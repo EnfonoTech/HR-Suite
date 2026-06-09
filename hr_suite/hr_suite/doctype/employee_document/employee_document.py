@@ -1,5 +1,5 @@
 from frappe.model.document import Document
 
 
-class SaudiShiftType(Document):
+class EmployeeDocument(Document):
 	pass

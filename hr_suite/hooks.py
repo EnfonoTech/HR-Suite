@@ -15,9 +15,11 @@ add_to_apps_screen = [
 		"name": "hr_suite",
 		"logo": "/assets/hr_suite/images/logo.svg",
 		"title": "Hr Suite",
-		"route": "/app/saudi-hr",
+		"route": "/app/hr-suite",
 	},
 ]
+
+app_include_css = ["/assets/hr_suite/css/hr_suite.css"]
 
 # ─── Scheduled Tasks ───────────────────────────────────────────────────────────
 scheduler_events = {
@@ -131,29 +133,21 @@ jinja = {
 override_whitelisted_methods = {}
 
 permission_query_conditions = {
-	"Saudi Employee Checkin":   "hr_suite.hr_suite.permissions.get_saudi_employee_checkin_query",
-	"Saudi Daily Attendance":   "hr_suite.hr_suite.permissions.get_saudi_daily_attendance_query",
-	"Monthly Attendance Record":"hr_suite.hr_suite.permissions.get_monthly_attendance_record_query",
 	"Saudi Annual Leave":       "hr_suite.hr_suite.permissions.get_saudi_annual_leave_query",
 	"Saudi Sick Leave":         "hr_suite.hr_suite.permissions.get_saudi_sick_leave_query",
 	"Overtime Request":         "hr_suite.hr_suite.permissions.get_overtime_request_query",
 	"Salary Adjustment":        "hr_suite.hr_suite.permissions.get_salary_adjustment_query",
 	"Maternity Paternity Leave":"hr_suite.hr_suite.permissions.get_maternity_paternity_leave_query",
 	"Special Leave":            "hr_suite.hr_suite.permissions.get_special_leave_query",
-	"Attendance Location":      "hr_suite.hr_suite.permissions.get_attendance_location_query",
 }
 
 has_permission = {
-	"Saudi Employee Checkin":   "hr_suite.hr_suite.permissions.has_saudi_employee_checkin_permission",
-	"Saudi Daily Attendance":   "hr_suite.hr_suite.permissions.has_saudi_daily_attendance_permission",
-	"Monthly Attendance Record":"hr_suite.hr_suite.permissions.has_monthly_attendance_record_permission",
 	"Saudi Annual Leave":       "hr_suite.hr_suite.permissions.has_saudi_annual_leave_permission",
 	"Saudi Sick Leave":         "hr_suite.hr_suite.permissions.has_saudi_sick_leave_permission",
 	"Overtime Request":         "hr_suite.hr_suite.permissions.has_overtime_request_permission",
 	"Salary Adjustment":        "hr_suite.hr_suite.permissions.has_salary_adjustment_permission",
 	"Maternity Paternity Leave":"hr_suite.hr_suite.permissions.has_maternity_paternity_leave_permission",
 	"Special Leave":            "hr_suite.hr_suite.permissions.has_special_leave_permission",
-	"Attendance Location":      "hr_suite.hr_suite.permissions.has_attendance_location_permission",
 }
 
 after_install = "hr_suite.install.after_install"
@@ -172,7 +166,6 @@ fixtures = [
 		"doctype": "Workflow",
 		"filters": [["module", "=", "Hr Suite"]],
 	},
-	"Attendance Location",
 ]
 
 # ─── Migration Hooks ───────────────────────────────────────────────────────

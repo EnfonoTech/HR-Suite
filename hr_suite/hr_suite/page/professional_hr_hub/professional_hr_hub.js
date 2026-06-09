@@ -18,8 +18,7 @@ hr_suite.ProfessionalHrHub = class ProfessionalHrHub {
 		this.ensureStyles();
 		this.renderShell();
 		this.loadCatalog();
-		this.page.set_primary_action(__("Mobile Attendance"), () => this.open("/mobile-attendance"));
-		this.page.add_menu_item(__("Hr Suite Workspace"), () => this.open("/app/saudi-hr"));
+		this.page.add_menu_item(__("Hr Suite Workspace"), () => this.open("/app/hr-suite"));
 		this.page.add_menu_item(__("Hr Suite Settings"), () => this.open("/app/saudi-hr-settings/Hr Suite Settings"));
 	}
 
@@ -276,7 +275,7 @@ hr_suite.ProfessionalHrHub = class ProfessionalHrHub {
 				<section class="professional-hr-hub__panel">
 					<div class="professional-hr-hub__toolbar">
 						<input class="professional-hr-hub__search" data-search placeholder="${frappe.utils.escape_html(__("Search features, reports, workflows, leave, payroll, compliance..."))}">
-						<button class="professional-hr-hub__button" data-route="/mobile-attendance">${__("Mobile Attendance")}</button>
+						<button class="professional-hr-hub__button" data-route="/app/hr-suite">${__("HR Suite")}</button>
 					</div>
 				</section>
 

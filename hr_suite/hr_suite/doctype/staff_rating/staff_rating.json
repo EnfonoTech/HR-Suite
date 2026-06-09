@@ -1,0 +1,111 @@
+{
+ "actions": [],
+ "autoname": "HR-RATE-.YYYY.-.#####",
+ "creation": "2026-06-09 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "rated_by_employee",
+  "col_break_top",
+  "rating_direction",
+  "rating_period",
+  "rating_section",
+  "rating",
+  "review"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rated_by_employee",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Rated By Employee",
+   "options": "Employee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_break_top",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rating_direction",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Rating Direction",
+   "options": "\nDownward\nUpward",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rating_period",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Rating Period",
+   "description": "Format: YYYY-MM (e.g. 2026-06)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rating_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "rating",
+   "fieldtype": "Rating",
+   "label": "Rating",
+   "reqd": 1
+  },
+  {
+   "fieldname": "review",
+   "fieldtype": "Small Text",
+   "label": "Review (optional)"
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-06-09 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Staff Rating",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 0,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "HR User",
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Employee",
+   "submit": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,68 @@
+/* ── HR Suite Workspace — Modern Styling ──────────────────────────────────── */
+
+/* Shortcut widget boxes — bolder, coloured background */
+.desk-page[data-page-route="hr-suite"] .widget.shortcut-widget-box,
+.page-container[data-page-route^="hr-suite"] .widget.shortcut-widget-box {
+	border-radius: 10px;
+	border: none;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.desk-page[data-page-route="hr-suite"] .widget.shortcut-widget-box:hover,
+.page-container[data-page-route^="hr-suite"] .widget.shortcut-widget-box:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.13);
+}
+
+/* Shortcut icon circle */
+.desk-page[data-page-route="hr-suite"] .shortcut-widget-box .widget-icon,
+.page-container[data-page-route^="hr-suite"] .shortcut-widget-box .widget-icon {
+	border-radius: 8px;
+	padding: 8px;
+}
+
+/* Card widget — rounded, subtle shadow */
+.desk-page[data-page-route="hr-suite"] .widget.links-widget-box,
+.page-container[data-page-route^="hr-suite"] .widget.links-widget-box {
+	border-radius: 10px;
+	border: 1px solid #e8eaed;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* Card header — bolder section title */
+.desk-page[data-page-route="hr-suite"] .links-widget-box .widget-title,
+.page-container[data-page-route^="hr-suite"] .links-widget-box .widget-title {
+	font-weight: 600;
+	font-size: 13px;
+	letter-spacing: 0.01em;
+	color: #1a1f36;
+}
+
+/* Card links — cleaner hover */
+.desk-page[data-page-route="hr-suite"] .links-widget-box .link-item,
+.page-container[data-page-route^="hr-suite"] .links-widget-box .link-item {
+	border-radius: 6px;
+	padding: 4px 8px;
+	transition: background 0.1s;
+}
+
+.desk-page[data-page-route="hr-suite"] .links-widget-box .link-item:hover,
+.page-container[data-page-route^="hr-suite"] .links-widget-box .link-item:hover {
+	background: #f4f5f7;
+}
+
+/* Section headers — stronger visual separation */
+.desk-page[data-page-route="hr-suite"] .workspace-section-header,
+.page-container[data-page-route^="hr-suite"] .workspace-section-header {
+	border-bottom: 2px solid #e8eaed;
+	padding-bottom: 8px;
+	margin-bottom: 4px;
+}
+
+/* Quick Actions header label */
+.desk-page[data-page-route="hr-suite"] .h4,
+.page-container[data-page-route^="hr-suite"] .h4 {
+	color: #1a1f36;
+	letter-spacing: -0.01em;
+}
