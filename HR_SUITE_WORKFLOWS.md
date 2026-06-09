@@ -7,7 +7,7 @@
 ## Table of Contents
 
 1. [Architecture Overview](#architecture-overview)
-2. [Approval Engine (Ladder Approve)](#approval-engine-ladder-approve)
+2. [Approval Engine (permission_manager)](#approval-engine-permission_manager)
 3. [Leave Management Workflows](#leave-management-workflows)
 4. [Penalty & Disciplinary Workflows](#penalty--disciplinary-workflows)
 5. [Payroll & Compensation Workflows](#payroll--compensation-workflows)
@@ -24,61 +24,68 @@
 ## Architecture Overview
 
 ```
-hr_suite
-├── Approval Engine        Ladder Approve (PM Workflow)
-│   ├── PM Workflow        Define multi-level approval chains per doctype
-│   ├── PM Workflow Action Tracks each pending approval task per user
-│   └── Approval Inbox     /app/pm-approval-inbox — unified to-do list
+hr_suite                               permission_manager (separate app)
+├── Leave Management                   ├── Approval Engine (Ladder Approve)
+│   ├── Saudi Annual Leave             │   ├── PM Workflow
+│   ├── Saudi Sick Leave               │   ├── PM Workflow Action
+│   ├── Special Leave                  │   ├── PM Employee Approval Chain
+│   └── Maternity / Paternity Leave    │   ├── PM Approver Delegation
+│                                      │   └── Approval Inbox  /app/pm-approval-inbox
+├── Penalties                          │
+│   ├── Employee Penalty               └── Permission Studio  /app/permission-studio
+│   └── Penalty Type
 │
-├── Leave Management       Saudi Annual Leave · Sick Leave · Special Leave
-│                          Maternity/Paternity · Annual Leave Disbursement
+├── Payroll
+│   ├── Saudi Monthly Payroll
+│   ├── Overtime Request
+│   ├── GOSI Contribution
+│   └── Salary Adjustment
 │
-├── Penalties              Employee Penalty · Penalty Type
-│                          Auto-deducts salary via Additional Salary
+├── HR Letters
+│   ├── HR Letter
+│   └── HR Letter Template
 │
-├── Payroll                Saudi Monthly Payroll · GOSI · Salary Adjustment
-│                          Overtime Request · Employee Loan
+├── Compliance (25+)
+│   ├── Work Regulation
+│   ├── Ministry Filing Tracker
+│   ├── NITAQAT · WPS · Iqama · GOSI
+│   └── Safety · Legal · Disability
 │
-├── HR Letters             HR Letter · HR Letter Template
-│                          Jinja-rendered, submittable, printable
-│
-├── Compliance (25+)       Work Regulation · Ministry Filing Tracker
-│                          NITAQAT · WPS · Iqama · GOSI · Safety · Legal
-│
-└── Employee Lifecycle     Hiring → Onboarding → Contract → Promotion
-                           → Performance → Termination → EOSB → Exit
+└── Employee Lifecycle
+    ├── Hiring → Onboarding → Contract
+    ├── Performance → Promotion
+    └── Termination → EOSB → Exit
 ```
+
+> **Approval routing** for hr_suite documents (Leave, Overtime, Salary Adjustment, etc.) is
+> handled entirely by the **`permission_manager`** app. Both apps must be installed on the site.
 
 ---
 
-## Approval Engine (Ladder Approve)
+## Approval Engine (permission_manager)
+
+The multi-level approval engine lives in the `permission_manager` custom app. `hr_suite` does **not** contain any ladder_approve or PM Workflow code — it simply relies on the engine running alongside it on the same site.
 
 ### How It Works
 
-The **Ladder Approve** engine (PM Workflow) replaces Frappe's built-in single-approver workflow with a configurable multi-level approval chain stored on each Employee record.
-
 ```
-Employee Record
-  └── PM Approval Chain (child table: custom_pm_approval_chain)
-        ├── Level 1 → Direct Manager (user)
-        ├── Level 2 → Department Head (user)
-        └── Level 3 → HR Manager (user)
-```
+Employee Record  (in hr_suite)
+  └── PM Approval Chain  (custom field managed by permission_manager)
+        ├── Level 1 → Direct Manager
+        ├── Level 2 → Department Head
+        └── Level 3 → HR Manager
 
-When a document (Leave Application, Overtime Request, etc.) is saved/submitted:
-
-```
-Document Saved
+HR Suite Document saved / submitted
       │
       ▼
-PM Workflow engine (process_workflow_actions)
+permission_manager PM Workflow engine  (process_workflow_actions)
       │
       ├─ Looks up active PM Workflow for the doctype
       ├─ Resolves approver from Employee's approval chain (level 1 first)
-      ├─ Creates PM Workflow Action record (status = Open)
+      ├─ Creates PM Workflow Action record  (status = Open)
       └─ Sends email notification to approver
 
-Approver opens PM Approval Inbox
+Approver opens PM Approval Inbox  (/app/pm-approval-inbox)
       │
       ├─ Sees all Open PM Workflow Actions assigned to them
       ├─ Clicks Approve / Reject / Return for Correction
@@ -88,33 +95,37 @@ Approver opens PM Approval Inbox
 ### Setting Up an Approval Chain
 
 1. Open the **Employee** record.
-2. Go to the **PM Approval** section.
+2. Go to the **PM Approval** section (added by permission_manager fixtures).
 3. Add rows to **PM Approval Chain**:
+
    | Level | Approver (User) | Applies To |
    |-------|----------------|------------|
    | 1 | manager@company.com | All DocTypes |
    | 2 | dept.head@company.com | All DocTypes |
    | 3 | hr@company.com | All DocTypes |
+
 4. Save the Employee record.
 
 ### Creating a PM Workflow
 
+All PM Workflow configuration is done in the **permission_manager** app:
+
 1. Go to **PM Workflow** list → New.
 2. Set **Document Type** (e.g., `Saudi Annual Leave`).
 3. Define **Document States** — each state has a `doc_status` (0=Draft, 1=Submitted, 2=Cancelled) and edit permissions.
-4. Define **Transitions** — each transition has:
+4. Define **Transitions**:
    - From State → To State
-   - Action name (e.g., "Approve", "Reject")
+   - Action name ("Approve", "Reject")
    - Approver Type: Role / User / Approval Matrix
    - Matrix Level (1, 2, 3 from the employee chain)
-5. Save. The engine activates automatically on next document save.
+5. Save. The engine activates automatically on the next document save.
 
 ### Delegation (Out-of-Office Cover)
 
-When an approver is on leave, create a **PM Approver Delegation**:
+Create a **PM Approver Delegation** in permission_manager:
 - Original Approver → Substitute Approver
 - From Date / To Date
-- Scope: All DocTypes or specific module/doctype
+- Scope: All DocTypes or specific doctype
 
 ---
 
@@ -122,9 +133,9 @@ When an approver is on leave, create a **PM Approver Delegation**:
 
 ### 1. Saudi Annual Leave
 
-**Doctype:** `Saudi Annual Leave`  
-**Frappe Workflow:** `annual_leave_approval_workflow`  
-**Ladder Approve:** Wired via `on_update` hook
+**Doctype:** `Saudi Annual Leave`
+**Frappe Workflow:** `annual_leave_approval_workflow`
+**Approval Engine:** PM Workflow (via permission_manager)
 
 ```
 [Employee]
@@ -154,7 +165,7 @@ Cancelled ──► Leave balance restored
 
 ### 2. Saudi Sick Leave
 
-**Doctype:** `Saudi Sick Leave`  
+**Doctype:** `Saudi Sick Leave`
 **Frappe Workflow:** `sick_leave_approval_workflow`
 
 ```
@@ -170,11 +181,14 @@ Pending HR Review ──► HR checks certificate
 Approved
     │  (If sick days exceed threshold → daily alert fires)
     ▼
-Salary deduction applied per Saudi Labor Law (first 30 days full pay,
-days 31–90 at 75%, days 91–120 at 50%, beyond 120 — employer may terminate)
+Salary deduction applied per Saudi Labor Law:
+    Days 1–30:   Full pay
+    Days 31–90:  75% pay
+    Days 91–120: 50% pay
+    Beyond 120:  Employer may terminate
 ```
 
-**Daily alert:** `send_sick_leave_threshold_alerts` fires when an employee's cumulative sick days cross configurable thresholds.
+**Daily alert:** `send_sick_leave_threshold_alerts` fires when cumulative sick days cross configurable thresholds.
 
 ---
 
@@ -208,7 +222,7 @@ Workflow: Draft → Approved (HR Manager).
 
 ### 5. Annual Leave Disbursement
 
-**Doctype:** `Annual Leave Disbursement`  
+**Doctype:** `Annual Leave Disbursement`
 **Triggered by:** Resignation / End of service
 
 ```
@@ -237,18 +251,18 @@ Create Penalty Types with escalating consequences:
 | Field | Example Value |
 |-------|--------------|
 | Penalty Relation | Unauthorised Absence |
-| First Offense | Warning Letter | Value: 0.5 days |
-| Second Offense | Written Warning | Value: 1 day |
-| Third Offense | Suspension Warning | Value: 2 days |
-| Fourth Offense | Termination Notice | Value: 3 days |
+| First Offense | Warning Letter — Value: 0.5 days |
+| Second Offense | Written Warning — Value: 1 day |
+| Third Offense | Suspension Warning — Value: 2 days |
+| Fourth Offense | Termination Notice — Value: 3 days |
 
 #### Employee Penalty Workflow
 
 ```
 [HR/Manager] Creates Employee Penalty
-    │  (system auto-counts same penalty_type in current month for employee)
-    │  (auto-sets repeat_status: First / Second / Third / Fourth)
-    │  (auto-sets penalty_value from Penalty Type)
+    │  System auto-counts same penalty_type in current month for employee
+    │  Auto-sets repeat_status: First / Second / Third / Fourth
+    │  Auto-sets penalty_value from Penalty Type
     ▼
 Draft
     │  Set Status = Approved, then Submit
@@ -271,8 +285,8 @@ Additional Salary cancelled → deduction reversed
 
 ### 2. Disciplinary Procedure (Formal Process)
 
-**Doctype:** `Disciplinary Procedure`  
-**Frappe Workflow:** (validate hook via `compliance_controls.validate_compliance_doc`)
+**Doctype:** `Disciplinary Procedure`
+**Hook:** `compliance_controls.validate_compliance_doc`
 
 ```
 Incident Reported
@@ -296,7 +310,7 @@ Draft ──► Under Investigation ──► Pending Decision ──► Decisio
 
 ### 3. Disciplinary Appeal
 
-**Doctype:** `Disciplinary Appeal`  
+**Doctype:** `Disciplinary Appeal`
 **Frappe Workflow:** `disciplinary_appeal_workflow`
 
 ```
@@ -315,7 +329,7 @@ Open → Under Review → Hearing Scheduled → Decided → Closed
 
 ### 4. Employee Grievance
 
-**Doctype:** `Employee Grievance`  
+**Doctype:** `Employee Grievance`
 **Frappe Workflow:** `employee_grievance_workflow`
 
 ```
@@ -334,7 +348,7 @@ Channels: Portal / Email / Meeting / Written Letter
 
 ### 5. Investigation Record
 
-**Doctype:** `Investigation Record`  
+**Doctype:** `Investigation Record`
 **Frappe Workflow:** `investigation_workflow`
 
 ```
@@ -353,15 +367,15 @@ Open → In Progress → Findings Issued → Closed
 
 ### 1. Overtime Request
 
-**Doctype:** `Overtime Request`  
-**Frappe Workflow:** `overtime_approval_workflow`  
-**Ladder Approve:** Wired via `on_update` + `on_cancel`
+**Doctype:** `Overtime Request`
+**Frappe Workflow:** `overtime_approval_workflow`
+**Approval Engine:** PM Workflow (via permission_manager)
 
 ```
 [Employee/Manager] Creates Overtime Request
     │
     ▼
-Draft → Pending Approval (via PM Approval Chain Level 1)
+Draft → Pending Approval (PM Approval Chain Level 1)
     │  Approved
     ▼
 Approved ──► On Submit: Journal Entry created automatically
@@ -404,9 +418,9 @@ WPS Submission created → submitted to government portal
 
 ### 3. Salary Adjustment
 
-**Doctype:** `Salary Adjustment`  
-**Frappe Workflow:** `salary_adjustment_workflow`  
-**Ladder Approve:** Wired via `on_update` + `on_cancel`
+**Doctype:** `Salary Adjustment`
+**Frappe Workflow:** `salary_adjustment_workflow`
+**Approval Engine:** PM Workflow (via permission_manager)
 
 ```
 [HR/Manager] Creates Salary Adjustment
@@ -530,7 +544,7 @@ Tracks all government submission deadlines:
 
 ### 4. HR Policy Document
 
-**Doctype:** `HR Policy Document`  
+**Doctype:** `HR Policy Document`
 **Frappe Workflow:** `hr_policy_review_workflow`
 
 ```
@@ -666,7 +680,7 @@ All alerts run daily at midnight unless noted.
 | Expat Authorization Due | Expat Work Authorization Control | Renewal deadline |
 | Training Disclosure Due | Training Disclosure Register | Submission deadline |
 | GOSI Due | GOSI Contribution | 5th of each month (monthly) |
-| Approval SLA | PM Workflow Action | Overdue approvals (Ladder Approve) |
+| Approval SLA | PM Workflow Action | Overdue approvals — run by **permission_manager** |
 
 ---
 
@@ -689,8 +703,12 @@ All alerts run daily at midnight unless noted.
 
 ### Phase 1 — Initial Setup
 
-- [ ] Install hr_suite on site: `bench --site <site> install-app hr_suite`
-- [ ] Run `bench --site <site> migrate`
+- [ ] Install both apps on the site:
+  ```
+  bench --site <site> install-app permission_manager
+  bench --site <site> install-app hr_suite
+  bench --site <site> migrate
+  ```
 - [ ] Open **Hr Suite Settings** and configure:
   - Default salary component for penalty deductions
   - GOSI rates (employer / employee shares)
@@ -701,7 +719,7 @@ All alerts run daily at midnight unless noted.
 
 ### Phase 2 — Employee Setup
 
-- [ ] For each employee, set **PM Approval Chain** (Level 1 = direct manager, Level 2 = dept head, Level 3 = HR)
+- [ ] For each employee, set **PM Approval Chain** in the PM Approval section (Level 1 = direct manager, Level 2 = dept head, Level 3 = HR)
 - [ ] Assign **Department Approver** role to all line managers
 - [ ] Create **Saudi Employment Contracts** for all active employees
 - [ ] Create **Work Permit Iqama** records for all expat employees
@@ -715,9 +733,11 @@ All alerts run daily at midnight unless noted.
 - [ ] Configure **GOSI Contribution** settings
 - [ ] Set up **WPS Submission** workflow parameters
 
-### Phase 4 — Approval Workflows
+### Phase 4 — Approval Workflows (in permission_manager)
 
-- [ ] Create **PM Workflows** for each key doctype:
+All multi-level approval configuration is done in the **permission_manager** app — not in hr_suite.
+
+- [ ] Go to **PM Workflow** list → create workflows for each key doctype:
   - Saudi Annual Leave
   - Saudi Sick Leave
   - Overtime Request
@@ -725,13 +745,13 @@ All alerts run daily at midnight unless noted.
   - Employee Penalty
   - HR Letter
 - [ ] Configure **PM Workflow Document States** with correct doc_status values
-- [ ] Configure **PM Workflow Transitions** with matrix levels
-- [ ] Test approval flow: submit a leave request → check PM Approval Inbox
+- [ ] Configure **PM Workflow Transitions** with matrix levels matching the employee approval chain
+- [ ] Test approval flow: submit a leave request → check **PM Approval Inbox** (`/app/pm-approval-inbox`)
+- [ ] For out-of-office cover, create **PM Approver Delegation** records as needed
 
 ### Phase 5 — Go Live
 
-- [ ] Run `bench --site <site> execute "frappe.get_attr('hr_suite.hr_suite.demo_lifecycle.seed_employee_lifecycle_demo')"` to seed demo data
-- [ ] Train HR team on **PM Approval Inbox** (`/app/pm-approval-inbox`)
+- [ ] Train HR team on **PM Approval Inbox** (`/app/pm-approval-inbox`) in permission_manager
 - [ ] Train managers on approving via Approval Inbox
 - [ ] Configure email notifications (SMTP) so approval alerts are delivered
 - [ ] Set up scheduled tasks: `bench --site <site> scheduler enable`
@@ -789,16 +809,20 @@ All alerts run daily at midnight unless noted.
 | Saudi Employment Contract | Employment contract with terms |
 | Contract Portal Evidence | Uploaded contract evidence documents |
 
-### Approval Engine
-| Doctype | Purpose |
-|---------|---------|
-| PM Workflow | Define multi-level approval workflow for any doctype |
-| PM Workflow Action | Pending approval task assigned to a user |
-| PM Workflow Action Permitted Role | Roles allowed to act on an approval |
-| PM Workflow Transition | State transition rules |
-| PM Workflow Document State | Per-state document permissions |
-| PM Employee Approval Chain | Employee's approval hierarchy |
-| PM Approver Delegation | Out-of-office approval delegation |
+### Approval Engine (permission_manager app)
+
+> These doctypes are owned by the **`permission_manager`** app. They are listed here for
+> reference because hr_suite workflows depend on them.
+
+| Doctype | App | Purpose |
+|---------|-----|---------|
+| PM Workflow | permission_manager | Define multi-level approval workflow for any doctype |
+| PM Workflow Action | permission_manager | Pending approval task assigned to a user |
+| PM Workflow Action Permitted Role | permission_manager | Roles allowed to act on an approval |
+| PM Workflow Transition | permission_manager | State transition rules |
+| PM Workflow Document State | permission_manager | Per-state document permissions |
+| PM Employee Approval Chain | permission_manager | Employee's approval hierarchy |
+| PM Approver Delegation | permission_manager | Out-of-office approval delegation |
 
 ### Employee Lifecycle
 | Doctype | Purpose |
@@ -865,4 +889,4 @@ All alerts run daily at midnight unless noted.
 
 ---
 
-*Generated: 2026-06-09 | hr_suite v0.0.1 | For internal HR use*
+*Updated: 2026-06-09 | hr_suite v0.0.1 | Approval engine: permission_manager | For internal HR use*
