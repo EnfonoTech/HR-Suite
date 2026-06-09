@@ -293,37 +293,78 @@ def calculate_eosb_components(joining_date, termination_date, last_basic_salary,
 	}
 
 
-def get_gosi_rates(nationality: str) -> dict:
+def get_gosi_rates(nationality: str = "", employee: str = "") -> dict:
 	"""
-	Return GOSI rates by nationality.
+	Return GOSI contribution rates.
+	Pass employee name for the most accurate result (uses hr_suite_is_saudi checkbox first).
+	Passing nationality string alone still works as a fallback.
 	"""
 	settings = frappe.get_single("Hr Suite Settings")
 
-	if is_saudi_nationality(nationality):
+	is_saudi = (
+		get_employee_is_saudi(employee)
+		if employee
+		else is_saudi_nationality(nationality)
+	)
+
+	if is_saudi:
 		return {
 			"employee_rate": flt(settings.gosi_saudi_employee_rate) or 10.0,
 			"employer_rate": flt(settings.gosi_saudi_employer_rate) or 12.0,
 		}
-	else:
-		return {
-			"employee_rate": flt(settings.gosi_non_saudi_employee_rate) or 0.0,
-			"employer_rate": flt(settings.gosi_non_saudi_employer_rate) or 2.0,
-		}
+	return {
+		"employee_rate": flt(settings.gosi_non_saudi_employee_rate) or 0.0,
+		"employer_rate": flt(settings.gosi_non_saudi_employer_rate) or 2.0,
+	}
 
 
 def is_saudi_nationality(nationality: str) -> bool:
 	text = (nationality or "").strip().lower()
 	if not text:
 		return False
-	return text == "sa" or "saudi" in text or "saudi" in text
+	return text in ("sa", "saudi", "saudi national", "saudi arabia") or "saudi" in text
+
+
+def get_employee_is_saudi(employee: str) -> bool:
+	"""
+	Determine if an employee is a Saudi national.
+	Resolution order:
+	  1. hr_suite_employee_type Select field on Employee ("Saudi National" / "Expatriate")
+	  2. nationality text field on Employee (ERPNext standard field)
+	  3. nationality on the active Saudi Employment Contract
+	"""
+	if not employee:
+		return False
+
+	# 1. Explicit Employee Type field — highest priority
+	if frappe.db.has_column("Employee", "hr_suite_employee_type"):
+		emp_type = frappe.db.get_value("Employee", employee, "hr_suite_employee_type") or ""
+		if emp_type == "Saudi National":
+			return True
+		if emp_type == "Expatriate":
+			return False
+
+	# 2. Nationality text field on Employee
+	nationality = ""
+	if frappe.get_meta("Employee").has_field("nationality"):
+		nationality = frappe.db.get_value("Employee", employee, "nationality") or ""
+
+	# 3. Fallback: contract nationality
+	if not nationality:
+		nationality = get_contract_nationality_lookup([employee]).get(employee) or ""
+
+	return is_saudi_nationality(nationality)
 
 
 def get_employee_nationality(employee: str) -> str:
+	"""Return the employee's nationality string. Use get_employee_is_saudi() for GOSI logic."""
 	if not employee:
 		return ""
 
 	if frappe.get_meta("Employee").has_field("nationality"):
-		return frappe.db.get_value("Employee", employee, "nationality") or ""
+		nat = frappe.db.get_value("Employee", employee, "nationality") or ""
+		if nat:
+			return nat
 
 	return get_contract_nationality_lookup([employee]).get(employee) or ""
 

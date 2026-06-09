@@ -72,10 +72,77 @@ class TerminationNotice(Document):
 		self.eosb_applicable = 0 if reason in no_eosb_reasons else 1
 
 	def on_submit(self):
-		"""On approval: update employee status."""
-		if self.eosb_applicable:
-			frappe.msgprint(
-				_("Don't forget to create an End of Service Benefit document for this employee."),
-				title=_("EOSB Required"),
-				indicator="blue",
+		self._auto_create_exit_documents()
+
+	def _auto_create_exit_documents(self):
+		last_day = self.notice_end_date or frappe.utils.nowdate()
+
+		# Exit Interview
+		if not frappe.db.exists("Exit Interview", {"employee": self.employee, "docstatus": ["!=", 2]}):
+			frappe.get_doc({
+				"doctype": "Exit Interview",
+				"employee": self.employee,
+				"employee_name": self.employee_name,
+				"company": self.company,
+				"department": self.department,
+				"termination_notice": self.name,
+				"interview_date": last_day,
+				"status": "Scheduled",
+			}).insert(ignore_permissions=True)
+
+		# Exit Clearance
+		ec_name = frappe.db.get_value(
+			"Exit Clearance", {"employee": self.employee, "docstatus": ["!=", 2]}, "name"
+		)
+		if not ec_name:
+			ec = frappe.get_doc({
+				"doctype": "Exit Clearance",
+				"employee": self.employee,
+				"employee_name": self.employee_name,
+				"company": self.company,
+				"department": self.department,
+				"termination_notice": self.name,
+				"last_working_day": last_day,
+				"status": "Open",
+			})
+			ec.insert(ignore_permissions=True)
+			ec_name = ec.name
+
+		# EOSB — only when applicable
+		if self.eosb_applicable and not frappe.db.exists(
+			"End of Service Benefit", {"employee": self.employee, "docstatus": ["!=", 2]}
+		):
+			emp = frappe.get_doc("Employee", self.employee)
+			basic = (
+				frappe.db.get_value(
+					"Saudi Employment Contract",
+					{"employee": self.employee, "contract_status": "Active"},
+					"basic_salary",
+				)
+				or frappe.db.get_value("Employee", self.employee, "hr_suite_gosi_salary")
+				or 0
 			)
+			eosb = frappe.get_doc({
+				"doctype": "End of Service Benefit",
+				"employee": self.employee,
+				"employee_name": self.employee_name,
+				"company": self.company,
+				"department": self.department,
+				"joining_date": emp.date_of_joining,
+				"termination_date": last_day,
+				"termination_reason": self.termination_reason,
+				"last_basic_salary": basic,
+			})
+			eosb.insert(ignore_permissions=True)
+			# Back-link EOSB on this termination notice
+			self.db_set("eosb_reference", eosb.name)
+			# Link EOSB on exit clearance
+			frappe.db.set_value("Exit Clearance", ec_name, "end_of_service_benefit", eosb.name)
+
+		frappe.msgprint(
+			_("Exit Interview, Exit Clearance{0} created automatically.").format(
+				_(" and EOSB") if self.eosb_applicable else ""
+			),
+			title=_("Exit Process Initiated"),
+			indicator="green",
+		)

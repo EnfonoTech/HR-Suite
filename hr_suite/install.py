@@ -45,6 +45,8 @@ def after_migrate():
 	migrate_legacy_shift_data()
 	migrate_legacy_annual_leave()
 	migrate_legacy_employee_loans()
+	ensure_employee_custom_fields()
+	remove_obsolete_reports()
 
 
 def ensure_department_approver_role():
@@ -464,3 +466,82 @@ def create_default_settings():
 		frappe.msgprint("Created Hr Suite default settings", alert=True)
 	except Exception:
 		pass
+
+
+# ─── Employee Custom Fields ────────────────────────────────────────────────────
+
+def ensure_employee_custom_fields():
+	"""Add HR Suite custom fields to the Employee doctype if not already present."""
+	fields = [
+		# GOSI Contribution Base salary — shown in Overview after General Details
+		{
+			"dt": "Employee",
+			"fieldname": "hr_suite_gosi_salary",
+			"label": "GOSI Contribution Base",
+			"fieldtype": "Currency",
+			"insert_after": "custom_visa_designation",
+			"module": "Hr Suite",
+			"description": "Basic salary used for GOSI contribution calculation",
+		},
+		# Employee Type (Saudi National / Expatriate) — drives GOSI rates and Nitaqat
+		{
+			"dt": "Employee",
+			"fieldname": "hr_suite_employee_type",
+			"label": "Employee Type",
+			"fieldtype": "Select",
+			"options": "\nSaudi National\nExpatriate",
+			"insert_after": "hr_suite_gosi_salary",
+			"module": "Hr Suite",
+			"description": "Determines GOSI contribution rates and Nitaqat classification",
+			"in_list_view": 1,
+			"search_index": 1,
+		},
+		# Employee Documents section header
+		{
+			"dt": "Employee",
+			"fieldname": "hr_suite_documents_section",
+			"label": "Employee Documents",
+			"fieldtype": "Section Break",
+			"insert_after": "hr_suite_employee_type",
+			"module": "Hr Suite",
+		},
+		# Documents child table (Iqama, Passport, Health Insurance, etc.)
+		{
+			"dt": "Employee",
+			"fieldname": "hr_suite_documents",
+			"label": "Documents",
+			"fieldtype": "Table",
+			"options": "Employee Document",
+			"insert_after": "hr_suite_documents_section",
+			"module": "Hr Suite",
+		},
+	]
+	for cf in fields:
+		if frappe.db.exists("Custom Field", {"dt": cf["dt"], "fieldname": cf["fieldname"]}):
+			continue
+		try:
+			frappe.get_doc({"doctype": "Custom Field", **cf}).insert(ignore_permissions=True)
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), f"HR Suite: failed to create custom field {cf['fieldname']}")
+
+
+# ─── Remove Obsolete Reports ───────────────────────────────────────────────────
+
+def remove_obsolete_reports():
+	"""Delete report DB records whose Python module files have been removed."""
+	stale = [
+		"Team Attendance Review",
+	]
+	for report_name in stale:
+		if frappe.db.exists("Report", report_name):
+			try:
+				frappe.delete_doc("Report", report_name, force=1, ignore_permissions=True)
+			except Exception:
+				frappe.log_error(frappe.get_traceback(), f"HR Suite: could not delete stale report {report_name}")
+
+	# Remove stale Saudi Employee Voice Profile doctype registration
+	if frappe.db.exists("DocType", "Saudi Employee Voice Profile"):
+		try:
+			frappe.delete_doc("DocType", "Saudi Employee Voice Profile", force=1, ignore_permissions=True)
+		except Exception:
+			pass

@@ -23,3 +23,20 @@ class EmployeeOnboarding(Document):
 			self.status = "Completed"
 		elif self.completion_percentage > 0 and self.status == "Draft":
 			self.status = "In Progress"
+
+	def on_submit(self):
+		self._activate_employee()
+
+	def _activate_employee(self):
+		"""Mark employee Active and sync joining date when onboarding is completed."""
+		if self.completion_percentage < 100:
+			return
+		emp_updates = {"status": "Active"}
+		if self.joining_date:
+			emp_updates["date_of_joining"] = self.joining_date
+		frappe.db.set_value("Employee", self.employee, emp_updates)
+		frappe.msgprint(
+			frappe._("Employee {0} activated.").format(self.employee_name or self.employee),
+			indicator="green",
+			alert=True,
+		)

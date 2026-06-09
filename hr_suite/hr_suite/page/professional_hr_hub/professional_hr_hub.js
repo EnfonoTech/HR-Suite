@@ -18,8 +18,9 @@ hr_suite.ProfessionalHrHub = class ProfessionalHrHub {
 		this.ensureStyles();
 		this.renderShell();
 		this.loadCatalog();
-		this.page.add_menu_item(__("Hr Suite Workspace"), () => this.open("/app/hr-suite"));
-		this.page.add_menu_item(__("Hr Suite Settings"), () => this.open("/app/saudi-hr-settings/Hr Suite Settings"));
+		this.page.add_menu_item(__("HR Suite Workspace"), () => this.open("/app/hr-suite"));
+		this.page.add_menu_item(__("HR Suite Settings"), () => this.open("/app/hr-suite-settings/Hr Suite Settings"));
+		this.page.add_menu_item(__("Seed Demo Data (4 Employees)"), () => this.seedDemoData());
 	}
 
 	ensureStyles() {
@@ -411,5 +412,38 @@ hr_suite.ProfessionalHrHub = class ProfessionalHrHub {
 			return;
 		}
 		frappe.set_route(route);
+	}
+
+	seedDemoData() {
+		frappe.confirm(
+			__("This will create 4 demo employees (Ahmed Al-Ghamdi, John Smith, Sara Al-Dosari, Tariq Al-Mutairi) with full lifecycle records. Safe to run multiple times — skips existing records. Proceed?"),
+			() => {
+				frappe.dom.freeze(__("Seeding demo data…"));
+				frappe.call({
+					method: "hr_suite.hr_suite.demo_lifecycle.seed_employee_lifecycle_demo",
+					freeze: false,
+					callback: (r) => {
+						frappe.dom.unfreeze();
+						if (!r.message) return;
+						let s = r.message.summary || {};
+						let rows = Object.entries(s).map(([name, desc]) =>
+							`<tr><td><b>${name}</b></td><td style="color:#555">${desc}</td></tr>`
+						).join("");
+						frappe.msgprint({
+							title: __("Demo Data Seeded"),
+							message: `<table class="table table-condensed" style="margin-top:8px">
+								<thead><tr><th>${__("Employee")}</th><th>${__("Scenario")}</th></tr></thead>
+								<tbody>${rows}</tbody>
+							</table>
+							<div style="margin-top:8px">
+								<a href="/app/employee">${__("Open Employee List →")}</a>
+							</div>`,
+							indicator: "green",
+						});
+					},
+					error: () => frappe.dom.unfreeze(),
+				});
+			}
+		);
 	}
 };

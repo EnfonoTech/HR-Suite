@@ -7,6 +7,7 @@ from hr_suite.hr_suite.utils import (
 	assert_doctype_permissions,
 	get_contract_nationality_lookup,
 	get_employee_basic_salary as get_current_basic_salary,
+	get_employee_is_saudi,
 	get_employee_nationality,
 	is_saudi_nationality,
 )
@@ -29,9 +30,15 @@ class GOSIContribution(Document):
 			self.nationality = get_employee_nationality(self.employee) or ""
 
 	def _apply_gosi_rates(self):
-		"""Determine GOSI rates by nationality."""
+		"""Determine GOSI rates — uses hr_suite_employee_type on Employee as primary source."""
 		settings = frappe.get_single("Hr Suite Settings")
-		if is_saudi_nationality(self.nationality):
+		# get_employee_is_saudi checks Employee Type field first, then nationality text, then contract
+		is_saudi = (
+			get_employee_is_saudi(self.employee)
+			if self.employee
+			else is_saudi_nationality(self.nationality)
+		)
+		if is_saudi:
 			self.employee_contribution_rate = flt(settings.gosi_saudi_employee_rate) or 10.0
 			self.employer_contribution_rate = flt(settings.gosi_saudi_employer_rate) or 12.0
 		else:

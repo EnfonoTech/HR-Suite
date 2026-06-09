@@ -57,3 +57,24 @@ class SaudiEmploymentContract(Document):
 	def on_submit(self):
 		self.contract_status = "Active"
 		self.db_set("contract_status", "Active")
+		self._sync_employee_fields()
+
+	def _sync_employee_fields(self):
+		"""Sync GOSI base salary, Saudi national flag, and key contract details onto Employee."""
+		from hr_suite.hr_suite.utils import is_saudi_nationality
+		updates = {}
+		if self.basic_salary:
+			updates["hr_suite_gosi_salary"] = self.basic_salary
+		if self.designation:
+			updates["designation"] = self.designation
+		if self.department:
+			updates["department"] = self.department
+		if self.start_date and not frappe.db.get_value("Employee", self.employee, "date_of_joining"):
+			updates["date_of_joining"] = self.start_date
+		# Auto-set Employee Type from contract nationality
+		if self.nationality and frappe.db.has_column("Employee", "hr_suite_employee_type"):
+			updates["hr_suite_employee_type"] = (
+				"Saudi National" if is_saudi_nationality(self.nationality) else "Expatriate"
+			)
+		if updates:
+			frappe.db.set_value("Employee", self.employee, updates)
