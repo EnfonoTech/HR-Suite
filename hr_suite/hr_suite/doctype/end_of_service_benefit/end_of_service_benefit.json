@@ -1,0 +1,283 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-03-17 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "column_break_1",
+  "company",
+  "department",
+  "calculations_section",
+  "joining_date",
+  "termination_date",
+  "years_of_service",
+  "column_break_2",
+  "termination_reason",
+  "last_basic_salary",
+  "eosb_section",
+  "eosb_years_1_5",
+  "eosb_years_above_5",
+  "eosb_gross",
+  "column_break_3",
+  "resignation_factor",
+  "resignation_factor_label",
+  "eosb_deductions",
+  "net_eosb",
+  "payment_section",
+  "payment_status",
+  "payment_date",
+  "payment_account",
+  "column_break_4",
+  "journal_entry",
+  "notes_section",
+  "calculation_notes",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-EOSB-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "calculations_section",
+   "fieldtype": "Section Break",
+   "label": "Service Period"
+  },
+  {
+   "fetch_from": "employee.date_of_joining",
+   "fieldname": "joining_date",
+   "fieldtype": "Date",
+   "label": "Date of Joining",
+   "read_only": 1
+  },
+  {
+   "fieldname": "termination_date",
+   "fieldtype": "Date",
+   "label": "Termination Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "years_of_service",
+   "fieldtype": "Float",
+   "label": "Years of Service",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "termination_reason",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Termination Reason",
+   "options": "Resignation\nTermination by Employer\nEnd of Fixed Term\nDismissal\nDeath\nTotal Disability",
+   "reqd": 1
+  },
+  {
+   "fieldname": "last_basic_salary",
+   "fieldtype": "Currency",
+   "label": "Last Basic Salary",
+   "reqd": 1
+  },
+  {
+   "fieldname": "eosb_section",
+   "fieldtype": "Section Break",
+   "label": "EOSB Calculation"
+  },
+  {
+   "description": "0.5 × monthly basic × years 1–5",
+   "fieldname": "eosb_years_1_5",
+   "fieldtype": "Currency",
+   "label": "EOSB (Years 1-5)",
+   "read_only": 1
+  },
+  {
+   "description": "1 × monthly basic × years >5",
+   "fieldname": "eosb_years_above_5",
+   "fieldtype": "Currency",
+   "label": "EOSB (Years >5)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "eosb_gross",
+   "fieldtype": "Currency",
+   "label": "Gross EOSB",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "1.0 = Full | 2/3 | 1/3 | 0 — based on resignation + years",
+   "fieldname": "resignation_factor",
+   "fieldtype": "Float",
+   "label": "Resignation Factor",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resignation_factor_label",
+   "fieldtype": "Data",
+   "label": "Factor Label",
+   "read_only": 1
+  },
+  {
+   "fieldname": "eosb_deductions",
+   "fieldtype": "Currency",
+   "label": "Deductions"
+  },
+  {
+   "fieldname": "net_eosb",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Net EOSB",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_section",
+   "fieldtype": "Section Break",
+   "label": "Payment"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "payment_status",
+   "fieldtype": "Select",
+   "label": "Payment Status",
+   "options": "Pending\nPaid\nCancelled"
+  },
+  {
+   "fieldname": "payment_date",
+   "fieldtype": "Date",
+   "label": "Payment Date"
+  },
+  {
+   "fieldname": "payment_account",
+   "fieldtype": "Link",
+   "label": "Payment Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "journal_entry",
+   "fieldtype": "Link",
+   "label": "Journal Entry",
+   "options": "Journal Entry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Calculation Notes"
+  },
+  {
+   "fieldname": "calculation_notes",
+   "fieldtype": "Small Text",
+   "label": "Calculation Notes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "End of Service Benefit",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-03-17 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "End of Service Benefit",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "Employee",
+   "read": 1,
+   "print": 1
+  }
+ ],
+ "quick_entry": 0,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "employee_name",
+ "track_changes": 1
+}

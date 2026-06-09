@@ -1,0 +1,238 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-03-17 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "column_break_1",
+  "company",
+  "department",
+  "job",
+  "exam_details_section",
+  "examination_type",
+  "examination_date",
+  "examining_physician",
+  "column_break_2",
+  "medical_facility",
+  "medical_facility_license",
+  "examination_cost",
+  "work_injury_reference",
+  "results_section",
+  "fitness_result",
+  "restrictions_notes",
+  "column_break_3",
+  "valid_until",
+  "next_examination_date",
+  "report_attached",
+  "follow_up_required",
+  "follow_up_notes",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-MED-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fieldname": "job",
+   "fieldtype": "Data",
+   "label": "Position",
+   "read_only": 1
+  },
+  {
+   "fieldname": "exam_details_section",
+   "fieldtype": "Section Break",
+   "label": "Examination Details"
+  },
+  {
+   "fieldname": "examination_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Examination Type",
+   "options": "Pre-Employment\nPeriodic\nPost-Injury\nReturn to Work\nResignation\nWork Hazard",
+   "reqd": 1
+  },
+  {
+   "fieldname": "examination_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Examination Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "examining_physician",
+   "fieldtype": "Data",
+   "label": "Physician"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "medical_facility",
+   "fieldtype": "Data",
+   "label": "Medical Facility"
+  },
+  {
+   "fieldname": "medical_facility_license",
+   "fieldtype": "Data",
+   "label": "Facility License No."
+  },
+  {
+   "fieldname": "examination_cost",
+   "fieldtype": "Currency",
+   "label": "Examination Cost (SAR)"
+  },
+  {
+   "depends_on": "eval:['Post-Injury",
+   "fieldname": "work_injury_reference",
+   "fieldtype": "Link",
+   "label": "Work Injury Reference",
+   "options": "Work Injury"
+  },
+  {
+   "fieldname": "results_section",
+   "fieldtype": "Section Break",
+   "label": "Results"
+  },
+  {
+   "fieldname": "fitness_result",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Fitness Result",
+   "options": "\nFit\nFit with Restrictions\nTemporarily Unfit\nPermanently Unfit\nPending",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:['Fit with Restrictions",
+   "fieldname": "restrictions_notes",
+   "fieldtype": "Text Editor",
+   "label": "Restrictions / Notes"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "valid_until",
+   "fieldtype": "Date",
+   "label": "Valid Until"
+  },
+  {
+   "fieldname": "next_examination_date",
+   "fieldtype": "Date",
+   "label": "Next Examination Date"
+  },
+  {
+   "default": "0",
+   "fieldname": "report_attached",
+   "fieldtype": "Check",
+   "label": "Medical Report Attached"
+  },
+  {
+   "default": "0",
+   "fieldname": "follow_up_required",
+   "fieldtype": "Check",
+   "label": "Follow-Up Required"
+  },
+  {
+   "depends_on": "follow_up_required",
+   "fieldname": "follow_up_notes",
+   "fieldtype": "Small Text",
+   "label": "Follow-Up Notes"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Medical Examination",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-03-17 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Medical Examination",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "HR User",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Employee"
+  }
+ ],
+ "sort_field": "examination_date",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "examination_type",
+ "track_changes": 1
+}

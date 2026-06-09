@@ -1,0 +1,235 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-03-27 02:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "disciplinary_procedure",
+  "employee",
+  "employee_name",
+  "column_break_1",
+  "company",
+  "department",
+  "decision_section",
+  "decision_status",
+  "decision_type",
+  "decision_date",
+  "column_break_2",
+  "effective_from",
+  "effective_to",
+  "decided_by",
+  "reference_section",
+  "investigation_record",
+  "employee_warning_notice",
+  "legal_reference",
+  "article_reference",
+  "details_section",
+  "decision_summary",
+  "implementation_notes",
+  "appeal_deadline",
+  "appeal_received_on",
+  "evidence_attachment",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-DDL-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "disciplinary_procedure",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Disciplinary Procedure",
+   "options": "Disciplinary Procedure",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "decision_section",
+   "fieldtype": "Section Break",
+   "label": "Decision"
+  },
+  {
+   "fieldname": "decision_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nIssued\nImplemented\nRevoked\nAppealed",
+   "default": "Draft"
+  },
+  {
+   "fieldname": "decision_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Decision Type",
+   "options": "Verbal Warning\nFirst Written Warning\nSecond Written Warning\nSuspension without Pay\nDemotion\nTermination for Cause",
+   "reqd": 1
+  },
+  {
+   "fieldname": "decision_date",
+   "fieldtype": "Date",
+   "label": "Decision Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Effective From"
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Date",
+   "label": "Effective To"
+  },
+  {
+   "fieldname": "decided_by",
+   "fieldtype": "Link",
+   "label": "Decided By",
+   "options": "User"
+  },
+  {
+   "fieldname": "reference_section",
+   "fieldtype": "Section Break",
+   "label": "References"
+  },
+  {
+   "fieldname": "investigation_record",
+   "fieldtype": "Link",
+   "label": "Investigation Record",
+   "options": "Investigation Record"
+  },
+  {
+   "fieldname": "employee_warning_notice",
+   "fieldtype": "Link",
+   "label": "Warning Notice",
+   "options": "Employee Warning Notice"
+  },
+  {
+   "fieldname": "legal_reference",
+   "fieldtype": "Data",
+   "label": "Legal Reference"
+  },
+  {
+   "fieldname": "article_reference",
+   "fieldtype": "Data",
+   "label": "Article Reference"
+  },
+  {
+   "fieldname": "details_section",
+   "fieldtype": "Section Break",
+   "label": "Implementation"
+  },
+  {
+   "fieldname": "decision_summary",
+   "fieldtype": "Text Editor",
+   "label": "Decision Summary"
+  },
+  {
+   "fieldname": "implementation_notes",
+   "fieldtype": "Text Editor",
+   "label": "Implementation Notes"
+  },
+  {
+   "fieldname": "appeal_deadline",
+   "fieldtype": "Date",
+   "label": "Appeal Deadline"
+  },
+  {
+   "fieldname": "appeal_received_on",
+   "fieldtype": "Date",
+   "label": "Appeal Received On"
+  },
+  {
+   "fieldname": "evidence_attachment",
+   "fieldtype": "Attach",
+   "label": "Evidence"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Disciplinary Decision Log",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "icon": "fa fa-gavel",
+ "modified": "2026-03-27 02:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Disciplinary Decision Log",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "search_fields": "disciplinary_procedure,employee,employee_name,decision_type",
+ "sort_field": "decision_date",
+ "sort_order": "DESC",
+ "title_field": "employee_name",
+ "track_changes": 1
+}

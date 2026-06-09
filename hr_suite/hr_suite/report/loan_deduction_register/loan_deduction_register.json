@@ -1,0 +1,17 @@
+{
+ "add_total_row": 1,
+ "creation": "2026-03-27 03:20:00.000000",
+ "disabled": 0,
+ "doctype": "Report",
+ "is_standard": "Yes",
+ "module": "Hr Suite",
+ "name": "Loan Deduction Register",
+ "ref_doctype": "Employee Loan",
+ "report_name": "Loan Deduction Register",
+ "report_type": "Script Report",
+ "roles": [
+  {"role": "HR Manager"},
+  {"role": "HR User"},
+  {"role": "System Manager"}
+ ]
+}

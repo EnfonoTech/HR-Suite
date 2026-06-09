@@ -1,0 +1,125 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-24 21:39:44.264372",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "record_type",
+  "legal_reference",
+  "column_break_1",
+  "required",
+  "status",
+  "ownership_section",
+  "owner_user",
+  "last_verified_on",
+  "next_review_date",
+  "column_break_2",
+  "linked_doctype",
+  "linked_report",
+  "evidence_attachment",
+  "gap_description",
+  "action_log"
+ ],
+ "fields": [
+  {
+   "fieldname": "record_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Record Type",
+   "options": "\nEmployee Names Register",
+   "reqd": 1
+  },
+  {
+   "default": "Art.17 / Reg. Art.5",
+   "fieldname": "legal_reference",
+   "fieldtype": "Data",
+   "label": "Legal Reference"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "required",
+   "fieldtype": "Check",
+   "label": "Required"
+  },
+  {
+   "default": "Missing",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Missing"
+  },
+  {
+   "fieldname": "ownership_section",
+   "fieldtype": "Section Break",
+   "label": "Ownership & Evidence"
+  },
+  {
+   "fieldname": "owner_user",
+   "fieldtype": "Link",
+   "label": "Owner",
+   "options": "User"
+  },
+  {
+   "fieldname": "last_verified_on",
+   "fieldtype": "Date",
+   "label": "Last Verified On"
+  },
+  {
+   "fieldname": "next_review_date",
+   "fieldtype": "Date",
+   "label": "Next Review Date"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "linked_doctype",
+   "fieldtype": "Link",
+   "label": "Linked DocType",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "linked_report",
+   "fieldtype": "Data",
+   "label": "Linked Report"
+  },
+  {
+   "fieldname": "evidence_attachment",
+   "fieldtype": "Attach",
+   "label": "Evidence"
+  },
+  {
+   "fieldname": "gap_description",
+   "fieldtype": "Small Text",
+   "label": "Gap Description"
+  },
+  {
+   "fieldname": "action_log",
+   "fieldtype": "Link",
+   "label": "Compliance Action",
+   "options": "HR Compliance Action Log"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-06-09 03:00:17.955313",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Statutory HR Record Row",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "idx",
+ "sort_order": "ASC",
+ "states": []
+}

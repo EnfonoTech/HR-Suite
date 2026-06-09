@@ -1,0 +1,260 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-05-25 08:22:22.499406",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "provider_name",
+  "company",
+  "column_break_1",
+  "provider_type",
+  "status",
+  "license_section",
+  "license_number",
+  "license_issue_date",
+  "license_expiry_date",
+  "column_break_2",
+  "renewal_due_date",
+  "ministry_reference",
+  "license_attachment",
+  "controls_section",
+  "insurance_policy_reference",
+  "insurance_expiry_date",
+  "bank_account_documented",
+  "complaint_channel_available",
+  "column_break_3",
+  "hr_unit_available",
+  "compliance_unit_available",
+  "policy_manual_attachment",
+  "last_ministry_visit_date",
+  "branches_section",
+  "branches",
+  "violations",
+  "legal_reference",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-RSP-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "provider_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Provider Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Internal Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "provider_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Provider Type",
+   "options": "\nSaudi Recruitment Mediation",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft"
+  },
+  {
+   "fieldname": "license_section",
+   "fieldtype": "Section Break",
+   "label": "License"
+  },
+  {
+   "fieldname": "license_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "License Number",
+   "reqd": 1
+  },
+  {
+   "fieldname": "license_issue_date",
+   "fieldtype": "Date",
+   "label": "License Issue Date"
+  },
+  {
+   "fieldname": "license_expiry_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "License Expiry Date"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "renewal_due_date",
+   "fieldtype": "Date",
+   "label": "Renewal Due Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ministry_reference",
+   "fieldtype": "Data",
+   "label": "Ministry Reference"
+  },
+  {
+   "fieldname": "license_attachment",
+   "fieldtype": "Attach",
+   "label": "License Attachment"
+  },
+  {
+   "fieldname": "controls_section",
+   "fieldtype": "Section Break",
+   "label": "Mandatory Controls"
+  },
+  {
+   "fieldname": "insurance_policy_reference",
+   "fieldtype": "Data",
+   "label": "Insurance Policy Reference"
+  },
+  {
+   "fieldname": "insurance_expiry_date",
+   "fieldtype": "Date",
+   "label": "Insurance Expiry Date"
+  },
+  {
+   "default": "0",
+   "fieldname": "bank_account_documented",
+   "fieldtype": "Check",
+   "label": "Bank Account Documented"
+  },
+  {
+   "default": "1",
+   "fieldname": "complaint_channel_available",
+   "fieldtype": "Check",
+   "label": "Complaint Channel Available"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "hr_unit_available",
+   "fieldtype": "Check",
+   "label": "Independent HR Unit"
+  },
+  {
+   "default": "0",
+   "fieldname": "compliance_unit_available",
+   "fieldtype": "Check",
+   "label": "Independent Compliance Unit"
+  },
+  {
+   "fieldname": "policy_manual_attachment",
+   "fieldtype": "Attach",
+   "label": "Policy Manual"
+  },
+  {
+   "fieldname": "last_ministry_visit_date",
+   "fieldtype": "Date",
+   "label": "Last Ministry Visit"
+  },
+  {
+   "fieldname": "branches_section",
+   "fieldtype": "Section Break",
+   "label": "Branches & Violations"
+  },
+  {
+   "fieldname": "branches",
+   "fieldtype": "Table",
+   "label": "Branches",
+   "options": "Recruitment Provider Branch Row"
+  },
+  {
+   "fieldname": "violations",
+   "fieldtype": "Table",
+   "label": "Violations",
+   "options": "Recruitment Provider Violation Row"
+  },
+  {
+   "default": "Annex 3 and Annex 4 - Recruitment and Labor Services Controls",
+   "fieldname": "legal_reference",
+   "fieldtype": "Data",
+   "label": "Legal Reference"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "icon": "fa fa-briefcase",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-09 03:00:24.525660",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Recruitment Service Provider Compliance",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "provider_name,license_number,provider_type,status",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "provider_name",
+ "track_changes": 1
+}

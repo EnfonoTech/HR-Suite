@@ -1,0 +1,1 @@
+from hr_suite.hr_suite.hr_suite.permissions import *

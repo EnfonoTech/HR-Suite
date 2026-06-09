@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: 'Arial', 'Tahoma', sans-serif; direction: ltr; font-size: 13px; color: #1a1a1a; margin: 0; padding: 35px 40px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #2c3e50; padding-bottom: 15px; margin-bottom: 25px; }
+  .header-title h1 { font-size: 20px; color: #2c3e50; margin: 0 0 4px 0; }
+  .header-title h2 { font-size: 13px; color: #888; margin: 0; }
+  .header-info { font-size: 12px; color: #555; text-align: right; }
+  p { line-height: 2.0; margin: 10px 0; font-size: 13.5px; }
+  .details-box { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 15px 20px; margin: 18px 0; }
+  .details-box .row { display: flex; margin: 6px 0; }
+  .details-box .label { font-weight: bold; min-width: 180px; color: #2c3e50; }
+  .details-box .value { flex: 1; color: #333; }
+  .article-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px 15px; margin: 15px 0; font-size: 12px; line-height: 1.8; }
+  .signature-section { margin-top: 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 50px; text-align: center; }
+  .signature-line { border-top: 1px solid #555; margin-top: 55px; padding-top: 8px; font-size: 12px; color: #333; }
+  .stamp-area { border: 2px dashed #ccc; width: 120px; height: 120px; margin: 20px auto 0 auto; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #aaa; border-radius: 50%; text-align: center; }
+  .footer { margin-top: 40px; border-top: 1px solid #eee; padding-top: 12px; font-size: 11px; color: #999; text-align: center; }
+  .highlight { font-weight: bold; color: #c0392b; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-title">
+    <h1>Termination Notice</h1>
+    <h2>{{ doc.company }}</h2>
+  </div>
+  <div class="header-info">
+    <div>Notice No.: <strong>{{ doc.name }}</strong></div>
+    <div>Issue Date: <strong>{{ frappe.format(frappe.utils.today(), "Date") }}</strong></div>
+  </div>
+</div>
+
+<!-- Salutation -->
+<p>Dear: <strong>{{ doc.employee_name or doc.employee }}</strong></p>
+<p>Subject: <span class="highlight">Notice of Employment Contract Termination</span></p>
+
+<p>
+  We hereby notify you that pursuant to <strong>{{ doc.termination_reason }}</strong>,
+  {% if doc.during_probation %}
+    and as this falls within the probationary period,
+  {% endif %}
+  it has been decided to terminate your employment contract with <strong>{{ doc.company }}</strong>.
+</p>
+
+<!-- Details Box -->
+<div class="details-box">
+  <div class="row">
+    <span class="label">Termination Reason:</span>
+    <span class="value">{{ doc.termination_reason }}</span>
+  </div>
+  <div class="row">
+    <span class="label">Notice Start Date:</span>
+    <span class="value">{{ frappe.format(doc.notice_start_date, "Date") }}</span>
+  </div>
+  <div class="row">
+    <span class="label">Notice Period Required:</span>
+    <span class="value">{{ doc.notice_required_days or 0 }} days</span>
+  </div>
+  {% if doc.notice_end_date %}
+  <div class="row">
+    <span class="label">Last Working Day:</span>
+    <span class="value"><strong class="highlight">{{ frappe.format(doc.notice_end_date, "Date") }}</strong></span>
+  </div>
+  {% endif %}
+  {% if doc.eosb_applicable %}
+  <div class="row">
+    <span class="label">End of Service Benefit:</span>
+    <span class="value">Applicable — a benefit certificate will be issued</span>
+  </div>
+  {% endif %}
+</div>
+
+{% if doc.termination_article %}
+<div class="article-box">
+  <strong>Legal Basis:</strong> {{ doc.termination_article }} of the Saudi Labor Law<br>
+  {% if doc.article_description %}{{ doc.article_description }}{% endif %}
+</div>
+{% endif %}
+
+<p>
+  Please hand over all your responsibilities and company equipment before your last working day.
+  The HR department will complete the final settlement procedures in accordance with Saudi Labor Law.
+</p>
+
+<!-- Signatures -->
+<div class="signature-section">
+  <div>
+    <div class="stamp-area">Company Stamp</div>
+    <div class="signature-line">
+      <strong>HR Manager</strong><br>
+      {{ doc.company }}<br>
+      Date: _______________
+    </div>
+  </div>
+  <div>
+    <div class="stamp-area" style="border:none; background:#f9f9f9;"></div>
+    <div class="signature-line">
+      <strong>Employee Acknowledgement of Receipt</strong><br>
+      {{ doc.employee_name or doc.employee }}<br>
+      Date: _______________
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Issued in accordance with Saudi Labor Law — Royal Decree No. M/51 | {{ doc.company }}
+</div>
+
+</body>
+</html>

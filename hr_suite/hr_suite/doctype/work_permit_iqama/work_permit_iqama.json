@@ -1,0 +1,279 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-03-17 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "column_break_1",
+  "company",
+  "nationality",
+  "profession",
+  "iqama_section",
+  "iqama_number",
+  "iqama_issue_date",
+  "iqama_expiry_date",
+  "column_break_2",
+  "iqama_status",
+  "days_to_iqama_expiry",
+  "iqama_renewal_cost",
+  "work_permit_section",
+  "work_permit_number",
+  "work_permit_issue_date",
+  "work_permit_expiry_date",
+  "column_break_3",
+  "work_permit_status",
+  "days_to_permit_expiry",
+  "sponsor_section",
+  "sponsor_name",
+  "sponsor_id",
+  "column_break_4",
+  "sponsor_transfer_status",
+  "exit_reentry_section",
+  "exit_reentry_visa_number",
+  "exit_reentry_expiry_date",
+  "notes_section",
+  "notes",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-IQAMA-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "nationality",
+   "fieldtype": "Data",
+   "label": "Nationality"
+  },
+  {
+   "fieldname": "profession",
+   "fieldtype": "Data",
+   "label": "Profession on Iqama"
+  },
+  {
+   "fieldname": "iqama_section",
+   "fieldtype": "Section Break",
+   "label": "Iqama"
+  },
+  {
+   "fieldname": "iqama_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Iqama Number",
+   "reqd": 1
+  },
+  {
+   "fieldname": "iqama_issue_date",
+   "fieldtype": "Date",
+   "label": "Issue Date"
+  },
+  {
+   "fieldname": "iqama_expiry_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Expiry Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "iqama_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Iqama Status",
+   "options": "Active\nExpiring Soon\nExpired",
+   "read_only": 1
+  },
+  {
+   "fieldname": "days_to_iqama_expiry",
+   "fieldtype": "Int",
+   "label": "Days to Expiry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "iqama_renewal_cost",
+   "fieldtype": "Currency",
+   "label": "Renewal Cost (SAR)"
+  },
+  {
+   "fieldname": "work_permit_section",
+   "fieldtype": "Section Break",
+   "label": "Work Permit"
+  },
+  {
+   "fieldname": "work_permit_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Work Permit No."
+  },
+  {
+   "fieldname": "work_permit_issue_date",
+   "fieldtype": "Date",
+   "label": "Issue Date"
+  },
+  {
+   "fieldname": "work_permit_expiry_date",
+   "fieldtype": "Date",
+   "label": "Expiry Date"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "work_permit_status",
+   "fieldtype": "Select",
+   "label": "Permit Status",
+   "options": "Active\nExpiring Soon\nExpired\nN/A",
+   "read_only": 1
+  },
+  {
+   "fieldname": "days_to_permit_expiry",
+   "fieldtype": "Int",
+   "label": "Days to Permit Expiry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sponsor_section",
+   "fieldtype": "Section Break",
+   "label": "Sponsor"
+  },
+  {
+   "fieldname": "sponsor_name",
+   "fieldtype": "Data",
+   "label": "Sponsor Name"
+  },
+  {
+   "fieldname": "sponsor_id",
+   "fieldtype": "Data",
+   "label": "Sponsor ID"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sponsor_transfer_status",
+   "fieldtype": "Select",
+   "label": "Transfer Status",
+   "options": "N/A\nIn Progress\nCompleted\nRejected"
+  },
+  {
+   "fieldname": "exit_reentry_section",
+   "fieldtype": "Section Break",
+   "label": "Exit Re-entry Visa"
+  },
+  {
+   "fieldname": "exit_reentry_visa_number",
+   "fieldtype": "Data",
+   "label": "Exit Re-entry Visa No."
+  },
+  {
+   "fieldname": "exit_reentry_expiry_date",
+   "fieldtype": "Date",
+   "label": "Exit Re-entry Expiry"
+  },
+  {
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Work Permit Iqama",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-03-17 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Work Permit Iqama",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "Employee",
+   "read": 1,
+   "print": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "employee_name",
+ "track_changes": 1
+}

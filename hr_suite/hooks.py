@@ -1,244 +1,179 @@
+from . import __version__ as app_version
+
+
 app_name = "hr_suite"
 app_title = "Hr Suite"
 app_publisher = "siva@enfono.com"
-app_description = "Hr Suite"
+app_description = "Hr Suite - Saudi HR Management System"
 app_email = "siva@enfono.com"
 app_license = "mit"
+required_apps = ["frappe/erpnext"]
 
-# Apps
-# ------------------
+# Apps Screen
+add_to_apps_screen = [
+	{
+		"name": "hr_suite",
+		"logo": "/assets/hr_suite/images/logo.svg",
+		"title": "Hr Suite",
+		"route": "/app/saudi-hr",
+	},
+]
 
-# required_apps = []
+# ─── Scheduled Tasks ───────────────────────────────────────────────────────────
+scheduler_events = {
+	"daily": [
+		"hr_suite.hr_suite.tasks.send_iqama_expiry_alerts",
+		"hr_suite.hr_suite.tasks.send_contract_expiry_alerts",
+		"hr_suite.hr_suite.tasks.send_work_permit_expiry_alerts",
+		"hr_suite.hr_suite.tasks.send_sick_leave_threshold_alerts",
+		"hr_suite.hr_suite.tasks.send_probation_end_alerts",
+		"hr_suite.hr_suite.tasks.send_ministry_filing_due_alerts",
+		"hr_suite.hr_suite.tasks.send_final_settlement_sla_alerts",
+		"hr_suite.hr_suite.tasks.send_employee_document_custody_alerts",
+		"hr_suite.hr_suite.tasks.send_inspection_fine_sla_alerts",
+		"hr_suite.hr_suite.tasks.send_wps_correction_due_alerts",
+		"hr_suite.hr_suite.tasks.send_work_regulation_review_alerts",
+		"hr_suite.hr_suite.tasks.send_expat_authorization_due_alerts",
+		"hr_suite.hr_suite.tasks.send_training_disclosure_due_alerts",
+	],
+	"monthly": [
+		"hr_suite.hr_suite.tasks.send_gosi_due_alerts",
+	],
+	"weekly": [
+		"hr_suite.hr_suite.tasks.send_iqama_expiry_alerts",
+	],
+}
 
-# Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "hr_suite",
-# 		"logo": "/assets/hr_suite/logo.png",
-# 		"title": "Hr Suite",
-# 		"route": "/hr_suite",
-# 		"has_permission": "hr_suite.api.permission.has_app_permission"
-# 	}
-# ]
+# ─── Document Events ────────────────────────────────────────────────────────────
+doc_events = {
+	"Overtime Request": {
+		"on_submit": "hr_suite.hr_suite.doctype.overtime_request.overtime_request.create_overtime_journal_entry",
+	},
+	"Employee Penalty": {
+		"before_save": "hr_suite.hr_suite.doctype.employee_penalty.employee_penalty.before_save",
+		"on_submit":   "hr_suite.hr_suite.doctype.employee_penalty.employee_penalty.on_submit",
+		"on_cancel":   "hr_suite.hr_suite.doctype.employee_penalty.employee_penalty.on_cancel",
+	},
+	"GOSI Contribution": {
+		"on_submit": "hr_suite.hr_suite.doctype.gosi_contribution.gosi_contribution.create_payroll_entries",
+	},
+	"Policy Acknowledgement": {
+		"after_insert": "hr_suite.hr_suite.doctype.policy_acknowledgement.policy_acknowledgement.update_policy_acknowledgement_summary",
+		"on_update":    "hr_suite.hr_suite.doctype.policy_acknowledgement.policy_acknowledgement.update_policy_acknowledgement_summary",
+		"on_trash":     "hr_suite.hr_suite.doctype.policy_acknowledgement.policy_acknowledgement.update_policy_acknowledgement_summary",
+	},
+	"Termination Notice": {
+		"on_submit": "hr_suite.hr_suite.compliance_controls.create_final_settlement_from_termination",
+	},
+	"Work Regulation": {
+		"validate": "hr_suite.hr_suite.compliance_controls.validate_compliance_doc",
+	},
+	"Statutory HR Records Register": {
+		"validate": "hr_suite.hr_suite.compliance_controls.validate_compliance_doc",
+	},
+	"Ministry Filing Tracker": {
+		"validate": "hr_suite.hr_suite.compliance_controls.validate_compliance_doc",
+	},
+	"Disability Employment Compliance": {
+		"validate": "hr_suite.hr_suite.compliance_controls.validate_compliance_doc",
+	},
+	"Final Settlement SLA": {
+		"validate": "hr_suite.hr_suite.compliance_controls.validate_compliance_doc",
+	},
+	"Work Arrangement Control": {
+		"validate": "hr_suite.hr_suite.compliance_controls.validate_compliance_doc",
+	},
+	"Working Time Compliance Check": {
+		"validate": "hr_suite.hr_suite.compliance_controls.validate_compliance_doc",
+	},
+	"Inspection Fine SLA": {
+		"validate": "hr_suite.hr_suite.compliance_controls.validate_compliance_doc",
+	},
+	"Special Employment Category Control": {
+		"validate": "hr_suite.hr_suite.compliance_controls.validate_compliance_doc",
+	},
+	"Holiday Leave Overlap Rule": {
+		"validate": "hr_suite.hr_suite.compliance_controls.validate_compliance_doc",
+	},
+	"Expat Work Authorization Control": {
+		"validate": "hr_suite.hr_suite.compliance_controls.validate_compliance_doc",
+	},
+	"Training Disclosure Register": {
+		"validate": "hr_suite.hr_suite.compliance_controls.validate_compliance_doc",
+	},
+	"Disciplinary Procedure": {
+		"validate": "hr_suite.hr_suite.compliance_controls.validate_compliance_doc",
+	},
+	"Recruitment Service Provider Compliance": {
+		"validate": "hr_suite.hr_suite.compliance_controls.validate_compliance_doc",
+	},
+	"Recruitment Provider Complaint": {
+		"validate": "hr_suite.hr_suite.compliance_controls.validate_compliance_doc",
+	},
+	"Training Agreement": {
+		"validate": "hr_suite.hr_suite.compliance_controls.validate_compliance_doc",
+	},
+}
 
-# Includes in <head>
-# ------------------
+doctype_js = {
+	"Employee": "public/js/employee.js",
+}
 
-# include js, css files in header of desk.html
-# app_include_css = "/assets/hr_suite/css/hr_suite.css"
-# app_include_js = "/assets/hr_suite/js/hr_suite.js"
+# ─── Jinja ──────────────────────────────────────────────────────────────────────
+jinja = {
+	"methods": [
+		"hr_suite.hr_suite.utils.get_eosb_amount",
+		"hr_suite.hr_suite.utils.get_annual_leave_entitlement",
+		"hr_suite.hr_suite.utils.get_gosi_rates",
+	]
+}
 
-# include js, css files in header of web template
-# web_include_css = "/assets/hr_suite/css/hr_suite.css"
-# web_include_js = "/assets/hr_suite/js/hr_suite.js"
+override_whitelisted_methods = {}
 
-# include custom scss in every website theme (without file extension ".scss")
-# website_theme_scss = "hr_suite/public/scss/website"
+permission_query_conditions = {
+	"Saudi Employee Checkin":   "hr_suite.hr_suite.permissions.get_saudi_employee_checkin_query",
+	"Saudi Daily Attendance":   "hr_suite.hr_suite.permissions.get_saudi_daily_attendance_query",
+	"Monthly Attendance Record":"hr_suite.hr_suite.permissions.get_monthly_attendance_record_query",
+	"Saudi Annual Leave":       "hr_suite.hr_suite.permissions.get_saudi_annual_leave_query",
+	"Saudi Sick Leave":         "hr_suite.hr_suite.permissions.get_saudi_sick_leave_query",
+	"Overtime Request":         "hr_suite.hr_suite.permissions.get_overtime_request_query",
+	"Salary Adjustment":        "hr_suite.hr_suite.permissions.get_salary_adjustment_query",
+	"Maternity Paternity Leave":"hr_suite.hr_suite.permissions.get_maternity_paternity_leave_query",
+	"Special Leave":            "hr_suite.hr_suite.permissions.get_special_leave_query",
+	"Attendance Location":      "hr_suite.hr_suite.permissions.get_attendance_location_query",
+}
 
-# include js, css files in header of web form
-# webform_include_js = {"doctype": "public/js/doctype.js"}
-# webform_include_css = {"doctype": "public/css/doctype.css"}
+has_permission = {
+	"Saudi Employee Checkin":   "hr_suite.hr_suite.permissions.has_saudi_employee_checkin_permission",
+	"Saudi Daily Attendance":   "hr_suite.hr_suite.permissions.has_saudi_daily_attendance_permission",
+	"Monthly Attendance Record":"hr_suite.hr_suite.permissions.has_monthly_attendance_record_permission",
+	"Saudi Annual Leave":       "hr_suite.hr_suite.permissions.has_saudi_annual_leave_permission",
+	"Saudi Sick Leave":         "hr_suite.hr_suite.permissions.has_saudi_sick_leave_permission",
+	"Overtime Request":         "hr_suite.hr_suite.permissions.has_overtime_request_permission",
+	"Salary Adjustment":        "hr_suite.hr_suite.permissions.has_salary_adjustment_permission",
+	"Maternity Paternity Leave":"hr_suite.hr_suite.permissions.has_maternity_paternity_leave_permission",
+	"Special Leave":            "hr_suite.hr_suite.permissions.has_special_leave_permission",
+	"Attendance Location":      "hr_suite.hr_suite.permissions.has_attendance_location_permission",
+}
 
-# include js in page
-# page_js = {"page" : "public/js/file.js"}
+after_install = "hr_suite.install.after_install"
 
-# include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
-# doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
-# doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
+# ─── Fixtures ───────────────────────────────────────────────────────────────────
+fixtures = [
+	{
+		"doctype": "Custom Field",
+		"filters": [["module", "=", "Hr Suite"]],
+	},
+	{
+		"doctype": "Property Setter",
+		"filters": [["module", "=", "Hr Suite"]],
+	},
+	{
+		"doctype": "Workflow",
+		"filters": [["module", "=", "Hr Suite"]],
+	},
+	"Attendance Location",
+]
 
-# Svg Icons
-# ------------------
-# include app icons in desk
-# app_include_icons = "hr_suite/public/icons.svg"
-
-# Home Pages
-# ----------
-
-# application home page (will override Website Settings)
-# home_page = "login"
-
-# website user home page (by Role)
-# role_home_page = {
-# 	"Role": "home_page"
-# }
-
-# Generators
-# ----------
-
-# automatically create page for each record of this doctype
-# website_generators = ["Web Page"]
-
-# Jinja
-# ----------
-
-# add methods and filters to jinja environment
-# jinja = {
-# 	"methods": "hr_suite.utils.jinja_methods",
-# 	"filters": "hr_suite.utils.jinja_filters"
-# }
-
-# Installation
-# ------------
-
-# before_install = "hr_suite.install.before_install"
-# after_install = "hr_suite.install.after_install"
-
-# Uninstallation
-# ------------
-
-# before_uninstall = "hr_suite.uninstall.before_uninstall"
-# after_uninstall = "hr_suite.uninstall.after_uninstall"
-
-# Integration Setup
-# ------------------
-# To set up dependencies/integrations with other apps
-# Name of the app being installed is passed as an argument
-
-# before_app_install = "hr_suite.utils.before_app_install"
-# after_app_install = "hr_suite.utils.after_app_install"
-
-# Integration Cleanup
-# -------------------
-# To clean up dependencies/integrations with other apps
-# Name of the app being uninstalled is passed as an argument
-
-# before_app_uninstall = "hr_suite.utils.before_app_uninstall"
-# after_app_uninstall = "hr_suite.utils.after_app_uninstall"
-
-# Desk Notifications
-# ------------------
-# See frappe.core.notifications.get_notification_config
-
-# notification_config = "hr_suite.notifications.get_notification_config"
-
-# Permissions
-# -----------
-# Permissions evaluated in scripted ways
-
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
-
-# DocType Class
-# ---------------
-# Override standard doctype classes
-
-# override_doctype_class = {
-# 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
-
-# Document Events
-# ---------------
-# Hook on document methods and events
-
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
-
-# Scheduled Tasks
-# ---------------
-
-# scheduler_events = {
-# 	"all": [
-# 		"hr_suite.tasks.all"
-# 	],
-# 	"daily": [
-# 		"hr_suite.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"hr_suite.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"hr_suite.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"hr_suite.tasks.monthly"
-# 	],
-# }
-
-# Testing
-# -------
-
-# before_tests = "hr_suite.install.before_tests"
-
-# Overriding Methods
-# ------------------------------
-#
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "hr_suite.event.get_events"
-# }
-#
-# each overriding function accepts a `data` argument;
-# generated from the base implementation of the doctype dashboard,
-# along with any modifications made in other Frappe apps
-# override_doctype_dashboards = {
-# 	"Task": "hr_suite.task.get_dashboard_data"
-# }
-
-# exempt linked doctypes from being automatically cancelled
-#
-# auto_cancel_exempted_doctypes = ["Auto Repeat"]
-
-# Ignore links to specified DocTypes when deleting documents
-# -----------------------------------------------------------
-
-# ignore_links_on_delete = ["Communication", "ToDo"]
-
-# Request Events
-# ----------------
-# before_request = ["hr_suite.utils.before_request"]
-# after_request = ["hr_suite.utils.after_request"]
-
-# Job Events
-# ----------
-# before_job = ["hr_suite.utils.before_job"]
-# after_job = ["hr_suite.utils.after_job"]
-
-# User Data Protection
-# --------------------
-
-# user_data_fields = [
-# 	{
-# 		"doctype": "{doctype_1}",
-# 		"filter_by": "{filter_by}",
-# 		"redact_fields": ["{field_1}", "{field_2}"],
-# 		"partial": 1,
-# 	},
-# 	{
-# 		"doctype": "{doctype_2}",
-# 		"filter_by": "{filter_by}",
-# 		"partial": 1,
-# 	},
-# 	{
-# 		"doctype": "{doctype_3}",
-# 		"strict": False,
-# 	},
-# 	{
-# 		"doctype": "{doctype_4}"
-# 	}
-# ]
-
-# Authentication and authorization
-# --------------------------------
-
-# auth_hooks = [
-# 	"hr_suite.auth.validate"
-# ]
-
-# Automatically update python controller files with type annotations for this app.
-# export_python_type_annotations = True
-
-# default_log_clearing_doctypes = {
-# 	"Logging DocType Name": 30  # days to retain logs
-# }
-
+# ─── Migration Hooks ───────────────────────────────────────────────────────
+after_migrate = ["hr_suite.install.after_migrate"]

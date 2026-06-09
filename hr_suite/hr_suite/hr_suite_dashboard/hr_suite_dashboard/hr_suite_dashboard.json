@@ -1,0 +1,42 @@
+{
+ "cards": [
+  {
+   "card": "Total Active Contracts"
+  },
+  {
+   "card": "Expiring Iqamas"
+  },
+  {
+   "card": "Pending Overtime"
+  },
+  {
+   "card": "Total GOSI This Month"
+  }
+ ],
+ "charts": [
+  {
+   "chart": "GOSI Monthly Contributions",
+   "width": "Full"
+  },
+  {
+   "chart": "Active Contracts by Type",
+   "width": "Half"
+  },
+  {
+   "chart": "Nationality Distribution",
+   "width": "Half"
+  }
+ ],
+ "creation": "2026-03-17 12:37:38.519651",
+ "dashboard_name": "Hr Suite Dashboard",
+ "docstatus": 0,
+ "doctype": "Dashboard",
+ "idx": 0,
+ "is_default": 0,
+ "is_standard": 1,
+ "modified": "2026-03-17 12:54:15.943990",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Hr Suite Dashboard",
+ "owner": "Administrator"
+}

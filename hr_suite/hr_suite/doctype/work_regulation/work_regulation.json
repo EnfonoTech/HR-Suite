@@ -1,0 +1,239 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-05-24 21:52:16.660317",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "regulation_title",
+  "company",
+  "column_break_1",
+  "status",
+  "regulation_type",
+  "approval_section",
+  "version",
+  "effective_date",
+  "approval_date",
+  "column_break_2",
+  "next_review_date",
+  "lawyer_or_approver",
+  "ministry_certificate_reference",
+  "ministry_certificate_attachment",
+  "announcement_section",
+  "announcement_date",
+  "published_location",
+  "column_break_3",
+  "acknowledgement_required",
+  "acknowledgement_due_days",
+  "linked_policy",
+  "legal_section",
+  "legal_reference",
+  "approved_attachment",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-WR-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "regulation_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Regulation Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft"
+  },
+  {
+   "default": "Unified Model",
+   "fieldname": "regulation_type",
+   "fieldtype": "Select",
+   "label": "Regulation Type",
+   "options": "Unified Model"
+  },
+  {
+   "description": "Tracks the approved work regulation required by Labor Law Art.12-13 and Executive Regulations Art.3-4.",
+   "fieldname": "approval_section",
+   "fieldtype": "Section Break",
+   "label": "Approval & Publication"
+  },
+  {
+   "default": "1.0",
+   "fieldname": "version",
+   "fieldtype": "Data",
+   "label": "Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_date",
+   "fieldtype": "Date",
+   "label": "Effective Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "approval_date",
+   "fieldtype": "Date",
+   "label": "Approval Date"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "next_review_date",
+   "fieldtype": "Date",
+   "label": "Next Review Date"
+  },
+  {
+   "fieldname": "lawyer_or_approver",
+   "fieldtype": "Data",
+   "label": "Lawyer or Approver"
+  },
+  {
+   "fieldname": "ministry_certificate_reference",
+   "fieldtype": "Data",
+   "label": "Ministry Certificate Reference"
+  },
+  {
+   "fieldname": "ministry_certificate_attachment",
+   "fieldtype": "Attach",
+   "label": "Ministry Certificate"
+  },
+  {
+   "fieldname": "announcement_section",
+   "fieldtype": "Section Break",
+   "label": "Announcement & Acknowledgement"
+  },
+  {
+   "fieldname": "announcement_date",
+   "fieldtype": "Date",
+   "label": "Announcement Date"
+  },
+  {
+   "fieldname": "published_location",
+   "fieldtype": "Small Text",
+   "label": "Published Location"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "acknowledgement_required",
+   "fieldtype": "Check",
+   "label": "Acknowledgement Required"
+  },
+  {
+   "default": "7",
+   "fieldname": "acknowledgement_due_days",
+   "fieldtype": "Int",
+   "label": "Acknowledgement Due Days"
+  },
+  {
+   "fieldname": "linked_policy",
+   "fieldtype": "Link",
+   "label": "Linked Policy",
+   "options": "HR Policy Document"
+  },
+  {
+   "fieldname": "legal_section",
+   "fieldtype": "Section Break",
+   "label": "Legal Basis"
+  },
+  {
+   "default": "Labor Law Art.12-13; Executive Regulations Art.3-4; Annex 1",
+   "fieldname": "legal_reference",
+   "fieldtype": "Data",
+   "label": "Legal Reference"
+  },
+  {
+   "fieldname": "approved_attachment",
+   "fieldtype": "Attach",
+   "label": "Approved Regulation"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "icon": "fa fa-balance-scale",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-09 03:00:18.641440",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Work Regulation",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "regulation_title,company,ministry_certificate_reference",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "regulation_title",
+ "track_changes": 1
+}

@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Arial', 'Tahoma', 'DejaVu Sans', sans-serif;
+    direction: ltr;
+    font-size: 12px;
+    color: #1a1a1a;
+    background: #f0f2f5;
+    padding: 0;
+  }
+  .page-wrap { max-width: 900px; margin: 0 auto; background: #fff; }
+
+  /* ── Cover Header ── */
+  .cover-header {
+    background: linear-gradient(135deg, #0a3622 0%, #145c3a 40%, #1b7a52 80%, #22916b 100%);
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover-header::before {
+    content:""; position:absolute; top:-60px; left:-60px;
+    width:240px; height:240px; border-radius:50%;
+    background:rgba(255,255,255,0.04); pointer-events:none;
+  }
+  .cover-header::after {
+    content:""; position:absolute; bottom:-40px; right:10%;
+    width:300px; height:180px; border-radius:50%;
+    background:rgba(255,255,255,0.04); pointer-events:none;
+  }
+  .cover-inner { padding:28px 32px 22px; position:relative; z-index:1; }
+  .cover-top-bar { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px; }
+  .cover-titles h1 { font-size:26px; font-weight:bold; letter-spacing:0.5px; margin-bottom:4px; }
+  .cover-titles h2 { font-size:13px; opacity:0.7; font-weight:normal; letter-spacing:1px; }
+  .cover-badge-status {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 16px; border-radius:20px; font-size:13px; font-weight:bold;
+    border:2px solid rgba(255,255,255,0.4); background:rgba(255,255,255,0.12);
+  }
+  .status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .status-dot.active { background:#4ade80; box-shadow:0 0 6px #4ade80; }
+  .status-dot.inactive { background:#f87171; }
+  .cover-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px 20px; margin-top:4px; }
+  .cover-field .cf-label { opacity:0.65; font-size:11px; margin-bottom:2px; }
+  .cover-field .cf-value { font-weight:bold; font-size:13px; }
+  .cover-print-date { font-size:10.5px; opacity:0.6; text-align:right; margin-top:14px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.2); }
+
+  /* ── KPI Bar ── */
+  .kpi-bar {
+    display:grid; grid-template-columns:repeat(5,1fr);
+    background:#fff; border-bottom:3px solid #e8f5ee;
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
+  }
+  .kpi-item { padding:14px 12px; text-align:center; border-right:1px solid #eef5f1; position:relative; }
+  .kpi-item:last-child { border-right:none; }
+  .kpi-label { font-size:10.5px; color:#888; margin-bottom:5px; }
+  .kpi-value { font-size:20px; font-weight:bold; color:#0f4c35; line-height:1.1; }
+  .kpi-sub { font-size:10px; color:#aaa; margin-top:2px; }
+  .kpi-accent { width:3px; position:absolute; top:0; left:0; height:100%; border-radius:2px 0 0 2px; }
+
+  .main-content { padding:20px 28px; }
+
+  /* ── Section Title ── */
+  .section-title {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 16px; margin:22px 0 12px 0;
+    background:linear-gradient(90deg,#f0f9f4 0%,#fafafa 100%);
+    border-left:5px solid #17684f; border-radius:6px 0 0 6px;
+    page-break-inside:avoid; page-break-after:avoid;
+  }
+  .section-num {
+    background:#17684f; color:#fff; width:24px; height:24px;
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:bold; flex-shrink:0;
+  }
+  .section-title h3 { font-size:14px; color:#0f4c35; font-weight:bold; flex:1; }
+  .section-badge { background:#17684f; color:#fff; border-radius:10px; padding:2px 10px; font-size:11px; white-space:nowrap; }
+
+  /* ── Info Block ── */
+  .info-block { background:#fafcfb; border:1px solid #e6f0ea; border-radius:6px; padding:14px 16px; margin-bottom:12px; }
+  .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 28px; }
+  .info-item { display:flex; gap:6px; align-items:baseline; }
+  .info-label { color:#666; min-width:130px; flex-shrink:0; font-size:11.5px; }
+  .info-value { color:#111; font-weight:600; font-size:12px; }
+  .info-value.mono { font-family:'Courier New',monospace; }
+
+  /* ── Tables ── */
+  table.data-table { width:100%; border-collapse:collapse; margin:8px 0 14px; font-size:11.5px; border-radius:6px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+  table.data-table thead th { background:#145c3a; color:#fff; padding:9px 10px; text-align:left; font-size:11.5px; font-weight:bold; }
+  table.data-table tbody tr:nth-child(even) td { background:#f6fcf9; }
+  table.data-table tbody tr:hover td { background:#edf7f2; }
+  table.data-table tbody td { padding:8px 10px; border-bottom:1px solid #e8f2ec; vertical-align:middle; }
+  table.data-table tfoot td { font-weight:bold; background:#e0f0e8; padding:9px 10px; border-top:2px solid #145c3a; color:#0a3622; }
+  .num { text-align:center; }
+
+  /* ── Salary Cards ── */
+  .salary-cards { display:grid; gap:10px; margin-bottom:16px; }
+  .salary-card { background:linear-gradient(135deg,#f0faf5 0%,#e8f5ee 100%); border:1px solid #c5e8d4; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(20,92,58,0.08); }
+  .salary-card-header { background:linear-gradient(90deg,#145c3a,#1e8449); color:#fff; padding:8px 14px; display:flex; justify-content:space-between; align-items:center; }
+  .salary-card-month { font-size:13px; font-weight:bold; }
+  .salary-card-net { font-size:16px; font-weight:bold; }
+  .salary-card-net-label { font-size:10px; opacity:0.8; }
+  .salary-card-body { padding:10px 14px; display:grid; grid-template-columns:repeat(4,1fr); gap:6px; font-size:11px; }
+  .sc-field .sc-lbl { color:#666; margin-bottom:2px; }
+  .sc-field .sc-val { font-weight:bold; color:#0a3622; }
+  .sc-field .sc-val.red { color:#c0392b; }
+
+  /* ── Loan Card ── */
+  .loan-card { background:#fff; border:1px solid #dce8e3; border-radius:8px; margin-bottom:14px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.06); page-break-inside:avoid; }
+  .loan-card-header { padding:10px 16px; background:linear-gradient(90deg,#f0f9f4,#fafcfb); border-bottom:1px solid #e0ede8; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .loan-id { font-size:13px; font-weight:bold; color:#0a3622; font-family:monospace; }
+  .loan-detail-pill { font-size:11px; padding:2px 8px; background:#e8f5ee; border-radius:4px; color:#145c3a; }
+  .loan-progress-bar { height:8px; background:#e0efea; border-radius:4px; margin:8px 16px 4px; overflow:hidden; }
+  .loan-progress-fill { height:100%; background:linear-gradient(90deg,#1e8449,#2ecc71); border-radius:4px; }
+  .loan-progress-labels { display:flex; justify-content:space-between; padding:0 16px 10px; font-size:10.5px; }
+  table.loan-install { width:100%; border-collapse:collapse; font-size:11px; }
+  table.loan-install thead th { background:#2d6a4f; color:#fff; padding:7px 10px; text-align:left; }
+  table.loan-install tbody td { padding:6px 10px; border-bottom:1px solid #e8f2ec; }
+  table.loan-install tbody tr:nth-child(even) td { background:#f6fcf9; }
+
+  /* ── Badges ── */
+  .badge { display:inline-block; padding:2px 9px; border-radius:10px; font-size:10.5px; font-weight:bold; white-space:nowrap; }
+  .badge-green  { background:#d4edda; color:#145c3a; }
+  .badge-blue   { background:#d1ecf1; color:#0c5460; }
+  .badge-yellow { background:#fff3cd; color:#856404; }
+  .badge-red    { background:#f8d7da; color:#721c24; }
+  .badge-grey   { background:#e2e3e5; color:#383d41; }
+
+  /* ── Empty State ── */
+  .empty-state { text-align:center; padding:18px; color:#999; font-size:12px; background:#fafafa; border-radius:6px; border:1px dashed #ddd; margin-bottom:10px; }
+  .empty-state span { font-size:20px; display:block; margin-bottom:4px; }
+
+  /* ── Salary Breakdown table ── */
+  .salary-breakdown-table { border:1px solid #c5e8d4; border-radius:6px; overflow:hidden; }
+  .sbt-row { display:flex; justify-content:space-between; padding:7px 12px; border-bottom:1px solid #e8f2ec; font-size:12px; }
+  .sbt-row:last-child { border-bottom:none; }
+  .sbt-row.total { background:#145c3a; color:#fff; font-weight:bold; }
+  .sbt-row.total .sbt-lbl { color:#a8f0c4; }
+
+  .divider { border:none; border-top:2px solid #e8f2ec; margin:18px 0; }
+  .keep-together { page-break-inside:avoid; }
+
+  /* ── Footer ── */
+  .doc-footer { margin-top:24px; padding:12px 18px; background:linear-gradient(90deg,#0a3622,#145c3a); color:rgba(255,255,255,0.85); display:flex; justify-content:space-between; font-size:11px; border-radius:6px; }
+  .doc-footer strong { color:#a8f0c4; }
+
+  @media print {
+    body { background:#fff; }
+    .page-wrap { max-width:100%; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+{#───────────────── DATA COLLECTION ─────────────────#}
+{%- set emp = doc -%}
+{%- set emp_name = emp.employee_name or emp.name -%}
+{%- set today_str = frappe.utils.today() -%}
+{%- set now_str   = frappe.utils.now_datetime().strftime('%Y-%m-%d %H:%M') -%}
+
+{%- set contract = frappe.db.get_value(
+    "Saudi Employment Contract",
+    {"employee": emp.name, "contract_status": "Active"},
+    ["name","contract_type","start_date","end_date","basic_salary",
+     "housing_allowance","transport_allowance","other_allowances",
+     "designation","probation_end_date","contract_status"],
+    as_dict=True, order_by="start_date desc"
+) or {} -%}
+{%- set gross_contract = (contract.get("basic_salary") or 0)
+    + (contract.get("housing_allowance") or 0)
+    + (contract.get("transport_allowance") or 0)
+    + (contract.get("other_allowances") or 0) -%}
+
+{%- set iqama = frappe.db.get_value(
+    "Work Permit Iqama",
+    {"employee": emp.name, "docstatus": 1},
+    ["iqama_number","iqama_expiry_date","iqama_status",
+     "work_permit_number","work_permit_expiry_date","work_permit_status"],
+    as_dict=True
+) or {} -%}
+
+{%- set annual_leaves = frappe.get_all(
+    "Saudi Annual Leave",
+    filters={"employee": emp.name, "docstatus": 1},
+    fields=["name","leave_start_date","leave_end_date","total_leave_days",
+            "leave_balance_before","leave_balance_after","status"],
+    order_by="leave_start_date desc"
+) -%}
+{%- set total_annual_days = annual_leaves | sum(attribute="total_leave_days") -%}
+
+{%- set sick_leaves = frappe.get_all(
+    "Saudi Sick Leave",
+    filters={"employee": emp.name, "docstatus": 1},
+    fields=["name","from_date","to_date","total_days",
+            "pay_rate","pay_label","leave_pay_amount"],
+    order_by="from_date desc"
+) -%}
+{%- set total_sick_days = sick_leaves | sum(attribute="total_days") -%}
+
+{%- set mat_leaves = frappe.get_all(
+    "Maternity Paternity Leave",
+    filters={"employee": emp.name, "docstatus": 1},
+    fields=["name","leave_type","leave_start_date","leave_end_date",
+            "entitled_days","total_leave_pay"],
+    order_by="leave_start_date desc"
+) -%}
+
+{%- set special_leaves = frappe.get_all(
+    "Special Leave",
+    filters={"employee": emp.name, "docstatus": 1},
+    fields=["name","leave_type","leave_start_date","leave_end_date",
+            "actual_days","total_special_leave_pay","status"],
+    order_by="leave_start_date desc"
+) -%}
+
+{%- set leave_disb = frappe.get_all(
+    "Annual Leave Disbursement",
+    filters={"employee": emp.name, "docstatus": 1},
+    fields=["name","leave_year","leave_days_to_pay","total_leave_pay",
+            "disbursement_type","status"],
+    order_by="leave_year desc"
+) -%}
+
+{%- set payroll_rows = frappe.db.sql("""
+    SELECT
+        pe.name            AS row_name,
+        pe.parent          AS payroll_name,
+        p.month            AS payroll_month,
+        p.year             AS payroll_year,
+        pe.basic_salary,
+        pe.housing_allowance,
+        pe.transport_allowance,
+        pe.other_allowances,
+        pe.gross_salary,
+        pe.gosi_employee_deduction  AS gosi_deduction,
+        pe.loan_deduction,
+        pe.other_deductions,
+        pe.total_deductions,
+        pe.overtime_addition,
+        pe.net_salary
+    FROM `tabSaudi Monthly Payroll Employee` pe
+    INNER JOIN `tabSaudi Monthly Payroll` p ON p.name = pe.parent
+    WHERE pe.employee = %(emp)s
+    ORDER BY p.year DESC, p.month DESC
+    LIMIT 36
+""", {"emp": emp.name}, as_dict=True) -%}
+{%- set total_net_paid   = payroll_rows | sum(attribute="net_salary") -%}
+{%- set total_gross_paid = payroll_rows | sum(attribute="gross_salary") -%}
+
+{%- set loans = frappe.get_all(
+    "Employee Loan",
+    filters={"employee": emp.name},
+    fields=["name","loan_amount","loan_date","repayment_method",
+            "installment_count","monthly_installment_amount",
+            "total_deducted","outstanding_balance","status","approval_status"],
+    order_by="loan_date desc"
+) -%}
+{%- set total_loan_amount = loans | sum(attribute="loan_amount") -%}
+{%- set total_outstanding = loans | sum(attribute="outstanding_balance") -%}
+
+{%- set overtime_rows = frappe.get_all(
+    "Overtime Request",
+    filters={"employee": emp.name, "docstatus": 1},
+    fields=["name","date","overtime_hours","overtime_amount","approval_status"],
+    order_by="date desc"
+) -%}
+{%- set total_ot_hours  = overtime_rows | sum(attribute="overtime_hours") -%}
+{%- set total_ot_amount = overtime_rows | sum(attribute="overtime_amount") -%}
+
+{%- set gosi_rows = frappe.get_all(
+    "GOSI Contribution",
+    filters={"employee": emp.name},
+    fields=["name","month","year","contribution_base","employee_contribution",
+            "employer_contribution","total_contribution","payment_status"],
+    order_by="year desc, month desc",
+    limit=24
+) -%}
+{%- set total_gosi = gosi_rows | sum(attribute="total_contribution") -%}
+
+{%- set eosb = frappe.db.get_value(
+    "End of Service Benefit",
+    {"employee": emp.name, "docstatus": 1},
+    ["name","joining_date","termination_date","years_of_service",
+     "termination_reason","last_basic_salary","eosb_gross",
+     "eosb_deductions","net_eosb","payment_status"],
+    as_dict=True, order_by="termination_date desc"
+) or {} -%}
+
+{%- set termination = frappe.db.get_value(
+    "Termination Notice",
+    {"employee": emp.name},
+    ["name","termination_reason","salary_payment_type","notice_start_date","notice_end_date",
+     "termination_article","eosb_applicable"],
+    as_dict=True, order_by="notice_start_date desc"
+) or {} -%}
+
+{%- set doj = emp.date_of_joining -%}
+{%- set years_service = ((frappe.utils.getdate(today_str) - frappe.utils.getdate(doj)).days / 365.0) | round(1) if doj else 0 -%}
+{%- set total_leave_all = total_annual_days + total_sick_days
+    + (mat_leaves | sum(attribute="entitled_days"))
+    + (special_leaves | sum(attribute="actual_days")) -%}
+
+<!-- ======= COVER HEADER ======= -->
+<div class="cover-header">
+  <div class="cover-inner">
+    <div class="cover-top-bar">
+      <div class="cover-titles">
+        <h1>Complete Employee File</h1>
+        <h2>Complete Employee Lifecycle File</h2>
+      </div>
+      <div class="cover-badge-status">
+        <span class="status-dot {% if emp.status == 'Active' %}active{% else %}inactive{% endif %}"></span>
+        {{ emp.status or 'Unknown' }}
+      </div>
+    </div>
+    <div class="cover-grid">
+      <div class="cover-field"><div class="cf-label">Employee</div><div class="cf-value">{{ emp_name }}</div></div>
+      <div class="cover-field"><div class="cf-label">Employee ID</div><div class="cf-value" style="font-family:monospace;">{{ emp.name }}</div></div>
+      <div class="cover-field"><div class="cf-label">Company</div><div class="cf-value">{{ emp.company or '—' }}</div></div>
+      <div class="cover-field"><div class="cf-label">Department</div><div class="cf-value">{{ emp.department or '—' }}</div></div>
+      <div class="cover-field"><div class="cf-label">Job Title</div><div class="cf-value">{{ contract.get('designation') or emp.designation or '—' }}</div></div>
+      <div class="cover-field"><div class="cf-label">Years of Service</div><div class="cf-value">{{ years_service }} yrs</div></div>
+    </div>
+    <div class="cover-print-date">Printed: {{ now_str }}</div>
+  </div>
+</div>
+
+<!-- ======= KPI BAR ======= -->
+<div class="kpi-bar">
+  <div class="kpi-item">
+    <div class="kpi-accent" style="background:#1e8449;"></div>
+    <div class="kpi-label">Total Net Salary</div>
+    <div class="kpi-value">{{ "{:,.0f}".format(total_net_paid) }}</div>
+    <div class="kpi-sub">SAR — {{ payroll_rows | length }} months</div>
+  </div>
+  <div class="kpi-item">
+    <div class="kpi-accent" style="background:#2980b9;"></div>
+    <div class="kpi-label">Total Leave Days</div>
+    <div class="kpi-value">{{ total_leave_all | int }}</div>
+    <div class="kpi-sub">days consumed</div>
+  </div>
+  <div class="kpi-item">
+    <div class="kpi-accent" style="background:#e74c3c;"></div>
+    <div class="kpi-label">Total Loans</div>
+    <div class="kpi-value">{{ "{:,.0f}".format(total_loan_amount) }}</div>
+    <div class="kpi-sub">SAR — {{ loans | length }} loans</div>
+  </div>
+  <div class="kpi-item">
+    <div class="kpi-accent" style="background:#f39c12;"></div>
+    <div class="kpi-label">Outstanding Loans</div>
+    <div class="kpi-value">{{ "{:,.0f}".format(total_outstanding) }}</div>
+    <div class="kpi-sub">SAR</div>
+  </div>
+  <div class="kpi-item">
+    <div class="kpi-accent" style="background:#8e44ad;"></div>
+    <div class="kpi-label">Total Overtime</div>
+    <div class="kpi-value">{{ "{:,.0f}".format(total_ot_amount) }}</div>
+    <div class="kpi-sub">SAR — {{ "{:.0f}".format(total_ot_hours) }} hrs</div>
+  </div>
+</div>
+
+<div class="main-content">
+
+<!-- ======= 1. EMPLOYEE PROFILE ======= -->
+<div class="section-title keep-together">
+  <div class="section-num">1</div>
+  <h3>Employee Information</h3>
+</div>
+<div class="info-block">
+  <div class="info-grid">
+    <div class="info-item"><span class="info-label">Full Name:</span><span class="info-value">{{ emp_name }}</span></div>
+    <div class="info-item"><span class="info-label">Employee ID:</span><span class="info-value mono">{{ emp.name }}</span></div>
+    <div class="info-item"><span class="info-label">Nationality:</span><span class="info-value">{{ emp.nationality or '—' }}</span></div>
+    <div class="info-item"><span class="info-label">ID / Iqama No.:</span><span class="info-value mono">{{ iqama.get('iqama_number') or emp.passport_number or '—' }}</span></div>
+    <div class="info-item"><span class="info-label">Date of Birth:</span><span class="info-value">{{ frappe.format(emp.date_of_birth, "Date") if emp.date_of_birth else '—' }}</span></div>
+    <div class="info-item"><span class="info-label">Gender:</span><span class="info-value">{{ emp.gender or '—' }}</span></div>
+    <div class="info-item"><span class="info-label">Date of Joining:</span><span class="info-value">{{ frappe.format(emp.date_of_joining, "Date") if emp.date_of_joining else '—' }}</span></div>
+    <div class="info-item"><span class="info-label">Years of Service:</span><span class="info-value">{{ years_service }} yrs</span></div>
+    <div class="info-item"><span class="info-label">Department:</span><span class="info-value">{{ emp.department or '—' }}</span></div>
+    <div class="info-item"><span class="info-label">Branch:</span><span class="info-value">{{ emp.branch or '—' }}</span></div>
+    <div class="info-item"><span class="info-label">Email:</span><span class="info-value">{{ emp.prefered_email or emp.company_email or '—' }}</span></div>
+    <div class="info-item"><span class="info-label">Mobile:</span><span class="info-value mono">{{ emp.cell_number or '—' }}</span></div>
+  </div>
+  {% if iqama %}
+  <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #c5e8d4;">
+    <div class="info-grid">
+      <div class="info-item"><span class="info-label">Iqama No.:</span><span class="info-value mono">{{ iqama.get('iqama_number') or '—' }}</span></div>
+      <div class="info-item"><span class="info-label">Iqama Expiry:</span><span class="info-value">
+        {{ frappe.format(iqama.get('iqama_expiry_date'), "Date") if iqama.get('iqama_expiry_date') else '—' }}
+        {% if iqama.get('iqama_status') %}<span class="badge {% if 'Expired' in iqama.iqama_status %}badge-red{% elif 'Expiring' in iqama.iqama_status %}badge-yellow{% else %}badge-green{% endif %}">{{ iqama.iqama_status }}</span>{% endif %}
+      </span></div>
+      <div class="info-item"><span class="info-label">Work Permit No.:</span><span class="info-value mono">{{ iqama.get('work_permit_number') or '—' }}</span></div>
+      <div class="info-item"><span class="info-label">Permit Expiry:</span><span class="info-value">{{ frappe.format(iqama.get('work_permit_expiry_date'), "Date") if iqama.get('work_permit_expiry_date') else '—' }}</span></div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ======= 2. CONTRACT ======= -->
+<div class="section-title keep-together">
+  <div class="section-num">2</div>
+  <h3>Employment Contract</h3>
+  {% if contract %}<span class="section-badge">Active</span>{% endif %}
+</div>
+{% if contract %}
+<div class="info-block" style="margin-bottom:10px;">
+  <div class="info-grid">
+    <div class="info-item"><span class="info-label">Contract No.:</span><span class="info-value mono">{{ contract.get('name') }}</span></div>
+    <div class="info-item"><span class="info-label">Contract Type:</span><span class="info-value">{{ contract.get('contract_type') or '—' }}</span></div>
+    <div class="info-item"><span class="info-label">Start Date:</span><span class="info-value">{{ frappe.format(contract.get('start_date'), "Date") if contract.get('start_date') else '—' }}</span></div>
+    <div class="info-item"><span class="info-label">End Date:</span><span class="info-value">{{ frappe.format(contract.get('end_date'), "Date") if contract.get('end_date') else 'Open-ended' }}</span></div>
+    <div class="info-item"><span class="info-label">Probation End:</span><span class="info-value">{{ frappe.format(contract.get('probation_end_date'), "Date") if contract.get('probation_end_date') else '—' }}</span></div>
+    <div class="info-item"><span class="info-label">Contract Status:</span><span class="info-value">
+      <span class="badge {% if contract.get('contract_status') and 'Active' in contract.contract_status %}badge-green{% else %}badge-grey{% endif %}">{{ contract.get('contract_status') or '—' }}</span>
+    </span></div>
+  </div>
+</div>
+<div class="salary-breakdown-table" style="max-width:460px;">
+  <div class="sbt-row"><span class="sbt-lbl">Basic Salary</span><strong>{{ "{:,.2f}".format(contract.get('basic_salary') or 0) }} SAR</strong></div>
+  {% if (contract.get('housing_allowance') or 0) > 0 %}
+  <div class="sbt-row"><span class="sbt-lbl">Housing Allowance</span><strong>{{ "{:,.2f}".format(contract.housing_allowance) }} SAR</strong></div>
+  {% endif %}
+  {% if (contract.get('transport_allowance') or 0) > 0 %}
+  <div class="sbt-row"><span class="sbt-lbl">Transport Allowance</span><strong>{{ "{:,.2f}".format(contract.transport_allowance) }} SAR</strong></div>
+  {% endif %}
+  {% if (contract.get('other_allowances') or 0) > 0 %}
+  <div class="sbt-row"><span class="sbt-lbl">Other Allowances</span><strong>{{ "{:,.2f}".format(contract.other_allowances) }} SAR</strong></div>
+  {% endif %}
+  <div class="sbt-row total"><span class="sbt-lbl">Total Monthly Salary</span><strong>{{ "{:,.2f}".format(gross_contract) }} SAR</strong></div>
+</div>
+{% else %}
+<div class="empty-state"><span>&#128196;</span>No active employment contract found for this employee.</div>
+{% endif %}
+
+<!-- ======= 3. SALARY HISTORY ======= -->
+<div class="section-title keep-together">
+  <div class="section-num">3</div>
+  <h3>Salary History</h3>
+  <span class="section-badge">{{ payroll_rows | length }} months — Total {{ "{:,.0f}".format(total_net_paid) }} SAR</span>
+</div>
+{% if payroll_rows %}
+{%- set card_count = [payroll_rows | length, 4] | min -%}
+<div class="salary-cards" style="grid-template-columns:repeat({{ card_count }},1fr);">
+  {% for r in payroll_rows[:4] %}
+  <div class="salary-card">
+    <div class="salary-card-header">
+      <div class="salary-card-month">{{ r.payroll_month }} {{ r.payroll_year }}</div>
+      <div><div class="salary-card-net">{{ "{:,.0f}".format(r.net_salary or 0) }}</div><div class="salary-card-net-label">Net SAR</div></div>
+    </div>
+    <div class="salary-card-body">
+      <div class="sc-field"><div class="sc-lbl">Basic</div><div class="sc-val">{{ "{:,.0f}".format(r.basic_salary or 0) }}</div></div>
+      <div class="sc-field"><div class="sc-lbl">Gross</div><div class="sc-val">{{ "{:,.0f}".format(r.gross_salary or 0) }}</div></div>
+      <div class="sc-field"><div class="sc-lbl">GOSI</div><div class="sc-val red">{{ "{:,.0f}".format(r.gosi_deduction or 0) }}</div></div>
+      <div class="sc-field"><div class="sc-lbl">Deductions</div><div class="sc-val red">{{ "{:,.0f}".format(r.total_deductions or 0) }}</div></div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<table class="data-table">
+  <thead><tr>
+    <th>Month</th><th class="num">Year</th>
+    <th class="num">Basic</th><th class="num">Housing</th><th class="num">Transport</th>
+    <th class="num">Gross</th><th class="num">GOSI</th>
+    <th class="num">Loan</th><th class="num">Total Ded.</th>
+    <th class="num">Net</th>
+  </tr></thead>
+  <tbody>
+  {% for r in payroll_rows %}
+    <tr>
+      <td>{{ r.payroll_month }}</td><td class="num">{{ r.payroll_year }}</td>
+      <td class="num">{{ "{:,.2f}".format(r.basic_salary or 0) }}</td>
+      <td class="num">{{ "{:,.2f}".format(r.housing_allowance or 0) }}</td>
+      <td class="num">{{ "{:,.2f}".format(r.transport_allowance or 0) }}</td>
+      <td class="num">{{ "{:,.2f}".format(r.gross_salary or 0) }}</td>
+      <td class="num" style="color:#c0392b;">{{ "{:,.2f}".format(r.gosi_deduction or 0) }}</td>
+      <td class="num" style="color:#c0392b;">{{ "{:,.2f}".format(r.loan_deduction or 0) }}</td>
+      <td class="num" style="color:#c0392b;">{{ "{:,.2f}".format(r.total_deductions or 0) }}</td>
+      <td class="num"><strong style="color:#1a6b3c;">{{ "{:,.2f}".format(r.net_salary or 0) }}</strong></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr>
+    <td colspan="5">Total ({{ payroll_rows | length }} months)</td>
+    <td class="num">{{ "{:,.2f}".format(total_gross_paid) }}</td>
+    <td class="num">{{ "{:,.2f}".format(payroll_rows | sum(attribute="gosi_deduction")) }}</td>
+    <td class="num">{{ "{:,.2f}".format(payroll_rows | sum(attribute="loan_deduction")) }}</td>
+    <td class="num">{{ "{:,.2f}".format(payroll_rows | sum(attribute="total_deductions")) }}</td>
+    <td class="num">{{ "{:,.2f}".format(total_net_paid) }}</td>
+  </tr></tfoot>
+</table>
+{% else %}
+<div class="empty-state"><span>&#128176;</span>No payroll records found.</div>
+{% endif %}
+
+<!-- ======= 4. ANNUAL LEAVE ======= -->
+<div class="section-title keep-together">
+  <div class="section-num">4</div>
+  <h3>Annual Leave History</h3>
+  <span class="section-badge">{{ annual_leaves | length }} requests — {{ total_annual_days | int }} days</span>
+</div>
+{% if annual_leaves %}
+<table class="data-table">
+  <thead><tr>
+    <th>Reference</th><th>From</th><th>To</th>
+    <th class="num">Days</th><th class="num">Balance Before</th>
+    <th class="num">Balance After</th><th class="num">Status</th>
+  </tr></thead>
+  <tbody>
+  {% for r in annual_leaves %}
+    <tr>
+      <td style="font-family:monospace;font-size:11px;">{{ r.name }}</td>
+      <td>{{ frappe.format(r.leave_start_date, "Date") }}</td>
+      <td>{{ frappe.format(r.leave_end_date, "Date") }}</td>
+      <td class="num"><strong>{{ r.total_leave_days | int }}</strong></td>
+      <td class="num">{{ (r.leave_balance_before or 0) | int }}</td>
+      <td class="num">{{ (r.leave_balance_after or 0) | int }}</td>
+      <td class="num">
+        <span class="badge {% if r.status and 'Approved' in r.status %}badge-green{% elif r.status and 'Cancelled' in r.status %}badge-red{% else %}badge-yellow{% endif %}">
+          {{ r.status or '—' }}
+        </span>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr><td colspan="3">Total</td><td class="num">{{ total_annual_days | int }}</td><td></td><td></td><td></td></tr></tfoot>
+</table>
+{% else %}
+<div class="empty-state"><span>&#127796;</span>No annual leave records found.</div>
+{% endif %}
+{% if leave_disb %}
+<div style="font-weight:bold;font-size:11.5px;color:#0f4c35;margin:6px 0;padding-left:8px;border-left:3px solid #17684f;">Leave Pay Disbursements:</div>
+<table class="data-table">
+  <thead><tr>
+    <th>Reference</th><th class="num">Year</th><th class="num">Days</th>
+    <th class="num">Amount (SAR)</th><th class="num">Type</th><th class="num">Status</th>
+  </tr></thead>
+  <tbody>
+  {% for r in leave_disb %}
+    <tr>
+      <td style="font-family:monospace;font-size:11px;">{{ r.name }}</td>
+      <td class="num">{{ r.leave_year }}</td>
+      <td class="num">{{ (r.leave_days_to_pay or 0) | int }}</td>
+      <td class="num"><strong>{{ "{:,.2f}".format(r.total_leave_pay or 0) }}</strong></td>
+      <td class="num">{{ r.disbursement_type or '—' }}</td>
+      <td class="num"><span class="badge {% if r.status and 'Approved' in r.status %}badge-green{% else %}badge-yellow{% endif %}">{{ r.status or '—' }}</span></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr>
+    <td colspan="2">Total</td>
+    <td class="num">{{ (leave_disb | sum(attribute="leave_days_to_pay")) | int }}</td>
+    <td class="num">{{ "{:,.2f}".format(leave_disb | sum(attribute="total_leave_pay")) }}</td>
+    <td></td><td></td>
+  </tr></tfoot>
+</table>
+{% endif %}
+
+<!-- ======= 5. SICK LEAVE ======= -->
+<div class="section-title keep-together">
+  <div class="section-num">5</div>
+  <h3>Sick Leave History</h3>
+  <span class="section-badge">{{ sick_leaves | length }} leaves — {{ total_sick_days | int }} days</span>
+</div>
+{% if sick_leaves %}
+<table class="data-table">
+  <thead><tr>
+    <th>Reference</th><th>From</th><th>To</th>
+    <th class="num">Days</th><th class="num">Pay Rate</th><th class="num">Amount (SAR)</th>
+  </tr></thead>
+  <tbody>
+  {% for r in sick_leaves %}
+    <tr>
+      <td style="font-family:monospace;font-size:11px;">{{ r.name }}</td>
+      <td>{{ frappe.format(r.from_date, "Date") }}</td>
+      <td>{{ frappe.format(r.to_date, "Date") }}</td>
+      <td class="num"><strong>{{ (r.total_days or 0) | int }}</strong></td>
+      <td class="num">
+        <span class="badge {% if r.pay_rate == 'full' %}badge-green{% elif r.pay_rate == 'partial' %}badge-yellow{% else %}badge-red{% endif %}">
+          {% if r.pay_rate == 'full' %}100%{% elif r.pay_rate == 'partial' %}75%{% else %}Unpaid{% endif %}
+        </span>
+      </td>
+      <td class="num">{{ "{:,.2f}".format(r.leave_pay_amount or 0) }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr>
+    <td colspan="3">Total</td>
+    <td class="num">{{ total_sick_days | int }}</td><td></td>
+    <td class="num">{{ "{:,.2f}".format(sick_leaves | sum(attribute="leave_pay_amount")) }}</td>
+  </tr></tfoot>
+</table>
+{% else %}
+<div class="empty-state"><span>&#127973;</span>No sick leave records found.</div>
+{% endif %}
+
+<!-- ======= 6. MATERNITY / SPECIAL LEAVES ======= -->
+{% if mat_leaves or special_leaves %}
+<div class="section-title keep-together">
+  <div class="section-num">6</div>
+  <h3>Maternity / Paternity and Special Leaves</h3>
+  <span class="section-badge">{{ (mat_leaves | length) + (special_leaves | length) }} leaves</span>
+</div>
+{% if mat_leaves %}
+<div style="font-weight:bold;font-size:11.5px;color:#0f4c35;margin:0 0 6px;padding-left:10px;border-left:3px solid #2ecc71;">Maternity / Paternity Leaves</div>
+<table class="data-table" style="margin-bottom:12px;">
+  <thead><tr><th>Reference</th><th>Type</th><th>From</th><th>To</th><th class="num">Days</th><th class="num">Amount (SAR)</th></tr></thead>
+  <tbody>
+  {% for r in mat_leaves %}
+    <tr>
+      <td style="font-family:monospace;font-size:11px;">{{ r.name }}</td>
+      <td>{{ r.leave_type }}</td>
+      <td>{{ frappe.format(r.leave_start_date, "Date") }}</td>
+      <td>{{ frappe.format(r.leave_end_date, "Date") }}</td>
+      <td class="num">{{ (r.entitled_days or 0) | int }}</td>
+      <td class="num">{{ "{:,.2f}".format(r.total_leave_pay or 0) }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% if special_leaves %}
+<div style="font-weight:bold;font-size:11.5px;color:#0f4c35;margin:0 0 6px;padding-left:10px;border-left:3px solid #9b59b6;">Special Leaves (Hajj / Marriage / Bereavement)</div>
+<table class="data-table">
+  <thead><tr><th>Reference</th><th>Type</th><th>From</th><th>To</th><th class="num">Days</th><th class="num">Amount (SAR)</th><th class="num">Status</th></tr></thead>
+  <tbody>
+  {% for r in special_leaves %}
+    <tr>
+      <td style="font-family:monospace;font-size:11px;">{{ r.name }}</td>
+      <td>{{ r.leave_type }}</td>
+      <td>{{ frappe.format(r.leave_start_date, "Date") }}</td>
+      <td>{{ frappe.format(r.leave_end_date, "Date") }}</td>
+      <td class="num">{{ (r.actual_days or 0) | int }}</td>
+      <td class="num">{{ "{:,.2f}".format(r.total_special_leave_pay or 0) }}</td>
+      <td class="num"><span class="badge {% if r.status and 'Approved' in r.status %}badge-green{% else %}badge-yellow{% endif %}">{{ r.status or '—' }}</span></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endif %}
+
+<!-- ======= 7. LOANS ======= -->
+<div class="section-title keep-together">
+  <div class="section-num">7</div>
+  <h3>Loans and Advances</h3>
+  <span class="section-badge">{{ loans | length }} loans — Outstanding {{ "{:,.0f}".format(total_outstanding) }} SAR</span>
+</div>
+{% if loans %}
+{% for loan in loans %}
+{%- set paid_pct = ((loan.loan_amount - loan.outstanding_balance) / loan.loan_amount * 100) | round(0) if (loan.loan_amount or 0) > 0 else 0 -%}
+<div class="loan-card keep-together">
+  <div class="loan-card-header">
+    <span class="loan-id">{{ loan.name }}</span>
+    <span class="loan-detail-pill">{{ frappe.format(loan.loan_date, "Date") if loan.loan_date else '—' }}</span>
+    <span class="loan-detail-pill">{{ "{:,.0f}".format(loan.loan_amount or 0) }} SAR</span>
+    <span class="loan-detail-pill">{{ loan.installment_count or '—' }} installments</span>
+    <span class="loan-detail-pill">Monthly: {{ "{:,.0f}".format(loan.monthly_installment_amount or 0) }} SAR</span>
+    <span class="badge {% if loan.status and 'Active' in loan.status %}badge-green{% elif loan.status and 'Closed' in loan.status %}badge-blue{% else %}badge-grey{% endif %}">
+      {{ loan.status or '—' }}
+    </span>
+  </div>
+  <div class="loan-progress-bar">
+    <div class="loan-progress-fill" style="width:{{ paid_pct }}%;"></div>
+  </div>
+  <div class="loan-progress-labels">
+    <span style="color:#1e8449;font-weight:bold;">Paid: {{ "{:,.0f}".format(loan.loan_amount - loan.outstanding_balance) }} SAR ({{ paid_pct | int }}%)</span>
+    <span style="color:#c0392b;font-weight:bold;">Remaining: {{ "{:,.0f}".format(loan.outstanding_balance or 0) }} SAR</span>
+  </div>
+  {%- set installments = frappe.get_all(
+      "Employee Loan Installment",
+      filters={"parent": loan.name},
+      fields=["installment_number","due_date","installment_amount",
+              "deducted_amount","outstanding_amount","deduction_status"],
+      order_by="installment_number asc",
+      limit=60
+  ) -%}
+  {% if installments %}
+  <table class="loan-install">
+    <thead><tr>
+      <th class="num">#</th><th>Due Date</th>
+      <th class="num">Installment (SAR)</th><th class="num">Paid (SAR)</th>
+      <th class="num">Remaining (SAR)</th><th class="num">Status</th>
+    </tr></thead>
+    <tbody>
+    {% for inst in installments %}
+      <tr>
+        <td class="num">{{ inst.installment_number }}</td>
+        <td>{{ frappe.format(inst.due_date, "Date") }}</td>
+        <td class="num">{{ "{:,.2f}".format(inst.installment_amount or 0) }}</td>
+        <td class="num" style="color:#1e8449;">{{ "{:,.2f}".format(inst.deducted_amount or 0) }}</td>
+        <td class="num" style="color:{% if (inst.outstanding_amount or 0) > 0 %}#c0392b{% else %}#1e8449{% endif %};">{{ "{:,.2f}".format(inst.outstanding_amount or 0) }}</td>
+        <td class="num">
+          <span class="badge {% if inst.deduction_status and 'Deducted' in inst.deduction_status %}badge-green{% elif inst.deduction_status and 'Deferred' in inst.deduction_status %}badge-yellow{% elif inst.deduction_status and 'Pending' in inst.deduction_status %}badge-blue{% else %}badge-grey{% endif %}">
+            {{ inst.deduction_status or '—' }}
+          </span>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state"><span>&#128179;</span>No loan or advance records found.</div>
+{% endif %}
+
+<!-- ======= 8. OVERTIME ======= -->
+<div class="section-title keep-together">
+  <div class="section-num">8</div>
+  <h3>Overtime Records</h3>
+  <span class="section-badge">{{ overtime_rows | length }} requests — {{ "{:,.0f}".format(total_ot_amount) }} SAR</span>
+</div>
+{% if overtime_rows %}
+<table class="data-table">
+  <thead><tr>
+    <th>Reference</th><th>Date</th>
+    <th class="num">Hours</th><th class="num">Amount (SAR)</th><th class="num">Approval Status</th>
+  </tr></thead>
+  <tbody>
+  {% for r in overtime_rows %}
+    <tr>
+      <td style="font-family:monospace;font-size:11px;">{{ r.name }}</td>
+      <td>{{ frappe.format(r.date, "Date") }}</td>
+      <td class="num">{{ "{:.1f}".format(r.overtime_hours or 0) }}</td>
+      <td class="num">{{ "{:,.2f}".format(r.overtime_amount or 0) }}</td>
+      <td class="num">
+        <span class="badge {% if r.approval_status and 'Approved' in r.approval_status %}badge-green{% elif r.approval_status and 'Rejected' in r.approval_status %}badge-red{% else %}badge-yellow{% endif %}">
+          {{ r.approval_status or '—' }}
+        </span>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr>
+    <td colspan="2">Total</td>
+    <td class="num">{{ "{:,.1f}".format(total_ot_hours) }}</td>
+    <td class="num">{{ "{:,.2f}".format(total_ot_amount) }}</td>
+    <td></td>
+  </tr></tfoot>
+</table>
+{% else %}
+<div class="empty-state"><span>&#9200;</span>No overtime records found.</div>
+{% endif %}
+
+<!-- ======= 9. GOSI ======= -->
+<div class="section-title keep-together">
+  <div class="section-num">9</div>
+  <h3>GOSI Contribution History</h3>
+  <span class="section-badge">{{ gosi_rows | length }} months — {{ "{:,.0f}".format(total_gosi) }} SAR</span>
+</div>
+{% if gosi_rows %}
+<table class="data-table">
+  <thead><tr>
+    <th>Month</th><th class="num">Year</th><th class="num">Contribution Base</th>
+    <th class="num">Employee Share</th><th class="num">Employer Share</th>
+    <th class="num">Total</th><th class="num">Payment Status</th>
+  </tr></thead>
+  <tbody>
+  {% for r in gosi_rows %}
+    <tr>
+      <td>{{ r.month }}</td><td class="num">{{ r.year }}</td>
+      <td class="num">{{ "{:,.2f}".format(r.contribution_base or 0) }}</td>
+      <td class="num">{{ "{:,.2f}".format(r.employee_contribution or 0) }}</td>
+      <td class="num">{{ "{:,.2f}".format(r.employer_contribution or 0) }}</td>
+      <td class="num"><strong>{{ "{:,.2f}".format(r.total_contribution or 0) }}</strong></td>
+      <td class="num">
+        <span class="badge {% if (r.payment_status and 'Paid' in (r.payment_status or '')) %}badge-green{% else %}badge-yellow{% endif %}">
+          {{ r.payment_status or 'Pending' }}
+        </span>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr>
+    <td colspan="3">Total ({{ gosi_rows | length }} months)</td>
+    <td class="num">{{ "{:,.2f}".format(gosi_rows | sum(attribute="employee_contribution")) }}</td>
+    <td class="num">{{ "{:,.2f}".format(gosi_rows | sum(attribute="employer_contribution")) }}</td>
+    <td class="num">{{ "{:,.2f}".format(total_gosi) }}</td>
+    <td></td>
+  </tr></tfoot>
+</table>
+{% else %}
+<div class="empty-state"><span>&#128737;</span>No GOSI contribution records found.</div>
+{% endif %}
+
+<!-- ======= 10. EOSB & TERMINATION ======= -->
+{% if eosb or termination %}
+<div class="section-title keep-together">
+  <div class="section-num">10</div>
+  <h3>End of Service and EOSB</h3>
+</div>
+{% if termination %}
+<div class="info-block" style="margin-bottom:10px;">
+  <div class="info-grid">
+    <div class="info-item"><span class="info-label">Termination Notice No.:</span><span class="info-value mono">{{ termination.get('name') }}</span></div>
+    <div class="info-item"><span class="info-label">Termination Reason:</span><span class="info-value">{{ termination.get('termination_reason') or '—' }}</span></div>
+    <div class="info-item"><span class="info-label">Notice Start Date:</span><span class="info-value">{{ frappe.format(termination.get('notice_start_date'), "Date") if termination.get('notice_start_date') else '—' }}</span></div>
+    <div class="info-item"><span class="info-label">Last Working Day:</span><span class="info-value">{{ frappe.format(termination.get('notice_end_date'), "Date") if termination.get('notice_end_date') else '—' }}</span></div>
+  </div>
+</div>
+{% endif %}
+{% if eosb %}
+<div class="salary-breakdown-table" style="max-width:520px;">
+  <div class="sbt-row"><span class="sbt-lbl">Date of Joining</span><strong>{{ frappe.format(eosb.get('joining_date'), "Date") }}</strong></div>
+  <div class="sbt-row"><span class="sbt-lbl">Termination Date</span><strong>{{ frappe.format(eosb.get('termination_date'), "Date") }}</strong></div>
+  <div class="sbt-row"><span class="sbt-lbl">Years of Service</span><strong>{{ "{:.2f}".format(eosb.get('years_of_service') or 0) }} yrs</strong></div>
+  <div class="sbt-row"><span class="sbt-lbl">Termination Reason</span><strong>{{ eosb.get('termination_reason') or '—' }}</strong></div>
+  <div class="sbt-row"><span class="sbt-lbl">Last Basic Salary</span><strong>{{ "{:,.2f}".format(eosb.get('last_basic_salary') or 0) }} SAR</strong></div>
+  <div class="sbt-row"><span class="sbt-lbl">Gross EOSB</span><strong>{{ "{:,.2f}".format(eosb.get('eosb_gross') or 0) }} SAR</strong></div>
+  {% if (eosb.get('eosb_deductions') or 0) > 0 %}
+  <div class="sbt-row"><span class="sbt-lbl">Deductions</span><strong style="color:#c0392b;">- {{ "{:,.2f}".format(eosb.eosb_deductions) }} SAR</strong></div>
+  {% endif %}
+  <div class="sbt-row total"><span class="sbt-lbl">Net EOSB</span><strong style="font-size:15px;">{{ "{:,.2f}".format(eosb.get('net_eosb') or 0) }} SAR</strong></div>
+  <div class="sbt-row"><span class="sbt-lbl">Payment Status</span>
+    <span class="badge {% if eosb.get('payment_status') and 'Paid' in (eosb.payment_status or '') %}badge-green{% else %}badge-yellow{% endif %}">
+      {{ eosb.get('payment_status') or 'Pending' }}
+    </span>
+  </div>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- FOOTER -->
+<hr class="divider">
+<div class="doc-footer">
+  <div><strong>{{ emp.company or '' }}</strong> — Saudi HR System</div>
+  <div>Confidential — Internal Use Only</div>
+  <div>Printed: {{ now_str }}</div>
+</div>
+
+</div>
+</div>
+</body>
+</html>

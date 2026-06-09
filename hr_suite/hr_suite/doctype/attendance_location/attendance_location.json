@@ -1,0 +1,229 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:location_name",
+ "creation": "2026-03-17 00:00:00.000000",
+ "doctype": "DocType",
+ "icon": "fa fa-map-marker",
+ "engine": "InnoDB",
+ "field_order": [
+  "location_name",
+  "branch",
+  "column_break_1",
+  "is_active",
+  "section_reference",
+  "location_input_method",
+  "plus_code",
+  "column_break_reference",
+  "address_reference",
+  "location_source",
+  "section_gps",
+  "latitude",
+  "column_break_gps",
+  "longitude",
+  "section_settings",
+  "allowed_radius_meters",
+  "column_break_settings",
+  "geolocation",
+  "mobile_policy_section",
+  "default_shift_type",
+  "column_break_policy",
+  "enforce_schedule",
+  "voice_verification_policy",
+  "voice_challenge_ttl_seconds",
+  "voice_max_duration_seconds"
+ ],
+ "fields": [
+  {
+   "fieldname": "location_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Location Name",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  },
+  {
+   "fieldname": "section_reference",
+   "fieldtype": "Section Break",
+   "label": "Reference Options"
+  },
+  {
+   "default": "Coordinates",
+   "fieldname": "location_input_method",
+   "fieldtype": "Select",
+   "label": "Input Method",
+   "options": "Coordinates\nPlus Code\nMap Pin"
+  },
+  {
+   "fieldname": "plus_code",
+   "fieldtype": "Data",
+   "label": "Plus Code",
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_reference",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Optional city, district, or nearby landmark to resolve short Plus Codes.",
+   "fieldname": "address_reference",
+   "fieldtype": "Data",
+   "label": "Address Reference"
+  },
+  {
+   "fieldname": "location_source",
+   "fieldtype": "Data",
+   "label": "Resolved From",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_gps",
+   "fieldtype": "Section Break",
+   "label": "GPS Coordinates"
+  },
+  {
+   "fieldname": "latitude",
+   "fieldtype": "Float",
+   "label": "Latitude",
+   "precision": "8"
+  },
+  {
+   "fieldname": "column_break_gps",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "longitude",
+   "fieldtype": "Float",
+   "label": "Longitude",
+   "precision": "8"
+  },
+  {
+   "fieldname": "section_settings",
+   "fieldtype": "Section Break",
+   "label": "Settings"
+  },
+  {
+   "default": "100",
+   "description": "Maximum distance in meters from the branch GPS point within which check-in is allowed.",
+   "fieldname": "allowed_radius_meters",
+   "fieldtype": "Int",
+   "label": "Allowed Radius (meters)"
+  },
+  {
+   "fieldname": "column_break_settings",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Pick a point on the map or let the system sync it from coordinates.",
+   "fieldname": "geolocation",
+   "fieldtype": "Geolocation",
+   "label": "Map Preview"
+  },
+  {
+   "fieldname": "mobile_policy_section",
+   "fieldtype": "Section Break",
+   "label": "Mobile Attendance Policy"
+  },
+  {
+   "fieldname": "default_shift_type",
+   "fieldtype": "Link",
+   "label": "Default Saudi Shift Type",
+   "options": "Saudi Shift Type"
+  },
+  {
+   "fieldname": "column_break_policy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "enforce_schedule",
+   "fieldtype": "Check",
+   "label": "Use Shift Policy in Mobile Attendance"
+  },
+  {
+   "default": "Disabled",
+   "fieldname": "voice_verification_policy",
+   "fieldtype": "Select",
+   "label": "Voice Verification Policy",
+   "options": "Disabled\nOptional\nRequired"
+  },
+  {
+   "default": "300",
+   "fieldname": "voice_challenge_ttl_seconds",
+   "fieldtype": "Int",
+   "label": "Voice Challenge TTL (seconds)",
+   "depends_on": "eval:doc.voice_verification_policy!='Disabled"
+  },
+  {
+   "default": "15",
+   "fieldname": "voice_max_duration_seconds",
+   "fieldtype": "Int",
+   "label": "Voice Max Duration (seconds)",
+   "depends_on": "eval:doc.voice_verification_policy!='Disabled"
+  }
+ ],
+ "in_create": 0,
+ "links": [],
+ "modified": "2026-03-17 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Attendance Location",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Employee",
+   "type": "read"
+  }
+ ],
+ "search_fields": "branch,location_name",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "location_name",
+ "track_changes": 1
+}

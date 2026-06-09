@@ -1,0 +1,228 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-03-17 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "column_break_1",
+  "company",
+  "department",
+  "termination_section",
+  "termination_reason",
+  "salary_payment_type",
+  "notice_start_date",
+  "column_break_2",
+  "during_probation",
+  "notice_required_days",
+  "notice_end_date",
+  "legal_section",
+  "termination_article",
+  "article_description",
+  "column_break_3",
+  "eosb_applicable",
+  "eosb_reference",
+  "notes_section",
+  "termination_notes",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-TERM-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "termination_section",
+   "fieldtype": "Section Break",
+   "label": "Termination Details"
+  },
+  {
+   "fieldname": "termination_reason",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Termination Reason",
+   "options": "Resignation by Employee\nTermination by Employer\nEnd of Fixed Term\nMutual Agreement\nDismissal Without Notice",
+   "reqd": 1
+  },
+  {
+   "fieldname": "salary_payment_type",
+   "fieldtype": "Select",
+   "label": "Salary Payment Type",
+   "options": "Monthly\nWeekly\nDaily",
+   "reqd": 1
+  },
+  {
+   "fieldname": "notice_start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Notice Start Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "during_probation",
+   "fieldtype": "Check",
+   "label": "During Probation Period"
+  },
+  {
+   "description": "60 days (monthly) / 30 days (non-monthly) / 0 if during probation or Art.80",
+   "fieldname": "notice_required_days",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Notice Period (Days)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notice_end_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Notice End / Last Working Day",
+   "read_only": 1
+  },
+  {
+   "fieldname": "legal_section",
+   "fieldtype": "Section Break",
+   "label": "Legal Reference"
+  },
+  {
+   "fieldname": "termination_article",
+   "fieldtype": "Select",
+   "label": "Applicable Article",
+   "options": "Article 75 — Employee Resignation\nArticle 76 — Termination by Employer\nArticle 80 — Contract Termination Without Notice\nArticle 81 — Employee Resignation Without Notice\nArticle 84 — End of Service Benefit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "article_description",
+   "fieldtype": "Small Text",
+   "label": "Article Description",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "eosb_applicable",
+   "fieldtype": "Check",
+   "label": "EOSB Applicable",
+   "read_only": 1
+  },
+  {
+   "fieldname": "eosb_reference",
+   "fieldtype": "Link",
+   "label": "EOSB Document",
+   "options": "End of Service Benefit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "termination_notes",
+   "fieldtype": "Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Termination Notice",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [
+  {
+   "group": "References",
+   "link_doctype": "End of Service Benefit",
+   "link_fieldname": "employee"
+  }
+ ],
+ "modified": "2026-03-17 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Termination Notice",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "employee_name",
+ "track_changes": 1
+}

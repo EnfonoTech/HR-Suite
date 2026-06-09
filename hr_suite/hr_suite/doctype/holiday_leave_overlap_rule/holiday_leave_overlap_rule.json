@@ -1,0 +1,189 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-05-24 21:52:29.902102",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "company",
+  "employee",
+  "employee_name",
+  "column_break_1",
+  "holiday_name",
+  "holiday_date",
+  "overlap_type",
+  "action_section",
+  "required_action",
+  "status",
+  "column_break_2",
+  "leave_reference",
+  "leave_reference_doctype",
+  "evidence_attachment",
+  "legal_reference",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-HOL-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "holiday_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Holiday",
+   "reqd": 1
+  },
+  {
+   "fieldname": "holiday_date",
+   "fieldtype": "Date",
+   "label": "Holiday Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "overlap_type",
+   "fieldtype": "Select",
+   "label": "Overlap Type",
+   "options": "\nWeekly Rest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "action_section",
+   "fieldtype": "Section Break",
+   "label": "Required Action"
+  },
+  {
+   "default": "Legal Review",
+   "fieldname": "required_action",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Required Action",
+   "options": "Extend Leave"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Open"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "leave_reference",
+   "fieldtype": "Dynamic Link",
+   "label": "Leave Reference",
+   "options": "leave_reference_doctype"
+  },
+  {
+   "fieldname": "leave_reference_doctype",
+   "fieldtype": "Link",
+   "label": "Leave Reference Type",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "evidence_attachment",
+   "fieldtype": "Attach",
+   "label": "Evidence"
+  },
+  {
+   "default": "Executive Regulations official holiday overlap controls",
+   "fieldname": "legal_reference",
+   "fieldtype": "Data",
+   "label": "Legal Reference"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "icon": "fa fa-calendar",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-09 03:00:25.982037",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Holiday Leave Overlap Rule",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "holiday_name,employee,status",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "holiday_name",
+ "track_changes": 1
+}

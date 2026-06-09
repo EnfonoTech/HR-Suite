@@ -1,0 +1,291 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-03-17 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "column_break_1",
+  "company",
+  "department",
+  "dispute_section",
+  "dispute_date",
+  "dispute_type",
+  "dispute_description",
+  "column_break_2",
+  "amount_claimed",
+  "currency",
+  "status",
+  "internal_resolution_section",
+  "hr_response",
+  "hr_response_date",
+  "internal_resolution",
+  "column_break_3",
+  "resolution_date",
+  "resolution_amount",
+  "ministry_section",
+  "mlsd_case_number",
+  "mlsd_submission_date",
+  "mlsd_hearing_date",
+  "mlsd_decision",
+  "column_break_4",
+  "mlsd_decision_date",
+  "mlsd_awarded_amount",
+  "labor_court_section",
+  "court_case_number",
+  "court_submission_date",
+  "court_decision",
+  "court_decision_date",
+  "court_awarded_amount",
+  "notes",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-LD-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "dispute_section",
+   "fieldtype": "Section Break",
+   "label": "Dispute Details"
+  },
+  {
+   "fieldname": "dispute_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Dispute Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "dispute_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Dispute Type",
+   "options": "\nUnpaid Salary\nUnlawful Termination\nEOSB Dispute\nOvertime\nAnnual Leave\nHarassment\nDiscrimination\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "dispute_description",
+   "fieldtype": "Text Editor",
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amount_claimed",
+   "fieldtype": "Currency",
+   "label": "Amount Claimed"
+  },
+  {
+   "default": "SAR",
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Open\nInternal Mediation\nReferred to MLSD\nMLSD Mediation\nLabour Court\nResolved\nClosed"
+  },
+  {
+   "fieldname": "internal_resolution_section",
+   "fieldtype": "Section Break",
+   "label": "Internal Mediation"
+  },
+  {
+   "fieldname": "hr_response",
+   "fieldtype": "Text Editor",
+   "label": "HR Response"
+  },
+  {
+   "fieldname": "hr_response_date",
+   "fieldtype": "Date",
+   "label": "HR Response Date"
+  },
+  {
+   "fieldname": "internal_resolution",
+   "fieldtype": "Text Editor",
+   "label": "Internal Resolution"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "resolution_date",
+   "fieldtype": "Date",
+   "label": "Resolution Date"
+  },
+  {
+   "fieldname": "resolution_amount",
+   "fieldtype": "Currency",
+   "label": "Settlement Amount"
+  },
+  {
+   "fieldname": "ministry_section",
+   "fieldtype": "Section Break",
+   "label": "MLSD Referral"
+  },
+  {
+   "fieldname": "mlsd_case_number",
+   "fieldtype": "Data",
+   "label": "MLSD Case Number"
+  },
+  {
+   "fieldname": "mlsd_submission_date",
+   "fieldtype": "Date",
+   "label": "MLSD Submission Date"
+  },
+  {
+   "fieldname": "mlsd_hearing_date",
+   "fieldtype": "Date",
+   "label": "MLSD Hearing Date"
+  },
+  {
+   "fieldname": "mlsd_decision",
+   "fieldtype": "Text Editor",
+   "label": "MLSD Decision"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "mlsd_decision_date",
+   "fieldtype": "Date",
+   "label": "MLSD Decision Date"
+  },
+  {
+   "fieldname": "mlsd_awarded_amount",
+   "fieldtype": "Currency",
+   "label": "MLSD Awarded Amount"
+  },
+  {
+   "fieldname": "labor_court_section",
+   "fieldtype": "Section Break",
+   "label": "Labour Court"
+  },
+  {
+   "fieldname": "court_case_number",
+   "fieldtype": "Data",
+   "label": "Court Case Number"
+  },
+  {
+   "fieldname": "court_submission_date",
+   "fieldtype": "Date",
+   "label": "Court Submission Date"
+  },
+  {
+   "fieldname": "court_decision",
+   "fieldtype": "Text Editor",
+   "label": "Court Decision"
+  },
+  {
+   "fieldname": "court_decision_date",
+   "fieldtype": "Date",
+   "label": "Court Decision Date"
+  },
+  {
+   "fieldname": "court_awarded_amount",
+   "fieldtype": "Currency",
+   "label": "Court Awarded Amount"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Labor Dispute",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-03-17 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Labor Dispute",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "HR User",
+   "write": 1
+  }
+ ],
+ "sort_field": "dispute_date",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee_name",
+ "track_changes": 1
+}

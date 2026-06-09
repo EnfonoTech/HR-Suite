@@ -1,0 +1,298 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-03-17 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "column_break_1",
+  "company",
+  "department",
+  "injury_details_section",
+  "injury_date",
+  "injury_time",
+  "column_break_2",
+  "injury_type",
+  "severity",
+  "location_section",
+  "injury_location",
+  "injury_description",
+  "body_part_affected",
+  "medical_section",
+  "medical_treatment_type",
+  "hospital_name",
+  "lost_time_days",
+  "column_break_3",
+  "medical_report_attached",
+  "witnesses_section",
+  "witness_name",
+  "witness_contact",
+  "witness_statement",
+  "gosi_section",
+  "gosi_form_25_submitted",
+  "gosi_submission_date",
+  "column_break_4",
+  "gosi_case_number",
+  "compensation_amount",
+  "status_section",
+  "status",
+  "investigation_notes",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-INJ-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "injury_details_section",
+   "fieldtype": "Section Break",
+   "label": "Injury Details"
+  },
+  {
+   "fieldname": "injury_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Injury Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "injury_time",
+   "fieldtype": "Time",
+   "label": "Injury Time"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "injury_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Injury Type",
+   "options": "\nIndustrial Accident\nOccupational Disease\nCommute Injury",
+   "reqd": 1
+  },
+  {
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Severity",
+   "options": "\nMinor\nMajor\nPermanent Disability\nFatal",
+   "reqd": 1
+  },
+  {
+   "fieldname": "location_section",
+   "fieldtype": "Section Break",
+   "label": "Location & Description"
+  },
+  {
+   "fieldname": "injury_location",
+   "fieldtype": "Data",
+   "label": "Injury Location"
+  },
+  {
+   "fieldname": "injury_description",
+   "fieldtype": "Text Editor",
+   "label": "Incident Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "body_part_affected",
+   "fieldtype": "Select",
+   "label": "Body Part Affected",
+   "options": "\nHead\nNeck\nBack\nChest\nArm\nHand\nLeg\nFoot\nEye\nMultiple Parts\nOther"
+  },
+  {
+   "fieldname": "medical_section",
+   "fieldtype": "Section Break",
+   "label": "Medical Care"
+  },
+  {
+   "fieldname": "medical_treatment_type",
+   "fieldtype": "Select",
+   "label": "Treatment Type",
+   "options": "\nFirst Aid\nOutpatient\nHospitalization\nSurgery"
+  },
+  {
+   "fieldname": "hospital_name",
+   "fieldtype": "Data",
+   "label": "Hospital/Clinic"
+  },
+  {
+   "fieldname": "lost_time_days",
+   "fieldtype": "Int",
+   "label": "Lost Time (Days)"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "medical_report_attached",
+   "fieldtype": "Check",
+   "label": "Medical Report Attached"
+  },
+  {
+   "fieldname": "witnesses_section",
+   "fieldtype": "Section Break",
+   "label": "Witnesses"
+  },
+  {
+   "fieldname": "witness_name",
+   "fieldtype": "Data",
+   "label": "Witness Name"
+  },
+  {
+   "fieldname": "witness_contact",
+   "fieldtype": "Data",
+   "label": "Witness Contact"
+  },
+  {
+   "fieldname": "witness_statement",
+   "fieldtype": "Small Text",
+   "label": "Witness Statement"
+  },
+  {
+   "fieldname": "gosi_section",
+   "fieldtype": "Section Break",
+   "label": "GOSI Reporting"
+  },
+  {
+   "default": "0",
+   "fieldname": "gosi_form_25_submitted",
+   "fieldtype": "Check",
+   "label": "GOSI Form 25 Submitted"
+  },
+  {
+   "fieldname": "gosi_submission_date",
+   "fieldtype": "Date",
+   "label": "GOSI Submission Date",
+   "depends_on": "gosi_form_25_submitted"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gosi_case_number",
+   "fieldtype": "Data",
+   "label": "GOSI Case Number"
+  },
+  {
+   "fieldname": "compensation_amount",
+   "fieldtype": "Currency",
+   "label": "Compensation Amount",
+   "options": "currency"
+  },
+  {
+   "fieldname": "status_section",
+   "fieldtype": "Section Break",
+   "label": "Status & Investigation"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nReported to GOSI\nUnder Investigation\nCompensation Paid\nClosed"
+  },
+  {
+   "fieldname": "investigation_notes",
+   "fieldtype": "Text Editor",
+   "label": "Investigation Notes"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Work Injury",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-03-17 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Work Injury",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "injury_date",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee_name",
+ "track_changes": 1
+}

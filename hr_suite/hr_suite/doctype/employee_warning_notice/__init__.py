@@ -1,0 +1,1 @@
+"""Employee warning notice doctype package."""

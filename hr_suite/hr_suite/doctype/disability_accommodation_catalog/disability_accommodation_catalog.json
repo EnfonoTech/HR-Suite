@@ -1,0 +1,166 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-05-25 08:22:21.124171",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "accommodation_code",
+  "disability_type",
+  "job_family",
+  "column_break_1",
+  "accommodation_title",
+  "priority",
+  "requirement_section",
+  "requirement_details",
+  "evidence_required",
+  "column_break_2",
+  "legal_reference",
+  "source_page",
+  "active"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-DAC-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "accommodation_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Accommodation Code",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "disability_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Disability Type",
+   "options": "\nPhysical",
+   "reqd": 1
+  },
+  {
+   "fieldname": "job_family",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Job Family",
+   "options": "\nOffice",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "accommodation_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Accommodation",
+   "reqd": 1
+  },
+  {
+   "default": "Recommended",
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "label": "Priority",
+   "options": "Mandatory Review"
+  },
+  {
+   "fieldname": "requirement_section",
+   "fieldtype": "Section Break",
+   "label": "Checklist Requirement"
+  },
+  {
+   "fieldname": "requirement_details",
+   "fieldtype": "Text Editor",
+   "label": "Requirement Details",
+   "reqd": 1
+  },
+  {
+   "fieldname": "evidence_required",
+   "fieldtype": "Small Text",
+   "label": "Evidence Required"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Annex 2 - Accommodation and Facilitation Table",
+   "fieldname": "legal_reference",
+   "fieldtype": "Data",
+   "label": "Legal Reference"
+  },
+  {
+   "fieldname": "source_page",
+   "fieldtype": "Data",
+   "label": "PDF Page"
+  },
+  {
+   "default": "1",
+   "fieldname": "active",
+   "fieldtype": "Check",
+   "label": "Active"
+  }
+ ],
+ "grid_page_length": 50,
+ "icon": "fa fa-universal-access",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-09 03:00:23.751079",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Disability Accommodation Catalog",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "accommodation_code,disability_type,job_family,accommodation_title",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "accommodation_title",
+ "track_changes": 1
+}

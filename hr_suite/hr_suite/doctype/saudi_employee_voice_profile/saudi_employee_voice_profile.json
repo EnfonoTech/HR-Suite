@@ -1,0 +1,161 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:employee",
+ "creation": "2026-04-26 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee_section",
+  "employee",
+  "employee_name",
+  "column_break_employee",
+  "is_active",
+  "enrollment_status",
+  "last_enrolled_on",
+  "transcript_preview",
+  "last_challenge_text",
+  "scores_section",
+  "last_anti_spoof_score",
+  "last_speech_match_score",
+  "last_speaker_match_score",
+  "voiceprint_embedding"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee_section",
+   "fieldtype": "Section Break",
+   "label": "Employee Voice Profile"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "fetch_from": "employee.employee_name",
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_employee",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active"
+  },
+  {
+   "default": "Not Enrolled",
+   "fieldname": "enrollment_status",
+   "fieldtype": "Select",
+   "label": "Enrollment Status",
+   "options": "Not Enrolled\nEnrolled\nSuspended"
+  },
+  {
+   "fieldname": "last_enrolled_on",
+   "fieldtype": "Datetime",
+   "label": "Last Enrolled On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "transcript_preview",
+   "fieldtype": "Small Text",
+   "label": "Transcript Preview",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_challenge_text",
+   "fieldtype": "Data",
+   "label": "Last Challenge",
+   "read_only": 1
+  },
+  {
+   "fieldname": "scores_section",
+   "fieldtype": "Section Break",
+   "label": "Verification Scores"
+  },
+  {
+   "fieldname": "last_anti_spoof_score",
+   "fieldtype": "Float",
+   "label": "Last Anti-Spoof Score",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_speech_match_score",
+   "fieldtype": "Float",
+   "label": "Last Speech Match Score",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_speaker_match_score",
+   "fieldtype": "Float",
+   "label": "Last Speaker Match Score",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "voiceprint_embedding",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Voiceprint Embedding",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-04-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Saudi Employee Voice Profile",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee_name",
+ "track_changes": 1
+}

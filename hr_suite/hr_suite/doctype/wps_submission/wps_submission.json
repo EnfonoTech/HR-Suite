@@ -1,0 +1,244 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-04-27 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "payroll_document",
+  "company",
+  "column_break_1",
+  "status",
+  "responsible_user",
+  "payroll_snapshot_section",
+  "pay_period",
+  "employee_count",
+  "column_break_2",
+  "total_net_payable",
+  "submission_date",
+  "document_section",
+  "sif_file",
+  "ministry_submission_reference",
+  "bank_file_reference",
+  "column_break_3",
+  "rejection_date",
+  "accepted_on",
+  "follow_up_section",
+  "rejection_reason",
+  "correction_due_date",
+  "resubmission_date",
+  "corrective_action_log",
+  "accepted_reference",
+  "notes_section",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-WPS-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payroll_document",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Saudi Monthly Payroll",
+   "options": "Saudi Monthly Payroll",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fetch_from": "payroll_document.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nSubmitted\nRejected\nCorrective Action Required\nResubmitted\nAccepted\nCancelled",
+   "reqd": 1
+  },
+  {
+   "fieldname": "responsible_user",
+   "fieldtype": "Link",
+   "label": "Responsible User",
+   "options": "User"
+  },
+  {
+   "fieldname": "payroll_snapshot_section",
+   "fieldtype": "Section Break",
+   "label": "Payroll Snapshot"
+  },
+  {
+   "fetch_from": "payroll_document.period_label",
+   "fieldname": "pay_period",
+   "fieldtype": "Data",
+   "label": "Pay Period",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "payroll_document.total_employees",
+   "fieldname": "employee_count",
+   "fieldtype": "Int",
+   "label": "Employees Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "payroll_document.total_net_payable",
+   "fieldname": "total_net_payable",
+   "fieldtype": "Currency",
+   "label": "Total Net Payable",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submission_date",
+   "fieldtype": "Date",
+   "label": "Submission Date"
+  },
+  {
+   "fieldname": "document_section",
+   "fieldtype": "Section Break",
+   "label": "Submission Evidence"
+  },
+  {
+   "fieldname": "sif_file",
+   "fieldtype": "Attach",
+   "label": "SIF File"
+  },
+  {
+   "fieldname": "ministry_submission_reference",
+   "fieldtype": "Data",
+   "label": "Submission Reference"
+  },
+  {
+   "fieldname": "bank_file_reference",
+   "fieldtype": "Data",
+   "label": "Bank File Reference"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rejection_date",
+   "fieldtype": "Date",
+   "label": "Rejection Date"
+  },
+  {
+   "fieldname": "accepted_on",
+   "fieldtype": "Date",
+   "label": "Accepted On"
+  },
+  {
+   "fieldname": "follow_up_section",
+   "fieldtype": "Section Break",
+   "label": "Follow-up & Correction"
+  },
+  {
+   "fieldname": "rejection_reason",
+   "fieldtype": "Text Editor",
+   "label": "Rejection Reason"
+  },
+  {
+   "fieldname": "correction_due_date",
+   "fieldtype": "Date",
+   "label": "Correction Due Date"
+  },
+  {
+   "fieldname": "resubmission_date",
+   "fieldtype": "Date",
+   "label": "Resubmission Date"
+  },
+  {
+   "fieldname": "corrective_action_log",
+   "fieldtype": "Link",
+   "label": "Compliance Action",
+   "options": "HR Compliance Action Log",
+   "read_only": 1
+  },
+  {
+   "fieldname": "accepted_reference",
+   "fieldtype": "Data",
+   "label": "Acceptance Reference"
+  },
+  {
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  }
+ ],
+ "icon": "fa fa-bank",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-04-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "WPS Submission",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "write": 1
+  }
+ ],
+ "search_fields": "payroll_document,ministry_submission_reference,bank_file_reference,accepted_reference",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "payroll_document",
+ "track_changes": 1
+}

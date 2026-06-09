@@ -1,0 +1,358 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-03-17 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "column_break_1",
+  "company",
+  "department",
+  "designation",
+  "contract_section",
+  "contract_type",
+  "contract_status",
+  "column_break_2",
+  "start_date",
+  "end_date",
+  "probation_section",
+  "probation_period_days",
+  "probation_end_date",
+  "column_break_3",
+  "probation_extended",
+  "extended_probation_days",
+  "salary_section",
+  "basic_salary",
+  "housing_allowance",
+  "transport_allowance",
+  "column_break_4",
+  "other_allowances",
+  "total_salary",
+  "work_hours_section",
+  "working_hours_per_day",
+  "ramadan_hours_per_day",
+  "column_break_5",
+  "weekly_rest_day",
+  "outdoor_work_prohibition",
+  "personal_section",
+  "nationality",
+  "iqama_number",
+  "column_break_6",
+  "passport_number",
+  "visa_type",
+  "notes_section",
+  "terms_and_conditions",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-EMP-CONT-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation"
+  },
+  {
+   "fieldname": "contract_section",
+   "fieldtype": "Section Break",
+   "label": "Contract Details"
+  },
+  {
+   "default": "Fixed Term",
+   "fieldname": "contract_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Contract Type",
+   "options": "Fixed Term\nOpen Ended",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "contract_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Contract Status",
+   "options": "Draft\nActive\nExpired\nTerminated"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "depends_on": "Fixed Term'",
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "End Date"
+  },
+  {
+   "fieldname": "probation_section",
+   "fieldtype": "Section Break",
+   "label": "Probation Period"
+  },
+  {
+   "default": "90",
+   "description": "Maximum 90 days extendable to 180",
+   "fieldname": "probation_period_days",
+   "fieldtype": "Int",
+   "label": "Probation Period (Days)"
+  },
+  {
+   "fieldname": "probation_end_date",
+   "fieldtype": "Date",
+   "label": "Probation End Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "probation_extended",
+   "fieldtype": "Check",
+   "label": "Probation Extended"
+  },
+  {
+   "depends_on": "eval:doc.probation_extended",
+   "description": "Total probation cannot exceed 180 days",
+   "fieldname": "extended_probation_days",
+   "fieldtype": "Int",
+   "label": "Extended Probation (Days)"
+  },
+  {
+   "fieldname": "salary_section",
+   "fieldtype": "Section Break",
+   "label": "Salary & Allowances"
+  },
+  {
+   "fieldname": "basic_salary",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Basic Salary",
+   "reqd": 1
+  },
+  {
+   "fieldname": "housing_allowance",
+   "fieldtype": "Currency",
+   "label": "Housing Allowance"
+  },
+  {
+   "fieldname": "transport_allowance",
+   "fieldtype": "Currency",
+   "label": "Transport Allowance"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "other_allowances",
+   "fieldtype": "Currency",
+   "label": "Other Allowances"
+  },
+  {
+   "fieldname": "total_salary",
+   "fieldtype": "Currency",
+   "label": "Total Salary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "work_hours_section",
+   "fieldtype": "Section Break",
+   "label": "Working Hours"
+  },
+  {
+   "default": "8",
+   "description": "Maximum 8 hours per day",
+   "fieldname": "working_hours_per_day",
+   "fieldtype": "Float",
+   "label": "Working Hours/Day"
+  },
+  {
+   "default": "6",
+   "description": "During Ramadan for Muslim employees",
+   "fieldname": "ramadan_hours_per_day",
+   "fieldtype": "Float",
+   "label": "Ramadan Hours/Day"
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Friday",
+   "fieldname": "weekly_rest_day",
+   "fieldtype": "Select",
+   "label": "Weekly Rest Day",
+   "options": "Friday\nSaturday\nSunday"
+  },
+  {
+   "default": "1",
+   "description": "Outdoor work banned 12:30–3:30 PM Jun-Sep",
+   "fieldname": "outdoor_work_prohibition",
+   "fieldtype": "Check",
+   "label": "Outdoor Work Prohibition Applied"
+  },
+  {
+   "fieldname": "personal_section",
+   "fieldtype": "Section Break",
+   "label": "Personal Details"
+  },
+  {
+   "fieldname": "nationality",
+   "fieldtype": "Data",
+   "label": "Nationality"
+  },
+  {
+   "fieldname": "iqama_number",
+   "fieldtype": "Data",
+   "label": "Iqama Number"
+  },
+  {
+   "fieldname": "column_break_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "passport_number",
+   "fieldtype": "Data",
+   "label": "Passport Number"
+  },
+  {
+   "fieldname": "visa_type",
+   "fieldtype": "Select",
+   "label": "Visa Type",
+   "options": "\nWork Visa\nTransfer of Sponsorship\nSaudi Citizen"
+  },
+  {
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Terms & Conditions"
+  },
+  {
+   "fieldname": "terms_and_conditions",
+   "fieldtype": "Text Editor",
+   "label": "Terms and Conditions"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Saudi Employment Contract",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [
+  {
+   "group": "Transactions",
+   "link_doctype": "End of Service Benefit",
+   "link_fieldname": "employee"
+  },
+  {
+   "group": "Transactions",
+   "link_doctype": "Termination Notice",
+   "link_fieldname": "employee"
+  }
+ ],
+ "modified": "2026-03-17 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Saudi Employment Contract",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "submit": 1
+  },
+  {
+   "role": "Employee",
+   "read": 1,
+   "print": 1
+  }
+ ],
+ "quick_entry": 0,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "employee_name",
+ "track_changes": 1
+}

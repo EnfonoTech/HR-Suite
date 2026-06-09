@@ -1,0 +1,65 @@
+{
+ "creation": "2026-03-19 00:00:00.000000",
+ "doctype": "Workflow",
+ "doctype_or_field": "DocType",
+ "document_type": "Legal Reference Matrix",
+ "is_active": 1,
+ "module": "Hr Suite",
+ "name": "Legal Reference Review Workflow",
+ "workflow_name": "Legal Reference Review Workflow",
+ "override_status": 0,
+ "send_email_alert": 1,
+ "workflow_state_field": "workflow_state",
+ "states": [
+  {
+   "allow_edit": "HR User",
+   "doc_status": "0",
+   "is_optional_state": 0,
+   "message": "",
+   "state": "Draft",
+   "style": "Warning"
+  },
+  {
+   "allow_edit": "HR Manager",
+   "doc_status": "0",
+   "is_optional_state": 0,
+   "message": "Regulatory article pending verification and review",
+   "state": "Under Review",
+   "style": "Primary"
+  },
+  {
+   "allow_edit": "HR Manager",
+   "doc_status": "0",
+   "is_optional_state": 0,
+   "message": "Regulatory reference approved and linked to controls",
+   "state": "Approved",
+   "style": "Success"
+  }
+ ],
+ "transitions": [
+  {
+   "action": "Submit for Review",
+   "allow_self_approval": 1,
+   "allowed": "HR User",
+   "condition": "",
+   "next_state": "Under Review",
+   "state": "Draft"
+  },
+  {
+   "action": "Approve",
+   "allow_self_approval": 1,
+   "allowed": "HR Manager",
+   "condition": "",
+   "next_state": "Approved",
+   "state": "Under Review"
+  },
+  {
+   "action": "Return to Draft",
+   "allow_self_approval": 1,
+   "allowed": "HR Manager",
+   "condition": "",
+   "next_state": "Draft",
+   "state": "Under Review"
+  }
+ ]
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+body { font-family: Tahoma, Arial, sans-serif; direction: ltr; font-size: 12px; line-height: 1.8; color: #243447; }
+h1 { text-align: center; color: #205493; font-size: 21px; margin: 0 0 6px; }
+.sub { text-align: center; border-bottom: 2px solid #205493; padding-bottom: 8px; margin-bottom: 14px; }
+.section { background: #edf4fb; color: #205493; font-weight: bold; padding: 5px 8px; margin-top: 12px; }
+.box { border: 1px solid #d8dee4; padding: 8px; margin: 8px 0; border-radius: 4px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; }
+.label { font-weight: bold; }
+.signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 42px; }
+.line { border-top: 1px solid #333; padding-top: 8px; text-align: center; }
+</style>
+</head>
+<body>
+<h1>Part-time Employment Contract</h1>
+<div class="sub">Part-time Employment Contract - Contract No. {{ doc.name }}</div>
+
+<div class="section">Parties and Job</div>
+<div class="grid box">
+  <div><span class="label">Employer:</span> {{ doc.company or "" }}</div>
+  <div><span class="label">Employee:</span> {{ doc.employee_name or doc.employee }}</div>
+  <div><span class="label">Position:</span> {{ doc.designation or "" }}</div>
+  <div><span class="label">Regulatory Contract Type:</span> {{ doc.regulatory_contract_variant or "Part-time" }}</div>
+</div>
+
+<div class="section">Working Days and Hours</div>
+<div class="box">
+  Working days and hours are defined in a manner consistent with part-time work regulations. The employee is entitled to remuneration as agreed in this contract and as evidenced by attendance records.
+  <div class="grid">
+    <div><span class="label">Daily Hours:</span> {{ doc.working_hours_per_day or "" }}</div>
+    <div><span class="label">Weekly Hours:</span> {{ doc.working_hours_per_week or "" }}</div>
+    <div><span class="label">Start Date:</span> {{ frappe.format(doc.start_date, "Date") if doc.start_date else "" }}</div>
+    <div><span class="label">End Date:</span> {{ frappe.format(doc.end_date, "Date") if doc.end_date else "" }}</div>
+  </div>
+</div>
+
+<div class="section">Salary and Registration</div>
+<div class="box">
+  Basic salary {{ frappe.format(doc.basic_salary or 0, {"fieldtype": "Currency"}) }}, total salary {{ frappe.format(doc.total_salary or 0, {"fieldtype": "Currency"}) }}.
+  Proof of contract registration or acceptance on the Ministry platform must be retained where applicable.
+</div>
+
+<div class="section">Statutory Provisions</div>
+<div class="box">
+  This contract is governed by the Labor Law and its Executive Regulations. Provisions on rest periods, leave, overtime, and wage protection apply proportionally in accordance with the part-time work framework.
+</div>
+
+<div class="signatures">
+  <div class="line">First Party<br>{{ doc.company or "" }}</div>
+  <div class="line">Second Party<br>{{ doc.employee_name or doc.employee }}</div>
+</div>
+</body>
+</html>

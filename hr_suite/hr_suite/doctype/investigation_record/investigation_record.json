@@ -1,0 +1,231 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-03-19 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "subject_employee",
+  "employee_name",
+  "column_break_1",
+  "company",
+  "department",
+  "status",
+  "reference_section",
+  "case_type",
+  "reference_doctype",
+  "reference_name",
+  "legal_reference_matrix",
+  "column_break_2",
+  "allegation_date",
+  "investigator",
+  "timeline_section",
+  "investigation_start_date",
+  "investigation_end_date",
+  "closure_date",
+  "details_section",
+  "allegation_summary",
+  "employee_statement",
+  "findings",
+  "recommendation",
+  "outcome_summary",
+  "employee_warning_notice"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-INV-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "subject_employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Subject Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "subject_employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "subject_employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "subject_employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Open\nIn Progress\nFindings Issued\nClosed"
+  },
+  {
+   "description": "Identify the source case, allegation date, and assigned investigator.",
+   "fieldname": "reference_section",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "case_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Case Type",
+   "options": "\nAbsence\nMisconduct\nWorkplace Complaint\nGrievance\nSafety Incident\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference DocType",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Data",
+   "label": "Reference Name"
+  },
+  {
+   "fieldname": "legal_reference_matrix",
+   "fieldtype": "Link",
+   "label": "Legal Reference",
+   "options": "Legal Reference Matrix"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "allegation_date",
+   "fieldtype": "Date",
+   "label": "Allegation Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "investigator",
+   "fieldtype": "Link",
+   "label": "Investigator",
+   "options": "User"
+  },
+  {
+   "description": "Track the lifecycle of the investigation from opening to closure.",
+   "fieldname": "timeline_section",
+   "fieldtype": "Section Break",
+   "label": "Timeline"
+  },
+  {
+   "fieldname": "investigation_start_date",
+   "fieldtype": "Date",
+   "label": "Investigation Start Date"
+  },
+  {
+   "fieldname": "investigation_end_date",
+   "fieldtype": "Date",
+   "label": "Investigation End Date"
+  },
+  {
+   "fieldname": "closure_date",
+   "fieldtype": "Date",
+   "label": "Closure Date"
+  },
+  {
+   "description": "Write the allegation, employee statement, findings, and recommended outcome.",
+   "fieldname": "details_section",
+   "fieldtype": "Section Break",
+   "label": "Investigation Details"
+  },
+  {
+   "fieldname": "allegation_summary",
+   "fieldtype": "Text Editor",
+   "label": "Allegation Summary",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee_statement",
+   "fieldtype": "Text Editor",
+   "label": "Employee Statement"
+  },
+  {
+   "fieldname": "findings",
+   "fieldtype": "Text Editor",
+   "label": "Findings"
+  },
+  {
+   "fieldname": "recommendation",
+   "fieldtype": "Text Editor",
+   "label": "Recommendation"
+  },
+  {
+   "fieldname": "outcome_summary",
+   "fieldtype": "Text Editor",
+   "label": "Outcome Summary"
+  },
+  {
+   "fieldname": "employee_warning_notice",
+   "fieldtype": "Link",
+   "label": "Warning Notice",
+   "options": "Employee Warning Notice",
+   "read_only": 1
+  }
+ ],
+ "icon": "fa fa-search",
+ "links": [],
+ "modified": "2026-03-27 02:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Investigation Record",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "write": 1
+  }
+ ],
+ "search_fields": "subject_employee,employee_name,reference_name",
+ "sort_field": "allegation_date",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee_name",
+ "track_changes": 1
+}

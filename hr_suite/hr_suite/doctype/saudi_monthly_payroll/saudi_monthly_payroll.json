@@ -1,0 +1,308 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-03-17 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "company",
+  "column_break_1",
+  "month",
+  "year",
+  "period_label",
+  "posting_date",
+  "column_break_2",
+  "status",
+  "payroll_journal_entry",
+  "source_workbook",
+  "employee_setup_workbook",
+  "auto_employee_creation_section",
+  "auto_create_missing_employees",
+  "column_break_auto_employee_creation",
+  "auto_create_default_gender",
+  "auto_create_default_date_of_birth",
+  "auto_create_default_date_of_joining",
+  "employees_section",
+  "employees",
+  "adjustments_section",
+  "adjustment_items",
+  "totals_section",
+  "total_employees",
+  "total_gross",
+  "column_break_3",
+  "total_gosi_deductions",
+  "total_sick_deductions",
+  "total_loan_deductions",
+  "total_other_deductions",
+  "total_overtime",
+  "total_net_payable",
+  "notes_section",
+  "notes",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-PAY-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Month",
+   "options": "\nJanuary\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember",
+   "reqd": 1
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Year",
+   "reqd": 1
+  },
+  {
+   "fieldname": "period_label",
+   "fieldtype": "Data",
+   "label": "Period",
+   "read_only": 1
+  },
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nProcessing\nCompleted\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payroll_journal_entry",
+   "fieldtype": "Link",
+   "label": "Journal Entry",
+   "options": "Journal Entry",
+   "read_only": 1
+  },
+  {
+   "description": "Attach the payroll workbook, then use Analyze Workbook or Validate Workbook before Import Workbook. Enter payroll IDs whenever available, keep cost center filled for repeated names, and note that zero-salary rows are treated as leave and skipped.",
+   "fieldname": "source_workbook",
+   "fieldtype": "Attach",
+   "label": "Source Workbook"
+  },
+  {
+   "description": "Upload the completed employee setup workbook generated from payroll gaps before using Import Employee Setup.",
+   "fieldname": "employee_setup_workbook",
+   "fieldtype": "Attach",
+   "hidden": 1,
+   "label": "Employee Setup Workbook"
+  },
+  {
+   "fieldname": "auto_employee_creation_section",
+   "fieldtype": "Section Break",
+   "label": "Missing Employee Handling"
+  },
+  {
+   "default": "1",
+   "description": "When payroll rows do not match existing Employee records, create basic Employee masters during workbook import using the defaults below.",
+   "fieldname": "auto_create_missing_employees",
+   "fieldtype": "Check",
+   "label": "Auto Create Missing Employees"
+  },
+  {
+   "fieldname": "column_break_auto_employee_creation",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Prefer not to say",
+   "depends_on": "eval:doc.auto_create_missing_employees",
+   "fieldname": "auto_create_default_gender",
+   "fieldtype": "Link",
+   "label": "Default Gender",
+   "options": "Gender"
+  },
+  {
+   "default": "1990-01-01",
+   "depends_on": "eval:doc.auto_create_missing_employees",
+   "fieldname": "auto_create_default_date_of_birth",
+   "fieldtype": "Date",
+   "label": "Default Date of Birth"
+  },
+  {
+   "depends_on": "eval:doc.auto_create_missing_employees",
+   "description": "If left blank, Posting Date will be used during automatic employee creation.",
+   "fieldname": "auto_create_default_date_of_joining",
+   "fieldtype": "Date",
+   "label": "Default Date of Joining"
+  },
+  {
+   "fieldname": "employees_section",
+   "fieldtype": "Section Break",
+   "label": "Employees"
+  },
+  {
+   "fieldname": "employees",
+   "fieldtype": "Table",
+   "label": "Employees",
+   "options": "Saudi Monthly Payroll Employee"
+  },
+  {
+   "fieldname": "adjustments_section",
+   "fieldtype": "Section Break",
+   "label": "Adjustment Items",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "adjustment_items",
+   "fieldtype": "Table",
+   "label": "Adjustments",
+   "options": "Payroll Adjustment Item"
+  },
+  {
+   "fieldname": "totals_section",
+   "fieldtype": "Section Break",
+   "label": "Totals"
+  },
+  {
+   "fieldname": "total_employees",
+   "fieldtype": "Int",
+   "label": "Employees Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_gross",
+   "fieldtype": "Currency",
+   "label": "Total Gross",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_gosi_deductions",
+   "fieldtype": "Currency",
+   "label": "Total GOSI Deductions",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_sick_deductions",
+   "fieldtype": "Currency",
+   "label": "Total Sick Deductions",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_loan_deductions",
+   "fieldtype": "Currency",
+   "label": "Total Loan Deductions",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_other_deductions",
+   "fieldtype": "Currency",
+   "label": "Total Other Deductions",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_overtime",
+   "fieldtype": "Currency",
+   "label": "Total Overtime",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_net_payable",
+   "fieldtype": "Currency",
+   "label": "Total Net Payable",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Saudi Monthly Payroll",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-03-27 03:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Saudi Monthly Payroll",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "submit": 1,
+   "cancel": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "period_label",
+ "track_changes": 1
+}

@@ -1,0 +1,196 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-05-24 21:52:20.939161",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "company",
+  "period_start",
+  "column_break_1",
+  "period_end",
+  "status",
+  "ratio_section",
+  "total_employees",
+  "disabled_employees",
+  "required_ratio",
+  "column_break_2",
+  "compliance_ratio",
+  "gap_to_required",
+  "responsible_user",
+  "accommodation_section",
+  "accommodations",
+  "legal_reference",
+  "evidence_attachment",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-DIS-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "period_start",
+   "fieldtype": "Date",
+   "label": "Period Start",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "period_end",
+   "fieldtype": "Date",
+   "label": "Period End",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft"
+  },
+  {
+   "fieldname": "ratio_section",
+   "fieldtype": "Section Break",
+   "label": "Ratio"
+  },
+  {
+   "fieldname": "total_employees",
+   "fieldtype": "Int",
+   "label": "Total Employees",
+   "reqd": 1
+  },
+  {
+   "fieldname": "disabled_employees",
+   "fieldtype": "Int",
+   "label": "Qualified Disabled Employees",
+   "reqd": 1
+  },
+  {
+   "default": "4",
+   "fieldname": "required_ratio",
+   "fieldtype": "Percent",
+   "label": "Required Ratio"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "compliance_ratio",
+   "fieldtype": "Percent",
+   "label": "Compliance Ratio",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gap_to_required",
+   "fieldtype": "Float",
+   "label": "Gap to Required",
+   "read_only": 1
+  },
+  {
+   "fieldname": "responsible_user",
+   "fieldtype": "Link",
+   "label": "Responsible User",
+   "options": "User"
+  },
+  {
+   "fieldname": "accommodation_section",
+   "fieldtype": "Section Break",
+   "label": "Employees & Accommodations"
+  },
+  {
+   "fieldname": "accommodations",
+   "fieldtype": "Table",
+   "label": "Accommodations",
+   "options": "Disability Accommodation Row"
+  },
+  {
+   "default": "Executive Regulations Art.9",
+   "fieldname": "legal_reference",
+   "fieldtype": "Data",
+   "label": "Legal Reference"
+  },
+  {
+   "fieldname": "evidence_attachment",
+   "fieldtype": "Attach",
+   "label": "Evidence"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "icon": "fa fa-universal-access",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-09 03:00:20.493585",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Disability Employment Compliance",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "company,status",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "company",
+ "track_changes": 1
+}

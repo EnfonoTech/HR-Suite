@@ -1,0 +1,159 @@
+{% set lang = "en" %}
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: 'Arial', 'Tahoma', sans-serif; direction: ltr; font-size: 13px; color: #222; margin: 0; padding: 20px; }
+  .header { text-align: center; border-bottom: 3px double #1a5276; padding-bottom: 15px; margin-bottom: 20px; }
+  .header h1 { font-size: 22px; color: #1a5276; margin: 5px 0; }
+  .header h2 { font-size: 16px; color: #555; margin: 3px 0; }
+  .company-logo { max-height: 80px; margin-bottom: 10px; }
+  .contract-number { font-size: 12px; color: #777; margin-top: 5px; }
+  .section { margin: 18px 0; }
+  .section-title { background: #1a5276; color: white; padding: 6px 12px; font-size: 14px; font-weight: bold; margin-bottom: 10px; border-radius: 3px; }
+  .row { display: flex; margin: 5px 0; }
+  .label { font-weight: bold; min-width: 200px; color: #333; }
+  .value { flex: 1; padding-left: 10px; color: #111; border-bottom: 1px dotted #ddd; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .article-box { background: #eaf4fb; border-left: 4px solid #1a5276; padding: 10px 15px; margin: 10px 0; font-size: 12px; line-height: 1.7; }
+  .signature-section { margin-top: 50px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .signature-box { text-align: center; }
+  .signature-line { border-top: 1px solid #333; margin-top: 50px; padding-top: 8px; font-size: 12px; }
+  .footer { text-align: center; margin-top: 40px; font-size: 11px; color: #888; border-top: 1px solid #ddd; padding-top: 10px; }
+  table.salary-table { width: 100%; border-collapse: collapse; }
+  table.salary-table th { background: #1a5276; color: white; padding: 7px; text-align: left; }
+  table.salary-table td { padding: 6px 8px; border-bottom: 1px solid #eee; }
+  table.salary-table tr:last-child td { font-weight: bold; background: #f0f8ff; }
+  .badge { display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; }
+  .badge-active { background: #d4efdf; color: #1e8449; }
+  .badge-fixed { background: #d6eaf8; color: #1a5276; }
+  .badge-unlimited { background: #fef9e7; color: #b7950b; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  {% if doc.company %}
+  <div style="font-size:13px; color:#555; margin-bottom:5px;">{{ doc.company }}</div>
+  {% endif %}
+  <h1>Employment Contract</h1>
+  <h2>Employment Contract</h2>
+  <div class="contract-number">
+    Contract No.: {{ doc.name }} &nbsp;|&nbsp;
+    {% if doc.contract_type == "Fixed-term" %}
+      <span class="badge badge-fixed">Fixed-term</span>
+    {% else %}
+      <span class="badge badge-unlimited">Open-ended</span>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Parties -->
+<div class="section">
+  <div class="section-title">Contract Parties</div>
+  <div class="two-col">
+    <div>
+      <div class="row"><span class="label">Employer:</span><span class="value">{{ doc.company }}</span></div>
+    </div>
+    <div>
+      <div class="row"><span class="label">Employee:</span><span class="value">{{ doc.employee_name or doc.employee }}</span></div>
+      <div class="row"><span class="label">Nationality:</span><span class="value">{{ doc.nationality or "—" }}</span></div>
+      <div class="row"><span class="label">Iqama / ID No.:</span><span class="value">{{ doc.iqama_number or "—" }}</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Contract Details -->
+<div class="section">
+  <div class="section-title">Contract Details</div>
+  <div class="two-col">
+    <div>
+      <div class="row"><span class="label">Start Date:</span><span class="value">{{ frappe.format(doc.start_date, "Date") }}</span></div>
+      {% if doc.contract_type == "Fixed-term" and doc.end_date %}
+      <div class="row"><span class="label">End Date:</span><span class="value">{{ frappe.format(doc.end_date, "Date") }}</span></div>
+      {% endif %}
+      <div class="row"><span class="label">Probation Period:</span><span class="value">{{ doc.probation_period_days or 90 }} days</span></div>
+      <div class="row"><span class="label">Probation End Date:</span><span class="value">{{ frappe.format(doc.probation_end_date, "Date") }}</span></div>
+    </div>
+    <div>
+      <div class="row"><span class="label">Daily Working Hours:</span><span class="value">{{ doc.working_hours_per_day or 8 }} hours</span></div>
+      <div class="row"><span class="label">Ramadan Working Hours:</span><span class="value">{{ doc.ramadan_hours_per_day or 6 }} hours</span></div>
+      <div class="row"><span class="label">Weekly Rest Day:</span><span class="value">{{ doc.weekly_rest_day or "Friday" }}</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Salary -->
+<div class="section">
+  <div class="section-title">Compensation</div>
+  <table class="salary-table">
+    <tr>
+      <th>Item</th>
+      <th>Amount (SAR)</th>
+    </tr>
+    <tr>
+      <td>Basic Salary</td>
+      <td>{{ frappe.format(doc.basic_salary, {"fieldtype": "Currency"}) }}</td>
+    </tr>
+    {% if doc.housing_allowance %}
+    <tr>
+      <td>Housing Allowance</td>
+      <td>{{ frappe.format(doc.housing_allowance, {"fieldtype": "Currency"}) }}</td>
+    </tr>
+    {% endif %}
+    {% if doc.transport_allowance %}
+    <tr>
+      <td>Transport Allowance</td>
+      <td>{{ frappe.format(doc.transport_allowance, {"fieldtype": "Currency"}) }}</td>
+    </tr>
+    {% endif %}
+    {% if doc.other_allowances %}
+    <tr>
+      <td>Other Allowances</td>
+      <td>{{ frappe.format(doc.other_allowances, {"fieldtype": "Currency"}) }}</td>
+    </tr>
+    {% endif %}
+    <tr>
+      <td><strong>Total Monthly Salary</strong></td>
+      <td><strong>{{ frappe.format(doc.total_salary, {"fieldtype": "Currency"}) }}</strong></td>
+    </tr>
+  </table>
+</div>
+
+<!-- Legal Articles Box -->
+<div class="section">
+  <div class="section-title">Legal Terms</div>
+  <div class="article-box">
+    <strong>Article 53 — Saudi Labor Law:</strong> The probationary period shall not exceed ninety days and may be extended by agreement up to a maximum of 180 days.<br><br>
+    <strong>Article 107:</strong> An employee is entitled to overtime pay of not less than 150% of their basic wage for each overtime hour.<br><br>
+    <strong>Article 109:</strong> An employee who has completed one year of service is entitled to paid annual leave of not less than 21 days, increasing to 30 days after five years of service.<br><br>
+    <strong>Article 84:</strong> An employee is entitled upon end of service to a benefit for each year of service in accordance with the provisions of the Labor Law.
+  </div>
+</div>
+
+<!-- Signatures -->
+<div class="signature-section">
+  <div class="signature-box">
+    <div class="signature-line">
+      <strong>Employer</strong><br>
+      {{ doc.company }}<br>
+      Date: _______________
+    </div>
+  </div>
+  <div class="signature-box">
+    <div class="signature-line">
+      <strong>Employee</strong><br>
+      {{ doc.employee_name or doc.employee }}<br>
+      Date: _______________
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  This contract is issued in accordance with Saudi Labor Law — Royal Decree No. M/51
+</div>
+
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+body { font-family: Tahoma, Arial, sans-serif; direction: ltr; color: #1f2933; font-size: 12px; line-height: 1.8; }
+.title { text-align: center; border-bottom: 2px solid #1f4e79; padding-bottom: 8px; margin-bottom: 14px; }
+.title h1 { margin: 0; font-size: 21px; color: #1f4e79; }
+.meta, .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; }
+.box { border: 1px solid #d8dee4; padding: 8px; margin: 8px 0; border-radius: 4px; }
+.section { background: #eef5fb; color: #1f4e79; font-weight: bold; padding: 5px 8px; margin-top: 12px; }
+.label { font-weight: bold; }
+.signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 42px; }
+.line { border-top: 1px solid #333; padding-top: 8px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="title">
+  <h1>Standard Employment Contract</h1>
+  <div>Pursuant to the unified contract templates in the Executive Regulations of the Labor Law</div>
+  <div>Contract No.: {{ doc.name }}</div>
+</div>
+
+<div class="section">Contract Parties</div>
+<div class="grid box">
+  <div><span class="label">First Party:</span> {{ doc.company or "" }}</div>
+  <div><span class="label">Second Party:</span> {{ doc.employee_name or doc.employee }}</div>
+  <div><span class="label">Job Title:</span> {{ doc.designation or "" }}</div>
+  <div><span class="label">Department:</span> {{ doc.department or "" }}</div>
+</div>
+
+<div class="section">Contract Subject and Duration</div>
+<div class="box">
+  The second party shall work for the first party under their management and supervision in the position indicated above, and shall carry out assigned tasks in accordance with their capabilities and work requirements.
+  The contract starts on {{ frappe.format(doc.start_date, "Date") }}{% if doc.end_date %} and ends on {{ frappe.format(doc.end_date, "Date") }}{% endif %}.
+  Contract type: {{ doc.contract_type or "Standard" }}.
+</div>
+
+<div class="section">Probation Period and Working Hours</div>
+<div class="grid box">
+  <div><span class="label">Probation Period:</span> {{ doc.probation_period_days or 0 }} days</div>
+  <div><span class="label">Probation End:</span> {{ frappe.format(doc.probation_end_date, "Date") if doc.probation_end_date else "" }}</div>
+  <div><span class="label">Daily Hours:</span> {{ doc.working_hours_per_day or 8 }}</div>
+  <div><span class="label">Weekly Rest Day:</span> {{ doc.weekly_rest_day or "" }}</div>
+</div>
+
+<div class="section">Salary and Allowances</div>
+<div class="grid box">
+  <div><span class="label">Basic Salary:</span> {{ frappe.format(doc.basic_salary or 0, {"fieldtype": "Currency"}) }}</div>
+  <div><span class="label">Housing Allowance:</span> {{ frappe.format(doc.housing_allowance or 0, {"fieldtype": "Currency"}) }}</div>
+  <div><span class="label">Transport Allowance:</span> {{ frappe.format(doc.transport_allowance or 0, {"fieldtype": "Currency"}) }}</div>
+  <div><span class="label">Total Salary:</span> {{ frappe.format(doc.total_salary or 0, {"fieldtype": "Currency"}) }}</div>
+</div>
+
+<div class="section">Statutory Provisions</div>
+<div class="box">
+  The first party undertakes to pay wages on time, register the contract on the approved platform where required, and cover recruitment, residency, and work permit fees for non-Saudi workers.
+  This contract is governed by the Labor Law, its Executive Regulations, and the decisions issued thereunder for matters not expressly addressed herein.
+</div>
+
+<div class="signatures">
+  <div class="line">First Party<br>{{ doc.company or "" }}</div>
+  <div class="line">Second Party<br>{{ doc.employee_name or doc.employee }}</div>
+</div>
+</body>
+</html>

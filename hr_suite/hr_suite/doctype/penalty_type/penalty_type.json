@@ -1,0 +1,136 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:penalty_relation",
+ "creation": "2026-06-09 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "penalty_relation",
+  "penalty_description",
+  "offense_section",
+  "first_label",
+  "second_label",
+  "third_label",
+  "fourth_label",
+  "column_break_values",
+  "first_value",
+  "second_value",
+  "third_value",
+  "fourth_value"
+ ],
+ "fields": [
+  {
+   "fieldname": "penalty_relation",
+   "fieldtype": "Data",
+   "label": "Penalty Relation",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "penalty_description",
+   "fieldtype": "Small Text",
+   "label": "Penalty Description"
+  },
+  {
+   "fieldname": "offense_section",
+   "fieldtype": "Section Break",
+   "label": "Repeat Offense Levels"
+  },
+  {
+   "fieldname": "first_label",
+   "fieldtype": "Data",
+   "label": "First Offense"
+  },
+  {
+   "fieldname": "second_label",
+   "fieldtype": "Data",
+   "label": "Second Offense"
+  },
+  {
+   "fieldname": "third_label",
+   "fieldtype": "Data",
+   "label": "Third Offense"
+  },
+  {
+   "fieldname": "fourth_label",
+   "fieldtype": "Data",
+   "label": "Fourth Offense"
+  },
+  {
+   "fieldname": "column_break_values",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "first_value",
+   "fieldtype": "Float",
+   "label": "First Value (Days)"
+  },
+  {
+   "fieldname": "second_value",
+   "fieldtype": "Float",
+   "label": "Second Value (Days)"
+  },
+  {
+   "fieldname": "third_value",
+   "fieldtype": "Float",
+   "label": "Third Value (Days)"
+  },
+  {
+   "fieldname": "fourth_value",
+   "fieldtype": "Float",
+   "label": "Fourth Value (Days)"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-09 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Penalty Type",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "penalty_relation"
+}

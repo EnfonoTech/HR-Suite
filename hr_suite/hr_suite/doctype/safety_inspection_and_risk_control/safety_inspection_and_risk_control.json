@@ -1,0 +1,204 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-05-24 21:52:25.755829",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "inspection_title",
+  "company",
+  "column_break_1",
+  "location",
+  "inspection_date",
+  "status",
+  "control_section",
+  "inspector_user",
+  "risk_level",
+  "first_aid_available",
+  "column_break_2",
+  "remote_site_controls_required",
+  "next_inspection_date",
+  "action_log",
+  "risk_items_section",
+  "risk_items",
+  "legal_reference",
+  "evidence_attachment",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-SAFE-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "inspection_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Inspection Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "Location"
+  },
+  {
+   "fieldname": "inspection_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Inspection Date",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft"
+  },
+  {
+   "fieldname": "control_section",
+   "fieldtype": "Section Break",
+   "label": "Preventive Controls"
+  },
+  {
+   "fieldname": "inspector_user",
+   "fieldtype": "Link",
+   "label": "Inspector",
+   "options": "User"
+  },
+  {
+   "default": "Medium",
+   "fieldname": "risk_level",
+   "fieldtype": "Select",
+   "label": "Risk Level",
+   "options": "\nLow"
+  },
+  {
+   "default": "0",
+   "fieldname": "first_aid_available",
+   "fieldtype": "Check",
+   "label": "First Aid Available"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "remote_site_controls_required",
+   "fieldtype": "Check",
+   "label": "Remote Site Controls Required"
+  },
+  {
+   "fieldname": "next_inspection_date",
+   "fieldtype": "Date",
+   "label": "Next Inspection Date"
+  },
+  {
+   "fieldname": "action_log",
+   "fieldtype": "Link",
+   "label": "Compliance Action",
+   "options": "HR Compliance Action Log"
+  },
+  {
+   "fieldname": "risk_items_section",
+   "fieldtype": "Section Break",
+   "label": "Risk Items"
+  },
+  {
+   "fieldname": "risk_items",
+   "fieldtype": "Table",
+   "label": "Risk Items",
+   "options": "Safety Risk Control Item"
+  },
+  {
+   "default": "Executive Regulations occupational safety controls",
+   "fieldname": "legal_reference",
+   "fieldtype": "Data",
+   "label": "Legal Reference"
+  },
+  {
+   "fieldname": "evidence_attachment",
+   "fieldtype": "Attach",
+   "label": "Evidence"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "icon": "fa fa-shield",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-09 03:00:22.173624",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Safety Inspection and Risk Control",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "inspection_title,company,location,status",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "inspection_title",
+ "track_changes": 1
+}

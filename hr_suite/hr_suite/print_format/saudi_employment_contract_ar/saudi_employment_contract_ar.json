@@ -1,0 +1,18 @@
+{
+ "align_labels_right": 0,
+ "creation": "2026-03-17 00:00:00.000000",
+ "custom_format": 0,
+ "default_print_language": "ar",
+ "disabled": 0,
+ "doc_type": "Saudi Employment Contract",
+ "doctype": "Print Format",
+ "font": "Default",
+ "html": "",
+ "idx": 0,
+ "line_breaks": 0,
+ "module": "Hr Suite",
+ "name": "Saudi Employment Contract AR",
+ "print_format_builder": 0,
+ "print_format_type": "Jinja",
+ "standard": "Yes"
+}

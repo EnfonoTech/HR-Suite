@@ -1,0 +1,258 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-04-05 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "column_break_1",
+  "company",
+  "department",
+  "adjustment_context_section",
+  "performance_review",
+  "effective_date",
+  "adjustment_type",
+  "column_break_2",
+  "status",
+  "approved_by",
+  "implementation_date",
+  "salary_section",
+  "current_basic_salary",
+  "proposed_basic_salary",
+  "column_break_3",
+  "adjustment_amount",
+  "adjustment_percentage",
+  "currency",
+  "notes_section",
+  "business_justification",
+  "employee_impact",
+  "approval_notes",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-SAL-ADJ-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "description": "Capture why the adjustment is being proposed and what review it came from.",
+   "fieldname": "adjustment_context_section",
+   "fieldtype": "Section Break",
+   "label": "Adjustment Context"
+  },
+  {
+   "fieldname": "performance_review",
+   "fieldtype": "Link",
+   "label": "Performance Review",
+   "options": "Performance Review"
+  },
+  {
+   "fieldname": "effective_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Effective Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "adjustment_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Adjustment Type",
+   "options": "Merit Increase\nPromotion Increase\nMarket Correction\nRetention Adjustment\nExceptional Adjustment\nSalary Reduction",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nUnder Review\nApproved\nImplemented\nRejected"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User"
+  },
+  {
+   "fieldname": "implementation_date",
+   "fieldtype": "Date",
+   "label": "Implementation Date"
+  },
+  {
+   "description": "Track the current and proposed salary figures with automatic variance calculation.",
+   "fieldname": "salary_section",
+   "fieldtype": "Section Break",
+   "label": "Salary Values"
+  },
+  {
+   "fieldname": "current_basic_salary",
+   "fieldtype": "Currency",
+   "label": "Current Basic Salary",
+   "reqd": 1
+  },
+  {
+   "fieldname": "proposed_basic_salary",
+   "fieldtype": "Currency",
+   "label": "Proposed Basic Salary",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "adjustment_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Adjustment Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "adjustment_percentage",
+   "fieldtype": "Percent",
+   "label": "Adjustment %",
+   "read_only": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "default": "SAR"
+  },
+  {
+   "description": "Document the business rationale and the expected employee impact.",
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "business_justification",
+   "fieldtype": "Text Editor",
+   "label": "Business Justification",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee_impact",
+   "fieldtype": "Text Editor",
+   "label": "Employee Impact"
+  },
+  {
+   "fieldname": "approval_notes",
+   "fieldtype": "Text Editor",
+   "label": "Approval Notes"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Salary Adjustment",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "icon": "fa fa-line-chart",
+ "is_submittable": 1,
+ "links": [
+  {
+   "group": "References",
+   "link_doctype": "Performance Review",
+   "link_fieldname": "salary_adjustment"
+  }
+ ],
+ "modified": "2026-04-05 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Salary Adjustment",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "Department Approver",
+   "read": 1,
+   "write": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1
+  }
+ ],
+ "search_fields": "employee,employee_name,adjustment_type,status",
+ "sort_field": "effective_date",
+ "sort_order": "DESC",
+ "title_field": "employee_name",
+ "track_changes": 1
+}

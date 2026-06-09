@@ -1,0 +1,245 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-03-19 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "policy_title",
+  "policy_category",
+  "column_break_1",
+  "company",
+  "status",
+  "policy_section",
+  "effective_date",
+  "review_date",
+  "column_break_2",
+  "owner_user",
+  "acknowledgement_required",
+  "policy_version",
+  "acknowledgement_due_days",
+  "target_scope",
+  "target_department",
+  "acknowledgement_summary_section",
+  "acknowledged_count",
+  "pending_acknowledgement_count",
+  "last_acknowledgement_sync_on",
+  "legal_section",
+  "legal_reference",
+  "article_reference",
+  "compliance_risk",
+  "document_section",
+  "summary",
+  "attachment",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-POL-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "policy_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Policy Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "policy_category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Policy Category",
+   "options": "\nEmployment\nAttendance\nLeave\nCompensation\nConduct\nInvestigation\nGrievance\nSafety\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nActive\nUnder Review\nArchived"
+  },
+  {
+   "description": "Define when the policy starts, when it should be reviewed, and who owns it.",
+   "fieldname": "policy_section",
+   "fieldtype": "Section Break",
+   "label": "Policy Dates"
+  },
+  {
+   "fieldname": "effective_date",
+   "fieldtype": "Date",
+   "label": "Effective Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "review_date",
+   "fieldtype": "Date",
+   "label": "Review Date"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "owner_user",
+   "fieldtype": "Link",
+   "label": "Policy Owner",
+   "options": "User"
+  },
+  {
+   "default": "0",
+   "fieldname": "acknowledgement_required",
+   "fieldtype": "Check",
+   "label": "Acknowledgement Required"
+  },
+  {
+   "default": "1.0",
+   "fieldname": "policy_version",
+   "fieldtype": "Data",
+   "label": "Policy Version",
+   "reqd": 1
+  },
+  {
+   "default": "7",
+   "fieldname": "acknowledgement_due_days",
+   "fieldtype": "Int",
+   "label": "Acknowledgement Due Days"
+  },
+  {
+   "default": "Company Employees",
+   "fieldname": "target_scope",
+   "fieldtype": "Select",
+   "label": "Target Scope",
+   "options": "Company Employees\nDepartment Employees"
+  },
+  {
+   "depends_on": "eval:doc.target_scope === 'Department Employees",
+   "fieldname": "target_department",
+   "fieldtype": "Link",
+   "label": "Target Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "acknowledgement_summary_section",
+   "fieldtype": "Section Break",
+   "label": "Acknowledgement Summary"
+  },
+  {
+   "fieldname": "acknowledged_count",
+   "fieldtype": "Int",
+   "label": "Acknowledged Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pending_acknowledgement_count",
+   "fieldtype": "Int",
+   "label": "Pending Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_acknowledgement_sync_on",
+   "fieldtype": "Datetime",
+   "label": "Last Sync On",
+   "read_only": 1
+  },
+  {
+   "description": "Capture the legal basis and risk level that justify this policy.",
+   "fieldname": "legal_section",
+   "fieldtype": "Section Break",
+   "label": "Legal Basis"
+  },
+  {
+   "fieldname": "legal_reference",
+   "fieldtype": "Data",
+   "label": "Legal Reference"
+  },
+  {
+   "fieldname": "article_reference",
+   "fieldtype": "Data",
+   "label": "Article Reference"
+  },
+  {
+   "fieldname": "compliance_risk",
+   "fieldtype": "Select",
+   "label": "Compliance Risk",
+   "options": "\nLow\nMedium\nHigh\nCritical"
+  },
+  {
+   "description": "Store the policy summary and the latest approved attachment for operational use.",
+   "fieldname": "document_section",
+   "fieldtype": "Section Break",
+   "label": "Document Details"
+  },
+  {
+   "fieldname": "summary",
+   "fieldtype": "Text Editor",
+   "label": "Summary",
+   "reqd": 1
+  },
+  {
+   "fieldname": "attachment",
+   "fieldtype": "Attach",
+   "label": "Attachment"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "icon": "fa fa-book",
+ "links": [],
+ "modified": "2026-03-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "HR Policy Document",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "write": 1
+  }
+ ],
+ "search_fields": "policy_title,policy_category,article_reference",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "policy_title",
+ "track_changes": 1
+}

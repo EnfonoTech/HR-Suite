@@ -1,0 +1,65 @@
+{
+ "creation": "2026-03-19 00:00:00.000000",
+ "doctype": "Workflow",
+ "doctype_or_field": "DocType",
+ "document_type": "Employee Grievance",
+ "is_active": 1,
+ "module": "Hr Suite",
+ "name": "Employee Grievance Workflow",
+ "workflow_name": "Employee Grievance Workflow",
+ "override_status": 0,
+ "send_email_alert": 1,
+ "workflow_state_field": "workflow_state",
+ "states": [
+  {
+   "allow_edit": "HR User",
+   "doc_status": "0",
+   "is_optional_state": 0,
+   "message": "",
+   "state": "Open",
+   "style": "Warning"
+  },
+  {
+   "allow_edit": "HR User",
+   "doc_status": "0",
+   "is_optional_state": 0,
+   "message": "Grievance is under review and pending response",
+   "state": "Under Review",
+   "style": "Primary"
+  },
+  {
+   "allow_edit": "HR Manager",
+   "doc_status": "0",
+   "is_optional_state": 0,
+   "message": "Grievance processed and closed",
+   "state": "Resolved",
+   "style": "Success"
+  }
+ ],
+ "transitions": [
+  {
+   "action": "Start Review",
+   "allow_self_approval": 1,
+   "allowed": "HR User",
+   "condition": "",
+   "next_state": "Under Review",
+   "state": "Open"
+  },
+  {
+   "action": "Resolve",
+   "allow_self_approval": 1,
+   "allowed": "HR Manager",
+   "condition": "",
+   "next_state": "Resolved",
+   "state": "Under Review"
+  },
+  {
+   "action": "Reopen",
+   "allow_self_approval": 1,
+   "allowed": "HR Manager",
+   "condition": "",
+   "next_state": "Open",
+   "state": "Resolved"
+  }
+ ]
+}

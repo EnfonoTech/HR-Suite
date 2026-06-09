@@ -1,0 +1,110 @@
+{
+ "actions": [],
+ "creation": "2026-03-19 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "violation_category",
+  "legal_reference",
+  "column_break_1",
+  "severity",
+  "status",
+  "violation_description",
+  "corrective_action",
+  "column_break_2",
+  "fine_amount",
+  "correction_due_date",
+  "resolved_on",
+  "evidence_attachment",
+  "action_log"
+ ],
+ "fields": [
+  {
+   "fieldname": "violation_category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Violation Category",
+   "options": "\nWorking Hours\nWages\nLeave Entitlement\nContract Documentation\nSaudization\nWork Permit and Iqama\nHealth and Safety\nRecord Keeping\nWomen and Young Workers\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "legal_reference",
+   "fieldtype": "Data",
+   "label": "Legal Reference"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Severity",
+   "options": "\nLow\nMedium\nHigh\nCritical",
+   "reqd": 1
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Open\nUnder Review\nCorrective Action In Progress\nCorrected\nWaived\nClosed"
+  },
+  {
+   "fieldname": "violation_description",
+   "fieldtype": "Text Editor",
+   "label": "Violation Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "corrective_action",
+   "fieldtype": "Text Editor",
+   "label": "Corrective Action"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "fine_amount",
+   "fieldtype": "Currency",
+   "label": "Fine Amount"
+  },
+  {
+   "fieldname": "correction_due_date",
+   "fieldtype": "Date",
+   "label": "Correction Due Date"
+  },
+  {
+   "fieldname": "resolved_on",
+   "fieldtype": "Date",
+   "label": "Resolved On"
+  },
+  {
+   "fieldname": "evidence_attachment",
+   "fieldtype": "Attach",
+   "label": "Evidence Attachment"
+  },
+  {
+   "fieldname": "action_log",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Compliance Action",
+   "no_copy": 1,
+   "options": "HR Compliance Action Log",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-03-19 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Labor Inspection Violation",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "idx",
+ "sort_order": "ASC"
+}

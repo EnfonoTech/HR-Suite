@@ -1,0 +1,256 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-03-17 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "column_break_1",
+  "company",
+  "department",
+  "leave_details_section",
+  "leave_type",
+  "leave_start_date",
+  "leave_end_date",
+  "column_break_2",
+  "entitled_days",
+  "actual_days",
+  "status",
+  "eligibility_section",
+  "is_eligible",
+  "eligibility_notes",
+  "hajj_previously_taken",
+  "column_break_3",
+  "relationship_to_deceased",
+  "documentation_attached",
+  "financial_section",
+  "daily_basic_salary",
+  "total_special_leave_pay",
+  "payroll_processed",
+  "notes",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "depends_on": "eval:doc.leave_type && doc.leave_type.includes('Hajj')",
+   "label": "Naming Series",
+   "options": "SAU-SL-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "depends_on": "eval:doc.leave_type && doc.leave_type.includes('Bereavement')",
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "leave_details_section",
+   "fieldtype": "Section Break",
+   "label": "Leave Details"
+  },
+  {
+   "fieldname": "leave_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Leave Type",
+   "options": "\nHajj Leave\nBereavement Leave\nMarriage Leave",
+   "reqd": 1
+  },
+  {
+   "fieldname": "leave_start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "leave_end_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "End Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "entitled_days",
+   "fieldtype": "Int",
+   "label": "Entitled Days",
+   "read_only": 1
+  },
+  {
+   "fieldname": "actual_days",
+   "fieldtype": "Int",
+   "label": "Actual Days",
+   "read_only": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nApproved\nRejected\nCancelled"
+  },
+  {
+   "fieldname": "eligibility_section",
+   "fieldtype": "Section Break",
+   "label": "Eligibility"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_eligible",
+   "fieldtype": "Check",
+   "label": "Is Eligible",
+   "read_only": 1
+  },
+  {
+   "fieldname": "eligibility_notes",
+   "fieldtype": "Small Text",
+   "label": "Eligibility Notes",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:frm.doc.leave_type && frm.doc.leave_type.includes('Hajj')",
+   "fieldname": "hajj_previously_taken",
+   "fieldtype": "Check",
+   "label": "Hajj Leave Previously Taken",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:frm.doc.leave_type && frm.doc.leave_type.includes('Bereavement')",
+   "fieldname": "relationship_to_deceased",
+   "fieldtype": "Select",
+   "label": "Relationship to Deceased",
+   "options": "\nParent\nSpouse\nChild\nSibling\nOther"
+  },
+  {
+   "default": "0",
+   "fieldname": "documentation_attached",
+   "fieldtype": "Check",
+   "label": "Documentation Attached"
+  },
+  {
+   "fieldname": "financial_section",
+   "fieldtype": "Section Break",
+   "label": "Financial"
+  },
+  {
+   "fieldname": "daily_basic_salary",
+   "fieldtype": "Currency",
+   "label": "Daily Basic Salary"
+  },
+  {
+   "fieldname": "total_special_leave_pay",
+   "fieldtype": "Currency",
+   "label": "Total Special Leave Pay",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "payroll_processed",
+   "fieldtype": "Check",
+   "label": "Payroll Processed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Special Leave",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-03-17 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Special Leave",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "HR User",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Employee",
+   "write": 1
+  }
+ ],
+ "sort_field": "leave_start_date",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee_name",
+ "track_changes": 1
+}

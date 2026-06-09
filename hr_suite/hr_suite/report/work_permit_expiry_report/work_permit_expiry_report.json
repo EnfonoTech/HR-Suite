@@ -1,0 +1,17 @@
+{
+ "add_total_row": 0,
+ "creation": "2026-03-17 00:00:00.000000",
+ "disabled": 0,
+ "doctype": "Report",
+ "is_standard": "Yes",
+ "module": "Hr Suite",
+ "name": "Work Permit Expiry Report",
+ "ref_doctype": "Work Permit Iqama",
+ "report_name": "Work Permit Expiry Report",
+ "report_type": "Script Report",
+ "roles": [
+  {"role": "HR Manager"},
+  {"role": "HR User"},
+  {"role": "System Manager"}
+ ]
+}

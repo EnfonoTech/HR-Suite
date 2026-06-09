@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: 'Arial', 'Tahoma', sans-serif; direction: ltr; font-size: 13px; color: #222; margin: 0; padding: 30px; }
+  .header { text-align: center; border-bottom: 3px double #1e8449; padding-bottom: 15px; margin-bottom: 25px; }
+  .header h1 { font-size: 22px; color: #1e8449; margin: 5px 0; }
+  .header h2 { font-size: 14px; color: #777; }
+  .ref { font-size: 12px; color: #888; margin-top: 5px; }
+  .date-line { text-align: right; margin-bottom: 20px; font-size: 12px; color: #555; }
+  p { line-height: 1.9; margin: 8px 0; }
+  .section-title { background: #1e8449; color: white; padding: 6px 14px; font-size: 14px; border-radius: 3px; margin: 18px 0 10px 0; }
+  table.calc { width: 100%; border-collapse: collapse; margin: 10px 0; }
+  table.calc th { background: #1e8449; color: white; padding: 8px; text-align: left; font-size: 13px; }
+  table.calc td { padding: 7px 10px; border-bottom: 1px solid #e8e8e8; }
+  table.calc tr:nth-child(even) td { background: #f9fefb; }
+  .total-row td { font-weight: bold; font-size: 14px; background: #d4efdf !important; border-top: 2px solid #1e8449; }
+  .factor-box { background: #fef9e7; border: 1px solid #f0c040; padding: 10px 15px; border-radius: 4px; margin: 10px 0; font-size: 12px; }
+  .signature-section { margin-top: 50px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .signature-box { text-align: center; }
+  .signature-line { border-top: 1px solid #333; margin-top: 50px; padding-top: 8px; font-size: 12px; }
+  .footer { text-align: center; margin-top: 40px; font-size: 11px; color: #888; border-top: 1px solid #ddd; padding-top: 10px; }
+  .amount-highlight { font-size: 20px; font-weight: bold; color: #1e8449; text-align: center; padding: 12px; background: #d4efdf; border-radius: 5px; margin: 15px 0; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div style="font-size:13px; color:#555;">{{ doc.company }}</div>
+  <h1>End of Service Benefit Certificate</h1>
+  <h2>End of Service Benefit Certificate</h2>
+  <div class="ref">Reference: {{ doc.name }}</div>
+</div>
+
+<div class="date-line">Date: {{ frappe.format(frappe.utils.today(), "Date") }}</div>
+
+<p><strong>{{ doc.company }}</strong> hereby certifies that the End of Service Benefit has been calculated for the employee:</p>
+
+<div class="section-title">Employee Information</div>
+<table class="calc">
+  <tr><td style="font-weight:bold; width:220px;">Employee Name</td><td>{{ doc.employee_name or doc.employee }}</td></tr>
+  <tr><td style="font-weight:bold;">Employee ID</td><td>{{ doc.employee }}</td></tr>
+  <tr><td style="font-weight:bold;">Date of Joining</td><td>{{ frappe.format(doc.joining_date, "Date") }}</td></tr>
+  <tr><td style="font-weight:bold;">Termination Date</td><td>{{ frappe.format(doc.termination_date, "Date") }}</td></tr>
+  <tr><td style="font-weight:bold;">Years of Service</td><td>{{ "%.2f"|format(doc.years_of_service or 0) }} years</td></tr>
+  <tr><td style="font-weight:bold;">Termination Reason</td><td>{{ doc.termination_reason }}</td></tr>
+</table>
+
+<div class="section-title">Calculation Details</div>
+<table class="calc">
+  <tr>
+    <th>Item</th>
+    <th>Amount (SAR)</th>
+  </tr>
+  <tr>
+    <td>Last Basic Salary (Monthly)</td>
+    <td>{{ frappe.format(doc.last_basic_salary, {"fieldtype": "Currency"}) }}</td>
+  </tr>
+  {% if doc.eosb_years_1_5 %}
+  <tr>
+    <td>Benefit for Years 1-5 (half month/year)</td>
+    <td>{{ frappe.format(doc.eosb_years_1_5, {"fieldtype": "Currency"}) }}</td>
+  </tr>
+  {% endif %}
+  {% if doc.eosb_years_above_5 %}
+  <tr>
+    <td>Benefit for Years above 5 (full month/year)</td>
+    <td>{{ frappe.format(doc.eosb_years_above_5, {"fieldtype": "Currency"}) }}</td>
+  </tr>
+  {% endif %}
+  <tr>
+    <td>Gross Benefit before Adjustment</td>
+    <td>{{ frappe.format(doc.eosb_gross, {"fieldtype": "Currency"}) }}</td>
+  </tr>
+  {% if doc.eosb_deductions %}
+  <tr>
+    <td>Deductions</td>
+    <td style="color:#c0392b;">- {{ frappe.format(doc.eosb_deductions, {"fieldtype": "Currency"}) }}</td>
+  </tr>
+  {% endif %}
+  <tr class="total-row">
+    <td>Net Benefit Due</td>
+    <td>{{ frappe.format(doc.net_eosb, {"fieldtype": "Currency"}) }}</td>
+  </tr>
+</table>
+
+{% if doc.resignation_factor and doc.resignation_factor < 1 %}
+<div class="factor-box">
+  <strong>Note:</strong> {{ doc.resignation_factor_label or "" }}<br>
+  A factor of {{ doc.resignation_factor }} was applied to the gross benefit in accordance with Article 84 of the Labor Law.
+</div>
+{% endif %}
+
+<div class="amount-highlight">
+  Net Amount Due: {{ frappe.format(doc.net_eosb, {"fieldtype": "Currency"}) }} SAR
+</div>
+
+{% if doc.calculation_notes %}
+<div style="background:#f5f5f5; padding:10px; border-radius:4px; font-size:12px; margin:10px 0;">
+  <strong>Notes:</strong> {{ doc.calculation_notes }}
+</div>
+{% endif %}
+
+<div class="signature-section">
+  <div class="signature-box">
+    <div class="signature-line">
+      <strong>HR Manager</strong><br>
+      Date: _______________
+    </div>
+  </div>
+  <div class="signature-box">
+    <div class="signature-line">
+      <strong>Employee / Amount Received</strong><br>
+      {{ doc.employee_name or doc.employee }}<br>
+      Date: _______________
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Calculated in accordance with Article 84 of the Saudi Labor Law — Royal Decree No. M/51
+</div>
+
+</body>
+</html>

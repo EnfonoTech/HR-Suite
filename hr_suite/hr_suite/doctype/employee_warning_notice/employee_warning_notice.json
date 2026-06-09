@@ -1,0 +1,207 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-03-27 02:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "column_break_1",
+  "company",
+  "department",
+  "warning_section",
+  "warning_date",
+  "warning_level",
+  "status",
+  "column_break_2",
+  "investigation_record",
+  "disciplinary_procedure",
+  "legal_reference_matrix",
+  "details_section",
+  "issue_reason",
+  "corrective_action",
+  "due_date",
+  "employee_acknowledged_on",
+  "evidence_attachment",
+  "notes",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-WRN-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "warning_section",
+   "fieldtype": "Section Break",
+   "label": "Warning Details"
+  },
+  {
+   "fieldname": "warning_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Warning Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "warning_level",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Warning Level",
+   "options": "Verbal Warning\nFirst Written Warning\nSecond Written Warning\nFinal Warning",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Issued\nAcknowledged\nResolved\nWithdrawn",
+   "default": "Issued"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "investigation_record",
+   "fieldtype": "Link",
+   "label": "Investigation Record",
+   "options": "Investigation Record"
+  },
+  {
+   "fieldname": "disciplinary_procedure",
+   "fieldtype": "Link",
+   "label": "Disciplinary Procedure",
+   "options": "Disciplinary Procedure"
+  },
+  {
+   "fieldname": "legal_reference_matrix",
+   "fieldtype": "Link",
+   "label": "Legal Reference",
+   "options": "Legal Reference Matrix"
+  },
+  {
+   "fieldname": "details_section",
+   "fieldtype": "Section Break",
+   "label": "Actions"
+  },
+  {
+   "fieldname": "issue_reason",
+   "fieldtype": "Text Editor",
+   "label": "Issue Reason",
+   "reqd": 1
+  },
+  {
+   "fieldname": "corrective_action",
+   "fieldtype": "Text Editor",
+   "label": "Corrective Action"
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Follow-up Due Date"
+  },
+  {
+   "fieldname": "employee_acknowledged_on",
+   "fieldtype": "Datetime",
+   "label": "Acknowledged On"
+  },
+  {
+   "fieldname": "evidence_attachment",
+   "fieldtype": "Attach",
+   "label": "Evidence"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Employee Warning Notice",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "icon": "fa fa-exclamation-triangle",
+ "modified": "2026-03-27 02:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Employee Warning Notice",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "search_fields": "employee,employee_name,warning_level",
+ "sort_field": "warning_date",
+ "sort_order": "DESC",
+ "title_field": "employee_name",
+ "track_changes": 1
+}

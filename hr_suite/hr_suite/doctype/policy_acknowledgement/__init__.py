@@ -1,0 +1,1 @@
+"""Policy acknowledgement doctype package."""

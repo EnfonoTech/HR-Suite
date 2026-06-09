@@ -1,0 +1,163 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-05-25 08:22:23.178398",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "provider_compliance",
+  "complainant_type",
+  "complaint_subject",
+  "column_break_1",
+  "received_on",
+  "response_due_date",
+  "status",
+  "resolution_section",
+  "complaint_details",
+  "resolution_summary",
+  "platform_reference",
+  "evidence_attachment",
+  "legal_reference"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-RPC-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "provider_compliance",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Provider Compliance",
+   "options": "Recruitment Service Provider Compliance"
+  },
+  {
+   "fieldname": "complainant_type",
+   "fieldtype": "Select",
+   "label": "Complainant Type",
+   "options": "\nWorker",
+   "reqd": 1
+  },
+  {
+   "fieldname": "complaint_subject",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Complaint Subject",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "received_on",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Received On",
+   "reqd": 1
+  },
+  {
+   "fieldname": "response_due_date",
+   "fieldtype": "Date",
+   "label": "Response Due Date"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Open"
+  },
+  {
+   "fieldname": "resolution_section",
+   "fieldtype": "Section Break",
+   "label": "Resolution"
+  },
+  {
+   "fieldname": "complaint_details",
+   "fieldtype": "Text Editor",
+   "label": "Complaint Details"
+  },
+  {
+   "fieldname": "resolution_summary",
+   "fieldtype": "Text Editor",
+   "label": "Resolution Summary"
+  },
+  {
+   "fieldname": "platform_reference",
+   "fieldtype": "Data",
+   "label": "Platform Reference"
+  },
+  {
+   "fieldname": "evidence_attachment",
+   "fieldtype": "Attach",
+   "label": "Evidence"
+  },
+  {
+   "default": "Annex 4 complaint channel and platform handling controls",
+   "fieldname": "legal_reference",
+   "fieldtype": "Data",
+   "label": "Legal Reference"
+  }
+ ],
+ "grid_page_length": 50,
+ "icon": "fa fa-comments",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-09 03:00:24.974067",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Recruitment Provider Complaint",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "complaint_subject,provider_compliance,status",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "complaint_subject",
+ "track_changes": 1
+}

@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Hr Suite Visual Check</title>
+	<style>
+		:root {
+			color-scheme: light;
+			font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+			background: #f7f7f5;
+			color: #202124;
+		}
+		body {
+			margin: 0;
+			min-height: 100vh;
+			display: grid;
+			grid-template-rows: auto 1fr;
+		}
+		header {
+			display: grid;
+			grid-template-columns: 1fr auto;
+			gap: 16px;
+			align-items: center;
+			padding: 12px 16px;
+			border-bottom: 1px solid #d7d7d2;
+			background: #ffffff;
+		}
+		h1 {
+			margin: 0;
+			font-size: 17px;
+			font-weight: 650;
+		}
+		.controls {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+			flex-wrap: wrap;
+			justify-content: flex-end;
+		}
+		button, select {
+			height: 34px;
+			border: 1px solid #c8c8c2;
+			background: #fff;
+			border-radius: 6px;
+			padding: 0 10px;
+			font: inherit;
+		}
+		button {
+			cursor: pointer;
+		}
+		button.primary {
+			background: #1263a3;
+			border-color: #1263a3;
+			color: #fff;
+		}
+		main {
+			display: grid;
+			grid-template-columns: minmax(280px, 360px) 1fr;
+			min-height: 0;
+		}
+		aside {
+			border-right: 1px solid #d7d7d2;
+			background: #fbfbfa;
+			overflow: auto;
+			padding: 12px;
+		}
+		.route {
+			display: grid;
+			grid-template-columns: 20px 1fr;
+			gap: 8px;
+			padding: 9px 8px;
+			border-radius: 6px;
+			cursor: pointer;
+		}
+		.route.active {
+			background: #e8f1f8;
+		}
+		.status {
+			width: 10px;
+			height: 10px;
+			border-radius: 999px;
+			margin-top: 6px;
+			background: #9aa0a6;
+		}
+		.ok .status { background: #188038; }
+		.warn .status { background: #f9ab00; }
+		.fail .status { background: #d93025; }
+		.route-title {
+			font-size: 13px;
+			font-weight: 620;
+		}
+		.route-url {
+			font-size: 12px;
+			color: #5f6368;
+			overflow-wrap: anywhere;
+		}
+		.route-note {
+			font-size: 12px;
+			margin-top: 4px;
+			color: #3c4043;
+			white-space: pre-wrap;
+		}
+		.viewer {
+			min-width: 0;
+			min-height: 0;
+			display: grid;
+			grid-template-rows: auto 1fr;
+		}
+		.banner {
+			padding: 8px 12px;
+			border-bottom: 1px solid #d7d7d2;
+			background: #fff;
+			font-size: 13px;
+			display: flex;
+			gap: 16px;
+			align-items: center;
+			justify-content: space-between;
+		}
+		#frame {
+			width: 100%;
+			height: 100%;
+			border: 0;
+			background: #fff;
+		}
+		@media (max-width: 900px) {
+			main {
+				grid-template-columns: 1fr;
+				grid-template-rows: auto 1fr;
+			}
+			aside {
+				max-height: 210px;
+				border-right: 0;
+				border-bottom: 1px solid #d7d7d2;
+			}
+		}
+	</style>
+</head>
+<body>
+	<header>
+		<div>
+			<h1>Hr Suite Visual Check</h1>
+			<div id="summary">Open this page while logged in as Administrator.</div>
+		</div>
+		<div class="controls">
+			<select id="viewport">
+				<option value="desktop">Desktop 1366 x 768</option>
+				<option value="tablet">Tablet 900 x 900</option>
+				<option value="mobile">Mobile 390 x 844</option>
+			</select>
+			<button id="prev">Prev</button>
+			<button id="next">Next</button>
+			<button class="primary" id="run">Run</button>
+		</div>
+	</header>
+	<main>
+		<aside id="routes"></aside>
+		<section class="viewer">
+			<div class="banner">
+				<span id="current">Ready</span>
+				<span id="hint">The page below is live. Watch for broken layouts, errors, and redirects.</span>
+			</div>
+			<iframe id="frame" title="Visual check target"></iframe>
+		</section>
+	</main>
+	<script>
+		const checks = [
+			["Desk", "/app"],
+			["Hr Suite Workspace", "/app/saudi-hr"],
+			["Mobile Attendance", "/mobile-attendance"],
+			["Attendance Action Hub", "/app/attendance-action-hub"],
+			["Employee Org Tree", "/app/employee-org-tree"],
+			["Saudi Monthly Payroll", "/app/saudi-monthly-payroll"],
+			["Employee Loan", "/app/employee-loan"],
+			["WPS Export Report", "/app/query-report/WPS%20Export%20Report"],
+			["GOSI Monthly Report", "/app/query-report/GOSI%20Monthly%20Report"],
+			["Saudi Leave Balance Report", "/app/query-report/Saudi%20Leave%20Balance%20Report"]
+		];
+		const results = checks.map(([title, url]) => ({ title, url, state: "pending", note: "" }));
+		const routesEl = document.getElementById("routes");
+		const frame = document.getElementById("frame");
+		const currentEl = document.getElementById("current");
+		const summaryEl = document.getElementById("summary");
+		let currentIndex = 0;
+		let running = false;
+
+		function render() {
+			routesEl.innerHTML = "";
+			results.forEach((item, index) => {
+				const row = document.createElement("div");
+				row.className = `route ${item.state === "ok" ? "ok" : item.state === "fail" ? "fail" : item.state === "warn" ? "warn" : ""} ${index === currentIndex ? "active" : ""}`;
+				row.innerHTML = `<span class="status"></span><div><div class="route-title">${item.title}</div><div class="route-url">${item.url}</div><div class="route-note">${item.note || ""}</div></div>`;
+				row.onclick = () => load(index);
+				routesEl.appendChild(row);
+			});
+			const done = results.filter((item) => item.state !== "pending").length;
+			const failed = results.filter((item) => item.state === "fail").length;
+			const warned = results.filter((item) => item.state === "warn").length;
+			summaryEl.textContent = `${done}/${results.length} checked, ${failed} failed, ${warned} warnings`;
+		}
+
+		function setViewport() {
+			const mode = document.getElementById("viewport").value;
+			if (mode === "mobile") {
+				frame.style.width = "390px";
+				frame.style.height = "844px";
+				frame.style.justifySelf = "center";
+			} else if (mode === "tablet") {
+				frame.style.width = "900px";
+				frame.style.height = "900px";
+				frame.style.justifySelf = "center";
+			} else {
+				frame.style.width = "100%";
+				frame.style.height = "100%";
+				frame.style.justifySelf = "stretch";
+			}
+		}
+
+		function inspectFrame(index) {
+			const item = results[index];
+			try {
+				const doc = frame.contentDocument;
+				const win = frame.contentWindow;
+				const text = (doc.body && doc.body.innerText || "").slice(0, 3000);
+				const title = doc.title || "";
+				const url = win.location.href;
+				const html = doc.documentElement;
+				const body = doc.body;
+				const overflowX = html.scrollWidth > html.clientWidth + 8 || (body && body.scrollWidth > body.clientWidth + 8);
+				const badText = /traceback|server error|internal server error|not found|permission error|frappe\\.exceptions|syntaxerror|typeerror|referenceerror/i.test(text + " " + title);
+				const stillLogin = /\/login(?:#|\?|$)/.test(url) && item.url !== "/login";
+				const blank = !text.trim();
+				if (badText || stillLogin || blank) {
+					item.state = "fail";
+					item.note = [
+						stillLogin ? "Redirected to login" : "",
+						blank ? "Blank body" : "",
+						badText ? "Error text found" : ""
+					].filter(Boolean).join("; ");
+				} else if (overflowX) {
+					item.state = "warn";
+					item.note = "Horizontal overflow detected";
+				} else {
+					item.state = "ok";
+					item.note = "Loaded";
+				}
+				currentEl.textContent = `${item.title}: ${item.note} (${url})`;
+			} catch (error) {
+				item.state = "warn";
+				item.note = `Could not inspect iframe: ${error.message}`;
+				currentEl.textContent = `${item.title}: ${item.note}`;
+			}
+			render();
+		}
+
+		function load(index) {
+			currentIndex = (index + checks.length) % checks.length;
+			const item = results[currentIndex];
+			currentEl.textContent = `Loading ${item.title}...`;
+			render();
+			frame.onload = () => setTimeout(() => inspectFrame(currentIndex), 1600);
+			frame.src = item.url;
+		}
+
+		async function runAll() {
+			if (running) return;
+			running = true;
+			for (let index = 0; index < checks.length; index++) {
+				load(index);
+				await new Promise((resolve) => setTimeout(resolve, 4200));
+			}
+			running = false;
+		}
+
+		document.getElementById("run").onclick = runAll;
+		document.getElementById("prev").onclick = () => load(currentIndex - 1);
+		document.getElementById("next").onclick = () => load(currentIndex + 1);
+		document.getElementById("viewport").onchange = () => {
+			setViewport();
+			load(currentIndex);
+		};
+		setViewport();
+		render();
+		load(0);
+	</script>
+</body>
+</html>

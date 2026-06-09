@@ -1,0 +1,1 @@
+# Package marker for the attendance action hub page.

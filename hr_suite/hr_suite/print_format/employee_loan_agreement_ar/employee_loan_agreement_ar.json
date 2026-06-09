@@ -1,0 +1,18 @@
+{
+ "align_labels_right": 0,
+ "creation": "2026-03-27 04:10:00.000000",
+ "custom_format": 0,
+ "default_print_language": "ar",
+ "disabled": 0,
+ "doc_type": "Employee Loan",
+ "doctype": "Print Format",
+ "font": "Default",
+ "html": "Finance Authorization</div>\n    </div>\n  </div>\n</div>\n</body>\n</html>\n",
+ "idx": 0,
+ "line_breaks": 0,
+ "module": "Hr Suite",
+ "name": "Employee Loan Agreement AR",
+ "print_format_builder": 0,
+ "print_format_type": "Jinja",
+ "standard": "Yes"
+}

@@ -1,0 +1,14 @@
+{
+ "creation": "2026-03-17 00:00:00.000000",
+ "doctype": "Number Card",
+ "document_type": "GOSI Contribution",
+ "filters_json": "Pending\"]]",
+ "function": "Sum",
+ "aggregate_function_based_on": "total_contribution",
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Unpaid GOSI",
+ "module": "Hr Suite",
+ "name": "Total GOSI This Month",
+ "show_percentage_stats": 0
+}

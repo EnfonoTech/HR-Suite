@@ -1,0 +1,22 @@
+{
+ "attach_print": 0,
+ "channel": "Email",
+ "condition": "",
+ "creation": "2026-03-17 00:00:00.000000",
+ "doctype": "Notification",
+ "document_type": "Overtime Request",
+ "enabled": 1,
+ "event": "New",
+ "message": "<p>You have a new overtime request pending approval:</p>\n<ul>\n  <li>Employee: <b>{{ doc.employee_name }}</b></li>\n  <li>Date: {{ doc.date }}</li>\n  <li>Overtime Hours: {{ doc.overtime_hours }}</li>\n  <li>Amount: {{ doc.overtime_amount }} SAR</li>\n</ul>\n<p>Please review the request and take appropriate action.</p>",
+ "module": "Hr Suite",
+ "name": "Overtime Submitted Alert",
+ "recipients": [
+  {
+   "cc": "",
+   "condition": "",
+   "receiver_by_role": "HR Manager"
+  }
+ ],
+ "send_system_notification": 1,
+ "subject": "New Overtime Request — {{ doc.employee_name }} — {{ doc.date }}"
+}

@@ -1,0 +1,305 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-03-17 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "column_break_1",
+  "company",
+  "nationality",
+  "period_section",
+  "month",
+  "year",
+  "period_label",
+  "column_break_2",
+  "contribution_base",
+  "rates_section",
+  "employee_contribution_rate",
+  "employer_contribution_rate",
+  "column_break_3",
+  "employee_contribution",
+  "employer_contribution",
+  "total_contribution",
+  "breakdown_section",
+  "saudi_employee_pension_rate",
+  "saudi_employee_unemployment_rate",
+  "column_break_4",
+  "saudi_employer_pension_rate",
+  "saudi_employer_hazard_rate",
+  "saudi_employer_unemployment_rate",
+  "payment_section",
+  "payment_status",
+  "payment_date",
+  "column_break_5",
+  "reference_number",
+  "journal_entry",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-GOSI-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "nationality",
+   "fieldtype": "Data",
+   "label": "Nationality",
+   "read_only": 1
+  },
+  {
+   "fieldname": "period_section",
+   "fieldtype": "Section Break",
+   "label": "Period"
+  },
+  {
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Month",
+   "options": "January\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember",
+   "reqd": 1
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Year",
+   "reqd": 1
+  },
+  {
+   "fieldname": "period_label",
+   "fieldtype": "Data",
+   "label": "Period Label",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Usually = Basic Salary + Housing Allowance (max 45,000 SAR)",
+   "fieldname": "contribution_base",
+   "fieldtype": "Currency",
+   "label": "Contribution Base",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rates_section",
+   "fieldtype": "Section Break",
+   "label": "Rates & Amounts"
+  },
+  {
+   "description": "Saudi: 10% | Non-Saudi: 0%",
+   "fieldname": "employee_contribution_rate",
+   "fieldtype": "Percent",
+   "label": "Employee Rate %",
+   "read_only": 1
+  },
+  {
+   "description": "Saudi: 12% | Non-Saudi: 2%",
+   "fieldname": "employer_contribution_rate",
+   "fieldtype": "Percent",
+   "label": "Employer Rate %",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "employee_contribution",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Employee Contribution",
+   "read_only": 1
+  },
+  {
+   "fieldname": "employer_contribution",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Employer Contribution",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_contribution",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Contribution",
+   "read_only": 1
+  },
+  {
+   "fieldname": "breakdown_section",
+   "fieldtype": "Section Break",
+   "label": "Breakdown (Saudi)"
+  },
+  {
+   "default": "9",
+   "description": "Pension",
+   "fieldname": "saudi_employee_pension_rate",
+   "fieldtype": "Percent",
+   "label": "Employee Pension %"
+  },
+  {
+   "default": "1",
+   "description": "Unemployment Insurance",
+   "fieldname": "saudi_employee_unemployment_rate",
+   "fieldtype": "Percent",
+   "label": "Employee Unemployment %"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "9",
+   "description": "Pension",
+   "fieldname": "saudi_employer_pension_rate",
+   "fieldtype": "Percent",
+   "label": "Employer Pension %"
+  },
+  {
+   "default": "2",
+   "description": "Occupational Hazards",
+   "fieldname": "saudi_employer_hazard_rate",
+   "fieldtype": "Percent",
+   "label": "Employer Hazard %"
+  },
+  {
+   "default": "1",
+   "description": "Unemployment Insurance",
+   "fieldname": "saudi_employer_unemployment_rate",
+   "fieldtype": "Percent",
+   "label": "Employer Unemployment %"
+  },
+  {
+   "fieldname": "payment_section",
+   "fieldtype": "Section Break",
+   "label": "Payment"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "payment_status",
+   "fieldtype": "Select",
+   "label": "Payment Status",
+   "options": "Pending\nPaid\nCancelled"
+  },
+  {
+   "fieldname": "payment_date",
+   "fieldtype": "Date",
+   "label": "Payment Date"
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reference_number",
+   "fieldtype": "Data",
+   "label": "GOSI Reference No."
+  },
+  {
+   "fieldname": "journal_entry",
+   "fieldtype": "Link",
+   "label": "Journal Entry",
+   "options": "Journal Entry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "GOSI Contribution",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-03-22 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "GOSI Contribution",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "employee_name",
+ "track_changes": 1
+}

@@ -1,0 +1,187 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-03-19 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "disciplinary_procedure",
+  "employee",
+  "column_break_1",
+  "employee_name",
+  "company",
+  "status",
+  "appeal_section",
+  "appeal_date",
+  "appeal_type",
+  "column_break_2",
+  "assigned_to",
+  "hearing_date",
+  "decision_date",
+  "details_section",
+  "grounds_for_appeal",
+  "committee_notes",
+  "decision",
+  "outcome_summary"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-APL-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "disciplinary_procedure",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Disciplinary Procedure",
+   "options": "Disciplinary Procedure",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "disciplinary_procedure.employee",
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "disciplinary_procedure.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "disciplinary_procedure.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Open\nUnder Review\nHearing Scheduled\nDecided\nClosed"
+  },
+  {
+   "description": "Record the appeal type, submission date, assignee, and hearing schedule.",
+   "fieldname": "appeal_section",
+   "fieldtype": "Section Break",
+   "label": "Appeal Details"
+  },
+  {
+   "fieldname": "appeal_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Appeal Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "appeal_type",
+   "fieldtype": "Select",
+   "label": "Appeal Type",
+   "options": "\nAgainst Warning\nAgainst Suspension\nAgainst Demotion\nAgainst Termination\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "label": "Assigned To",
+   "options": "User"
+  },
+  {
+   "fieldname": "hearing_date",
+   "fieldtype": "Date",
+   "label": "Hearing Date"
+  },
+  {
+   "fieldname": "decision_date",
+   "fieldtype": "Date",
+   "label": "Decision Date"
+  },
+  {
+   "description": "Capture the grounds, committee review notes, and final appeal decision.",
+   "fieldname": "details_section",
+   "fieldtype": "Section Break",
+   "label": "Review Details"
+  },
+  {
+   "fieldname": "grounds_for_appeal",
+   "fieldtype": "Text Editor",
+   "label": "Grounds for Appeal",
+   "reqd": 1
+  },
+  {
+   "fieldname": "committee_notes",
+   "fieldtype": "Text Editor",
+   "label": "Committee Notes"
+  },
+  {
+   "fieldname": "decision",
+   "fieldtype": "Select",
+   "label": "Decision",
+   "options": "\nUpheld\nModified\nCancelled"
+  },
+  {
+   "fieldname": "outcome_summary",
+   "fieldtype": "Text Editor",
+   "label": "Outcome Summary"
+  }
+ ],
+ "icon": "fa fa-gavel",
+ "links": [],
+ "modified": "2026-03-19 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Disciplinary Appeal",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "write": 1
+  }
+ ],
+ "search_fields": "disciplinary_procedure,employee,employee_name",
+ "sort_field": "appeal_date",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee_name",
+ "track_changes": 1
+}

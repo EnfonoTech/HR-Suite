@@ -1,0 +1,97 @@
+{
+ "actions": [],
+ "creation": "2026-03-27 03:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "installment_number",
+  "due_date",
+  "installment_amount",
+  "deducted_amount",
+  "outstanding_amount",
+  "deduction_status",
+  "deduction_date",
+  "payroll_reference",
+  "payroll_deducted_amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "installment_number",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Installment #",
+   "read_only": 1
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Due Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "installment_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Installment Amount",
+   "options": "currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "deducted_amount",
+   "fieldtype": "Currency",
+   "label": "Deducted Amount",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "outstanding_amount",
+   "fieldtype": "Currency",
+   "label": "Outstanding",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "deduction_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Pending\nDeducted\nDeferred\nCancelled",
+   "default": "Pending"
+  },
+  {
+   "fieldname": "deduction_date",
+   "fieldtype": "Date",
+   "label": "Deduction Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payroll_reference",
+   "fieldtype": "Link",
+   "label": "Payroll",
+   "options": "Saudi Monthly Payroll",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payroll_deducted_amount",
+   "fieldtype": "Currency",
+   "label": "Payroll Deducted Amount",
+   "options": "currency",
+   "read_only": 1,
+   "hidden": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-03-27 03:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Employee Loan Installment",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "idx",
+ "sort_order": "ASC",
+ "states": []
+}

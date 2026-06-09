@@ -3,7 +3,7 @@ name = "hr_suite"
 authors = [
     { name = "siva@enfono.com", email = "siva@enfono.com"}
 ]
-description = "Hr Suite"
+description = "Hr Suite - Saudi HR Management System"
 requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]

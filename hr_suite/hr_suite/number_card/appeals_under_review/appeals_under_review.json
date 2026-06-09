@@ -1,0 +1,23 @@
+{
+ "creation": "2026-03-19 19:43:41.371973",
+ "currency": "SAR",
+ "docstatus": 0,
+ "doctype": "Number Card",
+ "document_type": "Disciplinary Appeal",
+ "filters_json": "[[\"Disciplinary Appeal\",\"status\",\"=\",\"Under Review / \u0642\u064a\u062f \u0627\u0644\u0645\u0631\u0627\u062c\u0639\u0629\"]]",
+ "function": "Count",
+ "idx": 0,
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Appeals Under Review",
+ "modified": "2026-03-19 19:43:41.371973",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Appeals Under Review",
+ "owner": "Administrator",
+ "report_function": "Sum",
+ "show_full_number": 0,
+ "show_percentage_stats": 0,
+ "stats_time_interval": "Daily",
+ "type": "Document Type"
+}

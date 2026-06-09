@@ -1,0 +1,113 @@
+{
+ "doctype": "Workflow",
+ "workflow_name": "Annual Leave Approval Workflow",
+ "name": "Annual Leave Approval Workflow",
+ "document_type": "Saudi Annual Leave",
+ "is_active": 1,
+ "override_status": 0,
+ "send_email_alert": 1,
+ "workflow_state_field": "workflow_state",
+ "states": [
+  {
+   "allow_edit": "Employee Self Service",
+   "doc_status": "0",
+   "state": "Draft",
+   "style": "Warning"
+  },
+  {
+   "allow_edit": "Department Approver",
+   "doc_status": "0",
+   "state": "Pending Manager Approval",
+   "style": "Primary"
+  },
+  {
+   "allow_edit": "HR Manager",
+   "doc_status": "0",
+   "state": "Pending HR Approval",
+   "style": "Primary"
+  },
+    {
+     "allow_edit": "Accounts Manager",
+     "doc_status": "0",
+     "state": "Pending Finance Approval",
+     "style": "Primary"
+    },
+  {
+     "allow_edit": "Accounts Manager",
+   "doc_status": "1",
+   "state": "Approved",
+   "style": "Success"
+  },
+  {
+   "allow_edit": "HR Manager",
+   "doc_status": "0",
+   "state": "Rejected",
+   "style": "Danger"
+  }
+ ],
+ "transitions": [
+  {
+   "action": "Submit Request",
+   "allowed": "Employee Self Service",
+   "state": "Draft",
+   "next_state": "Pending Manager Approval",
+   "allow_self_approval": 1
+  },
+  {
+   "action": "Submit Request",
+   "allowed": "HR User",
+   "state": "Draft",
+   "next_state": "Pending Manager Approval",
+   "allow_self_approval": 1
+  },
+  {
+   "action": "Manager Approve",
+   "allowed": "Department Approver",
+   "state": "Pending Manager Approval",
+   "next_state": "Pending HR Approval",
+   "allow_self_approval": 0
+  },
+  {
+   "action": "Reject",
+   "allowed": "Department Approver",
+   "state": "Pending Manager Approval",
+   "next_state": "Rejected",
+   "allow_self_approval": 1
+  },
+  {
+    "action": "HR Approve",
+   "allowed": "HR Manager",
+   "state": "Pending HR Approval",
+    "next_state": "Pending Finance Approval",
+    "allow_self_approval": 1
+  },
+  {
+    "action": "Reject",
+    "allowed": "HR Manager",
+    "state": "Pending HR Approval",
+    "next_state": "Rejected",
+    "allow_self_approval": 1
+  },
+  {
+    "action": "Final Approve",
+    "allowed": "Accounts Manager",
+    "state": "Pending Finance Approval",
+   "next_state": "Approved",
+   "allow_self_approval": 1
+  },
+  {
+   "action": "Reject",
+    "allowed": "Accounts Manager",
+    "state": "Pending Finance Approval",
+   "next_state": "Rejected",
+   "allow_self_approval": 1
+  },
+  {
+   "action": "Reset to Draft",
+   "allowed": "HR Manager",
+   "state": "Rejected",
+   "next_state": "Draft",
+   "allow_self_approval": 1
+  }
+ ]
+}

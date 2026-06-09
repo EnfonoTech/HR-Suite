@@ -1,0 +1,387 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-03-17 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "gosi_section",
+  "gosi_saudi_employee_rate",
+  "gosi_saudi_employer_rate",
+  "column_break_gosi",
+  "gosi_non_saudi_employee_rate",
+  "gosi_non_saudi_employer_rate",
+  "leave_section",
+  "annual_leave_years_threshold",
+  "annual_leave_before_threshold",
+  "annual_leave_after_threshold",
+  "column_break_leave",
+  "sick_leave_full_pay_days",
+  "sick_leave_partial_pay_days",
+  "sick_leave_partial_pay_percentage",
+  "contract_section",
+  "probation_period_days",
+  "max_probation_period_days",
+  "column_break_contract",
+  "notice_period_monthly_days",
+  "notice_period_non_monthly_days",
+   "voice_section",
+   "enable_voice_verification",
+  "voice_verification_mode",
+   "voice_language",
+   "voice_whisper_model_size",
+   "voice_compute_type",
+   "column_break_voice",
+   "speaker_model_source",
+   "anti_spoof_model_source",
+   "voice_speaker_threshold",
+   "voice_speech_match_threshold",
+   "voice_anti_spoof_threshold",
+   "voice_bonafide_labels",
+  "alerts_section",
+  "iqama_expiry_alert_days",
+  "contract_expiry_alert_days",
+  "column_break_alerts",
+  "work_permit_expiry_alert_days",
+ "send_email_alerts",
+ "branch_employee_import_section",
+ "branch_employee_import_help",
+ "employee_branch_import_file",
+ "branch_employee_directory",
+ "attendance_api_section",
+ "attendance_api_help",
+ "mobile_attendance_base_url",
+ "mobile_attendance_api_reference"
+ ],
+ "fields": [
+  {
+   "fieldname": "gosi_section",
+   "fieldtype": "Section Break",
+   "label": "GOSI Rates"
+  },
+  {
+   "default": "10",
+   "description": "9% pension + 1% unemployment = 10% total",
+   "fieldname": "gosi_saudi_employee_rate",
+   "fieldtype": "Percent",
+   "label": "Saudi Employee Rate %"
+  },
+  {
+   "default": "12",
+   "description": "9% pension + 2% hazard + 1% unemployment = 12% total",
+   "fieldname": "gosi_saudi_employer_rate",
+   "fieldtype": "Percent",
+   "label": "Saudi Employer Rate %"
+  },
+  {
+   "fieldname": "column_break_gosi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Non-Saudi employees are not subject to GOSI employee contribution",
+   "fieldname": "gosi_non_saudi_employee_rate",
+   "fieldtype": "Percent",
+   "label": "Non-Saudi Employee Rate %"
+  },
+  {
+   "default": "2",
+   "description": "Occupational hazards only",
+   "fieldname": "gosi_non_saudi_employer_rate",
+   "fieldtype": "Percent",
+   "label": "Non-Saudi Employer Rate %"
+  },
+  {
+   "fieldname": "leave_section",
+   "fieldtype": "Section Break",
+   "label": "Annual Leave"
+  },
+  {
+   "default": "5",
+   "description": "Years of service threshold for 30-day entitlement",
+   "fieldname": "annual_leave_years_threshold",
+   "fieldtype": "Int",
+   "label": "Years Threshold"
+  },
+  {
+   "default": "21",
+   "description": "Days before reaching threshold (< 5 years service)",
+   "fieldname": "annual_leave_before_threshold",
+   "fieldtype": "Int",
+   "label": "Days Before Threshold"
+  },
+  {
+   "default": "30",
+   "description": "Days after reaching threshold (≥ 5 years service)",
+   "fieldname": "annual_leave_after_threshold",
+   "fieldtype": "Int",
+   "label": "Days After Threshold"
+  },
+  {
+   "fieldname": "column_break_leave",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "30",
+   "description": "Days at 100% pay",
+   "fieldname": "sick_leave_full_pay_days",
+   "fieldtype": "Int",
+   "label": "Full Pay Days"
+  },
+  {
+   "default": "60",
+   "description": "Additional days at partial pay",
+   "fieldname": "sick_leave_partial_pay_days",
+   "fieldtype": "Int",
+   "label": "Partial Pay Days"
+  },
+  {
+   "default": "75",
+   "fieldname": "sick_leave_partial_pay_percentage",
+   "fieldtype": "Percent",
+   "label": "Partial Pay %"
+  },
+  {
+   "fieldname": "contract_section",
+   "fieldtype": "Section Break",
+   "label": "Contract & Notice Period"
+  },
+  {
+   "default": "90",
+   "fieldname": "probation_period_days",
+   "fieldtype": "Int",
+   "label": "Default Probation (Days)"
+  },
+  {
+   "default": "180",
+   "fieldname": "max_probation_period_days",
+   "fieldtype": "Int",
+   "label": "Max Probation (Days)"
+  },
+  {
+   "fieldname": "column_break_contract",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "60",
+   "description": "Art.75/Art.76 — Monthly salary employees",
+   "fieldname": "notice_period_monthly_days",
+   "fieldtype": "Int",
+   "label": "Notice Period — Monthly (Days)"
+  },
+  {
+   "default": "30",
+   "description": "Art.75/Art.76 — Non-monthly salary employees",
+   "fieldname": "notice_period_non_monthly_days",
+   "fieldtype": "Int",
+   "label": "Notice Period — Non-Monthly (Days)"
+   },
+   {
+    "fieldname": "voice_section",
+    "fieldtype": "Section Break",
+    "label": "Voice Verification"
+   },
+   {
+    "default": "0",
+    "fieldname": "enable_voice_verification",
+    "fieldtype": "Check",
+    "label": "Enable Voice Verification"
+   },
+    {
+     "default": "Challenge Only",
+     "fieldname": "voice_verification_mode",
+     "fieldtype": "Select",
+     "label": "Voice Verification Mode",
+     "options": "Challenge Only"
+    },
+   {
+    "default": "ar",
+    "fieldname": "voice_language",
+    "fieldtype": "Data",
+    "label": "Voice Language"
+   },
+   {
+    "default": "small",
+    "fieldname": "voice_whisper_model_size",
+    "fieldtype": "Data",
+    "label": "Whisper Model Size"
+   },
+   {
+    "default": "int8",
+    "fieldname": "voice_compute_type",
+    "fieldtype": "Select",
+    "label": "Whisper Compute Type",
+    "options": "int8\nfloat32\nfloat16"
+   },
+   {
+    "fieldname": "column_break_voice",
+    "fieldtype": "Column Break"
+   },
+   {
+    "default": "speechbrain/spkrec-ecapa-voxceleb",
+    "fieldname": "speaker_model_source",
+    "fieldtype": "Data",
+    "label": "Speaker Model Source"
+   },
+   {
+    "fieldname": "anti_spoof_model_source",
+    "fieldtype": "Data",
+    "label": "Anti-Spoof Model Source"
+   },
+   {
+    "default": "0.25",
+    "fieldname": "voice_speaker_threshold",
+    "fieldtype": "Float",
+    "label": "Speaker Threshold",
+    "precision": "4"
+   },
+   {
+    "default": "0.75",
+    "fieldname": "voice_speech_match_threshold",
+    "fieldtype": "Float",
+    "label": "Speech Match Threshold",
+    "precision": "4"
+   },
+   {
+    "default": "0.50",
+    "fieldname": "voice_anti_spoof_threshold",
+    "fieldtype": "Float",
+    "label": "Anti-Spoof Threshold",
+    "precision": "4"
+   },
+   {
+    "default": "bonafide,genuine,human,real",
+    "fieldname": "voice_bonafide_labels",
+    "fieldtype": "Data",
+    "label": "Bonafide Labels"
+  },
+  {
+   "fieldname": "alerts_section",
+   "fieldtype": "Section Break",
+   "label": "Expiry Alerts"
+  },
+  {
+   "default": "90",
+   "fieldname": "iqama_expiry_alert_days",
+   "fieldtype": "Int",
+   "label": "Iqama Alert (Days Before)"
+  },
+  {
+   "default": "60",
+   "fieldname": "contract_expiry_alert_days",
+   "fieldtype": "Int",
+   "label": "Contract Alert (Days Before)"
+  },
+  {
+   "fieldname": "column_break_alerts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "90",
+   "fieldname": "work_permit_expiry_alert_days",
+   "fieldtype": "Int",
+   "label": "Work Permit Alert (Days)"
+  },
+  {
+   "default": "1",
+   "fieldname": "send_email_alerts",
+   "fieldtype": "Check",
+   "label": "Send Email Alerts"
+    },
+    {
+     "fieldname": "branch_employee_import_section",
+     "fieldtype": "Section Break",
+     "label": "Branch Employees & Bulk Import"
+    },
+    {
+     "fieldname": "branch_employee_import_help",
+     "fieldtype": "Small Text",
+     "label": "Instructions",
+     "read_only": 1,
+     "default": "Download the Excel template, update the target branch for each employee, attach the file here, then click Import Employee Branches."
+    },
+    {
+     "fieldname": "employee_branch_import_file",
+     "fieldtype": "Attach",
+     "label": "Excel Import File"
+    },
+    {
+     "fieldname": "branch_employee_directory",
+     "fieldtype": "Table",
+     "label": "Employee Branch Directory",
+     "options": "Branch Employee Directory Row",
+     "read_only": 1,
+     "cannot_add_rows": 1,
+     "cannot_delete_rows": 1
+    },
+    {
+     "fieldname": "attendance_api_section",
+     "fieldtype": "Section Break",
+     "label": "External HR API Reference",
+     "permlevel": 1
+    },
+    {
+     "default": "This section is a connection reference only. Generate API Key and API Secret from the standard ERPNext User page, then use them in the external app with the Base URL below.",
+     "fieldname": "attendance_api_help",
+     "fieldtype": "Small Text",
+     "label": "Integration Instructions",
+     "permlevel": 1,
+     "read_only": 1
+    },
+    {
+     "description": "Leave empty to use the current site URL.",
+     "fieldname": "mobile_attendance_base_url",
+     "fieldtype": "Data",
+     "label": "Base URL",
+     "permlevel": 1
+    },
+    {
+     "fieldname": "mobile_attendance_api_reference",
+     "fieldtype": "Code",
+     "label": "External App API Reference",
+     "options": "JSON",
+     "permlevel": 1,
+     "read_only": 1
+    }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-03-17 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Hr Suite Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "permlevel": 1,
+   "read": 1,
+   "write": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

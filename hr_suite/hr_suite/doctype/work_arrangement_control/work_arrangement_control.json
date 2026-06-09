@@ -1,0 +1,231 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-05-24 21:52:22.970648",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "column_break_1",
+  "company",
+  "contract",
+  "arrangement_type",
+  "status",
+  "period_section",
+  "start_date",
+  "end_date",
+  "actual_days",
+  "column_break_2",
+  "conversion_due_date",
+  "conversion_required",
+  "daily_hours_limit",
+  "weekly_hours_limit",
+  "portal_section",
+  "saudi_only_applicable",
+  "platform_reference",
+  "compensatory_leave_allowed",
+  "legal_reference",
+  "evidence_attachment",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-WAC-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "contract",
+   "fieldtype": "Link",
+   "label": "Saudi Employment Contract",
+   "options": "Saudi Employment Contract"
+  },
+  {
+   "fieldname": "arrangement_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Arrangement Type",
+   "options": "\nFlexible Work",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft"
+  },
+  {
+   "fieldname": "period_section",
+   "fieldtype": "Section Break",
+   "label": "Period & Limits"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date"
+  },
+  {
+   "fieldname": "actual_days",
+   "fieldtype": "Int",
+   "label": "Actual Days",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "conversion_due_date",
+   "fieldtype": "Date",
+   "label": "Conversion Due Date"
+  },
+  {
+   "default": "0",
+   "fieldname": "conversion_required",
+   "fieldtype": "Check",
+   "label": "Conversion Required",
+   "read_only": 1
+  },
+  {
+   "fieldname": "daily_hours_limit",
+   "fieldtype": "Float",
+   "label": "Daily Hours Limit"
+  },
+  {
+   "fieldname": "weekly_hours_limit",
+   "fieldtype": "Float",
+   "label": "Weekly Hours Limit"
+  },
+  {
+   "fieldname": "portal_section",
+   "fieldtype": "Section Break",
+   "label": "Portal Evidence"
+  },
+  {
+   "default": "0",
+   "fieldname": "saudi_only_applicable",
+   "fieldtype": "Check",
+   "label": "Saudi-only Rule Applies"
+  },
+  {
+   "fieldname": "platform_reference",
+   "fieldtype": "Data",
+   "label": "Platform Reference"
+  },
+  {
+   "default": "0",
+   "fieldname": "compensatory_leave_allowed",
+   "fieldtype": "Check",
+   "label": "Compensatory Leave Allowed"
+  },
+  {
+   "fieldname": "legal_reference",
+   "fieldtype": "Data",
+   "label": "Legal Reference"
+  },
+  {
+   "fieldname": "evidence_attachment",
+   "fieldtype": "Attach",
+   "label": "Evidence"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "icon": "fa fa-random",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-09 03:00:21.272032",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Work Arrangement Control",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "employee,employee_name,arrangement_type,status",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee_name",
+ "track_changes": 1
+}

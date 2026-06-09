@@ -1,0 +1,269 @@
+{%- set company = doc.company -%}
+{%- set issue_date = frappe.utils.today() -%}
+{%- set validity_date = frappe.utils.add_months(issue_date, 3) -%}
+
+{%- set contract_salary = frappe.db.get_value(
+  "Saudi Employment Contract",
+  {"employee": doc.name, "contract_status": "Active"},
+  ["basic_salary", "from_date"],
+  as_dict=True,
+  order_by="start_date desc"
+) or {} -%}
+
+{%- set basic = contract_salary.get("basic_salary") or 0 -%}
+{%- set daily_rate = basic / 30 -%}
+
+{%- set contract = frappe.db.get_value(
+    "Saudi Employment Contract",
+    {"employee": doc.name, "contract_status": "Active"},
+    ["housing_allowance", "transport_allowance", "other_allowances", "job_title"],
+    as_dict=True,
+    order_by="start_date desc"
+) or {} -%}
+
+{%- set housing = contract.get("housing_allowance") or 0 -%}
+{%- set transport = contract.get("transport_allowance") or 0 -%}
+{%- set other = contract.get("other_allowances") or 0 -%}
+{%- set gross = basic + housing + transport + other -%}
+{%- set job_title = contract.get("job_title") or doc.designation or "" -%}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    color: #1a1a1a;
+    margin: 0;
+    padding: 30px 40px;
+    background: #fff;
+  }
+  .header {
+    text-align: center;
+    border-bottom: 3px double #1a5276;
+    padding-bottom: 18px;
+    margin-bottom: 25px;
+  }
+  .header h1 { font-size: 24px; color: #1a5276; margin: 6px 0 2px 0; }
+  .header h2 { font-size: 14px; color: #555; font-weight: normal; margin: 0; }
+  .cert-number { font-size: 11px; color: #888; margin-top: 6px; }
+  .issue-date { text-align: right; font-size: 12px; color: #555; margin-bottom: 20px; }
+  .to-whom {
+    background: #eaf2f8;
+    border-left: 5px solid #1a5276;
+    padding: 12px 18px;
+    margin: 20px 0;
+    font-size: 13px;
+    line-height: 2;
+    border-radius: 4px 0 0 4px;
+  }
+  .section-title {
+    background: #1a5276;
+    color: white;
+    padding: 7px 16px;
+    font-size: 14px;
+    border-radius: 3px;
+    margin: 22px 0 10px 0;
+    font-weight: bold;
+  }
+  table.info { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+  table.info td { padding: 8px 12px; border-bottom: 1px solid #e8e8e8; vertical-align: top; }
+  table.info td:first-child { font-weight: bold; width: 200px; color: #2c3e50; background: #f7fbff; }
+  table.salary { width: 100%; border-collapse: collapse; margin: 10px 0 20px 0; }
+  table.salary th { background: #1a5276; color: white; padding: 9px 12px; text-align: left; font-size: 13px; }
+  table.salary td { padding: 8px 12px; border-bottom: 1px solid #e0e0e0; }
+  table.salary tr:nth-child(even) td { background: #f5f9fd; }
+  .gross-row td { font-weight: bold; background: #d6eaf8 !important; border-top: 2px solid #1a5276; font-size: 14px; }
+  .amount-highlight {
+    text-align: center;
+    background: #d6eaf8;
+    border: 2px solid #1a5276;
+    border-radius: 6px;
+    padding: 14px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #1a5276;
+    margin: 15px 0;
+  }
+  .purpose-box {
+    background: #fef9e7;
+    border: 1px solid #f0c040;
+    border-radius: 4px;
+    padding: 12px 18px;
+    font-size: 12px;
+    color: #7d6608;
+    margin: 15px 0;
+  }
+  .validity-box {
+    background: #fdf2f8;
+    border: 1px solid #c39bd3;
+    border-radius: 4px;
+    padding: 10px 16px;
+    font-size: 12px;
+    color: #6c3483;
+    margin: 10px 0;
+    text-align: center;
+  }
+  .signature-section {
+    margin-top: 55px;
+    display: flex;
+    justify-content: space-between;
+    gap: 40px;
+  }
+  .sig-box { flex: 1; text-align: center; }
+  .sig-line {
+    border-top: 1px solid #333;
+    margin-top: 55px;
+    padding-top: 8px;
+    font-size: 12px;
+    color: #444;
+  }
+  .footer {
+    text-align: center;
+    margin-top: 40px;
+    font-size: 10px;
+    color: #aaa;
+    border-top: 1px solid #ddd;
+    padding-top: 12px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Company Header -->
+<div class="header">
+  {% if doc.company %}
+  <div style="font-size:15px;font-weight:bold;color:#1a1a1a;margin-bottom:4px;">{{ doc.company }}</div>
+  {% endif %}
+  <h1>Salary Certificate</h1>
+  <h2>Official Employment Salary Confirmation</h2>
+  <div class="cert-number">Reference: SAL-CERT-{{ doc.name }}-{{ frappe.utils.now_datetime().strftime('%Y%m%d') }}</div>
+</div>
+
+<div class="issue-date">
+  Date Issued: {{ issue_date }}
+</div>
+
+<!-- To Whom It May Concern -->
+<div class="to-whom">
+  <strong>To Whom It May Concern,</strong><br>
+  This is to certify that employee <strong>{{ doc.employee_name }}</strong> is employed by <strong>{{ doc.company }}</strong>
+  as <strong>{{ job_title }}</strong>, and that their total monthly gross salary is
+  <strong>{{ "{:,.2f}".format(gross) }} SAR</strong> as detailed below.
+</div>
+
+<!-- Employee Information -->
+<div class="section-title">Employee Information</div>
+<table class="info">
+  <tr>
+    <td>Employee Name</td>
+    <td>{{ doc.employee_name }}</td>
+  </tr>
+  <tr>
+    <td>Employee ID</td>
+    <td>{{ doc.name }}</td>
+  </tr>
+  <tr>
+    <td>Job Title</td>
+    <td>{{ job_title }}</td>
+  </tr>
+  <tr>
+    <td>Department</td>
+    <td>{{ doc.department or "—" }}</td>
+  </tr>
+  <tr>
+    <td>Branch / Location</td>
+    <td>{{ doc.branch or "—" }}</td>
+  </tr>
+  <tr>
+    <td>Date of Joining</td>
+    <td>{{ frappe.format(doc.date_of_joining, "Date") or "—" }}</td>
+  </tr>
+  <tr>
+    <td>Nationality</td>
+    <td>{{ doc.nationality or "—" }}</td>
+  </tr>
+  <tr>
+    <td>ID / Iqama Number</td>
+    <td>{{ doc.iqama_number or doc.passport_number or "—" }}</td>
+  </tr>
+</table>
+
+<!-- Salary Breakdown -->
+<div class="section-title">Monthly Salary Breakdown</div>
+<table class="salary">
+  <thead>
+    <tr>
+      <th>Component</th>
+      <th style="width:200px;">Amount (SAR)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Basic Salary</td>
+      <td>{{ "{:,.2f}".format(basic) }}</td>
+    </tr>
+    {% if housing > 0 %}
+    <tr>
+      <td>Housing Allowance</td>
+      <td>{{ "{:,.2f}".format(housing) }}</td>
+    </tr>
+    {% endif %}
+    {% if transport > 0 %}
+    <tr>
+      <td>Transport Allowance</td>
+      <td>{{ "{:,.2f}".format(transport) }}</td>
+    </tr>
+    {% endif %}
+    {% if other > 0 %}
+    <tr>
+      <td>Other Allowances</td>
+      <td>{{ "{:,.2f}".format(other) }}</td>
+    </tr>
+    {% endif %}
+    <tr class="gross-row">
+      <td>Total Monthly Gross</td>
+      <td>{{ "{:,.2f}".format(gross) }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="amount-highlight">
+  Total Monthly Gross Salary: {{ "{:,.2f}".format(gross) }} SAR
+</div>
+
+<!-- Purpose & Validity -->
+<div class="purpose-box">
+  This certificate is issued upon the employee's request for official purposes and carries no liability on the company.
+</div>
+
+<div class="validity-box">
+  Valid for 3 months from date of issue ({{ validity_date }})
+</div>
+
+<!-- Signatures -->
+<div class="signature-section">
+  <div class="sig-box">
+    <div class="sig-line">HR Manager</div>
+  </div>
+  <div class="sig-box" style="text-align:center;">
+    <div style="border:2px dashed #bbb;width:100px;height:100px;display:inline-flex;
+                align-items:center;justify-content:center;color:#ccc;font-size:11px;
+                border-radius:50%;margin-top:10px;">
+      Official Stamp
+    </div>
+  </div>
+  <div class="sig-box">
+    <div class="sig-line">General Manager / CEO</div>
+  </div>
+</div>
+
+<div class="footer">
+  {{ doc.company }} &mdash; Saudi HR System &mdash;
+  Issued: {{ frappe.utils.now_datetime().strftime('%Y-%m-%d %H:%M') }}
+</div>
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+ "creation": "2026-03-17 00:00:00.000000",
+ "doctype": "Number Card",
+ "document_type": "Work Permit Iqama",
+ "filters_json": "[[\"Work Permit Iqama\",\"iqama_status\",\"in\",\"Expiring Soon",
+ "function": "Count",
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Expired/Expiring Iqamas",
+ "module": "Hr Suite",
+ "name": "Expiring Iqamas",
+ "show_percentage_stats": 0
+}

@@ -1,0 +1,23 @@
+{
+ "creation": "2026-03-19 19:43:41.380375",
+ "currency": "SAR",
+ "docstatus": 0,
+ "doctype": "Number Card",
+ "document_type": "Employee Grievance",
+ "filters_json": "[[\"Employee Grievance\",\"status\",\"=\",\"Resolved / \u0645\u062d\u0644\u0648\u0644\u0629\"]]",
+ "function": "Count",
+ "idx": 0,
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Resolved Grievances",
+ "modified": "2026-03-19 19:43:41.380375",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Resolved Grievances",
+ "owner": "Administrator",
+ "report_function": "Sum",
+ "show_full_number": 0,
+ "show_percentage_stats": 0,
+ "stats_time_interval": "Daily",
+ "type": "Document Type"
+}

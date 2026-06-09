@@ -1,0 +1,275 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-03-17 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "column_break_1",
+  "company",
+  "department",
+  "leave_section",
+  "leave_year",
+  "leave_from_date",
+  "leave_to_date",
+  "column_break_2",
+  "leave_days_entitled",
+  "leave_days_taken",
+  "leave_days_balance",
+  "leave_days_to_pay",
+  "status",
+  "salary_section",
+  "monthly_basic_salary",
+  "monthly_gross_salary",
+  "daily_basic_rate",
+  "column_break_3",
+  "disbursement_type",
+  "basic_leave_pay",
+  "housing_allowance_pay",
+  "transport_allowance_pay",
+  "total_leave_pay",
+  "additional_section",
+  "ticket_entitled",
+  "ticket_amount",
+  "linked_payroll_entry",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-ALD-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "leave_section",
+   "fieldtype": "Section Break",
+   "label": "Leave Details"
+  },
+  {
+   "fieldname": "leave_year",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Leave Year",
+   "reqd": 1
+  },
+  {
+   "fieldname": "leave_from_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Leave From",
+   "reqd": 1
+  },
+  {
+   "fieldname": "leave_to_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Leave To",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "leave_days_entitled",
+   "fieldtype": "Float",
+   "label": "Entitled Days",
+   "read_only": 1
+  },
+  {
+   "fieldname": "leave_days_taken",
+   "fieldtype": "Float",
+   "label": "Days Taken Before",
+   "read_only": 1
+  },
+  {
+   "fieldname": "leave_days_balance",
+   "fieldtype": "Float",
+   "label": "Balance Days",
+   "read_only": 1
+  },
+  {
+   "fieldname": "leave_days_to_pay",
+   "fieldtype": "Float",
+   "label": "Days to Disburse",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nApproved\nPaid\nCancelled"
+  },
+  {
+   "fieldname": "salary_section",
+   "fieldtype": "Section Break",
+   "label": "Salary Calculation"
+  },
+  {
+   "fieldname": "monthly_basic_salary",
+   "fieldtype": "Currency",
+   "label": "Monthly Basic"
+  },
+  {
+   "fieldname": "monthly_gross_salary",
+   "fieldtype": "Currency",
+   "label": "Monthly Gross",
+   "read_only": 1
+  },
+  {
+   "fieldname": "daily_basic_rate",
+   "fieldtype": "Currency",
+   "label": "Daily Basic Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "disbursement_type",
+   "fieldtype": "Select",
+   "label": "Disbursement Basis",
+   "options": "Basic Salary Only\nFull Salary",
+   "reqd": 1
+  },
+  {
+   "fieldname": "basic_leave_pay",
+   "fieldtype": "Currency",
+   "label": "Basic Leave Pay",
+   "read_only": 1
+  },
+  {
+   "fieldname": "housing_allowance_pay",
+   "fieldtype": "Currency",
+   "label": "Housing Allowance Pay",
+   "read_only": 1,
+   "depends_on": "eval:doc.disbursement_type && doc.disbursement_type.indexOf('Full') !== -1"
+  },
+  {
+   "fieldname": "transport_allowance_pay",
+   "fieldtype": "Currency",
+   "label": "Transport Allowance Pay",
+   "read_only": 1,
+   "depends_on": "eval:doc.disbursement_type && doc.disbursement_type.indexOf('Full') !== -1"
+  },
+  {
+   "fieldname": "total_leave_pay",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Leave Pay",
+   "read_only": 1
+  },
+  {
+   "fieldname": "additional_section",
+   "fieldtype": "Section Break",
+   "label": "Additional Entitlements"
+  },
+  {
+   "default": "0",
+   "fieldname": "ticket_entitled",
+   "fieldtype": "Check",
+   "label": "Annual Ticket Entitled"
+  },
+  {
+   "depends_on": "ticket_entitled",
+   "fieldname": "ticket_amount",
+   "fieldtype": "Currency",
+   "label": "Ticket Amount"
+  },
+  {
+   "fieldname": "linked_payroll_entry",
+   "fieldtype": "Link",
+   "label": "Linked Journal Entry",
+   "options": "Journal Entry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Annual Leave Disbursement",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-03-17 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Annual Leave Disbursement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "HR User",
+   "write": 1
+  }
+ ],
+ "sort_field": "leave_from_date",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee_name",
+ "track_changes": 1
+}

@@ -1,0 +1,211 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-05-24 21:52:18.951975",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "filing_title",
+  "filing_type",
+  "company",
+  "column_break_1",
+  "status",
+  "priority",
+  "deadline_section",
+  "trigger_date",
+  "due_date",
+  "column_break_2",
+  "submitted_on",
+  "accepted_on",
+  "responsible_user",
+  "evidence_section",
+  "platform_name",
+  "platform_reference",
+  "evidence_attachment",
+  "legal_reference",
+  "action_log",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-MFT-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "filing_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Filing Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "filing_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Filing Type",
+   "options": "\nEstablishment Data Update",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Pending Submission",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Pending Submission"
+  },
+  {
+   "default": "P0",
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "label": "Priority",
+   "options": "\nP0"
+  },
+  {
+   "fieldname": "deadline_section",
+   "fieldtype": "Section Break",
+   "label": "Deadlines"
+  },
+  {
+   "fieldname": "trigger_date",
+   "fieldtype": "Date",
+   "label": "Trigger Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Due Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "submitted_on",
+   "fieldtype": "Date",
+   "label": "Submitted On"
+  },
+  {
+   "fieldname": "accepted_on",
+   "fieldtype": "Date",
+   "label": "Accepted On"
+  },
+  {
+   "fieldname": "responsible_user",
+   "fieldtype": "Link",
+   "label": "Responsible User",
+   "options": "User"
+  },
+  {
+   "fieldname": "evidence_section",
+   "fieldtype": "Section Break",
+   "label": "Platform Evidence"
+  },
+  {
+   "default": "MHRSD",
+   "fieldname": "platform_name",
+   "fieldtype": "Data",
+   "label": "Platform"
+  },
+  {
+   "fieldname": "platform_reference",
+   "fieldtype": "Data",
+   "label": "Platform Reference"
+  },
+  {
+   "fieldname": "evidence_attachment",
+   "fieldtype": "Attach",
+   "label": "Evidence"
+  },
+  {
+   "fieldname": "legal_reference",
+   "fieldtype": "Data",
+   "label": "Legal Reference"
+  },
+  {
+   "fieldname": "action_log",
+   "fieldtype": "Link",
+   "label": "Compliance Action",
+   "options": "HR Compliance Action Log"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "icon": "fa fa-upload",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-09 03:00:19.314413",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Ministry Filing Tracker",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "filing_title,filing_type,platform_reference",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "filing_title",
+ "track_changes": 1
+}

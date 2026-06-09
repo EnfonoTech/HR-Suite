@@ -1,0 +1,306 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-03-17 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "column_break_1",
+  "company",
+  "department",
+  "incident_section",
+  "incident_date",
+  "reported_by",
+  "investigation_record",
+  "legal_reference_matrix",
+  "column_break_2",
+  "violation_type",
+  "status",
+  "incident_description",
+  "investigation_section",
+  "investigation_committee",
+  "investigation_date",
+  "investigation_findings",
+  "column_break_3",
+  "employee_response_date",
+  "employee_response",
+  "decision_section",
+  "penalty_type",
+  "penalty_days",
+  "column_break_4",
+  "penalty_start_date",
+  "penalty_end_date",
+  "decision_notes",
+  "hr_manager_approval",
+  "employee_warning_notice",
+  "disciplinary_decision_log",
+  "appeal_section",
+  "appeal_submitted",
+  "appeal_date",
+  "appeal_notes",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-DIS-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "incident_section",
+   "fieldtype": "Section Break",
+   "label": "Incident"
+  },
+  {
+   "fieldname": "incident_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Incident Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reported_by",
+   "fieldtype": "Link",
+   "label": "Reported By",
+   "options": "User"
+  },
+  {
+   "fieldname": "investigation_record",
+   "fieldtype": "Link",
+   "label": "Investigation Record",
+   "options": "Investigation Record"
+  },
+  {
+   "fieldname": "legal_reference_matrix",
+   "fieldtype": "Link",
+   "label": "Legal Reference",
+   "options": "Legal Reference Matrix"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "violation_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Violation Type",
+   "options": "\nUnauthorised Absence\nInsubordination\nMisconduct\nAggression\nTheft\nFraud\nViolation of Policies\nOther",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nUnder Investigation\nPending Decision\nDecision Issued\nAppealed\nClosed"
+  },
+  {
+   "fieldname": "incident_description",
+   "fieldtype": "Text Editor",
+   "label": "Incident Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "investigation_section",
+   "fieldtype": "Section Break",
+   "label": "Investigation"
+  },
+  {
+   "fieldname": "investigation_committee",
+   "fieldtype": "Data",
+   "label": "Investigation Committee"
+  },
+  {
+   "fieldname": "investigation_date",
+   "fieldtype": "Date",
+   "label": "Investigation Date"
+  },
+  {
+   "fieldname": "investigation_findings",
+   "fieldtype": "Text Editor",
+   "label": "Investigation Findings"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "employee_response_date",
+   "fieldtype": "Date",
+   "label": "Employee Response Date"
+  },
+  {
+   "fieldname": "employee_response",
+   "fieldtype": "Text Editor",
+   "label": "Employee Response"
+  },
+  {
+   "fieldname": "decision_section",
+   "fieldtype": "Section Break",
+   "label": "Penalty Decision"
+  },
+  {
+   "fieldname": "penalty_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Penalty Type",
+   "options": "\nVerbal Warning\nFirst Written Warning\nSecond Written Warning\nSuspension without Pay\nDemotion\nTermination for Cause"
+  },
+  {
+   "fieldname": "penalty_days",
+   "fieldtype": "Int",
+   "label": "Suspension Days",
+   "depends_on": "eval:doc.penalty_type && doc.penalty_type.includes('Suspension')"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "penalty_start_date",
+   "fieldtype": "Date",
+   "label": "Penalty Start Date"
+  },
+  {
+   "fieldname": "penalty_end_date",
+   "fieldtype": "Date",
+   "label": "Penalty End Date",
+   "depends_on": "eval:doc.penalty_type && doc.penalty_type.includes('Suspension')"
+  },
+  {
+   "fieldname": "decision_notes",
+   "fieldtype": "Text Editor",
+   "label": "Decision Notes"
+  },
+  {
+   "default": "0",
+   "fieldname": "hr_manager_approval",
+   "fieldtype": "Check",
+   "label": "HR Manager Approved"
+  },
+  {
+   "fieldname": "employee_warning_notice",
+   "fieldtype": "Link",
+   "label": "Warning Notice",
+   "options": "Employee Warning Notice"
+  },
+  {
+   "fieldname": "disciplinary_decision_log",
+   "fieldtype": "Link",
+   "label": "Decision Log",
+   "options": "Disciplinary Decision Log",
+   "read_only": 1
+  },
+  {
+   "fieldname": "appeal_section",
+   "fieldtype": "Section Break",
+   "label": "Appeal"
+  },
+  {
+   "default": "0",
+   "fieldname": "appeal_submitted",
+   "fieldtype": "Check",
+   "label": "Employee Submitted Appeal"
+  },
+  {
+   "fieldname": "appeal_date",
+   "fieldtype": "Date",
+   "label": "Appeal Date",
+   "depends_on": "appeal_submitted"
+  },
+  {
+   "fieldname": "appeal_notes",
+   "fieldtype": "Text Editor",
+   "label": "Appeal Notes",
+   "depends_on": "appeal_submitted"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Disciplinary Procedure",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-03-27 02:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Disciplinary Procedure",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "HR User",
+   "write": 1
+  }
+ ],
+ "sort_field": "incident_date",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee_name",
+ "track_changes": 1
+}

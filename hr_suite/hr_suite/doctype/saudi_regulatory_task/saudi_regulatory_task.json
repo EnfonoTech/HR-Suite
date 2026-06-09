@@ -1,0 +1,238 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-03-27 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "task_title",
+  "company",
+  "column_break_1",
+  "status",
+  "priority",
+  "planning_section",
+  "task_date",
+  "due_date",
+  "column_break_2",
+  "assigned_to",
+  "progress_percentage",
+  "mapping_section",
+  "legal_reference_matrix",
+  "article_reference",
+  "policy_document",
+  "lifecycle_stage",
+  "task_category",
+  "source_type",
+  "source_reference",
+  "details_section",
+  "obligation_summary",
+  "implementation_notes",
+  "blockers",
+  "evidence_attachment",
+  "completed_on",
+  "completion_notes",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SAU-RGT-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "task_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Task Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Open\nIn Progress\nBlocked\nCompleted\nCancelled"
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Priority",
+   "options": "Low\nMedium\nHigh\nUrgent"
+  },
+  {
+   "fieldname": "planning_section",
+   "fieldtype": "Section Break",
+   "label": "Planning"
+  },
+  {
+   "default": "Today",
+   "fieldname": "task_date",
+   "fieldtype": "Date",
+   "label": "Task Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Due Date"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "assigned_to",
+   "fieldtype": "Link",
+   "label": "Assigned To",
+   "options": "User"
+  },
+  {
+   "fieldname": "progress_percentage",
+   "fieldtype": "Percent",
+   "label": "Progress %"
+  },
+  {
+   "fieldname": "mapping_section",
+   "fieldtype": "Section Break",
+   "label": "Regulation Mapping"
+  },
+  {
+   "fieldname": "legal_reference_matrix",
+   "fieldtype": "Link",
+   "label": "Legal Reference",
+   "options": "Legal Reference Matrix"
+  },
+  {
+   "fieldname": "article_reference",
+   "fieldtype": "Data",
+   "label": "Article Reference"
+  },
+  {
+   "fieldname": "policy_document",
+   "fieldtype": "Link",
+   "label": "Policy Document",
+   "options": "HR Policy Document"
+  },
+  {
+   "fieldname": "lifecycle_stage",
+   "fieldtype": "Select",
+   "label": "Lifecycle Stage",
+   "options": "Strategy & Setup\nTalent Acquisition\nOnboarding & Employment\nTime, Leave & Payroll\nPerformance & Development\nEmployee Relations & Legal\nSeparation & Offboarding\nReports & Analytics"
+  },
+  {
+   "fieldname": "task_category",
+   "fieldtype": "Select",
+   "label": "Task Category",
+   "options": "Policy\nWorkflow\nCalculation\nReport\nAlert\nDocument\nIntegration\nPermission\nWorkspace\nOther"
+  },
+  {
+   "fieldname": "source_type",
+   "fieldtype": "Select",
+   "label": "Source Type",
+   "options": "Regulation Review\nInternal Audit\nGap Assessment\nInspection\nDispute\nOther"
+  },
+  {
+   "fieldname": "source_reference",
+   "fieldtype": "Data",
+   "label": "Source Reference"
+  },
+  {
+   "fieldname": "details_section",
+   "fieldtype": "Section Break",
+   "label": "Execution Details"
+  },
+  {
+   "fieldname": "obligation_summary",
+   "fieldtype": "Text Editor",
+   "label": "Obligation Summary"
+  },
+  {
+   "fieldname": "implementation_notes",
+   "fieldtype": "Text Editor",
+   "label": "Implementation Notes"
+  },
+  {
+   "fieldname": "blockers",
+   "fieldtype": "Small Text",
+   "label": "Blockers"
+  },
+  {
+   "fieldname": "evidence_attachment",
+   "fieldtype": "Attach",
+   "label": "Evidence Attachment"
+  },
+  {
+   "fieldname": "completed_on",
+   "fieldtype": "Date",
+   "label": "Completed On"
+  },
+  {
+   "fieldname": "completion_notes",
+   "fieldtype": "Small Text",
+   "label": "Completion Notes"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Saudi Regulatory Task",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "icon": "fa fa-clipboard",
+ "links": [],
+ "modified": "2026-03-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Saudi Regulatory Task",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "search_fields": "task_title,article_reference,source_reference",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "task_title",
+ "track_changes": 1
+}

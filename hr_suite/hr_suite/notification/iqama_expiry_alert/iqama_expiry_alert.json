@@ -1,0 +1,23 @@
+{
+ "attach_print": 0,
+ "channel": "Email",
+ "condition": "doc.days_to_iqama_expiry and doc.days_to_iqama_expiry <= 90",
+ "creation": "2026-03-17 00:00:00.000000",
+ "days_in_advance": 90,
+ "doctype": "Notification",
+ "document_type": "Work Permit Iqama",
+ "enabled": 1,
+ "event": "Days Before",
+ "message": "<p>Dear HR Manager,</p>\n<p>Alert: Employee <b>{{ doc.employee_name }}</b> Iqama expires in <b>{{ doc.days_to_iqama_expiry }}</b> days.</p>\n<p>Iqama No: {{ doc.iqama_number }}<br>\nExpiry Date: {{ doc.iqama_expiry_date }}</p>\n<p>Please take the necessary steps to renew the Iqama as soon as possible.</p>",
+ "module": "Hr Suite",
+ "name": "Iqama Expiry Alert",
+ "recipients": [
+  {
+   "cc": "",
+   "condition": "",
+   "receiver_by_role": "HR Manager"
+  }
+ ],
+ "send_system_notification": 1,
+ "subject": "Alert: Employee Iqama Expiring Soon — {{ doc.employee_name }}"
+}
