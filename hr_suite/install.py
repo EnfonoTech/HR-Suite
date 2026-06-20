@@ -28,6 +28,7 @@ def after_install():
 	sync_notification_configs()
 	create_default_saudi_shift_type()
 	create_default_settings()
+	ensure_employee_custom_fields()
 	frappe.db.commit()
 
 
