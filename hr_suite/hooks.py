@@ -162,10 +162,6 @@ fixtures = [
 		"doctype": "Property Setter",
 		"filters": [["module", "=", "Hr Suite"]],
 	},
-	{
-		"doctype": "Workflow",
-		"filters": [["module", "=", "Hr Suite"]],
-	},
 ]
 
 # ─── Migration Hooks ───────────────────────────────────────────────────────
