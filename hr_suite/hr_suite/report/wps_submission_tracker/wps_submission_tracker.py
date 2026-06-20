@@ -14,7 +14,7 @@ def execute(filters=None):
 def get_columns():
 	return [
 		{"fieldname": "wps_submission", "label": _("WPS Submission"), "fieldtype": "Link", "options": "WPS Submission", "width": 180},
-		{"fieldname": "payroll_document", "label": _("Saudi Monthly Payroll"), "fieldtype": "Link", "options": "Saudi Monthly Payroll", "width": 170},
+		{"fieldname": "payroll_document", "label": _("Monthly Payroll"), "fieldtype": "Link", "options": "Monthly Payroll", "width": 170},
 		{"fieldname": "company", "label": _("Company"), "fieldtype": "Link", "options": "Company", "width": 160},
 		{"fieldname": "status", "label": _("Status"), "fieldtype": "Data", "width": 180},
 		{"fieldname": "submission_date", "label": _("Submission Date"), "fieldtype": "Date", "width": 120},

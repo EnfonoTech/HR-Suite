@@ -473,8 +473,8 @@ def _get_payroll_snapshot(employee):
 			parent.month,
 			parent.year,
 			parent.status
-		FROM `tabSaudi Monthly Payroll Employee` child
-		INNER JOIN `tabSaudi Monthly Payroll` parent ON parent.name = child.parent
+		FROM `tabMonthly Payroll Employee` child
+		INNER JOIN `tabMonthly Payroll` parent ON parent.name = child.parent
 		WHERE child.employee = %s AND parent.docstatus = 1
 		ORDER BY parent.year DESC, parent.modified DESC
 		LIMIT 1
@@ -520,7 +520,7 @@ def _get_attendance_insights(employee, month=None, year=None):
 	)
 
 	attendance_rows = frappe.get_all(
-		"Saudi Daily Attendance",
+		"HR Daily Attendance",
 		filters={"employee": employee, "attendance_date": ["between", [from_date, to_date]], "docstatus": 1},
 		fields=["status", "working_hours", "late_entry", "early_exit"],
 	)
@@ -566,7 +566,7 @@ def get_employee_paid_payroll_history(employee, limit=10):
 	employee_doc = frappe.get_doc("Employee", employee)
 	frappe.has_permission("Employee", "read", doc=employee_doc, throw=True)
 
-	if not frappe.has_permission("Saudi Monthly Payroll", "read"):
+	if not frappe.has_permission("Monthly Payroll", "read"):
 		return []
 
 	rows = frappe.db.sql(
@@ -583,8 +583,8 @@ def get_employee_paid_payroll_history(employee, limit=10):
 			child.total_deductions,
 			child.net_salary,
 			child.salary_mode
-		FROM `tabSaudi Monthly Payroll Employee` child
-		INNER JOIN `tabSaudi Monthly Payroll` parent ON parent.name = child.parent
+		FROM `tabMonthly Payroll Employee` child
+		INNER JOIN `tabMonthly Payroll` parent ON parent.name = child.parent
 		WHERE child.employee = %s
 			AND parent.docstatus = 1
 			AND IFNULL(parent.payroll_journal_entry, '') != ''
@@ -678,8 +678,8 @@ def fetch_approved_overtime_for_payroll(payroll_name):
 	and populates adjustment items on matching employee rows.
 	Fetch approved overtime requests not linked to a payroll and add them as adjustment items.
 	"""
-	doc = frappe.get_doc("Saudi Monthly Payroll", payroll_name)
-	frappe.has_permission("Saudi Monthly Payroll", "write", doc=doc, throw=True)
+	doc = frappe.get_doc("Monthly Payroll", payroll_name)
+	frappe.has_permission("Monthly Payroll", "write", doc=doc, throw=True)
 
 	month_map = {
 		"January": 1, "February": 2, "March": 3,
@@ -760,8 +760,8 @@ def add_payroll_adjustment_item(payroll_name, employee, item_type, description, 
 	Add a single adjustment item to a payroll employee row.
 	Add a single adjustment item for an employee in payroll.
 	"""
-	doc = frappe.get_doc("Saudi Monthly Payroll", payroll_name)
-	frappe.has_permission("Saudi Monthly Payroll", "write", doc=doc, throw=True)
+	doc = frappe.get_doc("Monthly Payroll", payroll_name)
+	frappe.has_permission("Monthly Payroll", "write", doc=doc, throw=True)
 
 	target_row = None
 	for row in doc.employees:

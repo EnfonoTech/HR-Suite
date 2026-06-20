@@ -1,0 +1,17 @@
+{
+ "name": "Country Leave Type Row",
+ "module": "Hr Suite",
+ "doctype": "DocType",
+ "istable": 1,
+ "fields": [
+  {"fieldname": "leave_type_name", "fieldtype": "Data", "label": "Leave Type Name", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "days_per_year", "fieldtype": "Int", "label": "Days/Year", "in_list_view": 1},
+  {"fieldname": "gender_specific", "fieldtype": "Select", "label": "Applies To", "options": "All\nMale Only\nFemale Only", "default": "All", "in_list_view": 1},
+  {"fieldname": "column_break_1", "fieldtype": "Column Break"},
+  {"fieldname": "is_optional", "fieldtype": "Check", "label": "Optional Leave"},
+  {"fieldname": "once_in_employment", "fieldtype": "Check", "label": "Once in Employment (e.g. Hajj)"},
+  {"fieldname": "max_carry_forward_days", "fieldtype": "Int", "label": "Max Carry Forward (Days)"},
+  {"fieldname": "frappe_leave_type_name", "fieldtype": "Data", "label": "Frappe Leave Type (auto-create name)", "description": "Leave type name that will be created in Frappe HRMS"}
+ ],
+ "permissions": []
+}

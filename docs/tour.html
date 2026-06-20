@@ -332,6 +332,15 @@ body {
       <a class="sidebar-link" href="#training-bond"><span class="sidebar-dot" style="background:#9E9B95"></span>Training Bond</a>
       <a class="sidebar-link" href="#grievance"><span class="sidebar-dot" style="background:#9E9B95"></span>Grievance</a>
     </div>
+    <div class="sidebar-section">
+      <div class="sidebar-group">Saudi Portals</div>
+      <a class="sidebar-link" href="#portal-settings"><span class="sidebar-dot" style="background:#0F5B7A"></span>Portal Settings</a>
+      <a class="sidebar-link" href="#gosi-register"><span class="sidebar-dot" style="background:#0F5B7A"></span>GOSI Registration</a>
+      <a class="sidebar-link" href="#muqeem-verify"><span class="sidebar-dot" style="background:#0F5B7A"></span>Muqeem — Verify Iqama</a>
+      <a class="sidebar-link" href="#gosi-contribution"><span class="sidebar-dot" style="background:#0F5B7A"></span>GOSI Contribution</a>
+      <a class="sidebar-link" href="#wps-submit"><span class="sidebar-dot" style="background:#0F5B7A"></span>WPS / Mudad Submit</a>
+      <a class="sidebar-link" href="#portal-log"><span class="sidebar-dot" style="background:#0F5B7A"></span>Portal Sync Log</a>
+    </div>
   </nav>
 
   <!-- MAIN CONTENT -->
@@ -1568,6 +1577,387 @@ body {
             <div class="step-label">Small Text — fill on resolution</div>
             <div class="step-field-name">Resolution Notes</div>
             <div class="step-desc">Summarize findings and corrective actions taken. This is the formal closure record.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         GOVERNMENT PORTAL SYNC
+    ═══════════════════════════════════ -->
+    <div class="section-header">
+      <h2>Government Portal Sync</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <!-- Portal Settings -->
+    <div id="portal-settings" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#E3F0F5">⚙️</div>
+        <div class="doctype-header-text">
+          <h2>Enable Portal Integrations</h2>
+          <div class="doctype-meta">HR Suite Settings › Saudi Portal Credentials · Configure once; used by all portal calls</div>
+        </div>
+        <span class="module-tag" style="background:#E3F0F5; color:#0F5B7A;">Saudi Portals</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Settings → HR Suite Settings → Saudi Portal Credentials section
+      </div>
+      <div class="mock-form">
+        <p class="form-intro">Before using any Saudi portal button, enter credentials here. Each portal has its own section. Credentials are encrypted at rest — they are never exposed in logs.</p>
+
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Data — Muqeem section</div>
+            <div class="step-field-name">Muqeem API Username / Password / Establishment ID</div>
+            <div class="step-desc">Obtained from the MOI Muqeem employer portal. The Establishment ID is your MOI registration number.</div>
+            <div class="step-note"><span>💡</span> Contact your PRO (Public Relations Officer) or MOI account manager for Muqeem API credentials.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Data — Qiwa section</div>
+            <div class="step-field-name">Qiwa Client ID / Client Secret / Establishment Number</div>
+            <div class="step-desc">Generated from the Qiwa developer portal (qiwa.sa). The system fetches and caches the OAuth2 token automatically in Redis.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Required · Data — GOSI section</div>
+            <div class="step-field-name">GOSI API Key / Secret / Establishment Number</div>
+            <div class="step-desc">From the GOSI employer API portal (gosi.gov.sa). All contribution submissions and registration calls are signed with these credentials.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Required · Data — Mudad section</div>
+            <div class="step-field-name">Mudad API Key / Establishment ID / IBAN / Bank Code</div>
+            <div class="step-desc">From the Mudad WPS portal. The IBAN and Bank Code are embedded in the SAMA SIF file generated for WPS submissions.</div>
+            <div class="step-warn"><span>🔴</span> Incorrect IBAN or bank code will cause WPS file rejection. Verify with your Finance team before saving.</div>
+          </div>
+        </div>
+
+        <div class="form-section-break">After saving</div>
+        <div class="form-step">
+          <div class="step-num">✓</div>
+          <div class="step-body">
+            <div class="step-field-name">Save Settings</div>
+            <div class="step-desc">Save the HR Suite Settings document. All portal buttons on Employee forms, GOSI Contribution forms, Payroll Entry, and the daily schedulers will now use these credentials automatically.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GOSI Register -->
+    <div id="gosi-register" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#E3F0F5">🏛</div>
+        <div class="doctype-header-text">
+          <h2>Register Employee with GOSI</h2>
+          <div class="doctype-meta">Employee form › GOSI group · Enrol a new Saudi employee with GOSI via direct API</div>
+        </div>
+        <span class="module-tag" style="background:#E3F0F5; color:#0F5B7A;">GOSI API</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;Employee → open record → GOSI group → Register with GOSI button
+      </div>
+      <div class="mock-form">
+        <p class="form-intro">When a Saudi national employee joins, register them with GOSI before the first payroll run. Expatriates are enrolled for Occupational Hazard only — use the same button.</p>
+
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Pre-requisite</div>
+            <div class="step-field-name">Ensure Employee record is complete</div>
+            <div class="step-desc">GOSI requires: National ID (for Saudis) or Iqama number (for expats), date of birth, joining date, and basic salary. All must be filled before calling the API.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> Saudi National ID filled · Basic SAR 16,000</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Button · GOSI group</div>
+            <div class="step-field-name">Register with GOSI</div>
+            <div class="step-desc">Sends the registration request to GOSI API. On success, a confirmation message with the GOSI member ID appears. The call is logged to Government Portal Sync Log with Status = Success.</div>
+            <div class="step-note"><span>💡</span> If the employee already exists in GOSI (e.g., transferred from another employer), registration will update their employer link — GOSI will respond with the existing membership ID.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Button · GOSI group</div>
+            <div class="step-field-name">GOSI Member Status</div>
+            <div class="step-desc">After registration, click GOSI Member Status to confirm the membership is active and the correct contribution rate has been assigned by GOSI.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> Status: Active · Rate: 10% employee + 12.5% employer</span>
+              <span class="example-val"><span class="who who-james">James</span> Status: Active · Rate: 2% employer (Occ. Hazard)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Muqeem Verify Iqama -->
+    <div id="muqeem-verify" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#E3F0F5">🪪</div>
+        <div class="doctype-header-text">
+          <h2>Verify Iqama (Muqeem)</h2>
+          <div class="doctype-meta">Employee form / Work Permit form › Muqeem group · Live Iqama status from MOI</div>
+        </div>
+        <span class="module-tag" style="background:#E3F0F5; color:#0F5B7A;">Muqeem</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;Employee → open record → Muqeem group → Verify Iqama &nbsp;|&nbsp; OR &nbsp;Work Permit / Iqama → Verify Iqama button
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Pre-requisite</div>
+            <div class="step-field-name">Work Permit / Iqama record must exist</div>
+            <div class="step-desc">Ensure the employee has a linked Work Permit / Iqama record with the Iqama number entered. The Muqeem call uses this number to query MOI.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> Iqama No. 2305xxxxx · Expiry 1 Feb 2025</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Button · Muqeem group</div>
+            <div class="step-field-name">Verify Iqama</div>
+            <div class="step-desc">Calls Muqeem API with the Iqama number. Returns live status (Active / Expired / Suspended) and the actual expiry date from MOI records. Updates the Work Permit / Iqama record if the expiry date differs from what is stored.</div>
+            <div class="step-note"><span>💡</span> Run Verify Iqama after any physical Absher renewal to confirm the new expiry is registered in MOI and update the system record simultaneously.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Button · Muqeem group</div>
+            <div class="step-field-name">Exit Re-entry Status</div>
+            <div class="step-desc">Checks whether the employee has an active exit re-entry visa and its remaining validity. Use before approving travel for expatriate employees to avoid an accidental final exit.</div>
+            <div class="step-warn"><span>🔴</span> If an expatriate leaves Saudi Arabia on a final exit visa rather than a re-entry visa, their Iqama is cancelled on departure. Always verify Exit Re-entry Status before the employee travels.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Button · Muqeem group</div>
+            <div class="step-field-name">Initiate Final Exit</div>
+            <div class="step-desc">For employees who are leaving Saudi Arabia permanently (resignation or end of contract) — submits the final exit request via Muqeem API. Only use after Exit Clearance is complete and EOSB is settled.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GOSI Contribution -->
+    <div id="gosi-contribution" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#E3F0F5">💳</div>
+        <div class="doctype-header-text">
+          <h2>Submit GOSI Contribution</h2>
+          <div class="doctype-meta">GOSI Contribution form · Submit monthly contribution via GOSI API and obtain reference number</div>
+        </div>
+        <span class="module-tag" style="background:#E3F0F5; color:#0F5B7A;">GOSI API</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Compliance → GOSI Contribution → open record → Submit to GOSI button
+      </div>
+      <div class="mock-form">
+        <p class="form-intro">After running payroll and reviewing GOSI Contribution amounts, use these buttons to transmit to GOSI and get official confirmation.</p>
+
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Pre-requisite</div>
+            <div class="step-field-name">GOSI Contribution record saved and amounts verified</div>
+            <div class="step-desc">The GOSI Contribution record must be saved with correct employee, contributory wages, and the period (month/year). Verify employee and employer amounts match your payroll totals.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Button</div>
+            <div class="step-field-name">Submit to GOSI</div>
+            <div class="step-desc">Submits this employee's contribution for the period. GOSI API returns a reference number confirming receipt. Reference is saved to the record and visible in the Sync Log.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> GOSI-REF-20260531-0042 · Status: Received</span>
+            </div>
+            <div class="step-note"><span>💡</span> Use Submit Monthly Batch if you want to send all employees' contributions in a single API call rather than one by one.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Button</div>
+            <div class="step-field-name">Contribution Certificate</div>
+            <div class="step-desc">After GOSI processes the payment (usually same day or next business day), click this to download the official GOSI contribution certificate PDF. Finance keeps this for audit records.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Read-only — auto-updated by scheduler</div>
+            <div class="step-field-name">Payment Status</div>
+            <div class="step-desc">The sync_monthly_gosi daily scheduler checks GOSI and updates this field. Once the bank transfer clears and GOSI confirms, Payment Status updates to <strong>Paid</strong>.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WPS Submit -->
+    <div id="wps-submit" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#E3F0F5">🏦</div>
+        <div class="doctype-header-text">
+          <h2>Submit WPS to Mudad</h2>
+          <div class="doctype-meta">Payroll Entry form › WPS/Mudad group · Generate SIF, upload to Mudad, check compliance</div>
+        </div>
+        <span class="module-tag" style="background:#E3F0F5; color:#0F5B7A;">Mudad / WPS</span>
+      </div>
+      <div class="submittable-banner">&#10003; All Salary Slips must be submitted before generating the WPS file — unsubmitted slips are excluded from the SIF.</div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Payroll → Payroll Entry → open record → WPS/Mudad group
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Pre-requisite</div>
+            <div class="step-field-name">All Salary Slips submitted for this Payroll Entry</div>
+            <div class="step-desc">Go to the Payroll Entry → Salary Slips tab. Confirm all slips show status Submitted. If any are Draft, open and submit them first.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Button · WPS/Mudad group</div>
+            <div class="step-field-name">Preview WPS File</div>
+            <div class="step-desc">Builds the SAMA SIF from all submitted Salary Slips. Shows a summary: employee count, total net pay, bank routing details. Review before upload — verify employee count matches your headcount.</div>
+            <div class="examples-row">
+              <span class="example-val">47 employees · SAR 642,800 total · SIF format v1.3</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Button · WPS/Mudad group</div>
+            <div class="step-field-name">Submit WPS to Mudad</div>
+            <div class="step-desc">Uploads the SIF to the Mudad portal API. Mudad validates the file and returns a WPS Reference Number. The reference is saved to the Payroll Entry and logged in Government Portal Sync Log.</div>
+            <div class="examples-row">
+              <span class="example-val">WPS-2026-0548 · Accepted · Submitted 28 May 2026</span>
+            </div>
+            <div class="step-warn"><span>🔴</span> Submit within 7 days of the payroll date. Late submission = fines up to SAR 10,000 and potential visa application block.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Button · WPS/Mudad group</div>
+            <div class="step-field-name">Check WPS Status</div>
+            <div class="step-desc">Queries Mudad for the compliance status of this period. Expected result after a successful submission: <strong>Compliant</strong>. If Non-compliant, review the error reason in the Sync Log and resubmit if needed.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-label">Button · WPS/Mudad group</div>
+            <div class="step-field-name">Sync Log</div>
+            <div class="step-desc">Opens the Government Portal Sync Log pre-filtered to this Payroll Entry's WPS calls — showing all Preview, Submit, and Status check events with timestamps and response data.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Portal Sync Log -->
+    <div id="portal-log" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#E3F0F5">📋</div>
+        <div class="doctype-header-text">
+          <h2>Government Portal Sync Log</h2>
+          <div class="doctype-meta">HR Suite › Saudi Portals · Unified audit trail for all government portal API calls</div>
+        </div>
+        <span class="module-tag" style="background:#E3F0F5; color:#0F5B7A;">Audit</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Saudi Portals → Government Portal Sync Log
+      </div>
+      <div class="mock-form">
+        <p class="form-intro">Every call to Muqeem, Qiwa, GOSI, and Mudad is automatically recorded here. Use this log for compliance audits, troubleshooting failed API calls, and generating evidence of portal submissions.</p>
+
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Filter · Select</div>
+            <div class="step-field-name">Portal <span class="field-type-badge">Select</span></div>
+            <div class="step-desc">Filter to a specific portal: Muqeem / Qiwa / GOSI / Mudad.</div>
+            <div class="examples-row">
+              <span class="example-val">GOSI — shows all GOSI contribution submissions and registration calls</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Filter · Select</div>
+            <div class="step-field-name">Sync Type <span class="field-type-badge">Select</span></div>
+            <div class="step-desc">Filter to a specific action type — e.g., Submit WPS, Verify Iqama, Register Employee, Nitaqat Sync.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Read-only · Data</div>
+            <div class="step-field-name">Reference No</div>
+            <div class="step-desc">The reference number returned by the government portal. For GOSI: contribution reference. For Mudad: WPS submission reference. For Muqeem: transaction ID.</div>
+            <div class="examples-row">
+              <span class="example-val">GOSI-REF-20260531-0042</span>
+              <span class="example-val">WPS-2026-0548</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Read-only · Select</div>
+            <div class="step-field-name">Status</div>
+            <div class="step-desc">Success / Failed / Pending. Failed entries include the error message from the portal in the Response Data field — use this to diagnose and retry.</div>
+            <div class="step-note"><span>💡</span> For Ministry audits: export the Sync Log filtered by portal and date range as your evidence of submission. The log is tamper-proof — entries cannot be edited after creation.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-label">Read-only · JSON</div>
+            <div class="step-field-name">Response Data</div>
+            <div class="step-desc">The full API response from the government portal. For successful calls, this contains confirmation data (member IDs, reference numbers, compliance flags). For failed calls, the error code and message from the portal are stored here.</div>
           </div>
         </div>
       </div>

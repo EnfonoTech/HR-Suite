@@ -97,13 +97,13 @@ def _ensure_iqama(data: dict) -> str:
 
 def _ensure_leave(data: dict) -> str:
     existing = frappe.db.get_value(
-        "Saudi Annual Leave",
+        "Annual Leave",
         {"employee": data["employee"], "leave_start_date": data["leave_start_date"], "docstatus": ["<", 2]},
         "name",
     )
     if existing:
         return existing
-    doc = frappe.get_doc({"doctype": "Saudi Annual Leave", **data})
+    doc = frappe.get_doc({"doctype": "Annual Leave", **data})
     doc.flags.ignore_permissions = True
     try:
         from frappe.workflow.doctype.workflow_action import workflow_action

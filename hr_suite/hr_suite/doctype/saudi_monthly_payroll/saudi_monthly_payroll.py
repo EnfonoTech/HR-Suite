@@ -101,7 +101,7 @@ def _required_workbook_field_labels() -> dict[str, str]:
 	}
 
 
-class SaudiMonthlyPayroll(Document):
+class MonthlyPayroll(Document):
 
 	def validate(self):
 		self.period_label = f"{self.month} {self.year}"
@@ -198,8 +198,8 @@ def fetch_employees(doc_name: str):
 	Fetch all active employees for the company and populate the child table.
 	Called from a JavaScript button.
 	"""
-	doc = frappe.get_doc("Saudi Monthly Payroll", doc_name)
-	frappe.has_permission("Saudi Monthly Payroll", "write", doc=doc, throw=True)
+	doc = frappe.get_doc("Monthly Payroll", doc_name)
+	frappe.has_permission("Monthly Payroll", "write", doc=doc, throw=True)
 
 	employees = frappe.get_all(
 		"Employee",
@@ -242,7 +242,7 @@ def fetch_employees(doc_name: str):
 
 	sick_rows = frappe.db.sql(
 		"""SELECT employee, leave_pay_amount, total_days, daily_salary, from_date, to_date
-		   FROM `tabSaudi Sick Leave`
+		   FROM `tabSick Leave`
 		   WHERE employee IN %(names)s AND docstatus=1
 		     AND from_date <= %(end)s AND to_date >= %(start)s""",
 		{"names": emp_names, "start": month_start, "end": month_end},
@@ -374,8 +374,8 @@ def calculate_employee_row(employee: str, month: str, year: int):
 @frappe.whitelist()
 def import_payroll_workbook(doc_name: str, file_url: str | None = None):
 	"""Import an external payroll file into the monthly payroll."""
-	doc = frappe.get_doc("Saudi Monthly Payroll", doc_name)
-	frappe.has_permission("Saudi Monthly Payroll", "write", doc=doc, throw=True)
+	doc = frappe.get_doc("Monthly Payroll", doc_name)
+	frappe.has_permission("Monthly Payroll", "write", doc=doc, throw=True)
 
 	workbook_url = file_url or doc.source_workbook
 	if not workbook_url:
@@ -461,8 +461,8 @@ def import_payroll_workbook(doc_name: str, file_url: str | None = None):
 @frappe.whitelist()
 def preview_payroll_workbook_import(doc_name: str, file_url: str | None = None):
 	"""Preview the payroll file before import and show the match rate."""
-	doc = frappe.get_doc("Saudi Monthly Payroll", doc_name)
-	frappe.has_permission("Saudi Monthly Payroll", "read", doc=doc, throw=True)
+	doc = frappe.get_doc("Monthly Payroll", doc_name)
+	frappe.has_permission("Monthly Payroll", "read", doc=doc, throw=True)
 	workbook_url = file_url or doc.source_workbook
 	if not workbook_url:
 		frappe.throw(_("Attach the source payroll workbook first."))
@@ -472,8 +472,8 @@ def preview_payroll_workbook_import(doc_name: str, file_url: str | None = None):
 @frappe.whitelist()
 def validate_payroll_workbook(doc_name: str, file_url: str | None = None):
 	"""Validate the payroll file before import, showing errors and warnings."""
-	doc = frappe.get_doc("Saudi Monthly Payroll", doc_name)
-	frappe.has_permission("Saudi Monthly Payroll", "read", doc=doc, throw=True)
+	doc = frappe.get_doc("Monthly Payroll", doc_name)
+	frappe.has_permission("Monthly Payroll", "read", doc=doc, throw=True)
 	workbook_url = file_url or doc.source_workbook
 	if not workbook_url:
 		frappe.throw(_("Attach the source payroll workbook first."))
@@ -485,8 +485,8 @@ def validate_payroll_workbook(doc_name: str, file_url: str | None = None):
 @frappe.whitelist()
 def download_payroll_workbook_gap_report(doc_name: str, file_url: str | None = None):
 	"""Create an Excel file for payroll rows that did not match current employee records."""
-	doc = frappe.get_doc("Saudi Monthly Payroll", doc_name)
-	frappe.has_permission("Saudi Monthly Payroll", "read", doc=doc, throw=True)
+	doc = frappe.get_doc("Monthly Payroll", doc_name)
+	frappe.has_permission("Monthly Payroll", "read", doc=doc, throw=True)
 	workbook_url = file_url or doc.source_workbook
 	if not workbook_url:
 		frappe.throw(_("Attach the source payroll workbook first."))
@@ -507,8 +507,8 @@ def download_payroll_workbook_gap_report(doc_name: str, file_url: str | None = N
 @frappe.whitelist()
 def download_payroll_import_template(doc_name: str):
 	"""Create an empty Excel template for batch payroll upload with simplified instructions."""
-	doc = frappe.get_doc("Saudi Monthly Payroll", doc_name)
-	frappe.has_permission("Saudi Monthly Payroll", "read", doc=doc, throw=True)
+	doc = frappe.get_doc("Monthly Payroll", doc_name)
+	frappe.has_permission("Monthly Payroll", "read", doc=doc, throw=True)
 
 	file_name = f"payroll-import-template-{doc.name}-{frappe.generate_hash(length=6)}.xlsx"
 	file_doc = save_file(
@@ -524,8 +524,8 @@ def download_payroll_import_template(doc_name: str):
 @frappe.whitelist()
 def download_simple_payroll_import_template(doc_name: str):
 	"""Create a simplified Excel template for end users with a single input sheet and brief instructions."""
-	doc = frappe.get_doc("Saudi Monthly Payroll", doc_name)
-	frappe.has_permission("Saudi Monthly Payroll", "read", doc=doc, throw=True)
+	doc = frappe.get_doc("Monthly Payroll", doc_name)
+	frappe.has_permission("Monthly Payroll", "read", doc=doc, throw=True)
 
 	file_name = f"payroll-import-template-simple-{doc.name}-{frappe.generate_hash(length=6)}.xlsx"
 	file_doc = save_file(
@@ -541,8 +541,8 @@ def download_simple_payroll_import_template(doc_name: str):
 @frappe.whitelist()
 def download_employee_setup_template(doc_name: str, file_url: str | None = None):
 	"""Create an employee setup template from unmatched payroll rows."""
-	doc = frappe.get_doc("Saudi Monthly Payroll", doc_name)
-	frappe.has_permission("Saudi Monthly Payroll", "read", doc=doc, throw=True)
+	doc = frappe.get_doc("Monthly Payroll", doc_name)
+	frappe.has_permission("Monthly Payroll", "read", doc=doc, throw=True)
 	workbook_url = file_url or doc.source_workbook
 	if not workbook_url:
 		frappe.throw(_("Attach the source payroll workbook first."))
@@ -563,8 +563,8 @@ def download_employee_setup_template(doc_name: str, file_url: str | None = None)
 @frappe.whitelist()
 def import_employee_setup_workbook(doc_name: str, file_url: str | None = None):
 	"""Import the completed employee setup workbook and create missing Employee records."""
-	doc = frappe.get_doc("Saudi Monthly Payroll", doc_name)
-	frappe.has_permission("Saudi Monthly Payroll", "write", doc=doc, throw=True)
+	doc = frappe.get_doc("Monthly Payroll", doc_name)
+	frappe.has_permission("Monthly Payroll", "write", doc=doc, throw=True)
 	workbook_url = file_url or doc.employee_setup_workbook
 	if not workbook_url:
 		frappe.throw(_("Attach the completed employee setup workbook first."))
@@ -586,8 +586,8 @@ def import_employee_setup_workbook(doc_name: str, file_url: str | None = None):
 @frappe.whitelist()
 def autofill_employee_setup_workbook_names(doc_name: str, file_url: str | None = None):
 	"""Auto-fill name fields in the employee setup workbook from the employee name in the payroll file."""
-	doc = frappe.get_doc("Saudi Monthly Payroll", doc_name)
-	frappe.has_permission("Saudi Monthly Payroll", "write", doc=doc, throw=True)
+	doc = frappe.get_doc("Monthly Payroll", doc_name)
+	frappe.has_permission("Monthly Payroll", "write", doc=doc, throw=True)
 	workbook_url = file_url or doc.employee_setup_workbook
 	if not workbook_url:
 		frappe.throw(_("Attach the employee setup workbook first."))
@@ -619,8 +619,8 @@ def create_basic_employees_from_payroll(
 	default_status: str = "Active",
 ):
 	"""Create placeholder Employee records for imported payroll rows that are not linked yet."""
-	doc = frappe.get_doc("Saudi Monthly Payroll", doc_name)
-	frappe.has_permission("Saudi Monthly Payroll", "write", doc=doc, throw=True)
+	doc = frappe.get_doc("Monthly Payroll", doc_name)
+	frappe.has_permission("Monthly Payroll", "write", doc=doc, throw=True)
 	defaults = _normalize_basic_employee_creation_defaults(
 		default_gender,
 		default_date_of_birth,
@@ -655,8 +655,8 @@ def create_basic_employees_from_payroll(
 @frappe.whitelist()
 def sync_linked_employee_master_fields(doc_name: str):
 	"""Backfill safe Employee master fields from linked payroll rows."""
-	doc = frappe.get_doc("Saudi Monthly Payroll", doc_name)
-	frappe.has_permission("Saudi Monthly Payroll", "write", doc=doc, throw=True)
+	doc = frappe.get_doc("Monthly Payroll", doc_name)
+	frappe.has_permission("Monthly Payroll", "write", doc=doc, throw=True)
 	assert_doctype_permissions("Employee", "write")
 	updated_count = _sync_linked_employee_master_fields_from_payroll(doc)
 	if updated_count:
@@ -671,8 +671,8 @@ def sync_linked_employee_master_fields(doc_name: str):
 @frappe.whitelist()
 def delete_draft_payroll(doc_name: str):
 	"""Delete a draft payroll document using write access plus explicit safety checks."""
-	doc = frappe.get_doc("Saudi Monthly Payroll", doc_name)
-	frappe.has_permission("Saudi Monthly Payroll", "write", doc=doc, throw=True)
+	doc = frappe.get_doc("Monthly Payroll", doc_name)
+	frappe.has_permission("Monthly Payroll", "write", doc=doc, throw=True)
 
 	if cint(doc.docstatus) != 0:
 		frappe.throw(
@@ -692,7 +692,7 @@ def delete_draft_payroll(doc_name: str):
 			title=_("Linked Loan Installments"),
 		)
 
-	frappe.delete_doc("Saudi Monthly Payroll", doc.name, ignore_permissions=True)
+	frappe.delete_doc("Monthly Payroll", doc.name, ignore_permissions=True)
 	return {"deleted": True, "name": doc_name}
 
 
@@ -748,13 +748,13 @@ def _auto_create_missing_employees_for_import(doc) -> dict:
 @frappe.whitelist()
 def create_journal_entry_from_payroll(doc_name: str):
 	"""
-	Create a journal entry directly from Saudi Monthly Payroll data
+	Create a journal entry directly from Monthly Payroll data
 	instead of relying on an external Payroll Entry.
 	Called from the "Create Journal Entry" button.
 	"""
 	import calendar as _cal
-	doc = frappe.get_doc("Saudi Monthly Payroll", doc_name)
-	frappe.has_permission("Saudi Monthly Payroll", "write", doc=doc, throw=True)
+	doc = frappe.get_doc("Monthly Payroll", doc_name)
+	frappe.has_permission("Monthly Payroll", "write", doc=doc, throw=True)
 
 	if doc.payroll_journal_entry:
 		frappe.throw(
@@ -1078,7 +1078,7 @@ def _build_payroll_import_template_workbook(doc) -> BytesIO:
 	wrapped_alignment = Alignment(wrap_text=True, vertical="top")
 
 	instruction_rows = [
-		["Payroll Upload Template", "Use this file to upload payroll in bulk from the Saudi Monthly Payroll screen."],
+		["Payroll Upload Template", "Use this file to upload payroll in bulk from the Monthly Payroll screen."],
 		["1", "Fill data in the payroll sheet only and do not change column names in the first row."],
 		["2", "Key fields per row: Employee ID, Name, Cost Center, Basic, Total, Total Deductions, and Net Salary."],
 		["3", "If the employee ID is available, enter it exactly; do not rely on name only when the ID is known."],
@@ -1361,7 +1361,7 @@ def _build_employee_row(emp: dict, month: str, year: int) -> dict:
 	month_end = f"{year}-{month_num:02d}-{last_day:02d}"
 
 	sick_rows = frappe.get_all(
-		"Saudi Sick Leave",
+		"Sick Leave",
 		filters={
 			"employee": emp["name"],
 			"docstatus": 1,
@@ -2645,7 +2645,7 @@ def auto_create_employment_contracts(
 	  bench --site <site> execute \\
 	    hr_suite.hr_suite.doctype.saudi_monthly_payroll.saudi_monthly_payroll.auto_create_employment_contracts
 	"""
-	doc = frappe.get_doc("Saudi Monthly Payroll", payroll_docname)
+	doc = frappe.get_doc("Monthly Payroll", payroll_docname)
 	company = doc.company
 
 	# Resolve workbook file

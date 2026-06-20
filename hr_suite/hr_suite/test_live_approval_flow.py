@@ -46,13 +46,13 @@ class TestLiveApprovalFlow(FrappeTestCase):
 
 	def test_annual_leave_workflow_runs_submitter_manager_hr_path(self):
 		with patch(
-			"hr_suite.hr_suite.doctype.saudi_annual_leave.saudi_annual_leave.get_annual_leave_balance",
+			"hr_suite.hr_suite.doctype.annual_leave.annual_leave.get_annual_leave_balance",
 			return_value={"balance": 21},
 		):
 			frappe.set_user(self.submitter_email)
 			leave = frappe.get_doc(
 				{
-					"doctype": "Saudi Annual Leave",
+					"doctype": "Annual Leave",
 					"employee": self.employee,
 					"company": frappe.db.get_value("Employee", self.employee, "company"),
 					"department": frappe.db.get_value("Employee", self.employee, "department"),
@@ -68,19 +68,19 @@ class TestLiveApprovalFlow(FrappeTestCase):
 			self.assertEqual(leave.workflow_state, "Pending Manager Approval")
 
 			frappe.set_user(self.manager_email)
-			self.assertTrue(frappe.has_permission("Saudi Annual Leave", "read", doc=leave))
+			self.assertTrue(frappe.has_permission("Annual Leave", "read", doc=leave))
 			apply_workflow(leave, "Manager Approve")
 			leave.reload()
 			self.assertEqual(leave.workflow_state, "Pending HR Approval")
 
 			frappe.set_user(self.hr_email)
-			self.assertTrue(frappe.has_permission("Saudi Annual Leave", "read", doc=leave))
+			self.assertTrue(frappe.has_permission("Annual Leave", "read", doc=leave))
 			apply_workflow(leave, "HR Approve")
 			leave.reload()
 			self.assertEqual(leave.workflow_state, "Pending Finance Approval")
 
 			frappe.set_user(self.finance_email)
-			self.assertTrue(frappe.has_permission("Saudi Annual Leave", "read", doc=leave))
+			self.assertTrue(frappe.has_permission("Annual Leave", "read", doc=leave))
 			apply_workflow(leave, "Final Approve")
 			leave.reload()
 

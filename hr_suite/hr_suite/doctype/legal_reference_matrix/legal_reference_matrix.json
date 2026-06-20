@@ -158,7 +158,7 @@
    "fieldname": "latest_regulatory_task",
    "fieldtype": "Link",
    "label": "Latest Regulatory Task",
-   "options": "Saudi Regulatory Task",
+   "options": "Regulatory Task",
    "read_only": 1
   },
   {

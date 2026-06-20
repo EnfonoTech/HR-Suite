@@ -16,7 +16,7 @@
  "name": "WPS Export Report",
  "owner": "Administrator",
  "prepared_report": 0,
- "ref_doctype": "Saudi Monthly Payroll",
+ "ref_doctype": "Monthly Payroll",
  "report_name": "WPS Export Report",
  "report_type": "Script Report",
  "roles": [

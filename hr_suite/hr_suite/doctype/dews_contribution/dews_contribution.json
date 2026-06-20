@@ -1,0 +1,37 @@
+{
+ "autoname": "naming_series:",
+ "name": "DEWS Contribution",
+ "module": "Hr Suite",
+ "doctype": "DocType",
+ "is_submittable": 1,
+ "fields": [
+  {"fieldname": "naming_series", "fieldtype": "Select", "label": "Naming Series", "options": "AE-DEWS-.YYYY.-.####", "reqd": 1},
+  {"fieldname": "employee", "fieldtype": "Link", "label": "Employee", "options": "Employee", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "employee_name", "fieldtype": "Data", "label": "Employee Name", "fetch_from": "employee.employee_name", "read_only": 1, "in_list_view": 1},
+  {"fieldname": "column_break_1", "fieldtype": "Column Break"},
+  {"fieldname": "company", "fieldtype": "Link", "label": "Company", "options": "Company", "reqd": 1, "fetch_from": "employee.company"},
+  {"fieldname": "is_difc_entity", "fieldtype": "Check", "label": "DIFC Entity", "description": "DEWS is mandatory for DIFC-licensed entities. ADGM: check scheme rules."},
+  {"fieldname": "period_section", "fieldtype": "Section Break", "label": "Period"},
+  {"fieldname": "month", "fieldtype": "Select", "label": "Month", "options": "January\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "year", "fieldtype": "Int", "label": "Year", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "column_break_2", "fieldtype": "Column Break"},
+  {"fieldname": "period_label", "fieldtype": "Data", "label": "Period", "read_only": 1},
+  {"fieldname": "service_start_date", "fieldtype": "Date", "label": "Service Start Date", "description": "Employee joining date in UAE"},
+  {"fieldname": "contribution_section", "fieldtype": "Section Break", "label": "Contribution"},
+  {"fieldname": "gross_salary", "fieldtype": "Currency", "label": "Gross Salary (AED)", "reqd": 1},
+  {"fieldname": "employer_contribution_rate", "fieldtype": "Percent", "label": "Employer Contribution Rate (%)", "default": "5.83", "description": "5.83% = 21 days / 12 months of basic salary"},
+  {"fieldname": "column_break_3", "fieldtype": "Column Break"},
+  {"fieldname": "employer_contribution", "fieldtype": "Currency", "label": "Monthly Contribution (AED)", "read_only": 1},
+  {"fieldname": "cumulative_balance", "fieldtype": "Currency", "label": "Cumulative Fund Balance (AED)", "read_only": 1, "description": "Running total of employer contributions"},
+  {"fieldname": "notes_section", "fieldtype": "Section Break", "label": "Notes"},
+  {"fieldname": "notes", "fieldtype": "Small Text", "label": "Notes"},
+  {"fieldname": "journal_entry", "fieldtype": "Link", "label": "Journal Entry", "options": "Journal Entry", "read_only": 1},
+  {"fieldname": "amended_from", "fieldtype": "Link", "label": "Amended From", "options": "DEWS Contribution", "read_only": 1, "print_hide": 1}
+ ],
+ "permissions": [
+  {"role": "HR Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "submit": 1, "cancel": 1, "amend": 1},
+  {"role": "HR User", "read": 1, "write": 1, "create": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

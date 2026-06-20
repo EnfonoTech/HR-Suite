@@ -38,8 +38,17 @@ hr_suite                               permission_manager (separate app)
 ├── Payroll
 │   ├── Saudi Monthly Payroll
 │   ├── Overtime Request
-│   ├── GOSI Contribution
+│   ├── GOSI Contribution          ──► GOSI API (gosi.gov.sa)
+│   ├── WPS / Mudad Submission     ──► Mudad WPS (mudad.com.sa)
 │   └── Salary Adjustment
+│       └── Salary Component Override (pen/clock on SSA fields)
+│
+├── Government Portal Integrations
+│   ├── Muqeem  ──► MOI (muqeem.sa)        Iqama verify / final exit
+│   ├── Qiwa    ──► HRSD (qiwa.info)       Wathiqa / Nitaqat / notices
+│   ├── GOSI    ──► gosi.gov.sa            Register / submit / account
+│   └── Mudad   ──► mudad.com.sa           SIF file / WPS submit / status
+│       └── Government Portal Sync Log  (all calls audited here)
 │
 ├── HR Letters
 │   ├── HR Letter
@@ -437,19 +446,59 @@ Types: Merit Increase / Promotion Increase / Market Correction / Retention / Red
 
 ---
 
-### 4. GOSI Contribution
+### 4. GOSI Contribution + Direct API Submission
 
-**Doctype:** `GOSI Contribution`
+**Doctype:** `GOSI Contribution`  
+**Integration:** `integrations/gosi_api.py`
 
 ```
 Monthly auto-calculation:
-    Employee Share: 9.75% of Basic Salary
-    Employer Share: 11.75% of Basic Salary (Saudi nationals)
-    Expat employees: Occupational Hazard only (2%)
+    Employee Share: 10% of Basic Salary (Saudi nationals) / 0% (expats)
+    Employer Share: 12% of Basic Salary (Saudi nationals) / 2% (expats)
+    Ceiling: SAR 45,000 contribution base
     │
     ▼
-On Submit: Payroll Entries created in ERPNext GL
-Monthly GOSI report exported for Ministry submission
+On Submit: Journal Entry created in ERPNext GL
+    │
+    ▼
+GOSI Portal → Submit to GOSI button (visible when GOSI API enabled)
+    │
+    ├── API POST → gosi.gov.sa/v1/contributions/submit
+    ├── reference_number stored on the GOSI Contribution record
+    └── payment_status → Paid | payment_date = today
+    │
+    ▼
+Government Portal Sync Log entry created (portal=GOSI, status=Success/Failed)
+```
+
+**Batch path (via API):** `submit_monthly_batch(company, month, year)` submits all pending records in one call and marks all as Paid with the batch reference number.
+
+---
+
+### 4a. WPS Submission via Mudad
+
+**Integration:** `integrations/mudad.py`
+
+```
+Payroll Entry submitted (all Salary Slips submitted)
+    │
+    ▼
+Payroll Entry → WPS/Mudad → Preview WPS File
+    │  Builds SAMA SIF rows from Salary Slips:
+    │  employer_iban (from Settings), employee IBAN, net_pay per slip
+    │
+    ▼
+Payroll Entry → WPS/Mudad → Submit WPS to Mudad
+    │  POST → mudad.com.sa/v1/wps/submit
+    │  Returns: reference_number, status
+    │
+    ▼
+Payroll Entry → WPS/Mudad → Check WPS Status
+    │  GET → mudad.com.sa/v1/wps/status
+    │  Returns: is_compliant, violation_reason (if non-compliant)
+    │
+    ▼
+Government Portal Sync Log (portal=Mudad) — full audit trail
 ```
 
 ---
@@ -749,12 +798,38 @@ All multi-level approval configuration is done in the **permission_manager** app
 - [ ] Test approval flow: submit a leave request → check **PM Approval Inbox** (`/app/pm-approval-inbox`)
 - [ ] For out-of-office cover, create **PM Approver Delegation** records as needed
 
-### Phase 5 — Go Live
+### Phase 5 — Saudi Government Portal Integrations
+
+Configure in **Hr Suite Settings** under each portal's section (all optional — enable only what you have API access to):
+
+**Muqeem (MOI — Iqama management):**
+- [ ] Enable Muqeem integration → enter Establishment ID, username, password
+- [ ] Test: open any Employee with a Work Permit/Iqama record → Muqeem → Verify Iqama
+- [ ] Confirm Government Portal Sync Log entry created
+
+**Qiwa (HRSD — labor contracts & Nitaqat):**
+- [ ] Enable Qiwa integration → enter Establishment ID, OAuth2 Client ID + Secret
+- [ ] Test: Employee → Qiwa → Verify Wathiqa Contract
+- [ ] Test: Nitaqat Record → Sync from Qiwa → band and % updated
+
+**GOSI API (direct contribution submission):**
+- [ ] Enable GOSI API → enter Establishment ID + API Key
+- [ ] Test: Employee → GOSI → Register with GOSI
+- [ ] Test: submitted GOSI Contribution → GOSI Portal → Submit to GOSI → reference number stored
+
+**Mudad / WPS (wage protection submission):**
+- [ ] Enable Mudad → enter Establishment ID, Employer IBAN, Bank Code, API Key
+- [ ] Test: submitted Payroll Entry → WPS/Mudad → Preview WPS File → verify employee count matches
+- [ ] Test: Submit WPS to Mudad → reference number returned
+- [ ] Test: Check WPS Status → is_compliant = Yes
+
+### Phase 6 — Go Live
 
 - [ ] Train HR team on **PM Approval Inbox** (`/app/pm-approval-inbox`) in permission_manager
 - [ ] Train managers on approving via Approval Inbox
 - [ ] Configure email notifications (SMTP) so approval alerts are delivered
 - [ ] Set up scheduled tasks: `bench --site <site> scheduler enable`
+- [ ] Verify all scheduler tasks run: `bench --site <site> run-scheduler-events daily`
 
 ---
 
@@ -838,12 +913,22 @@ All multi-level approval configuration is done in the **permission_manager** app
 | Exit Interview | Exit discussion documentation |
 | Termination Notice | Formal termination with workflow |
 
+### Saudi Government Portal Integrations
+| DocType / Module | Purpose |
+|---------|---------|
+| Government Portal Sync Log | Unified audit log for all portal API calls (Muqeem, Qiwa, GOSI, Mudad) |
+| `integrations/muqeem.py` | Muqeem MOI — Iqama verification, exit/re-entry, final exit |
+| `integrations/qiwa.py` | Qiwa HRSD — labor contracts, Nitaqat, labor notices |
+| `integrations/gosi_api.py` | GOSI — registration, contribution submission, employer account |
+| `integrations/mudad.py` | Mudad WPS — SIF file generation, submission, compliance check |
+| Salary Component Override | Audit-trail record for every salary field change via pen icon |
+
 ### Compliance & Governance
 | Doctype | Purpose |
 |---------|---------|
-| Work Permit Iqama | Expat visa/Iqama tracking |
+| Work Permit Iqama | Expat visa/Iqama tracking (Muqeem-integrated) |
 | Ministry Filing Tracker | Government submission deadlines |
-| NITAQAT Record | Saudi worker quota compliance |
+| NITAQAT Record | Saudi worker quota compliance (Qiwa-integrated) |
 | Statutory HR Records Register | Legal document maintenance |
 | Work Regulation | Company labor regulation |
 | Working Time Compliance Check | Daily hours verification |

@@ -49,7 +49,7 @@ class TestProfessionalHrCatalog(FrappeTestCase):
 	def test_feature_detail_returns_related_features(self):
 		result = get_professional_hr_feature("saudi-monthly-payroll")
 
-		self.assertEqual(result["feature"]["title"], "Saudi Monthly Payroll")
+		self.assertEqual(result["feature"]["title"], "Monthly Payroll")
 		self.assertEqual(result["category"]["id"], "time")
 		self.assertTrue(result["related"])
 		self.assertGreaterEqual(result["catalog_summary"]["total_features"], 70)

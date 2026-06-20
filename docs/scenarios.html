@@ -572,7 +572,7 @@ body {
     <a class="topbar-tab" href="tour.html">Guided Tour</a>
   </nav>
   <div class="topbar-right">
-    <span class="topbar-badge">v1.0 · ERPNext 15</span>
+    <span class="topbar-badge">v2.0 · ERPNext 15</span>
   </div>
 </header>
 
@@ -580,11 +580,11 @@ body {
 
   <!-- PAGE HEADER -->
   <div class="page-eyebrow">HR Suite · Employee Scenarios</div>
-  <h1 class="page-title">Three employees. Full HR cycles.</h1>
-  <p class="page-desc">These scenarios trace three real employees from their first day through every HR event — leave, payroll, disciplinary action, exit — showing which module is used at each step, what HR must do, and what the system handles automatically.</p>
+  <h1 class="page-title">Four scenarios. Full HR cycles.</h1>
+  <p class="page-desc">These scenarios trace three real employees from their first day through every HR event — leave, payroll, disciplinary action, exit — and a fourth scenario covering a monthly compliance run with Saudi portal integrations (GOSI, WPS/Mudad, Muqeem).</p>
 
   <!-- OVERVIEW CARDS -->
-  <div class="emp-overview">
+  <div class="emp-overview" style="grid-template-columns: repeat(2, 1fr);">
 
     <a class="emp-card emp-card-1" href="#ahmed">
       <div class="emp-card-avatar">AG</div>
@@ -622,6 +622,18 @@ body {
         <span class="emp-tag tag-amber">Loan</span>
         <span class="emp-tag tag-rose">Disciplinary</span>
         <span class="emp-tag tag-muted">EOSB exit</span>
+      </div>
+    </a>
+
+    <a class="emp-card" href="#compliance-run" style="border-top-color: #0F5B7A;">
+      <div class="emp-card-avatar" style="background:#0F5B7A;">CR</div>
+      <div class="emp-card-name">Monthly Compliance Run</div>
+      <div class="emp-card-role">Payroll Manager · Saudi Portal Integrations</div>
+      <div class="emp-card-tags">
+        <span class="emp-tag" style="background:#E3F0F5; color:#0F5B7A;">WPS / Mudad</span>
+        <span class="emp-tag" style="background:#E3F0F5; color:#0F5B7A;">GOSI API</span>
+        <span class="emp-tag" style="background:#E3F0F5; color:#0F5B7A;">Muqeem</span>
+        <span class="emp-tag tag-muted">Salary Override</span>
       </div>
     </a>
 
@@ -1298,10 +1310,157 @@ body {
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SCENARIO 4: MONTHLY COMPLIANCE RUN                 -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="chapter" id="compliance-run" style="--ch-accent: #0F5B7A; --ch-dim: #E3F0F5; --ch-border: #9ECAD8;">
+
+    <div class="chapter-header" style="border-bottom-color: #0F5B7A;">
+      <div class="chapter-avatar" style="background: #0F5B7A;">CR</div>
+      <div class="chapter-header-info">
+        <div class="chapter-num" style="color: #0F5B7A;">Scenario 04 — Monthly Compliance Run</div>
+        <div class="chapter-name">Payroll Manager — Saudi Portal Integrations</div>
+        <div class="chapter-subtitle">End-to-end monthly compliance: payroll → WPS → GOSI → Iqama verification → salary overrides</div>
+      </div>
+      <div class="chapter-stat-row">
+        <div class="chapter-stat">
+          <div class="chapter-stat-val">4</div>
+          <div class="chapter-stat-key">Portal touches</div>
+        </div>
+        <div class="chapter-stat">
+          <div class="chapter-stat-val">Monthly</div>
+          <div class="chapter-stat-key">Cadence</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-grid">
+      <div class="profile-cell"><div class="profile-cell-label">Actor</div><div class="profile-cell-value">Payroll Manager (Finance / HR)</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Month</div><div class="profile-cell-value">May 2026 payroll cycle</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Systems</div><div class="profile-cell-value">GOSI API · Mudad WPS · Muqeem</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Audit</div><div class="profile-cell-value">Government Portal Sync Log</div></div>
+    </div>
+
+    <div class="note note-green" style="margin-bottom: 24px;">
+      <strong>Before you start:</strong> Ensure Saudi portal credentials are configured in <strong>HR Suite Settings → Saudi Portal Credentials</strong> for Muqeem, Qiwa, GOSI, and Mudad. All calls below will log automatically to the Government Portal Sync Log.
+    </div>
+
+    <div class="timeline-label">Monthly compliance workflow</div>
+    <div class="timeline">
+
+      <div class="tl-event ev-key">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Step 1 — Payroll run (25 May 2026)</div>
+          <div class="tl-title">Submit Salary Slips for May</div>
+          <span class="tl-module mod-green">Saudi Monthly Payroll</span>&nbsp;
+          <span class="tl-module mod-green">Salary Slip</span>
+          <div class="tl-desc">Payroll Manager opens Saudi Monthly Payroll for May 2026. All active employees are populated with their salary components. GOSI deductions, loan installments, and any approved penalties are already included. Manager reviews and submits — ERPNext Salary Slips are created for all employees.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Salary Slips submitted. GOSI Contribution records for Saudi nationals auto-populated from payroll. WPS/Mudad group appears on the Payroll Entry form.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-key">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Step 2 — WPS submission (by 1 Jun 2026, within 7 days)</div>
+          <div class="tl-title">Preview WPS File → Submit WPS to Mudad → Check Status</div>
+          <span class="tl-module mod-green">Payroll Entry</span>&nbsp;
+          <span class="tl-module" style="background:#E3F0F5; color:#0F5B7A;">Mudad / WPS</span>
+          <div class="tl-desc">From the May Payroll Entry, Payroll Manager clicks <strong>Preview WPS File</strong> in the WPS/Mudad group. The SAMA SIF is built from all submitted Salary Slips. After reviewing employee count (e.g., 47 employees, total SAR 642,800), clicks <strong>Submit WPS to Mudad</strong>. Mudad processes the upload and returns a WPS reference number (e.g., WPS-2026-0548). Manager clicks <strong>Check WPS Status</strong> — result: <strong>Compliant</strong>.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">All three API calls (Preview, Submit, Status) are logged to <strong>Government Portal Sync Log</strong> with status = Success and the Mudad reference number. The send_wps_correction_due_alerts scheduler stops firing for this period.</span>
+          </div>
+          <div class="note note-rose" style="margin-top:10px;"><strong>7-day deadline:</strong> Payroll ran 25 May — WPS must be submitted by 1 Jun. Late submission triggers fines up to SAR 10,000 and can block new visa applications.</div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-key">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Step 3 — GOSI submission (by 15 Jun 2026)</div>
+          <div class="tl-title">Open GOSI Contribution → Submit to GOSI → Get reference → Verify payment_status = Paid</div>
+          <span class="tl-module mod-green">GOSI Contribution</span>&nbsp;
+          <span class="tl-module" style="background:#E3F0F5; color:#0F5B7A;">GOSI API</span>
+          <div class="tl-desc">Payroll Manager opens the GOSI Contribution record for May 2026. Contributions for Saudi nationals (10% employee + 12.5% employer) are already calculated. Clicks <strong>Submit to GOSI</strong>. The GOSI API accepts the submission and returns a reference number (e.g., GOSI-REF-20260531-4421). Manager then opens the employer account via <strong>Get Employer Account</strong> to confirm total due, then clicks <strong>Contribution Certificate</strong> to download the official PDF for Finance records.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">GOSI reference number saved to the Contribution record. sync_monthly_gosi scheduler will confirm payment_status = <strong>Paid</strong> on the next daily run after the bank transfer clears.</span>
+          </div>
+          <div class="note note-amber" style="margin-top:10px;"><strong>Monthly batch option:</strong> If you have many employees, use <strong>Submit Monthly Batch</strong> instead of submitting individually — it transmits all May contributions in a single GOSI API call.</div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-key">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Step 4 — GOSI registration check</div>
+          <div class="tl-title">Open Employee → GOSI group → GOSI Member Status</div>
+          <span class="tl-module mod-green">Employee</span>&nbsp;
+          <span class="tl-module" style="background:#E3F0F5; color:#0F5B7A;">GOSI API</span>
+          <div class="tl-desc">For any newly onboarded Saudi national employee (e.g., a new hire who started in May), the Payroll Manager opens their Employee record, scrolls to the <strong>GOSI group</strong>, and clicks <strong>Register Employee</strong>. After GOSI confirms registration, clicks <strong>GOSI Member Status</strong> to verify the membership is active and the correct contribution rate is applied. Result logged to Government Portal Sync Log.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Registration confirmed. GOSI deduction will be applied automatically in the next payroll run for this employee.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-key">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Step 5 — Iqama verification (ongoing)</div>
+          <div class="tl-title">Open Employee → Muqeem group → Verify Iqama</div>
+          <span class="tl-module mod-green">Employee</span>&nbsp;
+          <span class="tl-module" style="background:#E3F0F5; color:#0F5B7A;">Muqeem</span>
+          <div class="tl-desc">PRO or HR Compliance Officer opens the record for an expatriate employee (e.g., James Mathew's replacement, EMP-0205). Clicks <strong>Verify Iqama</strong> in the Muqeem group. Muqeem API returns live status: Active, expiry 15 Feb 2027. The Work Permit / Iqama record is updated automatically. Manager also clicks <strong>Exit Re-entry Status</strong> to confirm the employee has no exit re-entry visa that might affect business travel plans.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Both calls logged to Government Portal Sync Log. sync_expiring_iqamas daily scheduler will alert HR automatically when the 90-day window approaches in Nov 2026.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-final">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Step 6 — Audit trail review</div>
+          <div class="tl-title">Verify Government Portal Sync Log for the month</div>
+          <span class="tl-module" style="background:#E3F0F5; color:#0F5B7A;">Portal Sync Log</span>
+          <div class="tl-desc">Payroll Manager opens <strong>HR Suite → Saudi Portals → Government Portal Sync Log</strong>. Filters by date range (May 2026). Confirms all calls show Status = Success: Mudad WPS Submit, GOSI contribution submissions, GOSI member registrations, and Muqeem Iqama verifications. Any Failed entries are investigated and retried. The log is saved as the compliance audit trail for May 2026.</div>
+          <div class="note note-green" style="margin-top:10px;"><strong>Monthly compliance achieved:</strong> WPS submitted within 7 days (Compliant). GOSI contributions submitted before the 15th. All active Iqamas verified. Audit trail complete in Government Portal Sync Log.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Salary Component Override callout -->
+    <div style="margin-top: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px;">
+      <div style="font-family: var(--ff-serif); font-size: 1rem; margin-bottom: 12px; color: var(--text);">Salary Component Override — Quick Reference</div>
+      <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 14px; line-height: 1.6;">Need to change one salary component for one employee — without rebuilding their entire Salary Structure? Use the inline override icons on the Salary Structure Assignment.</p>
+      <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 200px; background: var(--surface-2); border: 1px solid var(--border-light); border-radius: 5px; padding: 12px 14px;">
+          <div style="font-size: 0.67rem; font-family: var(--ff-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); margin-bottom: 6px;">Clock icon — History</div>
+          <div style="font-size: 0.84rem; color: var(--text-muted);">Opens a history dialog with all previous values for this component — filterable by year, with full audit rows.</div>
+        </div>
+        <div style="flex: 1; min-width: 200px; background: #E6F2EC; border: 1px solid #A8D5C0; border-radius: 5px; padding: 12px 14px;">
+          <div style="font-size: 0.67rem; font-family: var(--ff-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px;">Pen icon — Set override</div>
+          <div style="font-size: 0.84rem; color: var(--text-muted);">Click the pen icon on any salary field → set a new value with an effective date and optional notes → saves a <strong style="color: var(--accent);">SalaryComponentOverride</strong> record. Future-dated overrides stay Pending until the date arrives.</div>
+        </div>
+      </div>
+      <div class="note note-green" style="margin-top: 12px;"><strong>Example:</strong> Ahmed's housing allowance increases from SAR 3,500 to SAR 4,200 effective 1 July 2026. Click the pen icon on Housing Allowance in his Salary Structure Assignment, enter the new amount and date, add a note referencing the promotion letter. The July payroll will pick up the new amount automatically — no amendment to the Salary Structure needed.</div>
+    </div>
+
+  </div>
+
   <!-- FOOTER -->
   <div class="doc-footer">
-    <div class="footer-brand">HR Suite — Saudi Arabia HR Management System</div>
-    <div class="footer-meta">v1.0 · ERPNext 15 · Frappe Framework · Developed by Enfono</div>
+    <div class="footer-brand">HR Suite — Multi-Country HR Management System</div>
+    <div class="footer-meta">v2.0 · ERPNext 15 · Frappe Framework · Developed by Enfono</div>
   </div>
 
 </div>

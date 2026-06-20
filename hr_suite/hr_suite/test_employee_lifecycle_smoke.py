@@ -69,7 +69,7 @@ class TestEmployeeLifecycleSmoke(FrappeTestCase):
 		with patch("frappe.workflow.doctype.workflow_action.workflow_action.enqueue"):
 			leave = frappe.get_doc(
 				{
-					"doctype": "Saudi Annual Leave",
+					"doctype": "Annual Leave",
 					"employee": self.employee,
 					"company": self.company,
 					"leave_start_date": "2026-03-01",
@@ -79,12 +79,12 @@ class TestEmployeeLifecycleSmoke(FrappeTestCase):
 			).insert(ignore_permissions=True)
 
 		frappe.set_user(self.manager_email)
-		self.assertTrue(frappe.has_permission("Saudi Annual Leave", "read", doc=leave))
+		self.assertTrue(frappe.has_permission("Annual Leave", "read", doc=leave))
 		frappe.set_user("Administrator")
 
 		payroll = frappe.get_doc(
 			{
-				"doctype": "Saudi Monthly Payroll",
+				"doctype": "Monthly Payroll",
 				"company": self.company,
 				"month": "March",
 				"year": 2026,

@@ -4,7 +4,7 @@ from . import __version__ as app_version
 app_name = "hr_suite"
 app_title = "Hr Suite"
 app_publisher = "siva@enfono.com"
-app_description = "Hr Suite - Saudi HR Management System"
+app_description = "Hr Suite - Multi-Country HR Management System"
 app_email = "siva@enfono.com"
 app_license = "mit"
 required_apps = ["frappe/erpnext"]
@@ -24,6 +24,9 @@ app_include_css = ["/assets/hr_suite/css/hr_suite.css"]
 # ─── Scheduled Tasks ───────────────────────────────────────────────────────────
 scheduler_events = {
 	"daily": [
+		"hr_suite.hr_suite.salary_override_api.apply_pending_salary_overrides",
+		"hr_suite.hr_suite.integrations.muqeem.sync_expiring_iqamas",
+		"hr_suite.hr_suite.integrations.gosi_api.sync_monthly_gosi",
 		"hr_suite.hr_suite.tasks.send_iqama_expiry_alerts",
 		"hr_suite.hr_suite.tasks.send_contract_expiry_alerts",
 		"hr_suite.hr_suite.tasks.send_work_permit_expiry_alerts",
@@ -40,6 +43,8 @@ scheduler_events = {
 	],
 	"monthly": [
 		"hr_suite.hr_suite.tasks.send_gosi_due_alerts",
+		"hr_suite.hr_suite.integrations.qiwa.sync_nitaqat_monthly",
+		"hr_suite.hr_suite.integrations.mudad.sync_wps_monthly",
 	],
 	"weekly": [
 		"hr_suite.hr_suite.tasks.send_iqama_expiry_alerts",
@@ -115,10 +120,29 @@ doc_events = {
 	"Training Agreement": {
 		"validate": "hr_suite.hr_suite.compliance_controls.validate_compliance_doc",
 	},
+
+	# ── Frappe HRMS integration ───────────────────────────────────────────────
+	"Job Offer": {
+		"on_submit": "hr_suite.hr_suite.integrations.hrms.on_job_offer_submit",
+	},
+	"Salary Slip": {
+		"before_submit": "hr_suite.hr_suite.integrations.hrms.before_salary_slip_submit",
+	},
+	"Employee": {
+		"after_insert": "hr_suite.hr_suite.integrations.hrms.on_employee_insert",
+		"on_update":    "hr_suite.hr_suite.integrations.hrms.on_employee_update",
+	},
+	"Appraisal": {
+		"on_submit": "hr_suite.hr_suite.integrations.hrms.on_appraisal_submit",
+	},
 }
 
 doctype_js = {
 	"Employee": "public/js/employee.js",
+	"Salary Structure Assignment": "public/js/salary_structure_assignment.js",
+	"Work Permit / Iqama": "public/js/work_permit_iqama.js",
+	"Nitaqat Record": "public/js/nitaqat_record.js",
+	"Payroll Entry": "public/js/wps_payroll.js",
 }
 
 # ─── Jinja ──────────────────────────────────────────────────────────────────────
@@ -133,8 +157,8 @@ jinja = {
 override_whitelisted_methods = {}
 
 permission_query_conditions = {
-	"Saudi Annual Leave":       "hr_suite.hr_suite.permissions.get_saudi_annual_leave_query",
-	"Saudi Sick Leave":         "hr_suite.hr_suite.permissions.get_saudi_sick_leave_query",
+	"Annual Leave":       "hr_suite.hr_suite.permissions.get_annual_leave_query",
+	"Sick Leave":         "hr_suite.hr_suite.permissions.get_sick_leave_query",
 	"Overtime Request":         "hr_suite.hr_suite.permissions.get_overtime_request_query",
 	"Salary Adjustment":        "hr_suite.hr_suite.permissions.get_salary_adjustment_query",
 	"Maternity Paternity Leave":"hr_suite.hr_suite.permissions.get_maternity_paternity_leave_query",
@@ -142,8 +166,8 @@ permission_query_conditions = {
 }
 
 has_permission = {
-	"Saudi Annual Leave":       "hr_suite.hr_suite.permissions.has_saudi_annual_leave_permission",
-	"Saudi Sick Leave":         "hr_suite.hr_suite.permissions.has_saudi_sick_leave_permission",
+	"Annual Leave":       "hr_suite.hr_suite.permissions.has_annual_leave_permission",
+	"Sick Leave":         "hr_suite.hr_suite.permissions.has_sick_leave_permission",
 	"Overtime Request":         "hr_suite.hr_suite.permissions.has_overtime_request_permission",
 	"Salary Adjustment":        "hr_suite.hr_suite.permissions.has_salary_adjustment_permission",
 	"Maternity Paternity Leave":"hr_suite.hr_suite.permissions.has_maternity_paternity_leave_permission",

@@ -29,6 +29,68 @@ frappe.ui.form.on('GOSI Contribution', {
         }, __('Actions'));
     },
 
+    refresh(frm) {
+        if (frm.is_new()) return;
+
+        frappe.db.get_value("Hr Suite Settings", null, "gosi_api_enabled").then(r => {
+            if (!r.message || !r.message.gosi_api_enabled) return;
+
+            // Submit to GOSI — only on submitted, unpaid records
+            if (frm.doc.docstatus === 1 && frm.doc.payment_status === "Pending") {
+                frm.add_custom_button(__("Submit to GOSI"), function () {
+                    frappe.confirm(
+                        __("Submit this contribution to GOSI portal? This will mark it as Paid."),
+                        function () {
+                            frappe.call({
+                                method: "hr_suite.hr_suite.integrations.gosi_api.submit_contribution",
+                                args: { gosi_contribution: frm.doc.name },
+                                freeze: true,
+                                freeze_message: __("Submitting to GOSI…"),
+                                callback(res) {
+                                    if (res.exc) return;
+                                    frappe.show_alert({
+                                        message: __(`Submitted. Ref: ${res.message.reference_number || "—"}`),
+                                        indicator: "green",
+                                    });
+                                    frm.reload_doc();
+                                },
+                            });
+                        }
+                    );
+                }, __("GOSI Portal"));
+            }
+
+            // GOSI membership status for this employee
+            frm.add_custom_button(__("Check Member Status"), function () {
+                frappe.call({
+                    method: "hr_suite.hr_suite.integrations.gosi_api.get_employee_status",
+                    args: { employee: frm.doc.employee },
+                    callback(res) {
+                        if (res.exc || !res.message) return;
+                        const d = res.message;
+                        frappe.msgprint({
+                            title: __("GOSI Member Status"),
+                            message: `<table class="table table-condensed">
+                                <tr><td>${__("GOSI Status")}</td><td><b>${d.gosi_status || "—"}</b></td></tr>
+                                <tr><td>${__("Registration Date")}</td><td>${d.registration_date || "—"}</td></tr>
+                                <tr><td>${__("Contribution Class")}</td><td>${d.contribution_class || "—"}</td></tr>
+                                <tr><td>${__("Last Contribution Month")}</td><td>${d.last_contribution_month || "—"}</td></tr>
+                            </table>`,
+                            indicator: "blue",
+                        });
+                    },
+                });
+            }, __("GOSI Portal"));
+
+            frm.add_custom_button(__("Sync Log"), function () {
+                frappe.set_route("List", "Government Portal Sync Log", {
+                    portal: "GOSI",
+                    employee: frm.doc.employee,
+                });
+            }, __("GOSI Portal"));
+        });
+    },
+
     employee(frm) {
         if (!frm.doc.employee) return;
         frappe.call({

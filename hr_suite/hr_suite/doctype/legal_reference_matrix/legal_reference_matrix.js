@@ -16,7 +16,7 @@ frappe.ui.form.on("Legal Reference Matrix", {
 				});
 				await frm.reload_doc();
 				if (response.message?.task_name) {
-					frappe.set_route("Form", "Saudi Regulatory Task", response.message.task_name);
+					frappe.set_route("Form", "Regulatory Task", response.message.task_name);
 				}
 			});
 		}

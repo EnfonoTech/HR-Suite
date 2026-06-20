@@ -98,15 +98,15 @@ def _build_attendance_api_settings_reference(settings):
 			"leave_and_requests": {
 				"description": "Submit and track annual leave and ERPNext leave applications using the configured workflow.",
 				"resources": [
-					_resource_endpoint(base_url, "Saudi Annual Leave"),
+					_resource_endpoint(base_url, "Annual Leave"),
 					_resource_endpoint(base_url, "Leave Application"),
 				],
 			},
 			"payroll_and_salary": {
 				"description": "Read Saudi monthly payroll runs and ERPNext salary slips for employee-facing salary summaries.",
 				"resources": [
-					_resource_endpoint(base_url, "Saudi Monthly Payroll"),
-					_resource_endpoint(base_url, "Saudi Monthly Payroll Employee"),
+					_resource_endpoint(base_url, "Monthly Payroll"),
+					_resource_endpoint(base_url, "Monthly Payroll Employee"),
 					_resource_endpoint(base_url, "Salary Slip"),
 				],
 				"privacy_note": "Expose salary endpoints only to a trusted integration user with tightly scoped roles and server-side filtering.",

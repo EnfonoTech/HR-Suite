@@ -1,0 +1,43 @@
+{
+ "autoname": "naming_series:",
+ "name": "Statutory Contribution",
+ "module": "Hr Suite",
+ "doctype": "DocType",
+ "is_submittable": 1,
+ "fields": [
+  {"fieldname": "naming_series", "fieldtype": "Select", "label": "Naming Series", "options": "STAT-CON-.YYYY.-.####", "reqd": 1},
+  {"fieldname": "employee", "fieldtype": "Link", "label": "Employee", "options": "Employee", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "employee_name", "fieldtype": "Data", "label": "Employee Name", "fetch_from": "employee.employee_name", "read_only": 1, "in_list_view": 1},
+  {"fieldname": "column_break_1", "fieldtype": "Column Break"},
+  {"fieldname": "company", "fieldtype": "Link", "label": "Company", "options": "Company", "reqd": 1, "fetch_from": "employee.company"},
+  {"fieldname": "work_country", "fieldtype": "Select", "label": "Work Country", "options": "\nSA\nAE\nBH\nIN\nOM", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "scheme", "fieldtype": "Select", "label": "Scheme", "options": "\nGOSI\nGPSSA\nSIO\nPASI\nEPF\nESI\nDEWS\nOther", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "period_section", "fieldtype": "Section Break", "label": "Period"},
+  {"fieldname": "month", "fieldtype": "Select", "label": "Month", "options": "January\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "year", "fieldtype": "Int", "label": "Year", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "column_break_2", "fieldtype": "Column Break"},
+  {"fieldname": "period_label", "fieldtype": "Data", "label": "Period", "read_only": 1},
+  {"fieldname": "is_national", "fieldtype": "Check", "label": "National Employee", "description": "Saudi / Emirati / Bahraini / Omani — affects contribution rates"},
+  {"fieldname": "contribution_section", "fieldtype": "Section Break", "label": "Contribution"},
+  {"fieldname": "contribution_base", "fieldtype": "Currency", "label": "Contribution Base", "reqd": 1},
+  {"fieldname": "contribution_ceiling_applied", "fieldtype": "Check", "label": "Ceiling Applied", "read_only": 1},
+  {"fieldname": "column_break_3", "fieldtype": "Column Break"},
+  {"fieldname": "employee_contribution_rate", "fieldtype": "Percent", "label": "Employee Rate (%)"},
+  {"fieldname": "employer_contribution_rate", "fieldtype": "Percent", "label": "Employer Rate (%)"},
+  {"fieldname": "result_section", "fieldtype": "Section Break", "label": "Amounts"},
+  {"fieldname": "employee_contribution", "fieldtype": "Currency", "label": "Employee Contribution", "read_only": 1},
+  {"fieldname": "employer_contribution", "fieldtype": "Currency", "label": "Employer Contribution", "read_only": 1},
+  {"fieldname": "column_break_4", "fieldtype": "Column Break"},
+  {"fieldname": "total_contribution", "fieldtype": "Currency", "label": "Total Contribution", "read_only": 1},
+  {"fieldname": "journal_entry", "fieldtype": "Link", "label": "Journal Entry", "options": "Journal Entry", "read_only": 1},
+  {"fieldname": "notes_section", "fieldtype": "Section Break", "label": "Notes"},
+  {"fieldname": "notes", "fieldtype": "Small Text", "label": "Notes"},
+  {"fieldname": "amended_from", "fieldtype": "Link", "label": "Amended From", "options": "Statutory Contribution", "read_only": 1, "print_hide": 1}
+ ],
+ "permissions": [
+  {"role": "HR Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "submit": 1, "cancel": 1, "amend": 1},
+  {"role": "HR User", "read": 1, "write": 1, "create": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

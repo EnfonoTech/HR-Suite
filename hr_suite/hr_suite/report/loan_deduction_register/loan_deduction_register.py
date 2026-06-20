@@ -15,7 +15,7 @@ def get_columns():
 		{"fieldname": "due_date", "label": _("Due Date"), "fieldtype": "Date", "width": 110},
 		{"fieldname": "deduction_date", "label": _("Deduction Date"), "fieldtype": "Date", "width": 110},
 		{"fieldname": "deducted_amount", "label": _("Deducted Amount"), "fieldtype": "Currency", "width": 130},
-		{"fieldname": "payroll_reference", "label": _("Payroll"), "fieldtype": "Link", "options": "Saudi Monthly Payroll", "width": 150},
+		{"fieldname": "payroll_reference", "label": _("Payroll"), "fieldtype": "Link", "options": "Monthly Payroll", "width": 150},
 		{"fieldname": "deduction_status", "label": _("Status"), "fieldtype": "Data", "width": 120},
 	]
 

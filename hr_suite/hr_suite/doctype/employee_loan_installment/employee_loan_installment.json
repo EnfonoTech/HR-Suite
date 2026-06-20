@@ -70,7 +70,7 @@
    "fieldname": "payroll_reference",
    "fieldtype": "Link",
    "label": "Payroll",
-   "options": "Saudi Monthly Payroll",
+   "options": "Monthly Payroll",
    "read_only": 1
   },
   {

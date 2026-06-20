@@ -138,19 +138,19 @@ def _branch_permission(doc, user=None):
 	return bool(branch and getattr(doc, "branch", None) == branch)
 
 
-def get_saudi_employee_checkin_query(user=None):
-	return _employee_query("Saudi Employee Checkin", user)
+def get_hr_employee_checkin_query(user=None):
+	return _employee_query("HR Employee Checkin", user)
 
 
-def has_saudi_employee_checkin_permission(doc, user=None, permission_type=None):
+def has_hr_employee_checkin_permission(doc, user=None, permission_type=None):
 	return _employee_permission(doc, user)
 
 
-def get_saudi_daily_attendance_query(user=None):
-	return _employee_query("Saudi Daily Attendance", user)
+def get_hr_daily_attendance_query(user=None):
+	return _employee_query("HR Daily Attendance", user)
 
 
-def has_saudi_daily_attendance_permission(doc, user=None, permission_type=None):
+def has_hr_daily_attendance_permission(doc, user=None, permission_type=None):
 	return _employee_permission(doc, user)
 
 
@@ -162,17 +162,17 @@ def has_monthly_attendance_record_permission(doc, user=None, permission_type=Non
 	return _employee_permission(doc, user)
 
 
-def get_saudi_annual_leave_query(user=None):
+def get_annual_leave_query(user=None):
 	if _has_elevated_access(user):
 		return ""
 
 	conditions = []
-	employee_scope = _employee_or_approver_query("Saudi Annual Leave", DIRECT_MANAGER_FIELDS, user)
+	employee_scope = _employee_or_approver_query("Annual Leave", DIRECT_MANAGER_FIELDS, user)
 	if employee_scope and employee_scope != "1=0":
 		conditions.append(employee_scope)
 
 	finance_scope = _workflow_role_query(
-		"Saudi Annual Leave",
+		"Annual Leave",
 		ANNUAL_LEAVE_FINANCE_ROLE,
 		ANNUAL_LEAVE_FINANCE_VISIBLE_STATES,
 		user,
@@ -183,7 +183,7 @@ def get_saudi_annual_leave_query(user=None):
 	return "(" + " OR ".join(conditions) + ")" if conditions else "1=0"
 
 
-def has_saudi_annual_leave_permission(doc, user=None, permission_type=None):
+def has_annual_leave_permission(doc, user=None, permission_type=None):
 	if _employee_or_approver_permission(doc, DIRECT_MANAGER_FIELDS, user):
 		return True
 
@@ -195,11 +195,11 @@ def has_saudi_annual_leave_permission(doc, user=None, permission_type=None):
 	)
 
 
-def get_saudi_sick_leave_query(user=None):
-	return _employee_or_approver_query("Saudi Sick Leave", DIRECT_MANAGER_FIELDS, user)
+def get_sick_leave_query(user=None):
+	return _employee_or_approver_query("Sick Leave", DIRECT_MANAGER_FIELDS, user)
 
 
-def has_saudi_sick_leave_permission(doc, user=None, permission_type=None):
+def has_sick_leave_permission(doc, user=None, permission_type=None):
 	return _employee_or_approver_permission(doc, DIRECT_MANAGER_FIELDS, user)
 
 

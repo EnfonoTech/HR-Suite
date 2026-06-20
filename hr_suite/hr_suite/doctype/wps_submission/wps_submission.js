@@ -2,7 +2,7 @@ frappe.ui.form.on("WPS Submission", {
 	refresh(frm) {
 		if (frm.doc.payroll_document) {
 			frm.add_custom_button(__("Open Payroll"), () => {
-				frappe.set_route("Form", "Saudi Monthly Payroll", frm.doc.payroll_document);
+				frappe.set_route("Form", "Monthly Payroll", frm.doc.payroll_document);
 			});
 
 			frm.add_custom_button(__("Download WPS SIF File"), () => {

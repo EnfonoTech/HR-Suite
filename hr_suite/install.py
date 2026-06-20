@@ -1,6 +1,6 @@
 """
 install.py — Executed when the application is first installed.
-Creates: Saudi leave types, EOSB rules, default GOSI settings.
+Creates: leave types, statutory defaults, and Country Config for all operating countries.
 """
 
 import json
@@ -26,14 +26,16 @@ def after_install():
 	sync_department_approver_company_permissions()
 	sync_dashboard_chart_configs()
 	sync_notification_configs()
-	create_default_saudi_shift_type()
+	create_default_shift_type()
 	create_default_settings()
 	ensure_employee_custom_fields()
+	seed_country_configs()
 	frappe.db.commit()
 
 
 def after_migrate():
 	"""Called after every bench migrate — ensures workflow states always exist."""
+	rename_saudi_doctypes()
 	create_workflow_states()
 	sync_workflow_configs()
 	sync_compliance_controls()
@@ -42,11 +44,12 @@ def after_migrate():
 	sync_department_approver_company_permissions()
 	sync_dashboard_chart_configs()
 	sync_notification_configs()
-	create_default_saudi_shift_type()
+	create_default_shift_type()
 	migrate_legacy_shift_data()
 	migrate_legacy_annual_leave()
 	migrate_legacy_employee_loans()
 	ensure_employee_custom_fields()
+	seed_country_configs()
 	remove_obsolete_reports()
 
 
@@ -264,18 +267,36 @@ def ensure_workflow_actions(workflow_data):
 		).insert(ignore_permissions=True)
 
 
-# ─── Saudi Shift Management ───────────────────────────────────────────────────
+# ─── Shift Management ───────────────────────────────────────────────────
 
-def create_default_saudi_shift_type():
+def rename_saudi_doctypes():
+	"""Idempotent migration: rename Saudi-prefixed generic DocTypes to country-neutral names."""
+	renames = [
+		("Monthly Payroll Employee", "Monthly Payroll Employee"),
+		("Monthly Payroll", "Monthly Payroll"),
+		("Annual Leave", "Annual Leave"),
+		("Sick Leave", "Sick Leave"),
+		("Regulatory Task", "Regulatory Task"),
+	]
+	for old_name, new_name in renames:
+		if frappe.db.exists("DocType", old_name) and not frappe.db.exists("DocType", new_name):
+			try:
+				frappe.rename_doc("DocType", old_name, new_name, force=True, ignore_permissions=True)
+				frappe.db.commit()
+			except Exception:
+				frappe.log_error(frappe.get_traceback(), f"HR Suite: rename DocType {old_name} → {new_name} failed")
+
+
+def create_default_shift_type():
 	"""Create a local Hr Suite shift so attendance works without an external HR app."""
-	if not frappe.db.exists("DocType", "Saudi Shift Type"):
+	if not frappe.db.exists("DocType", "HR Shift Type"):
 		return
-	if frappe.db.exists("Saudi Shift Type", "Day Shift"):
+	if frappe.db.exists("HR Shift Type", "Day Shift"):
 		return
 
 	frappe.get_doc(
 		{
-			"doctype": "Saudi Shift Type",
+			"doctype": "HR Shift Type",
 			"shift_name": "Day Shift",
 			"start_time": "08:00:00",
 			"end_time": "17:00:00",
@@ -291,7 +312,7 @@ def create_default_saudi_shift_type():
 
 def migrate_legacy_shift_data():
 	"""Copy legacy shift records into Hr Suite-owned doctypes before removing the old app."""
-	if not frappe.db.exists("DocType", "Saudi Shift Type"):
+	if not frappe.db.exists("DocType", "HR Shift Type"):
 		return
 
 	if frappe.db.exists("DocType", "Shift Type"):
@@ -313,11 +334,11 @@ def migrate_legacy_shift_data():
 			"Shift Type",
 			fields=shift_type_fields,
 		):
-			if frappe.db.exists("Saudi Shift Type", row.name):
+			if frappe.db.exists("HR Shift Type", row.name):
 				continue
 			frappe.get_doc(
 				{
-					"doctype": "Saudi Shift Type",
+					"doctype": "HR Shift Type",
 					"shift_name": row.name,
 					"start_time": row.start_time,
 					"end_time": row.end_time,
@@ -331,17 +352,17 @@ def migrate_legacy_shift_data():
 				}
 			).insert(ignore_permissions=True)
 
-	if not frappe.db.exists("DocType", "Saudi Shift Assignment") or not frappe.db.exists("DocType", "Shift Assignment"):
+	if not frappe.db.exists("DocType", "HR Shift Assignment") or not frappe.db.exists("DocType", "Shift Assignment"):
 		return
 
 	for row in frappe.get_all(
 		"Shift Assignment",
 		fields=["name", "employee", "shift_type", "start_date", "end_date", "status", "docstatus"],
 	):
-		if not frappe.db.exists("Saudi Shift Type", row.shift_type):
+		if not frappe.db.exists("HR Shift Type", row.shift_type):
 			continue
 		if frappe.db.exists(
-			"Saudi Shift Assignment",
+			"HR Shift Assignment",
 			{
 				"employee": row.employee,
 				"shift_type": row.shift_type,
@@ -353,7 +374,7 @@ def migrate_legacy_shift_data():
 
 		doc = frappe.get_doc(
 			{
-				"doctype": "Saudi Shift Assignment",
+				"doctype": "HR Shift Assignment",
 				"employee": row.employee,
 				"shift_type": row.shift_type,
 				"start_date": row.start_date,
@@ -370,14 +391,14 @@ def migrate_legacy_shift_data():
 # ─── Leave Types ───────────────────────────────────────────────────────────────
 
 def migrate_legacy_annual_leave():
-	"""Copy legacy annual leave requests into Saudi Annual Leave before removing the old app."""
-	if not frappe.db.exists("DocType", "Saudi Annual Leave"):
+	"""Copy legacy annual leave requests into Annual Leave before removing the old app."""
+	if not frappe.db.exists("DocType", "Annual Leave"):
 		return
 	if not frappe.db.exists("DocType", "Leave Application"):
 		return
 
 	annual_types = (
-		"Saudi Annual Leave",
+		"Annual Leave",
 		"Annual Leave",
 	)
 	rows = frappe.get_all(
@@ -400,12 +421,12 @@ def migrate_legacy_annual_leave():
 	)
 
 	for row in rows:
-		if frappe.db.exists("Saudi Annual Leave", {"legacy_reference": row.name}):
+		if frappe.db.exists("Annual Leave", {"legacy_reference": row.name}):
 			continue
 
 		doc = frappe.get_doc(
 			{
-				"doctype": "Saudi Annual Leave",
+				"doctype": "Annual Leave",
 				"employee": row.employee,
 				"employee_name": row.employee_name,
 				"company": row.company,
@@ -478,22 +499,22 @@ def ensure_employee_custom_fields():
 		{
 			"dt": "Employee",
 			"fieldname": "hr_suite_gosi_salary",
-			"label": "GOSI Contribution Base",
+			"label": "Statutory Contribution Base",
 			"fieldtype": "Currency",
 			"insert_after": "custom_visa_designation",
 			"module": "Hr Suite",
-			"description": "Basic salary used for GOSI contribution calculation",
+			"description": "Basic salary used for statutory contribution calculation (GOSI, GPSSA, SIO, PASI, EPF)",
 		},
-		# Employee Type (Saudi National / Expatriate) — drives GOSI rates and Nitaqat
+		# Employee Type (National / Expatriate) — drives statutory contribution rates
 		{
 			"dt": "Employee",
 			"fieldname": "hr_suite_employee_type",
 			"label": "Employee Type",
 			"fieldtype": "Select",
-			"options": "\nSaudi National\nExpatriate",
+			"options": "\nNational\nExpatriate",
 			"insert_after": "hr_suite_gosi_salary",
 			"module": "Hr Suite",
-			"description": "Determines GOSI contribution rates and Nitaqat classification",
+			"description": "Determines statutory contribution rates and nationalization quota classification",
 			"in_list_view": 1,
 			"search_index": 1,
 		},
@@ -524,6 +545,268 @@ def ensure_employee_custom_fields():
 			frappe.get_doc({"doctype": "Custom Field", **cf}).insert(ignore_permissions=True)
 		except Exception:
 			frappe.log_error(frappe.get_traceback(), f"HR Suite: failed to create custom field {cf['fieldname']}")
+
+
+# ─── Country Configuration Seed Data ──────────────────────────────────────────
+
+_COUNTRY_CONFIGS = [
+	{
+		"country_code": "SA",
+		"country_name": "Saudi Arabia",
+		"currency": "SAR",
+		"is_active": 1,
+		# Statutory
+		"statutory_scheme": "GOSI",
+		"contribution_basis": "Basic Salary",
+		"contribution_ceiling": 45000,
+		"national_employee_rate": 10.0,
+		"national_employer_rate": 12.0,
+		"expat_employee_rate": 0.0,
+		"expat_employer_rate": 2.0,
+		# Settlement
+		"settlement_formula": "EOSB-SA",
+		"settlement_basis": "Basic Salary",
+		"years_threshold": 5,
+		"days_per_year_below_threshold": 21,
+		"days_per_year_above_threshold": 30,
+		"gratuity_eligibility_years": 2,
+		"settlement_ceiling_applicable": 0,
+		# Permits
+		"primary_permit_label": "Iqama",
+		"permit_expiry_alert_days": 90,
+		"national_id_label": "National ID (Ahwal)",
+		# WPS
+		"wps_mandatory": 1,
+		"wps_format": "SARIE (SA)",
+		# Nationalization
+		"nationalization_applies": 1,
+		"nationalization_scheme_name": "Nitaqat",
+		# Notice & Probation
+		"notice_period_days_monthly": 60,
+		"notice_period_days_others": 30,
+		"max_probation_days": 180,
+		# Leave types
+		"leave_types": [
+			{"leave_type_name": "Annual Leave", "days_per_year": 21, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Annual Leave"},
+			{"leave_type_name": "Annual Leave (5+ Years)", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Annual Leave"},
+			{"leave_type_name": "Sick Leave", "days_per_year": 120, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Sick Leave"},
+			{"leave_type_name": "Maternity Leave", "days_per_year": 70, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Maternity Leave"},
+			{"leave_type_name": "Paternity Leave", "days_per_year": 3, "gender_specific": "Male Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Paternity Leave"},
+			{"leave_type_name": "Hajj Leave", "days_per_year": 15, "gender_specific": "All", "is_optional": 0, "once_in_employment": 1, "max_carry_forward_days": 0, "frappe_leave_type_name": "Hajj Leave"},
+			{"leave_type_name": "Iddah Leave", "days_per_year": 130, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Iddah Leave"},
+		],
+	},
+	{
+		"country_code": "AE",
+		"country_name": "United Arab Emirates",
+		"currency": "AED",
+		"is_active": 1,
+		# Statutory (GPSSA for nationals; DEWS for DIFC; expats have no social insurance)
+		"statutory_scheme": "GPSSA",
+		"contribution_basis": "Basic Salary",
+		"contribution_ceiling": 0,
+		"national_employee_rate": 5.0,
+		"national_employer_rate": 12.5,
+		"expat_employee_rate": 0.0,
+		"expat_employer_rate": 0.0,
+		# Settlement
+		"settlement_formula": "Gratuity-AE",
+		"settlement_basis": "Basic Salary",
+		"years_threshold": 5,
+		"days_per_year_below_threshold": 21,
+		"days_per_year_above_threshold": 30,
+		"gratuity_eligibility_years": 1,
+		"settlement_ceiling_applicable": 0,
+		# Permits
+		"primary_permit_label": "UAE Residence Visa",
+		"permit_expiry_alert_days": 60,
+		"national_id_label": "Emirates ID",
+		# WPS
+		"wps_mandatory": 1,
+		"wps_format": "SIF-AE (UAE)",
+		# Nationalization
+		"nationalization_applies": 1,
+		"nationalization_scheme_name": "Emiratisation (Nafis)",
+		# Notice & Probation
+		"notice_period_days_monthly": 30,
+		"notice_period_days_others": 30,
+		"max_probation_days": 180,
+		# Leave types
+		"leave_types": [
+			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 15, "frappe_leave_type_name": "Annual Leave"},
+			{"leave_type_name": "Sick Leave", "days_per_year": 90, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Sick Leave"},
+			{"leave_type_name": "Maternity Leave", "days_per_year": 60, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Maternity Leave"},
+			{"leave_type_name": "Paternity Leave", "days_per_year": 5, "gender_specific": "Male Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Paternity Leave"},
+			{"leave_type_name": "Bereavement Leave", "days_per_year": 5, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Bereavement Leave"},
+			{"leave_type_name": "Study Leave", "days_per_year": 10, "gender_specific": "All", "is_optional": 1, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Study Leave"},
+		],
+	},
+	{
+		"country_code": "BH",
+		"country_name": "Bahrain",
+		"currency": "BHD",
+		"is_active": 1,
+		# Statutory (SIO)
+		"statutory_scheme": "SIO",
+		"contribution_basis": "Basic Salary",
+		"contribution_ceiling": 4000,
+		"national_employee_rate": 7.0,
+		"national_employer_rate": 12.0,
+		"expat_employee_rate": 1.0,
+		"expat_employer_rate": 3.0,
+		# Settlement
+		"settlement_formula": "Indemnity-BH",
+		"settlement_basis": "Basic Salary",
+		"years_threshold": 3,
+		"days_per_year_below_threshold": 15,
+		"days_per_year_above_threshold": 30,
+		"gratuity_eligibility_years": 1,
+		"settlement_ceiling_applicable": 0,
+		# Permits
+		"primary_permit_label": "CPR / Work Permit",
+		"permit_expiry_alert_days": 60,
+		"national_id_label": "CPR Number",
+		# WPS
+		"wps_mandatory": 1,
+		"wps_format": "WPS-BH (Bahrain)",
+		# Nationalization
+		"nationalization_applies": 1,
+		"nationalization_scheme_name": "Bahrainisation",
+		# Notice & Probation
+		"notice_period_days_monthly": 30,
+		"notice_period_days_others": 30,
+		"max_probation_days": 90,
+		# Leave types
+		"leave_types": [
+			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Annual Leave"},
+			{"leave_type_name": "Sick Leave", "days_per_year": 55, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Sick Leave"},
+			{"leave_type_name": "Maternity Leave", "days_per_year": 60, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Maternity Leave"},
+			{"leave_type_name": "Paternity Leave", "days_per_year": 1, "gender_specific": "Male Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Paternity Leave"},
+			{"leave_type_name": "Hajj Leave", "days_per_year": 14, "gender_specific": "All", "is_optional": 0, "once_in_employment": 1, "max_carry_forward_days": 0, "frappe_leave_type_name": "Hajj Leave"},
+		],
+	},
+	{
+		"country_code": "IN",
+		"country_name": "India",
+		"currency": "INR",
+		"is_active": 1,
+		# Statutory (EPF + ESI — handled by dedicated EPF ESI Contribution doctype)
+		"statutory_scheme": "EPF+ESI",
+		"contribution_basis": "Basic Salary",
+		"contribution_ceiling": 15000,
+		"national_employee_rate": 12.0,
+		"national_employer_rate": 12.0,
+		"expat_employee_rate": 0.0,
+		"expat_employer_rate": 0.0,
+		# Settlement (Gratuity Act 1972: 15/26 × basic × years, 5yr min, ₹20L cap)
+		"settlement_formula": "Gratuity-IN",
+		"settlement_basis": "Basic Salary",
+		"years_threshold": 5,
+		"days_per_year_below_threshold": 15,
+		"days_per_year_above_threshold": 15,
+		"gratuity_eligibility_years": 5,
+		"settlement_ceiling_applicable": 1,
+		"settlement_ceiling_amount": 2000000,
+		# Permits
+		"primary_permit_label": "Work Permit / OCI",
+		"permit_expiry_alert_days": 60,
+		"national_id_label": "Aadhaar / PAN",
+		# WPS
+		"wps_mandatory": 0,
+		"wps_format": "None",
+		# Nationalization
+		"nationalization_applies": 0,
+		"nationalization_scheme_name": "",
+		# Notice & Probation
+		"notice_period_days_monthly": 30,
+		"notice_period_days_others": 30,
+		"max_probation_days": 180,
+		# Leave types
+		"leave_types": [
+			{"leave_type_name": "Earned Leave", "days_per_year": 15, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Earned Leave"},
+			{"leave_type_name": "Casual Leave", "days_per_year": 12, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Casual Leave"},
+			{"leave_type_name": "Sick Leave", "days_per_year": 12, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Sick Leave"},
+			{"leave_type_name": "Maternity Leave", "days_per_year": 182, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Maternity Leave"},
+			{"leave_type_name": "Paternity Leave", "days_per_year": 15, "gender_specific": "Male Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Paternity Leave"},
+			{"leave_type_name": "Privilege Leave", "days_per_year": 15, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 45, "frappe_leave_type_name": "Privilege Leave"},
+			{"leave_type_name": "Compensatory Off", "days_per_year": 0, "gender_specific": "All", "is_optional": 1, "once_in_employment": 0, "max_carry_forward_days": 5, "frappe_leave_type_name": "Compensatory Off"},
+		],
+	},
+	{
+		"country_code": "OM",
+		"country_name": "Oman",
+		"currency": "OMR",
+		"is_active": 1,
+		# Statutory (PASI)
+		"statutory_scheme": "PASI",
+		"contribution_basis": "Basic Salary",
+		"contribution_ceiling": 5000,
+		"national_employee_rate": 7.0,
+		"national_employer_rate": 10.5,
+		"expat_employee_rate": 0.0,
+		"expat_employer_rate": 0.0,
+		# Settlement
+		"settlement_formula": "Indemnity-OM",
+		"settlement_basis": "Basic Salary",
+		"years_threshold": 3,
+		"days_per_year_below_threshold": 15,
+		"days_per_year_above_threshold": 30,
+		"gratuity_eligibility_years": 1,
+		"settlement_ceiling_applicable": 0,
+		# Permits
+		"primary_permit_label": "Oman Residence Card",
+		"permit_expiry_alert_days": 60,
+		"national_id_label": "Civil ID (Omani)",
+		# WPS
+		"wps_mandatory": 1,
+		"wps_format": "WPS-OM (Oman)",
+		# Nationalization
+		"nationalization_applies": 1,
+		"nationalization_scheme_name": "Omanisation",
+		# Notice & Probation
+		"notice_period_days_monthly": 30,
+		"notice_period_days_others": 30,
+		"max_probation_days": 180,
+		# Leave types
+		"leave_types": [
+			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Annual Leave"},
+			{"leave_type_name": "Sick Leave", "days_per_year": 182, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Sick Leave"},
+			{"leave_type_name": "Maternity Leave", "days_per_year": 50, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Maternity Leave"},
+			{"leave_type_name": "Paternity Leave", "days_per_year": 3, "gender_specific": "Male Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Paternity Leave"},
+			{"leave_type_name": "Hajj Leave", "days_per_year": 15, "gender_specific": "All", "is_optional": 0, "once_in_employment": 1, "max_carry_forward_days": 0, "frappe_leave_type_name": "Hajj Leave"},
+			{"leave_type_name": "Study Leave", "days_per_year": 15, "gender_specific": "All", "is_optional": 1, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Study Leave"},
+		],
+	},
+]
+
+
+def seed_country_configs():
+	"""Seed Country Config master records for all 5 operating countries."""
+	if not frappe.db.exists("DocType", "Country Config"):
+		return
+
+	for cfg_data in _COUNTRY_CONFIGS:
+		code = cfg_data["country_code"]
+		leave_types = cfg_data.pop("leave_types", [])
+
+		existing = frappe.db.get_value("Country Config", {"country_code": code}, "name")
+		if existing:
+			cfg_data["leave_types"] = leave_types
+			continue  # Don't overwrite admin-customised configs
+
+		doc_data = dict(cfg_data)
+		doc_data["doctype"] = "Country Config"
+		doc_data["leave_types"] = [
+			dict(lt, **{"doctype": "Country Leave Type Row"}) for lt in leave_types
+		]
+
+		try:
+			frappe.get_doc(doc_data).insert(ignore_permissions=True)
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), f"HR Suite: failed to seed Country Config for {code}")
+
+		# restore leave_types key in _COUNTRY_CONFIGS entry for idempotent re-runs
+		cfg_data["leave_types"] = leave_types
 
 
 # ─── Remove Obsolete Reports ───────────────────────────────────────────────────

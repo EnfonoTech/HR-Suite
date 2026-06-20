@@ -244,7 +244,7 @@ def send_sick_leave_threshold_alerts():
 	# Find employees with 75-90 sick days this year
 	results = frappe.db.sql("""
 		SELECT employee, employee_name, SUM(total_days) as total_sick
-		FROM `tabSaudi Sick Leave`
+		FROM `tabSick Leave`
 		WHERE YEAR(from_date) = %s AND docstatus = 1
 		GROUP BY employee
 		HAVING total_sick BETWEEN 75 AND 120
@@ -253,7 +253,7 @@ def send_sick_leave_threshold_alerts():
 	for rec in results:
 		# Find the most recent sick leave record for the employee to use as doc link
 		latest_doc = frappe.db.sql(
-			"""SELECT name FROM `tabSaudi Sick Leave`
+			"""SELECT name FROM `tabSick Leave`
 			   WHERE employee=%s AND YEAR(from_date)=%s AND docstatus=1
 			   ORDER BY from_date DESC LIMIT 1""",
 			(rec.employee, year),
@@ -262,7 +262,7 @@ def send_sick_leave_threshold_alerts():
 		_send_alert(
 			subject=f"Alert: {rec.employee_name} is approaching the maximum sick leave limit ({int(rec.total_sick)} days)",
 			message=f"Employee {rec.employee_name} has used {int(rec.total_sick)} sick days this year. Maximum is 120 days (Article 117).",
-			doctype="Saudi Sick Leave",
+			doctype="Sick Leave",
 			docname=latest_doc[0][0] if latest_doc else "",
 		)
 

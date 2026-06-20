@@ -2,7 +2,7 @@
 // Saudi Sick Leave - Client Script
 // Saudi Labor Law Art.117: 30 days full pay, 60 days at 75%, 30 days no pay
 
-frappe.ui.form.on('Saudi Sick Leave', {
+frappe.ui.form.on('Sick Leave', {
 
     onload(frm) {
         if (frm.is_new()) {

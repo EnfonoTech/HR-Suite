@@ -10,7 +10,7 @@ test_ignore = ["Journal Entry"]
 
 
 class TestAnnualLeaveDisbursement(FrappeTestCase):
-	def test_get_annual_leave_days_taken_reads_saudi_annual_leave(self):
+	def test_get_annual_leave_days_taken_reads_annual_leave(self):
 		with patch.object(
 			utils.frappe,
 			"get_all",

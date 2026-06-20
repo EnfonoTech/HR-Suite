@@ -361,6 +361,7 @@ body {
 .cat-docs     { background: #7B52A8; }
 .cat-comply   { background: #9B3535; }
 .cat-recruit  { background: #2A7A8C; }
+.cat-portal   { background: #0F5B7A; }
 
 .module-card-info { flex: 1; }
 
@@ -737,7 +738,7 @@ body {
     <a class="topbar-tab" href="tour.html">Guided Tour</a>
   </nav>
   <div class="topbar-right">
-    <span class="topbar-badge">v1.0 · ERPNext 15</span>
+    <span class="topbar-badge">v2.0 · ERPNext 15</span>
     <span class="topbar-jurisdiction">Kingdom of Saudi Arabia</span>
   </div>
 </header>
@@ -845,6 +846,20 @@ body {
       </ul>
     </div>
 
+    <div class="nav-chapter">
+      <button class="nav-chapter-btn" onclick="toggleChapter(this, 'sub-portals')">
+        <span class="nav-chapter-num">09</span> Saudi Portals
+      </button>
+      <ul class="nav-sub" id="sub-portals">
+        <li><a href="#muqeem">Muqeem (MOI)</a></li>
+        <li><a href="#qiwa">Qiwa (HRSD)</a></li>
+        <li><a href="#gosi-api">GOSI API</a></li>
+        <li><a href="#mudad-wps">Mudad / WPS</a></li>
+        <li><a href="#salary-component-override">Salary Component Override</a></li>
+        <li><a href="#portal-sync-log">Portal Sync Log</a></li>
+      </ul>
+    </div>
+
     <div class="nav-divider"></div>
     <div class="sidebar-heading">Reference</div>
 
@@ -865,12 +880,12 @@ body {
 
     <!-- ── HERO ─── -->
     <div class="hero">
-      <div class="hero-eyebrow">HR Suite · Saudi Arabia HR Management</div>
+      <div class="hero-eyebrow">HR Suite · Multi-Country HR Management</div>
       <h1 class="hero-title">Your complete reference<br>for every approval, deadline,<br>and compliance obligation.</h1>
       <p class="hero-sub">Everything built into HR Suite — from a day's annual leave to an employee's final settlement — follows Saudi Labor Law exactly. This guide tells you which document to open, what the system does for you automatically, and what you must do yourself.</p>
       <div class="hero-stats">
         <div class="stat"><span class="stat-num">50+</span><span class="stat-label">Document types</span></div>
-        <div class="stat"><span class="stat-num">17</span><span class="stat-label">Scheduled alerts</span></div>
+        <div class="stat"><span class="stat-num">21</span><span class="stat-label">Scheduled alerts</span></div>
         <div class="stat"><span class="stat-num">16</span><span class="stat-label">Built-in reports</span></div>
         <div class="stat"><span class="stat-num">KSA</span><span class="stat-label">Jurisdiction</span></div>
       </div>
@@ -1824,6 +1839,258 @@ body {
     </section>
 
     <!-- ═══════════════════════════════════════════════ -->
+    <!-- §09  SAUDI PORTALS                              -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section class="doc-section" id="saudi-portals">
+      <div class="section-header">
+        <span class="section-num">09</span>
+        <h2 class="section-title">Saudi Portals</h2>
+      </div>
+
+      <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom: 24px; line-height:1.65;">HR Suite connects directly to the four Saudi government portals — Muqeem, Qiwa, GOSI, and Mudad — through their official APIs. Credentials are configured once in <strong>HR Suite Settings</strong> (under the Saudi Portal Credentials section). All calls are logged to the <strong>Government Portal Sync Log</strong>.</p>
+
+      <!-- Muqeem -->
+      <div class="module-card" id="muqeem">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-portal"></div>
+          <div class="module-card-info">
+            <div class="module-name">Muqeem Integration (Saudi MOI — Iqama / Residency)</div>
+            <div class="module-tagline">Live Iqama status checks, exit re-entry verification, and final exit initiation — directly from the employee or Iqama record. Daily scheduler syncs expiring permits 90 days out.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Verify Iqama status</span>
+              <span class="badge badge-amber">Exit Re-entry check</span>
+              <span class="badge badge-muted">90-day sync</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="law-note"><strong>Portal:</strong> Ministry of Interior (MOI) — Muqeem platform. Manages expatriate residency permits (Iqama) and exit/re-entry visas.</div>
+
+          <h4>What HR can do</h4>
+          <table class="data-table">
+            <thead><tr><th>Action</th><th>Where</th><th>What it does</th></tr></thead>
+            <tbody>
+              <tr><td>Verify Iqama</td><td>Employee form → Muqeem group<br>Work Permit / Iqama form</td><td>Calls Muqeem API, returns live status and expiry — updates the Iqama record</td></tr>
+              <tr><td>Exit Re-entry Status</td><td>Employee form → Muqeem group</td><td>Checks whether the employee has an active exit re-entry visa and its validity</td></tr>
+              <tr><td>Initiate Final Exit</td><td>Employee form → Muqeem group</td><td>Submits a final exit request via the Muqeem API for departing expatriates</td></tr>
+            </tbody>
+          </table>
+
+          <h4>Daily scheduler</h4>
+          <div class="alert-grid">
+            <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">sync_expiring_iqamas</div><div class="alert-desc">Scans all active Iqama records with expiry within 90 days — verifies live status from Muqeem and logs results to Government Portal Sync Log</div></div>
+          </div>
+
+          <h4>Credential setup</h4>
+          <p>Go to <strong>HR Suite Settings → Saudi Portal Credentials → Muqeem</strong>. Enter your Muqeem API username, password, and employer ID (Establishment ID from MOI). Save — credentials are encrypted at rest.</p>
+        </div>
+      </div>
+
+      <!-- Qiwa -->
+      <div class="module-card" id="qiwa">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-portal"></div>
+          <div class="module-card-info">
+            <div class="module-name">Qiwa Integration (HRSD — Labor Contracts)</div>
+            <div class="module-tagline">Wathiqa contract verification, labor notice retrieval, and Nitaqat status sync — all via the Qiwa HRSD API with OAuth2 token automatically cached in Redis.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Wathiqa contract verify</span>
+              <span class="badge badge-amber">Nitaqat monthly sync</span>
+              <span class="badge badge-muted">OAuth2 · Redis cached</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="law-note"><strong>Portal:</strong> Ministry of Human Resources and Social Development (HRSD) — Qiwa platform. Manages labor contracts (Wathiqa), labor notices, and Nitaqat Saudization quotas.</div>
+
+          <h4>What HR can do</h4>
+          <table class="data-table">
+            <thead><tr><th>Action</th><th>Where</th><th>What it does</th></tr></thead>
+            <tbody>
+              <tr><td>Verify Wathiqa Contract</td><td>Employee form → Qiwa group<br>Nitaqat Record form</td><td>Confirms the employment contract is registered and active on the Qiwa Wathiqa platform</td></tr>
+              <tr><td>Labor Notices</td><td>Employee form → Qiwa group</td><td>Retrieves any outstanding labor notices or disputes filed against the employee or employer</td></tr>
+              <tr><td>Nitaqat Status Sync</td><td>Nitaqat Record form</td><td>Pulls the current Nitaqat band (Platinum / Green / Yellow / Red) and quota figures from Qiwa</td></tr>
+            </tbody>
+          </table>
+
+          <h4>Monthly scheduler</h4>
+          <div class="alert-grid">
+            <div class="alert-row"><div class="alert-icon monthly"></div><div class="alert-name">sync_nitaqat_monthly</div><div class="alert-desc">Refreshes Nitaqat quota data from Qiwa — updates the active Nitaqat Record with current headcount ratios and band classification</div></div>
+          </div>
+
+          <div class="deadline-note"><strong>OAuth2 token:</strong> The system obtains an OAuth2 access token from Qiwa on the first call each session and caches it in Redis. Token refresh is handled automatically — no manual re-authentication required.</div>
+
+          <h4>Credential setup</h4>
+          <p>Go to <strong>HR Suite Settings → Saudi Portal Credentials → Qiwa</strong>. Enter your Qiwa Client ID, Client Secret, and Establishment Number. The system will fetch and cache the OAuth2 token automatically on the first API call.</p>
+        </div>
+      </div>
+
+      <!-- GOSI API -->
+      <div class="module-card" id="gosi-api">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-portal"></div>
+          <div class="module-card-info">
+            <div class="module-name">GOSI API Integration (Social Insurance — Direct API)</div>
+            <div class="module-tagline">Register and deregister employees, submit monthly contributions, get contribution certificates — all via direct GOSI API from the Employee form and GOSI Contribution form. Daily scheduler keeps account status current.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Register / Deregister</span>
+              <span class="badge badge-amber">Monthly batch submission</span>
+              <span class="badge badge-muted">Daily sync</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="law-note"><strong>Portal:</strong> General Organisation for Social Insurance (GOSI). Manages mandatory social insurance contributions for Saudi nationals and expatriates.</div>
+
+          <h4>What HR can do</h4>
+          <table class="data-table">
+            <thead><tr><th>Action</th><th>Where</th><th>What it does</th></tr></thead>
+            <tbody>
+              <tr><td>Register Employee</td><td>Employee form → GOSI group</td><td>Enrolls the employee with GOSI — creates the GOSI membership record</td></tr>
+              <tr><td>Deregister Employee</td><td>Employee form → GOSI group</td><td>Removes the employee from GOSI on termination</td></tr>
+              <tr><td>GOSI Member Status</td><td>Employee form → GOSI group</td><td>Fetches current registration status and contribution history from GOSI API</td></tr>
+              <tr><td>Submit to GOSI</td><td>GOSI Contribution form</td><td>Submits the monthly contribution record for a single employee; returns a GOSI reference number</td></tr>
+              <tr><td>Submit Monthly Batch</td><td>GOSI Contribution form</td><td>Batch-submits all submitted contributions for the period — one upload to GOSI for the whole payroll</td></tr>
+              <tr><td>Get Employer Account</td><td>HR Suite Settings</td><td>Retrieves employer GOSI account summary and balance</td></tr>
+              <tr><td>Contribution Certificate</td><td>GOSI Contribution form</td><td>Downloads the official GOSI contribution certificate (PDF) for the period</td></tr>
+            </tbody>
+          </table>
+
+          <h4>Daily scheduler</h4>
+          <div class="alert-grid">
+            <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">sync_monthly_gosi</div><div class="alert-desc">Checks GOSI employer account status daily — confirms contribution receipts and flags any discrepancies or pending payments</div></div>
+          </div>
+
+          <div class="deadline-note"><strong>15th-of-month deadline:</strong> GOSI contributions are due by the 15th of each month. Use Submit Monthly Batch before this deadline to transmit all employee contributions in a single operation and obtain GOSI reference numbers for Finance.</div>
+
+          <h4>Credential setup</h4>
+          <p>Go to <strong>HR Suite Settings → Saudi Portal Credentials → GOSI</strong>. Enter your GOSI API Key, Secret, and Establishment Number. All API calls are signed with these credentials and logged to Government Portal Sync Log.</p>
+        </div>
+      </div>
+
+      <!-- Mudad / WPS -->
+      <div class="module-card" id="mudad-wps">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-portal"></div>
+          <div class="module-card-info">
+            <div class="module-name">Mudad / WPS Integration (Wage Protection System)</div>
+            <div class="module-tagline">Generate SAMA SIF files from submitted Salary Slips, upload to Mudad portal, and check per-period WPS compliance status — all from the Payroll Entry form. Monthly scheduler keeps establishment status current.</div>
+            <div class="module-badges">
+              <span class="badge badge-rose">Fine: up to SAR 10,000 if late</span>
+              <span class="badge badge-green">SIF auto-generated</span>
+              <span class="badge badge-muted">Monthly sync</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="risk-note"><strong>Compliance risk:</strong> Late WPS submission can result in fines up to SAR 10,000 per violation and can block new visa applications. The 7-day window starts from the payroll date. Submitting via Mudad integration marks the period compliant instantly.</div>
+
+          <h4>Buttons on Payroll Entry form (WPS/Mudad group)</h4>
+          <table class="data-table">
+            <thead><tr><th>Button</th><th>What it does</th></tr></thead>
+            <tbody>
+              <tr><td>Preview WPS File</td><td>Generates the SAMA SIF file from submitted Salary Slips for this Payroll Entry — shows a preview before upload</td></tr>
+              <tr><td>Submit WPS to Mudad</td><td>Uploads the SIF to the Mudad portal; returns a WPS reference number and marks the period as submitted</td></tr>
+              <tr><td>Check WPS Status</td><td>Queries Mudad for the compliance status of the current period — Compliant / Pending / Non-compliant</td></tr>
+              <tr><td>Sync Log</td><td>Opens the Government Portal Sync Log filtered to this Payroll Entry's WPS calls</td></tr>
+            </tbody>
+          </table>
+
+          <div class="wf-label">WPS process with Mudad integration</div>
+          <div class="workflow">
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Run Saudi Monthly Payroll → submit all Salary Slips</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Open Payroll Entry → WPS/Mudad group → <strong>Preview WPS File</strong> — review employee count and totals</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text"><strong>Submit WPS to Mudad</strong> — SIF uploaded; Mudad returns reference number. Record saved in Sync Log.</div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text"><strong>Check WPS Status</strong> to confirm Compliant. Finance team has the reference number for records.</div></div>
+          </div>
+
+          <h4>Monthly scheduler</h4>
+          <div class="alert-grid">
+            <div class="alert-row"><div class="alert-icon monthly"></div><div class="alert-name">sync_wps_monthly</div><div class="alert-desc">Pulls establishment WPS compliance history from Mudad — updates compliance status for all periods and flags any Non-compliant months</div></div>
+          </div>
+
+          <h4>Credential setup</h4>
+          <p>Go to <strong>HR Suite Settings → Saudi Portal Credentials → Mudad</strong>. Enter your Mudad API Key, Establishment ID, and bank account details (IBAN, bank code) used for WPS file generation.</p>
+        </div>
+      </div>
+
+      <!-- Salary Component Override -->
+      <div class="module-card" id="salary-component-override">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-portal"></div>
+          <div class="module-card-info">
+            <div class="module-name">Salary Component Override</div>
+            <div class="module-tagline">Change a single salary component for one employee with an effective date — without creating a new Salary Structure. Clock icon shows history; pen icon sets a new override value. Full audit trail.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Effective-date override</span>
+              <span class="badge badge-amber">Pending until effective date</span>
+              <span class="badge badge-muted">Full audit trail</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <p>On any <strong>Salary Structure Assignment</strong>, two icons appear next to each salary component field:</p>
+          <div class="two-col">
+            <div class="info-block">
+              <div class="info-block-label">Clock icon — History</div>
+              <div class="info-block-value">Opens a history dialog showing all previous override values for this component, with a year filter and full table of changes (date, old value, new value, notes, who changed it).</div>
+            </div>
+            <div class="info-block">
+              <div class="info-block-label">Pen icon — Edit / Override</div>
+              <div class="info-block-value">Opens an edit dialog: enter an Effective Date, the new component value, and optional Notes. Saves a <strong>SalaryComponentOverride</strong> record linked to this employee and component.</div>
+            </div>
+          </div>
+
+          <div class="wf-label">How overrides are applied</div>
+          <div class="workflow">
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">HR clicks the pen icon on a salary component → enters effective date, new value, and notes</div></div>
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">If effective date is today or past: override applied immediately, status = <strong>Applied</strong></div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">If effective date is in the future: status = <strong>Pending</strong> — the salary component is unchanged until that date</div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">Daily scheduler checks all Pending overrides — applies any whose effective date has arrived</div></div>
+          </div>
+
+          <div class="law-note"><strong>Audit trail:</strong> Every override — including who made it, when, the old value, and the notes — is stored in the SalaryComponentOverride DocType and visible via the clock icon on the assignment. This satisfies Ministry of HR audit requirements for documented salary changes.</div>
+        </div>
+      </div>
+
+      <!-- Government Portal Sync Log -->
+      <div class="module-card" id="portal-sync-log">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-portal"></div>
+          <div class="module-card-info">
+            <div class="module-name">Government Portal Sync Log</div>
+            <div class="module-tagline">Unified audit log for every call made to Muqeem, Qiwa, GOSI, and Mudad. Records portal, sync type, employee, reference number, status, and full API response data.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">All portals in one log</span>
+              <span class="badge badge-muted">Full response data stored</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <p>Every API call to a Saudi government portal is automatically logged. No manual entry is required. The log is accessible from <strong>HR Suite → Saudi Portals → Government Portal Sync Log</strong>.</p>
+          <table class="data-table">
+            <thead><tr><th>Field</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>Portal</td><td>Muqeem / Qiwa / GOSI / Mudad</td></tr>
+              <tr><td>Sync Type</td><td>The specific action: Verify Iqama, Submit Contribution, Submit WPS, Nitaqat Sync, etc.</td></tr>
+              <tr><td>Employee</td><td>The employee the call relates to (if applicable)</td></tr>
+              <tr><td>Reference No</td><td>The reference number returned by the government portal (GOSI reference, WPS reference, etc.)</td></tr>
+              <tr><td>Status</td><td>Success / Failed / Pending</td></tr>
+              <tr><td>Response Data</td><td>Full JSON response from the portal API — stored for audit and troubleshooting</td></tr>
+            </tbody>
+          </table>
+          <div class="law-note"><strong>Compliance use:</strong> The Sync Log serves as your evidence trail for all government portal interactions. Auditors or inspectors can be shown specific log entries to prove that GOSI submissions, Iqama verifications, and WPS uploads occurred on specific dates.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ -->
     <!-- §REF  REPORTS & ROLES                           -->
     <!-- ═══════════════════════════════════════════════ -->
     <section class="doc-section" id="reports">
@@ -1845,6 +2112,7 @@ body {
         <div class="report-item"><div class="report-name">Policy Compliance Register</div><div class="report-desc">Acknowledgement percentage per policy document.</div></div>
         <div class="report-item"><div class="report-name">Saudi Compliance Obligation Backlog</div><div class="report-desc">All overdue regulatory obligations with responsible parties.</div></div>
         <div class="report-item"><div class="report-name">Saudi Labor Coverage Matrix</div><div class="report-desc">Labor law coverage gap analysis — for legal review.</div></div>
+        <div class="report-item"><div class="report-name">Government Portal Sync Log</div><div class="report-desc">Unified audit trail of all Muqeem, Qiwa, GOSI, and Mudad API calls — filter by portal, status, employee, or date range.</div></div>
       </div>
     </section>
 
@@ -1890,12 +2158,16 @@ body {
         <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">send_training_disclosure_due_alerts</div><div class="alert-desc">Training compliance disclosure deadlines approaching</div></div>
         <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">send_employee_document_custody_alerts</div><div class="alert-desc">Employee document custody period expiring</div></div>
         <div class="alert-row"><div class="alert-icon monthly"></div><div class="alert-name">send_gosi_due_alerts</div><div class="alert-desc">Monthly reminder before the GOSI 15th-of-month submission deadline</div></div>
+        <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">sync_expiring_iqamas</div><div class="alert-desc">Muqeem Iqama expiry sync — verifies live status for all permits expiring within 90 days and logs results to Government Portal Sync Log</div></div>
+        <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">sync_monthly_gosi</div><div class="alert-desc">GOSI employer account status check — confirms contribution receipts and flags any pending or discrepant payments</div></div>
+        <div class="alert-row"><div class="alert-icon monthly"></div><div class="alert-name">sync_wps_monthly</div><div class="alert-desc">WPS establishment compliance check — pulls full period history from Mudad and flags any Non-compliant months</div></div>
+        <div class="alert-row"><div class="alert-icon monthly"></div><div class="alert-name">sync_nitaqat_monthly</div><div class="alert-desc">Nitaqat quota refresh from Qiwa — updates Nitaqat Record with current headcount ratios and band classification</div></div>
       </div>
     </section>
 
     <div class="doc-footer">
-      <div class="footer-brand">HR Suite — Saudi Arabia HR Management System</div>
-      <div class="footer-meta">v1.0 · ERPNext 15 · Frappe Framework · Developed by Enfono</div>
+      <div class="footer-brand">HR Suite — Multi-Country HR Management System</div>
+      <div class="footer-meta">v2.0 · ERPNext 15 · Frappe Framework · Developed by Enfono</div>
     </div>
 
   </main>
@@ -1932,7 +2204,8 @@ const observer = new IntersectionObserver((entries) => {
         'lifecycle': 4,
         'hr-documents': 5,
         'compliance': 6,
-        'recruitment': 7
+        'recruitment': 7,
+        'saudi-portals': 8
       };
       const idx = map[id];
       if (idx !== undefined) {

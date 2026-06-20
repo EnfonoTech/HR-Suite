@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\": \"h_qa\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Quick Actions</b></span>\", \"col\": 12}}, {\"id\": \"sc_al\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Saudi Annual Leave\", \"col\": 3}}, {\"id\": \"sc_ot\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Overtime Request\", \"col\": 3}}, {\"id\": \"sc_ep\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Employee Penalty\", \"col\": 3}}, {\"id\": \"sc_pr\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Saudi Monthly Payroll\", \"col\": 3}}, {\"id\": \"sc_dp\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Disciplinary Procedure\", \"col\": 3}}, {\"id\": \"sc_sr\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Staff Rating\", \"col\": 3}}, {\"id\": \"sc_sl\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Saudi Sick Leave\", \"col\": 3}}, {\"id\": \"sc_hl\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"HR Letter\", \"col\": 3}}, {\"id\": \"sp0\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h_em\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Employee Management</b></span>\", \"col\": 12}}, {\"id\": \"card_em\", \"type\": \"card\", \"data\": {\"card_name\": \"Employee Management\", \"col\": 4}}, {\"id\": \"card_lo\", \"type\": \"card\", \"data\": {\"card_name\": \"Leave & Overtime\", \"col\": 4}}, {\"id\": \"card_py\", \"type\": \"card\", \"data\": {\"card_name\": \"Payroll\", \"col\": 4}}, {\"id\": \"sp1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h_di\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Disciplinary</b></span>\", \"col\": 12}}, {\"id\": \"card_di\", \"type\": \"card\", \"data\": {\"card_name\": \"Disciplinary\", \"col\": 4}}, {\"id\": \"card_pe\", \"type\": \"card\", \"data\": {\"card_name\": \"Penalties\", \"col\": 4}}, {\"id\": \"sp2\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h_doc\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>HR Letters &amp; Documents</b></span>\", \"col\": 12}}, {\"id\": \"card_hl\", \"type\": \"card\", \"data\": {\"card_name\": \"HR Letters\", \"col\": 4}}, {\"id\": \"card_cx\", \"type\": \"card\", \"data\": {\"card_name\": \"Compliance\", \"col\": 4}}, {\"id\": \"sp3\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h_su\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Setup &amp; Configuration</b></span>\", \"col\": 12}}, {\"id\": \"card_su\", \"type\": \"card\", \"data\": {\"card_name\": \"Setup\", \"col\": 4}}, {\"id\": \"card_cr\", \"type\": \"card\", \"data\": {\"card_name\": \"Compliance Regulations and Records\", \"col\": 4}}, {\"id\": \"card_ed\", \"type\": \"card\", \"data\": {\"card_name\": \"Employee Documentation and Contracts\", \"col\": 4}}, {\"id\": \"sp4\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_rs\", \"type\": \"card\", \"data\": {\"card_name\": \"Recruitment and Staffing Agencies\", \"col\": 4}}, {\"id\": \"card_wp\", \"type\": \"card\", \"data\": {\"card_name\": \"Work Patterns and Hours\", \"col\": 4}}, {\"id\": \"card_sf\", \"type\": \"card\", \"data\": {\"card_name\": \"Safety, Inspection, and Penalties\", \"col\": 4}}]",
+ "content": "[{\"id\": \"h_qa\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Quick Actions</b></span>\", \"col\": 12}}, {\"id\": \"sc_al\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Annual Leave\", \"col\": 3}}, {\"id\": \"sc_ot\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Overtime Request\", \"col\": 3}}, {\"id\": \"sc_ep\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Employee Penalty\", \"col\": 3}}, {\"id\": \"sc_pr\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Monthly Payroll\", \"col\": 3}}, {\"id\": \"sc_dp\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Disciplinary Procedure\", \"col\": 3}}, {\"id\": \"sc_sr\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Staff Rating\", \"col\": 3}}, {\"id\": \"sc_sl\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Sick Leave\", \"col\": 3}}, {\"id\": \"sc_hl\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"HR Letter\", \"col\": 3}}, {\"id\": \"sp0\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h_em\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Employee Management</b></span>\", \"col\": 12}}, {\"id\": \"card_em\", \"type\": \"card\", \"data\": {\"card_name\": \"Employee Management\", \"col\": 4}}, {\"id\": \"card_lo\", \"type\": \"card\", \"data\": {\"card_name\": \"Leave & Overtime\", \"col\": 4}}, {\"id\": \"card_py\", \"type\": \"card\", \"data\": {\"card_name\": \"Payroll\", \"col\": 4}}, {\"id\": \"sp1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h_di\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Disciplinary</b></span>\", \"col\": 12}}, {\"id\": \"card_di\", \"type\": \"card\", \"data\": {\"card_name\": \"Disciplinary\", \"col\": 4}}, {\"id\": \"card_pe\", \"type\": \"card\", \"data\": {\"card_name\": \"Penalties\", \"col\": 4}}, {\"id\": \"sp2\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h_doc\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>HR Letters &amp; Documents</b></span>\", \"col\": 12}}, {\"id\": \"card_hl\", \"type\": \"card\", \"data\": {\"card_name\": \"HR Letters\", \"col\": 4}}, {\"id\": \"card_cx\", \"type\": \"card\", \"data\": {\"card_name\": \"Compliance\", \"col\": 4}}, {\"id\": \"sp3\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h_su\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Setup &amp; Configuration</b></span>\", \"col\": 12}}, {\"id\": \"card_su\", \"type\": \"card\", \"data\": {\"card_name\": \"Setup\", \"col\": 4}}, {\"id\": \"card_cr\", \"type\": \"card\", \"data\": {\"card_name\": \"Compliance Regulations and Records\", \"col\": 4}}, {\"id\": \"card_ed\", \"type\": \"card\", \"data\": {\"card_name\": \"Employee Documentation and Contracts\", \"col\": 4}}, {\"id\": \"sp4\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_rs\", \"type\": \"card\", \"data\": {\"card_name\": \"Recruitment and Staffing Agencies\", \"col\": 4}}, {\"id\": \"card_wp\", \"type\": \"card\", \"data\": {\"card_name\": \"Work Patterns and Hours\", \"col\": 4}}, {\"id\": \"card_sf\", \"type\": \"card\", \"data\": {\"card_name\": \"Safety, Inspection, and Penalties\", \"col\": 4}}]",
  "creation": "2026-06-10 00:51:41.384339",
  "custom_blocks": [],
  "docstatus": 0,
@@ -123,9 +123,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Saudi Annual Leave",
+   "label": "Annual Leave",
    "link_count": 0,
-   "link_to": "Saudi Annual Leave",
+   "link_to": "Annual Leave",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -133,9 +133,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Saudi Sick Leave",
+   "label": "Sick Leave",
    "link_count": 0,
-   "link_to": "Saudi Sick Leave",
+   "link_to": "Sick Leave",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -192,9 +192,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Saudi Monthly Payroll",
+   "label": "Monthly Payroll",
    "link_count": 0,
-   "link_to": "Saudi Monthly Payroll",
+   "link_to": "Monthly Payroll",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -368,9 +368,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Saudi Regulatory Task",
+   "label": "Regulatory Task",
    "link_count": 0,
-   "link_to": "Saudi Regulatory Task",
+   "link_to": "Regulatory Task",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -715,8 +715,8 @@
    "color": "#2AA44C",
    "doc_view": "",
    "icon": "calendar",
-   "label": "Saudi Annual Leave",
-   "link_to": "Saudi Annual Leave",
+   "label": "Annual Leave",
+   "link_to": "Annual Leave",
    "type": "DocType"
   },
   {
@@ -739,8 +739,8 @@
    "color": "#6B21E8",
    "doc_view": "",
    "icon": "dollar-sign",
-   "label": "Saudi Monthly Payroll",
-   "link_to": "Saudi Monthly Payroll",
+   "label": "Monthly Payroll",
+   "link_to": "Monthly Payroll",
    "type": "DocType"
   },
   {
@@ -763,8 +763,8 @@
    "color": "#059669",
    "doc_view": "",
    "icon": "thermometer",
-   "label": "Saudi Sick Leave",
-   "link_to": "Saudi Sick Leave",
+   "label": "Sick Leave",
+   "link_to": "Sick Leave",
    "type": "DocType"
   },
   {

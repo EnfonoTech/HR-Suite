@@ -2,9 +2,9 @@ frappe.query_reports["WPS Export Report"] = {
     filters: [
         {
             fieldname: "payroll_document",
-            label: __("Saudi Monthly Payroll"),
+            label: __("Monthly Payroll"),
             fieldtype: "Link",
-            options: "Saudi Monthly Payroll"
+            options: "Monthly Payroll"
         }
     ],
 
@@ -12,7 +12,7 @@ frappe.query_reports["WPS Export Report"] = {
         report.page.add_inner_button(__("Download WPS SIF File"), function () {
             let payroll = report.get_filter_value("payroll_document");
             if (!payroll) {
-                frappe.msgprint(__("Please select a Saudi Monthly Payroll first"));
+                frappe.msgprint(__("Please select a Monthly Payroll first"));
                 return;
             }
             window.location.href = frappe.urllib.get_full_url(

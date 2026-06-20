@@ -47,8 +47,8 @@
    "fieldname": "payroll_document",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Saudi Monthly Payroll",
-   "options": "Saudi Monthly Payroll",
+   "label": "Monthly Payroll",
+   "options": "Monthly Payroll",
    "reqd": 1,
    "unique": 1
   },

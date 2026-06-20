@@ -2,7 +2,7 @@
  "doctype": "Workflow",
  "workflow_name": "Sick Leave Approval Workflow",
  "name": "Sick Leave Approval Workflow",
- "document_type": "Saudi Sick Leave",
+ "document_type": "Sick Leave",
  "is_active": 1,
  "override_status": 0,
  "send_email_alert": 1,

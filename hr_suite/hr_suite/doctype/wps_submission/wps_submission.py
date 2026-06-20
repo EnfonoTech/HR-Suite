@@ -21,10 +21,10 @@ class WPSSubmission(Document):
 		if not self.payroll_document:
 			return
 
-		payroll = frappe.get_doc("Saudi Monthly Payroll", self.payroll_document)
+		payroll = frappe.get_doc("Monthly Payroll", self.payroll_document)
 		if payroll.docstatus != 1:
 			frappe.throw(
-				_("WPS Submission requires a submitted Saudi Monthly Payroll document."),
+				_("WPS Submission requires a submitted Monthly Payroll document."),
 				title=_("Submitted Payroll Required"),
 			)
 
@@ -103,8 +103,8 @@ class WPSSubmission(Document):
 
 @frappe.whitelist()
 def create_wps_submission_from_payroll(payroll_document):
-	payroll = frappe.get_doc("Saudi Monthly Payroll", payroll_document)
-	frappe.has_permission("Saudi Monthly Payroll", "read", doc=payroll, throw=True)
+	payroll = frappe.get_doc("Monthly Payroll", payroll_document)
+	frappe.has_permission("Monthly Payroll", "read", doc=payroll, throw=True)
 
 	existing_name = frappe.db.get_value("WPS Submission", {"payroll_document": payroll_document}, "name")
 	if existing_name:

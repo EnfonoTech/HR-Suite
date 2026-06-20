@@ -113,7 +113,7 @@ def get_annual_leave_days_taken(employee: str, leave_year: int, exclude_name: st
 		filters["name"] = ["!=", exclude_name]
 
 	rows = frappe.get_all(
-		"Saudi Annual Leave",
+		"Annual Leave",
 		filters=filters,
 		fields=["leave_start_date", "leave_end_date", "total_leave_days", "half_day"],
 	)
@@ -339,7 +339,7 @@ def get_employee_is_saudi(employee: str) -> bool:
 	# 1. Explicit Employee Type field — highest priority
 	if frappe.db.has_column("Employee", "hr_suite_employee_type"):
 		emp_type = frappe.db.get_value("Employee", employee, "hr_suite_employee_type") or ""
-		if emp_type == "Saudi National":
+		if emp_type in ("Saudi National", "National"):
 			return True
 		if emp_type == "Expatriate":
 			return False
@@ -356,8 +356,49 @@ def get_employee_is_saudi(employee: str) -> bool:
 	return is_saudi_nationality(nationality)
 
 
+def get_employee_is_national(employee: str, country_code: str) -> bool:
+	"""
+	Generalised national/expat check for any GCC country.
+	Returns True if the employee is a national of the given country.
+	Resolution: hr_suite_employee_type → nationality field → contract nationality.
+	"""
+	if not employee or not country_code:
+		return False
+
+	# Explicit Employee Type field — covers all countries via "National" / "Expatriate"
+	if frappe.db.has_column("Employee", "hr_suite_employee_type"):
+		emp_type = frappe.db.get_value("Employee", employee, "hr_suite_employee_type") or ""
+		if "National" in emp_type:
+			return True
+		if emp_type == "Expatriate":
+			return False
+
+	# Nationality text field
+	nationality = ""
+	if frappe.get_meta("Employee").has_field("nationality"):
+		nationality = frappe.db.get_value("Employee", employee, "nationality") or ""
+	if not nationality:
+		nationality = get_contract_nationality_lookup([employee]).get(employee) or ""
+
+	nat_code = country_name_to_code(nationality)
+	if nat_code:
+		return nat_code == country_code.upper()
+
+	# Fallback: keyword match per country
+	nat_lower = nationality.lower()
+	keywords = {
+		"SA": ["saudi"],
+		"AE": ["emirati", "emirian", "united arab"],
+		"BH": ["bahraini"],
+		"OM": ["omani"],
+		"KW": ["kuwaiti"],
+		"QA": ["qatari"],
+	}
+	return any(kw in nat_lower for kw in keywords.get(country_code.upper(), []))
+
+
 def get_employee_nationality(employee: str) -> str:
-	"""Return the employee's nationality string. Use get_employee_is_saudi() for GOSI logic."""
+	"""Return the employee's nationality string. Use get_employee_is_national() for statutory logic."""
 	if not employee:
 		return ""
 
@@ -384,6 +425,374 @@ def get_contract_nationality_lookup(employees: list[str]) -> dict[str, str]:
 		if row.get("nationality") and row.employee not in lookup:
 			lookup[row.employee] = row.nationality
 	return lookup
+
+
+# ─── Global Country Helpers ────────────────────────────────────────────────────
+
+_COUNTRY_NAME_TO_CODE = {
+    # Saudi Arabia
+    "saudi arabia": "SA", "ksa": "SA",
+    # United Arab Emirates
+    "united arab emirates": "AE", "uae": "AE",
+    # Bahrain
+    "bahrain": "BH",
+    # India
+    "india": "IN",
+    # Oman
+    "oman": "OM",
+}
+
+
+def country_name_to_code(country_name: str) -> str:
+    """Convert a Frappe country name (e.g. 'Saudi Arabia') to an ISO-2 code."""
+    key = (country_name or "").strip().lower()
+    # Direct ISO-2 pass-through
+    if len(key) == 2 and key.upper() in ("SA", "AE", "BH", "IN", "OM"):
+        return key.upper()
+    return _COUNTRY_NAME_TO_CODE.get(key, "")
+
+
+def get_employee_work_country(employee: str) -> str:
+    """
+    Return the ISO-2 work country code for an employee.
+
+    Resolution order:
+    1. Employee.work_country custom field (explicit override set by HR)
+    2. Active Country Employment Contract.work_country
+    3. Employee's Company.country → mapped to ISO-2 code
+    4. Hr Suite Settings.default_work_country (global fallback)
+    """
+    if not employee:
+        return ""
+
+    # 1. Explicit work_country on Employee record
+    if frappe.db.has_column("Employee", "work_country"):
+        country = frappe.db.get_value("Employee", employee, "work_country") or ""
+        if country:
+            return country.strip().upper()
+
+    # 2. Active Country Employment Contract
+    row = frappe.db.get_value(
+        "Country Employment Contract",
+        {"employee": employee, "contract_status": "Active"},
+        "work_country",
+        order_by="start_date desc",
+    )
+    if row:
+        return row.strip().upper()
+
+    # 3. Derive from Employee's Company country (Frappe standard field)
+    company = frappe.db.get_value("Employee", employee, "company") or ""
+    if company:
+        company_country = frappe.db.get_value("Company", company, "country") or ""
+        code = country_name_to_code(company_country)
+        if code:
+            return code
+
+    # 4. Global default in Hr Suite Settings
+    default = frappe.db.get_single_value("Hr Suite Settings", "default_work_country") or ""
+    return default.strip().upper()
+
+
+def get_country_config(country_code: str):
+    """Return the Country Config document for a given ISO-2 code, or None."""
+    if not country_code:
+        return None
+    from hr_suite.hr_suite.doctype.country_config.country_config import CountryConfig
+    return CountryConfig.get_for(country_code)
+
+
+def get_active_country_contract(employee: str, fields=None, as_dict=True):
+    """Return the active Country Employment Contract for an employee."""
+    field_list = fields or [
+        "name", "basic_salary", "housing_allowance", "transport_allowance",
+        "other_allowances", "total_salary", "work_country", "currency",
+    ]
+    # Try Country Employment Contract first
+    row = frappe.db.get_value(
+        "Country Employment Contract",
+        {"employee": employee, "contract_status": "Active"},
+        field_list,
+        as_dict=as_dict,
+        order_by="start_date desc",
+    )
+    if row:
+        return row
+    # Fall back to Saudi Employment Contract for backward compatibility
+    return get_active_contract(employee, fields=fields, as_dict=as_dict)
+
+
+def get_employee_basic_salary_global(employee: str) -> float:
+    """Return basic salary from Country Employment Contract, then Saudi contract, then CTC."""
+    contract = get_active_country_contract(employee, ["basic_salary"], as_dict=True) or {}
+    basic = flt(contract.get("basic_salary"))
+    if basic:
+        return basic
+    return flt(frappe.db.get_value("Employee", employee, "ctc") or 0)
+
+
+# ─── Multi-Country Settlement ─────────────────────────────────────────────────
+
+def calculate_settlement(
+    employee: str,
+    termination_reason: str,
+    termination_date: str = None,
+    eosb_deductions: float = 0,
+) -> dict:
+    """
+    Dispatch to the correct settlement formula based on the employee's work_country.
+    Returns a unified dict with keys: formula, years_of_service, basic_salary,
+    gross_entitlement, factor, factor_label, net_entitlement, notes.
+    """
+    country = get_employee_work_country(employee)
+    emp = frappe.get_doc("Employee", employee)
+    joining = emp.date_of_joining
+    term_date = getdate(termination_date) if termination_date else getdate()
+    basic = get_employee_basic_salary_global(employee)
+    years = date_diff(term_date, getdate(joining)) / 365.0
+
+    if country == "AE":
+        return _calculate_uae_gratuity(employee, years, basic, termination_reason, eosb_deductions)
+    if country == "IN":
+        return _calculate_india_gratuity(years, basic, termination_reason, eosb_deductions)
+    if country == "BH":
+        return _calculate_bh_indemnity(years, basic, termination_reason, eosb_deductions)
+    if country == "OM":
+        return _calculate_om_indemnity(years, basic, termination_reason, eosb_deductions)
+    # Default: SA EOSB
+    result = calculate_eosb_components(joining, term_date, basic, termination_reason, eosb_deductions)
+    result["formula"] = "EOSB-SA"
+    result["gross_entitlement"] = result.get("eosb_gross", 0)
+    result["net_entitlement"] = result.get("net_eosb", 0)
+    result["factor_label"] = result.get("resignation_factor_label", "")
+    return result
+
+
+def _calculate_uae_gratuity(employee: str, years: float, basic: float, reason: str, deductions: float) -> dict:
+    """
+    UAE Gratuity per Article 51 / 132 of UAE Labour Law 2021.
+    - Years 1–5 : 21 calendar days basic per year
+    - Years 5+  : 30 calendar days basic per year
+    - Capped at 2 years' total wage
+    - Resignation < 1yr: no gratuity. 1–3yrs: 1/3. 3–5yrs: 2/3. 5+yrs: full.
+    """
+    daily = basic / 30.0
+    if years < 1:
+        gross = 0.0
+    elif years <= 5:
+        gross = round(21 * daily * years, 2)
+    else:
+        gross_1_5 = round(21 * daily * 5, 2)
+        gross_above = round(30 * daily * (years - 5), 2)
+        gross = round(gross_1_5 + gross_above, 2)
+
+    # 2-year salary cap
+    annual_salary = basic * 12
+    cap = round(annual_salary * 2, 2)
+    if gross > cap:
+        gross = cap
+
+    # Resignation scaling
+    is_resignation = text_matches_tokens(reason, "resignation")
+    if is_resignation:
+        if years < 1:
+            factor, label = 0.0, "Resignation < 1yr — No Gratuity"
+        elif years < 3:
+            factor, label = 1/3, "Resignation 1–3yrs — 1/3 Gratuity"
+        elif years < 5:
+            factor, label = 2/3, "Resignation 3–5yrs — 2/3 Gratuity"
+        else:
+            factor, label = 1.0, "Resignation 5+yrs — Full Gratuity"
+    else:
+        factor, label = 1.0, "Full Gratuity"
+
+    net = round(max(0, gross * factor - flt(deductions)), 2)
+    return {
+        "formula": "Gratuity-AE",
+        "years_of_service": round(years, 2),
+        "basic_salary": basic,
+        "gross_entitlement": gross,
+        "factor": factor,
+        "factor_label": label,
+        "net_entitlement": net,
+        "notes": (
+            f"UAE Gratuity\nYears: {years:.2f}\nBasic: {basic:,.2f} AED/month\n"
+            f"Daily rate: {daily:.2f}\nGross: {gross:,.2f}\n2yr cap: {cap:,.2f}\n"
+            f"Factor: {factor} ({label})\nNet: {net:,.2f}"
+        ),
+    }
+
+
+def _calculate_india_gratuity(years: float, basic: float, reason: str, deductions: float) -> dict:
+    """
+    Payment of Gratuity Act 1972.
+    Eligible after 5 years continuous service.
+    Formula: (15/26) × last basic × completed years.
+    Statutory ceiling: ₹20,00,000.
+    """
+    CEILING = 2000000.0
+    completed = int(years)  # only complete years count (fraction ≥ 6 months rounds up)
+    if years - completed >= 0.5:
+        completed += 1
+
+    if completed < 5:
+        gross = 0.0
+        label = "Not Eligible — < 5 years service"
+    else:
+        gross = min(round((15 / 26) * basic * completed, 2), CEILING)
+        label = f"Eligible — {completed} completed years"
+
+    is_dismissal = text_matches_tokens(reason, "dismissal", "misconduct")
+    factor = 0.0 if is_dismissal and completed < 5 else 1.0
+    label = "Forfeited — Termination for Cause" if is_dismissal and gross else label
+
+    net = round(max(0, gross * factor - flt(deductions)), 2)
+    return {
+        "formula": "Gratuity-IN",
+        "years_of_service": round(years, 2),
+        "basic_salary": basic,
+        "gross_entitlement": gross,
+        "factor": factor,
+        "factor_label": label,
+        "net_entitlement": net,
+        "notes": (
+            f"India Gratuity Act\nYears: {years:.2f} ({completed} completed)\n"
+            f"Basic: ₹{basic:,.2f}/month\nGross: ₹{gross:,.2f}\n"
+            f"Ceiling: ₹20,00,000\n{label}\nNet: ₹{net:,.2f}"
+        ),
+    }
+
+
+def _calculate_bh_indemnity(years: float, basic: float, reason: str, deductions: float) -> dict:
+    """
+    Bahrain Labour Law — Article 116–117.
+    First 3 years: ½ month per year.
+    After 3 years: 1 month per year.
+    """
+    if years <= 0:
+        gross = 0.0
+    elif years <= 3:
+        gross = round((basic / 2) * years, 2)
+    else:
+        gross = round((basic / 2) * 3 + basic * (years - 3), 2)
+
+    is_resignation = text_matches_tokens(reason, "resignation")
+    if is_resignation and years < 1:
+        factor, label = 0.0, "Resignation < 1yr — No Indemnity"
+    elif is_resignation:
+        factor, label = 0.5, "Resignation — 50% Indemnity"
+    else:
+        factor, label = 1.0, "Full Indemnity"
+
+    net = round(max(0, gross * factor - flt(deductions)), 2)
+    return {
+        "formula": "Indemnity-BH",
+        "years_of_service": round(years, 2),
+        "basic_salary": basic,
+        "gross_entitlement": gross,
+        "factor": factor,
+        "factor_label": label,
+        "net_entitlement": net,
+        "notes": (
+            f"Bahrain Indemnity (Art. 116–117)\nYears: {years:.2f}\nBasic: {basic:,.2f} BHD/month\n"
+            f"Gross: {gross:,.2f}\n{label}\nNet: {net:,.2f}"
+        ),
+    }
+
+
+def _calculate_om_indemnity(years: float, basic: float, reason: str, deductions: float) -> dict:
+    """
+    Oman Labour Law — Article 39–40.
+    First 3 years: 15 days basic per year.
+    After 3 years: 1 month basic per year.
+    Expatriates only — Omani nationals covered by PASI.
+    """
+    daily = basic / 30.0
+    if years <= 0:
+        gross = 0.0
+    elif years <= 3:
+        gross = round(15 * daily * years, 2)
+    else:
+        gross_1_3 = round(15 * daily * 3, 2)
+        gross_above = round(basic * (years - 3), 2)
+        gross = round(gross_1_3 + gross_above, 2)
+
+    is_resignation = text_matches_tokens(reason, "resignation")
+    factor, label = (0.5, "Resignation — 50% Indemnity") if is_resignation else (1.0, "Full Indemnity")
+    if is_resignation and years < 1:
+        factor, label = 0.0, "Resignation < 1yr — No Indemnity"
+
+    net = round(max(0, gross * factor - flt(deductions)), 2)
+    return {
+        "formula": "Indemnity-OM",
+        "years_of_service": round(years, 2),
+        "basic_salary": basic,
+        "gross_entitlement": gross,
+        "factor": factor,
+        "factor_label": label,
+        "net_entitlement": net,
+        "notes": (
+            f"Oman Indemnity (Art. 39–40)\nYears: {years:.2f}\nBasic: {basic:,.2f} OMR/month\n"
+            f"Gross: {gross:,.2f}\n{label}\nNet: {net:,.2f}"
+        ),
+    }
+
+
+@frappe.whitelist()
+def get_settlement_estimate(employee: str, termination_reason: str, termination_date: str = None) -> dict:
+    """Whitelisted: return settlement estimate for any country — called from front-end."""
+    return calculate_settlement(employee, termination_reason, termination_date)
+
+
+def seed_country_leave_types(employee: str):
+    """Create Leave Allocations in Frappe HRMS from the employee's Country Config."""
+    country = get_employee_work_country(employee)
+    cfg = get_country_config(country)
+    if not cfg or not cfg.leave_types:
+        return
+
+    emp_doc = frappe.get_doc("Employee", employee)
+    year = getdate().year
+
+    for row in cfg.leave_types:
+        lt_name = row.frappe_leave_type_name or row.leave_type_name
+        if not frappe.db.exists("Leave Type", lt_name):
+            frappe.get_doc({
+                "doctype": "Leave Type",
+                "leave_type_name": lt_name,
+                "max_continuous_days_allowed": 0,
+                "is_optional_leave": row.is_optional,
+                "allow_negative": 0,
+            }).insert(ignore_permissions=True)
+
+        if frappe.db.exists("Leave Allocation", {
+            "employee": employee,
+            "leave_type": lt_name,
+            "docstatus": ["<", 2],
+            "from_date": [">=", f"{year}-01-01"],
+        }):
+            continue
+
+        if row.gender_specific == "Male Only" and emp_doc.gender != "Male":
+            continue
+        if row.gender_specific == "Female Only" and emp_doc.gender != "Female":
+            continue
+
+        alloc = frappe.get_doc({
+            "doctype": "Leave Allocation",
+            "employee": employee,
+            "employee_name": emp_doc.employee_name,
+            "leave_type": lt_name,
+            "from_date": f"{year}-01-01",
+            "to_date": f"{year}-12-31",
+            "new_leaves_allocated": row.days_per_year or 0,
+            "carry_forward": 1 if row.max_carry_forward_days else 0,
+        })
+        try:
+            alloc.insert(ignore_permissions=True)
+            alloc.submit()
+        except Exception:
+            frappe.log_error(frappe.get_traceback(), f"HR Suite: Leave allocation failed for {employee} / {lt_name}")
 
 
 def get_sick_leave_pay(employee: str, sick_days_this_year: int) -> dict:

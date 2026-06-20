@@ -152,7 +152,7 @@ def get_data(filters):
     if not payroll_name:
         return []
 
-    payroll = frappe.get_doc("Saudi Monthly Payroll", payroll_name)
+    payroll = frappe.get_doc("Monthly Payroll", payroll_name)
     company = payroll.company
     pay_period = _get_pay_period_code(payroll)
     payment_date = _get_payment_date(payroll)
@@ -209,7 +209,7 @@ def download_wps_sif(payroll_document):
     if not data:
         frappe.throw(_("No employee data found for this payroll document"))
 
-    payroll = frappe.get_doc("Saudi Monthly Payroll", payroll_document)
+    payroll = frappe.get_doc("Monthly Payroll", payroll_document)
     company = payroll.company
     employer_id = frappe.db.get_value("Company", company, "registration_details") or company
     pay_period = _get_pay_period_code(payroll)

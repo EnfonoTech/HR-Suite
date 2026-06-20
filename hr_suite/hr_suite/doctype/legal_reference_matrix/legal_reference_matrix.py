@@ -32,7 +32,7 @@ class LegalReferenceMatrix(Document):
 			return
 
 		rows = frappe.get_all(
-			"Saudi Regulatory Task",
+			"Regulatory Task",
 			filters={"legal_reference_matrix": self.name},
 			fields=["name", "status", "modified"],
 			order_by="modified desc",
@@ -49,7 +49,7 @@ class LegalReferenceMatrix(Document):
 		latest_name = None
 		for payload in self._get_task_blueprints():
 			existing = frappe.db.get_value(
-				"Saudi Regulatory Task",
+				"Regulatory Task",
 				{
 					"legal_reference_matrix": self.name,
 					"task_title": payload["task_title"],
@@ -62,7 +62,7 @@ class LegalReferenceMatrix(Document):
 				continue
 
 			task = frappe.get_doc(payload)
-			assert_doctype_permissions("Saudi Regulatory Task", "create", doc=task)
+			assert_doctype_permissions("Regulatory Task", "create", doc=task)
 			task.insert()
 			latest_name = task.name
 			created_names.append(task.name)
@@ -72,7 +72,7 @@ class LegalReferenceMatrix(Document):
 		self.db_set(
 			"open_regulatory_tasks",
 			frappe.db.count(
-				"Saudi Regulatory Task",
+				"Regulatory Task",
 				filters={
 					"legal_reference_matrix": self.name,
 					"status": ["not in", ["Completed", "Cancelled"]],
@@ -84,7 +84,7 @@ class LegalReferenceMatrix(Document):
 
 	def _get_task_blueprints(self):
 		base = {
-			"doctype": "Saudi Regulatory Task",
+			"doctype": "Regulatory Task",
 			"company": self.company,
 			"legal_reference_matrix": self.name,
 			"article_reference": self.article_number,

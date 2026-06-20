@@ -49,7 +49,7 @@ class AnnualLeaveDisbursement(Document):
         entitled = get_annual_leave_entitlement(self.employee, reference_date)
         self.leave_days_entitled = entitled
 
-        # Days already taken this year from Saudi Annual Leave requests
+        # Days already taken this year from Annual Leave requests
         taken = get_annual_leave_days_taken(self.employee, self.leave_year)
         self.leave_days_taken = taken
         self.leave_days_balance = entitled - taken

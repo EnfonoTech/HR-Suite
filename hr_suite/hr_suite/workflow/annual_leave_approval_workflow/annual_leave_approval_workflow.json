@@ -2,7 +2,7 @@
  "doctype": "Workflow",
  "workflow_name": "Annual Leave Approval Workflow",
  "name": "Annual Leave Approval Workflow",
- "document_type": "Saudi Annual Leave",
+ "document_type": "Annual Leave",
  "is_active": 1,
  "override_status": 0,
  "send_email_alert": 1,
