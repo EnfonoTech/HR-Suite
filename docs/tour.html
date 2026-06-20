@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR Suite — Guided Entry Tour</title>
+<style>
+:root {
+  --ground:       #F4F3EF;
+  --surface:      #FFFFFF;
+  --surface-2:    #F9F8F5;
+  --text:         #1A1917;
+  --text-muted:   #6B6860;
+  --text-light:   #9E9B95;
+  --accent:       #006C45;
+  --accent-dim:   #E6F2EC;
+  --amber:        #B8751A;
+  --amber-dim:    #FDF3E3;
+  --rose:         #9B3535;
+  --rose-dim:     #FAECEC;
+  --blue:         #1D4ED8;
+  --blue-dim:     #EFF6FF;
+  --border:       #DDD9D0;
+  --border-light: #ECEAE4;
+  --sidebar-w:    268px;
+  --ff-serif:     Georgia, 'Times New Roman', serif;
+  --ff-sans:      'Segoe UI', system-ui, -apple-system, Helvetica, sans-serif;
+  --ff-mono:      'SF Mono', 'Fira Code', Consolas, 'Courier New', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 15px; }
+body {
+  background: var(--ground);
+  color: var(--text);
+  font-family: var(--ff-sans);
+  line-height: 1.65;
+}
+
+/* TOPBAR */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 52px;
+  background: var(--text);
+  color: #fff;
+  display: flex; align-items: center;
+  padding: 0 24px;
+}
+.topbar-brand {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--ff-serif); font-size: 1rem;
+  color: #fff; text-decoration: none; flex-shrink: 0;
+}
+.topbar-brand-mark {
+  width: 26px; height: 26px;
+  background: var(--accent); border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-family: var(--ff-mono); font-weight: bold;
+  color: #fff; letter-spacing: -0.5px;
+}
+.topbar-divider { width: 1px; height: 20px; background: rgba(255,255,255,0.15); margin: 0 16px; }
+.topbar-meta { font-size: 0.8rem; color: rgba(255,255,255,0.45); font-family: var(--ff-mono); }
+.topbar-tabs { display: flex; align-items: stretch; margin-left: 24px; height: 100%; }
+.topbar-tab {
+  display: flex; align-items: center; padding: 0 14px;
+  font-size: 0.82rem; color: rgba(255,255,255,0.5);
+  text-decoration: none; border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s; letter-spacing: 0.01em;
+}
+.topbar-tab:hover { color: rgba(255,255,255,0.85); }
+.topbar-tab.active { color: #fff; border-bottom-color: var(--accent); }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+.topbar-badge {
+  font-size: 0.7rem; font-family: var(--ff-mono);
+  background: rgba(0,108,69,0.6); color: #7FFFC4;
+  padding: 2px 8px; border-radius: 3px; letter-spacing: 0.04em;
+}
+
+/* LAYOUT */
+.shell { display: flex; margin-top: 52px; min-height: calc(100vh - 52px); }
+
+/* SIDEBAR */
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  position: sticky; top: 52px;
+  height: calc(100vh - 52px); overflow-y: auto;
+  background: var(--surface); border-right: 1px solid var(--border);
+  padding: 28px 0 40px;
+}
+.sidebar-section { margin-bottom: 24px; }
+.sidebar-group {
+  font-size: 0.67rem; font-family: var(--ff-mono);
+  color: var(--text-light); letter-spacing: 0.09em;
+  text-transform: uppercase; padding: 0 20px 6px;
+}
+.sidebar-link {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 20px; text-decoration: none;
+  color: var(--text-muted); font-size: 0.83rem;
+  border-left: 2px solid transparent;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+.sidebar-link:hover { background: var(--ground); color: var(--text); }
+.sidebar-link.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-dim); font-weight: 500; }
+.sidebar-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+
+/* CONTENT */
+.content { flex: 1; min-width: 0; padding: 40px 52px 80px; max-width: 860px; }
+
+.intro-block {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 28px 32px; margin-bottom: 40px;
+}
+.intro-block h1 {
+  font-family: var(--ff-serif); font-size: 1.55rem;
+  font-weight: normal; color: var(--text); margin-bottom: 10px;
+}
+.intro-block p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.7; }
+
+.emp-chips { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.emp-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 12px; border-radius: 20px;
+  font-size: 0.8rem; font-weight: 500;
+  border: 1.5px solid;
+}
+.chip-ahmed { background: #E6F2EC; color: #006C45; border-color: #b3d9c8; }
+.chip-fatima { background: #EFF6FF; color: #1D4ED8; border-color: #bfdbfe; }
+.chip-james  { background: #FDF3E3; color: #B8751A; border-color: #f5d9a8; }
+
+/* DOCTYPE SECTION */
+.doctype-section {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; margin-bottom: 32px; overflow: hidden;
+}
+.doctype-header {
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex; align-items: flex-start; gap: 14px;
+}
+.doctype-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.doctype-header-text h2 {
+  font-family: var(--ff-serif); font-size: 1.1rem;
+  font-weight: normal; color: var(--text);
+}
+.doctype-header-text .doctype-meta {
+  font-size: 0.75rem; font-family: var(--ff-mono);
+  color: var(--text-light); margin-top: 2px;
+}
+.module-tag {
+  font-size: 0.65rem; font-family: var(--ff-mono); letter-spacing: 0.07em;
+  padding: 2px 7px; border-radius: 3px; text-transform: uppercase;
+  background: var(--ground); color: var(--text-muted); margin-left: auto; flex-shrink: 0;
+}
+
+/* MOCK FORM */
+.mock-form { padding: 20px 24px 24px; }
+.form-intro { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px; }
+
+.form-step {
+  display: flex; gap: 14px; margin-bottom: 18px;
+  align-items: flex-start;
+}
+.step-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-size: 0.7rem; font-weight: 700; font-family: var(--ff-mono);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.step-body { flex: 1; }
+.step-label {
+  font-size: 0.78rem; font-family: var(--ff-mono);
+  color: var(--text-light); letter-spacing: 0.04em;
+  text-transform: uppercase; margin-bottom: 3px;
+}
+.step-field-name {
+  font-weight: 600; font-size: 0.92rem; color: var(--text); margin-bottom: 4px;
+}
+.step-desc { font-size: 0.84rem; color: var(--text-muted); margin-bottom: 6px; }
+
+.example-val {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.8rem; font-family: var(--ff-mono);
+  background: var(--ground); border: 1px solid var(--border);
+  border-radius: 5px; padding: 3px 10px;
+}
+.example-val .who {
+  font-size: 0.68rem; padding: 1px 6px; border-radius: 10px;
+  font-family: var(--ff-sans); font-weight: 500; letter-spacing: 0.01em;
+}
+.who-ahmed { background: #E6F2EC; color: #006C45; }
+.who-fatima { background: #EFF6FF; color: #1D4ED8; }
+.who-james  { background: #FDF3E3; color: #B8751A; }
+
+.step-tip {
+  display: flex; gap: 7px; align-items: flex-start;
+  background: var(--amber-dim); border: 1px solid #f0c980;
+  border-radius: 6px; padding: 7px 11px; margin-top: 7px;
+  font-size: 0.8rem; color: #7a5010;
+}
+.step-tip-icon { flex-shrink: 0; font-size: 12px; margin-top: 1px; }
+
+.step-note {
+  display: flex; gap: 7px; align-items: flex-start;
+  background: var(--accent-dim); border: 1px solid #b3d9c8;
+  border-radius: 6px; padding: 7px 11px; margin-top: 7px;
+  font-size: 0.8rem; color: #004a2f;
+}
+
+.step-warn {
+  display: flex; gap: 7px; align-items: flex-start;
+  background: var(--rose-dim); border: 1px solid #f0b8b8;
+  border-radius: 6px; padding: 7px 11px; margin-top: 7px;
+  font-size: 0.8rem; color: #6b2020;
+}
+
+.form-section-break {
+  font-size: 0.7rem; font-family: var(--ff-mono); letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-light);
+  border-top: 1px solid var(--border-light); margin: 20px 0 14px;
+  padding-top: 12px;
+}
+
+.field-type-badge {
+  font-size: 0.65rem; font-family: var(--ff-mono); letter-spacing: 0.04em;
+  background: var(--surface-2); border: 1px solid var(--border-light);
+  border-radius: 3px; padding: 1px 6px; color: var(--text-muted);
+  margin-left: 6px; vertical-align: middle;
+}
+
+.examples-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 5px; }
+
+/* SECTION ANCHORS */
+.tour-section { scroll-margin-top: 72px; }
+
+/* PROGRESS INDICATOR */
+.section-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 24px 0 16px;
+}
+.section-header h2 {
+  font-family: var(--ff-serif); font-size: 1.25rem;
+  font-weight: normal; color: var(--text);
+}
+.section-line { flex: 1; height: 1px; background: var(--border); }
+
+/* ACTIONS */
+.action-bar {
+  display: flex; gap: 10px; margin-bottom: 16px;
+  background: var(--surface-2); border: 1px solid var(--border-light);
+  border-radius: 7px; padding: 10px 14px;
+  font-size: 0.8rem; color: var(--text-muted);
+  align-items: center;
+}
+.action-bar strong { color: var(--text); }
+
+/* FIELD GROUPS */
+.field-row { display: flex; gap: 12px; margin-bottom: 18px; }
+.field-row .form-step { flex: 1; }
+
+/* SUBMITTABLE BADGE */
+.submittable-banner {
+  background: var(--accent-dim); border: 1px solid #b3d9c8;
+  border-radius: 6px; padding: 7px 14px; font-size: 0.8rem;
+  color: #004a2f; margin: 0 24px 16px; display: flex; gap: 8px;
+}
+
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="topbar-brand" href="index.html">
+    <span class="topbar-brand-mark">HR</span>
+    HR Suite
+  </a>
+  <span class="topbar-divider"></span>
+  <span class="topbar-meta">v15 · KSA Labor Law</span>
+  <nav class="topbar-tabs">
+    <a class="topbar-tab" href="index.html">Reference</a>
+    <a class="topbar-tab" href="scenarios.html">Employee Scenarios</a>
+    <a class="topbar-tab active" href="tour.html">Guided Tour</a>
+  </nav>
+  <div class="topbar-right">
+    <span class="topbar-badge">KSA</span>
+  </div>
+</header>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-group">Leave</div>
+      <a class="sidebar-link active" href="#leave-allocation"><span class="sidebar-dot" style="background:#006C45"></span>Leave Allocation</a>
+      <a class="sidebar-link" href="#leave-application"><span class="sidebar-dot" style="background:#006C45"></span>Leave Application</a>
+      <a class="sidebar-link" href="#special-leave"><span class="sidebar-dot" style="background:#006C45"></span>Special Leave</a>
+      <a class="sidebar-link" href="#leave-encashment"><span class="sidebar-dot" style="background:#006C45"></span>Leave Encashment</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-group">Time &amp; Attendance</div>
+      <a class="sidebar-link" href="#attendance"><span class="sidebar-dot" style="background:#1D4ED8"></span>Attendance</a>
+      <a class="sidebar-link" href="#overtime"><span class="sidebar-dot" style="background:#1D4ED8"></span>Overtime Request</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-group">Payroll</div>
+      <a class="sidebar-link" href="#salary-structure"><span class="sidebar-dot" style="background:#B8751A"></span>Salary Structure</a>
+      <a class="sidebar-link" href="#salary-slip"><span class="sidebar-dot" style="background:#B8751A"></span>Salary Slip</a>
+      <a class="sidebar-link" href="#gosi"><span class="sidebar-dot" style="background:#B8751A"></span>GOSI Entry</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-group">Disciplinary</div>
+      <a class="sidebar-link" href="#warning-letter"><span class="sidebar-dot" style="background:#9B3535"></span>Warning Letter</a>
+      <a class="sidebar-link" href="#disciplinary-action"><span class="sidebar-dot" style="background:#9B3535"></span>Disciplinary Action</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-group">Lifecycle</div>
+      <a class="sidebar-link" href="#employee-onboarding"><span class="sidebar-dot" style="background:#6B6860"></span>Employee Onboarding</a>
+      <a class="sidebar-link" href="#employee-transfer"><span class="sidebar-dot" style="background:#6B6860"></span>Employee Transfer</a>
+      <a class="sidebar-link" href="#employee-separation"><span class="sidebar-dot" style="background:#6B6860"></span>Employee Separation</a>
+      <a class="sidebar-link" href="#eosb"><span class="sidebar-dot" style="background:#6B6860"></span>EOSB Calculation</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-group">HR Docs</div>
+      <a class="sidebar-link" href="#loan"><span class="sidebar-dot" style="background:#9E9B95"></span>Employee Loan</a>
+      <a class="sidebar-link" href="#training-bond"><span class="sidebar-dot" style="background:#9E9B95"></span>Training Bond</a>
+      <a class="sidebar-link" href="#grievance"><span class="sidebar-dot" style="background:#9E9B95"></span>Grievance</a>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="content">
+
+    <div class="intro-block">
+      <h1>Guided Entry Tour</h1>
+      <p>Step-by-step field walkthroughs for every key doctype in HR Suite. Each step shows you exactly what to enter, with real examples from three employees across their full HR lifecycle.</p>
+      <div class="emp-chips">
+        <span class="emp-chip chip-ahmed">&#9679; Ahmed Al-Ghamdi · EMP-0042 · Engineer · SAR 14,000</span>
+        <span class="emp-chip chip-fatima">&#9679; Fatima Al-Zahrani · EMP-0089 · Analyst · SAR 10,500</span>
+        <span class="emp-chip chip-james">&#9679; James Mathew · EMP-0156 · Technician · SAR 11,000</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         LEAVE
+    ═══════════════════════════════════ -->
+    <div class="section-header">
+      <h2>Leave Management</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <!-- Leave Allocation -->
+    <div id="leave-allocation" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#E6F2EC">📋</div>
+        <div class="doctype-header-text">
+          <h2>Leave Allocation</h2>
+          <div class="doctype-meta">HR Suite › Leave · Grants leave balance to an employee for a period</div>
+        </div>
+        <span class="module-tag">Leave</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Leave → Leave Allocation → New
+      </div>
+      <div class="mock-form">
+        <p class="form-intro">Create one allocation per leave type per employee per year. Annual leave must be allocated before employees can apply.</p>
+
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Employee <span class="field-type-badge">Link → Employee</span></div>
+            <div class="step-desc">Select the employee receiving the allocation.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> EMP-0042</span>
+              <span class="example-val"><span class="who who-fatima">Fatima</span> EMP-0089</span>
+              <span class="example-val"><span class="who who-james">James</span> EMP-0156</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Leave Type <span class="field-type-badge">Link → Leave Type</span></div>
+            <div class="step-desc">Choose from Annual Leave, Sick Leave, Maternity Leave, etc.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> Annual Leave</span>
+              <span class="example-val"><span class="who who-fatima">Fatima</span> Sick Leave</span>
+              <span class="example-val"><span class="who who-james">James</span> Annual Leave</span>
+            </div>
+            <div class="step-note"><span>💡</span> KSA Article 109: minimum 21 days/year for &lt;5 yrs service, 30 days/year after 5 yrs.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Required · Date</div>
+            <div class="step-field-name">From Date / To Date <span class="field-type-badge">Date</span></div>
+            <div class="step-desc">The validity period of this allocation — usually Jan 1 – Dec 31 of the leave year.</div>
+            <div class="examples-row">
+              <span class="example-val">01/01/2025 – 31/12/2025</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Required · Int</div>
+            <div class="step-field-name">New Leaves Allocated <span class="field-type-badge">Int</span></div>
+            <div class="step-desc">Number of leave days to grant. For annual leave enter 21 (or 30 for senior staff).</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> 21 days</span>
+              <span class="example-val"><span class="who who-fatima">Fatima</span> 30 (sick)</span>
+              <span class="example-val"><span class="who who-james">James</span> 21 days</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-label">Optional · Check</div>
+            <div class="step-field-name">Add unused leaves from previous period <span class="field-type-badge">Check</span></div>
+            <div class="step-desc">Tick this to carry forward any unused balance from the prior allocation period.</div>
+            <div class="step-tip"><span class="step-tip-icon">⚠</span> KSA law limits carry-forward of annual leave. Do not carry forward more than what is permitted — consult HR policy.</div>
+          </div>
+        </div>
+
+        <div class="form-section-break">After saving</div>
+        <div class="form-step">
+          <div class="step-num">✓</div>
+          <div class="step-body">
+            <div class="step-field-name">Submit</div>
+            <div class="step-desc">Click Submit to activate the allocation. The employee can now apply for leave of this type. Once submitted, use Amend to correct errors.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leave Application -->
+    <div id="leave-application" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#E6F2EC">🗓</div>
+        <div class="doctype-header-text">
+          <h2>Leave Application</h2>
+          <div class="doctype-meta">HR Suite › Leave · Employee requests leave; HR approves</div>
+        </div>
+        <span class="module-tag">Leave</span>
+      </div>
+      <div class="submittable-banner">&#10003; Submittable document — submit to deduct balance; cancel to restore it.</div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Leave → Leave Application → New
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Employee <span class="field-type-badge">Link → Employee</span></div>
+            <div class="step-desc">Select the employee applying for leave. Employee Name, Department and Company auto-fill.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> EMP-0042 — Eng. Dept</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Leave Type <span class="field-type-badge">Link → Leave Type</span></div>
+            <div class="step-desc">Determines which balance is deducted and which approval workflow fires.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> Annual Leave</span>
+              <span class="example-val"><span class="who who-fatima">Fatima</span> Sick Leave</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Required · Date</div>
+            <div class="step-field-name">From Date / To Date <span class="field-type-badge">Date</span></div>
+            <div class="step-desc">Enter inclusive start and end dates. The system calculates Total Leave Days excluding weekends/holidays.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> 01/07/2025 – 21/07/2025 (21 days annual)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Optional · Small Text</div>
+            <div class="step-field-name">Reason <span class="field-type-badge">Small Text</span></div>
+            <div class="step-desc">Required for sick leave and special types. Always fill for compliance records.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-fatima">Fatima</span> "Medical — Doctor's certificate attached"</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-label">Optional · Link</div>
+            <div class="step-field-name">Leave Approver <span class="field-type-badge">Link → User</span></div>
+            <div class="step-desc">Defaults from employee master. Override only if this request has a different approver.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <div class="step-label">Optional · Check</div>
+            <div class="step-field-name">Half Day <span class="field-type-badge">Check</span></div>
+            <div class="step-desc">Tick for partial-day leave. Then select Half Day Date and whether it's a Morning or Afternoon half.</div>
+            <div class="step-tip"><span class="step-tip-icon">⚠</span> Half-day sick leave still consumes 0.5 from the sick leave balance.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Special Leave -->
+    <div id="special-leave" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#E6F2EC">🕌</div>
+        <div class="doctype-header-text">
+          <h2>Special Leave</h2>
+          <div class="doctype-meta">HR Suite › Leave · Hajj (10 days), Bereavement (5 days), Marriage (3 days)</div>
+        </div>
+        <span class="module-tag">Leave</span>
+      </div>
+      <div class="submittable-banner">&#10003; Submittable — once approved, payroll picks up the special leave pay automatically.</div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Leave → Special Leave → New
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Auto · Select</div>
+            <div class="step-field-name">Naming Series <span class="field-type-badge">Select</span></div>
+            <div class="step-desc">Auto-populated as SAU-SL-2025-0001. Leave as-is unless advised otherwise.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Employee <span class="field-type-badge">Link → Employee</span></div>
+            <div class="step-desc">Select the employee. Company, Department, and Employee Name fill automatically.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> EMP-0042 (Hajj Leave)</span>
+              <span class="example-val"><span class="who who-james">James</span> EMP-0156 (Bereavement)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Required · Select</div>
+            <div class="step-field-name">Leave Type <span class="field-type-badge">Select</span></div>
+            <div class="step-desc">Choose Hajj Leave, Bereavement Leave, or Marriage Leave. This controls entitled days and conditional fields below.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> Hajj Leave → 10 days entitled</span>
+              <span class="example-val"><span class="who who-james">James</span> Bereavement Leave → 5 days</span>
+            </div>
+            <div class="step-note"><span>💡</span> Hajj Leave field "Previously Taken" appears only when Hajj is selected — KSA allows once-in-employment Hajj leave.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Required · Date</div>
+            <div class="step-field-name">Start Date / End Date <span class="field-type-badge">Date</span></div>
+            <div class="step-desc">Actual leave dates. Actual Days and Entitled Days will auto-calculate on save.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> 01/05/2025 – 10/05/2025</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section-break">Eligibility Section (read-only, auto-calculated)</div>
+
+        <div class="form-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-label">Read-only · Check</div>
+            <div class="step-field-name">Is Eligible</div>
+            <div class="step-desc">System checks leave history and sets this automatically. Review the Eligibility Notes if it shows No.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <div class="step-label">Conditional · Select — visible for Bereavement only</div>
+            <div class="step-field-name">Relationship to Deceased <span class="field-type-badge">Select</span></div>
+            <div class="step-desc">Select Parent, Spouse, Child, Sibling, or Other. Required to process bereavement entitlement.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> Parent</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section-break">Financial Section</div>
+
+        <div class="form-step">
+          <div class="step-num">7</div>
+          <div class="step-body">
+            <div class="step-label">Currency</div>
+            <div class="step-field-name">Daily Basic Salary <span class="field-type-badge">Currency</span></div>
+            <div class="step-desc">Enter the employee's basic monthly salary ÷ 30. System uses this to compute total special leave pay.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> SAR 14,000 ÷ 30 = SAR 466.67</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leave Encashment -->
+    <div id="leave-encashment" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#E6F2EC">💵</div>
+        <div class="doctype-header-text">
+          <h2>Leave Encashment</h2>
+          <div class="doctype-meta">HR Suite › Leave · Cash out unused leave balance</div>
+        </div>
+        <span class="module-tag">Leave</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Leave → Leave Encashment → New
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Employee <span class="field-type-badge">Link → Employee</span></div>
+            <div class="step-desc">Employee whose leave balance will be encashed. Current balance shows after selection.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> EMP-0156 — at resignation had 8 days accrued</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Leave Type <span class="field-type-badge">Link → Leave Type</span></div>
+            <div class="step-desc">Select Annual Leave. Only encashable leave types appear.</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Required · Date</div>
+            <div class="step-field-name">Encashment Date <span class="field-type-badge">Date</span></div>
+            <div class="step-desc">Date on which the payment is processed. Usually the last working day or payroll run date.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> 31/05/2027</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Read-only · Currency</div>
+            <div class="step-field-name">Encashment Amount</div>
+            <div class="step-desc">System calculates: unused days × daily salary. Verify before submit.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> 8 days × SAR 366.67 = SAR 2,933</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         TIME & ATTENDANCE
+    ═══════════════════════════════════ -->
+    <div class="section-header">
+      <h2>Time &amp; Attendance</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <!-- Attendance -->
+    <div id="attendance" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#EFF6FF">📅</div>
+        <div class="doctype-header-text">
+          <h2>Attendance</h2>
+          <div class="doctype-meta">HR Suite › Attendance · Daily present/absent/on-leave record</div>
+        </div>
+        <span class="module-tag">Attendance</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Attendance → Attendance → New &nbsp;|&nbsp; Or use Upload Attendance for bulk import
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Employee <span class="field-type-badge">Link → Employee</span></div>
+            <div class="step-desc">Employee for whom attendance is being recorded.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> EMP-0156 (absence record)</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Date</div>
+            <div class="step-field-name">Attendance Date <span class="field-type-badge">Date</span></div>
+            <div class="step-desc">The calendar date. One record per employee per day.</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Required · Select</div>
+            <div class="step-field-name">Status <span class="field-type-badge">Select</span></div>
+            <div class="step-desc">Present / Absent / Half Day / On Leave / Work From Home.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> Absent (3 days in April 2027)</span>
+            </div>
+            <div class="step-warn"><span>🔴</span> Absent without approval triggers the absence workflow. 3+ consecutive absent days should escalate to a disciplinary case (Art. 80 KSA Labor Law).</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Optional · Link</div>
+            <div class="step-field-name">Shift <span class="field-type-badge">Link → Shift Type</span></div>
+            <div class="step-desc">If using shift scheduling, link the shift to auto-validate check-in/out times.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overtime Request -->
+    <div id="overtime" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#EFF6FF">⏱</div>
+        <div class="doctype-header-text">
+          <h2>Overtime Request</h2>
+          <div class="doctype-meta">HR Suite › Attendance · Pre-authorized OT; feeds payroll at 1.5× rate</div>
+        </div>
+        <span class="module-tag">Attendance</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Attendance → Overtime Request → New
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Employee <span class="field-type-badge">Link → Employee</span></div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> EMP-0042</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Date / Time</div>
+            <div class="step-field-name">OT Date · From Time · To Time <span class="field-type-badge">DateTime</span></div>
+            <div class="step-desc">Enter the date and exact OT window. System calculates total OT hours.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> 10/02/2025 · 17:00 – 20:00 (3 hrs)</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Optional · Small Text</div>
+            <div class="step-field-name">Reason <span class="field-type-badge">Small Text</span></div>
+            <div class="step-desc">Brief business justification. Required if company OT policy demands pre-approval.</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Read-only · Currency</div>
+            <div class="step-field-name">OT Amount</div>
+            <div class="step-desc">Auto-calculated: hourly rate × OT hours × 1.5 (KSA Art. 107).</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> SAR 14,000 / 208 hrs × 3 × 1.5 = SAR 303</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         PAYROLL
+    ═══════════════════════════════════ -->
+    <div class="section-header">
+      <h2>Payroll</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <!-- Salary Structure -->
+    <div id="salary-structure" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#FDF3E3">💼</div>
+        <div class="doctype-header-text">
+          <h2>Salary Structure</h2>
+          <div class="doctype-meta">HR Suite › Payroll · Template defining earnings and deductions components</div>
+        </div>
+        <span class="module-tag">Payroll</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Payroll → Salary Structure → New &nbsp;(one structure per grade/band)
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Data</div>
+            <div class="step-field-name">Structure Name <span class="field-type-badge">Data</span></div>
+            <div class="step-desc">A descriptive name for the salary band or grade.</div>
+            <div class="examples-row">
+              <span class="example-val">Engineer — Grade 5</span>
+              <span class="example-val">Analyst — Grade 3</span>
+              <span class="example-val">Technician — Grade 2</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Company <span class="field-type-badge">Link → Company</span></div>
+            <div class="step-desc">Select the legal entity. Payroll is always company-scoped.</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Table — Earnings</div>
+            <div class="step-field-name">Earnings Components</div>
+            <div class="step-desc">Add rows for each earning: Basic Salary, Housing Allowance (25%), Transport Allowance (10%), etc. Set Amount or Formula.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> Basic SAR 14,000 · Housing 3,500 · Transport 1,400</span>
+            </div>
+            <div class="step-note"><span>💡</span> KSA practice: Basic ≈ 60%, Housing ≈ 25%, Transport ≈ 10%, Medical ≈ 5% of CTC.</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Table — Deductions</div>
+            <div class="step-field-name">Deductions Components</div>
+            <div class="step-desc">Add GOSI Employee Contribution (9.75% of basic for Saudis), income tax (if any), loan installments.</div>
+            <div class="step-note"><span>💡</span> Non-Saudi employees (like James) do not pay GOSI employee share — only employer pays the 2% annuities contribution.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Salary Slip -->
+    <div id="salary-slip" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#FDF3E3">🧾</div>
+        <div class="doctype-header-text">
+          <h2>Salary Slip</h2>
+          <div class="doctype-meta">HR Suite › Payroll · Monthly payslip generated from Payroll Entry</div>
+        </div>
+        <span class="module-tag">Payroll</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Payroll → Payroll Entry → New (generates slips in bulk)
+      </div>
+      <div class="mock-form">
+        <p class="form-intro">Salary Slips are normally generated in bulk via Payroll Entry, not created one by one. Create manually only for corrections.</p>
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Employee</div>
+            <div class="step-desc">If creating manually, select the employee.</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Date</div>
+            <div class="step-field-name">Start Date / End Date <span class="field-type-badge">Date</span></div>
+            <div class="step-desc">The payroll period — typically 1st to last day of the month.</div>
+            <div class="examples-row">
+              <span class="example-val">01/03/2025 – 31/03/2025</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Button</div>
+            <div class="step-field-name">Get Salary Components</div>
+            <div class="step-desc">Pulls earnings/deductions from the linked Salary Structure Assignment. Review totals before saving.</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Read-only</div>
+            <div class="step-field-name">Gross Pay / Net Pay</div>
+            <div class="step-desc">Auto-computed. Net Pay = Gross – Deductions. This is the WPS transfer amount.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> Gross SAR 19,800 · Net SAR 18,170 (after GOSI 9.75%)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GOSI Entry -->
+    <div id="gosi" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#FDF3E3">🏛</div>
+        <div class="doctype-header-text">
+          <h2>GOSI Entry</h2>
+          <div class="doctype-meta">HR Suite › Compliance · Monthly GOSI contribution record per employee</div>
+        </div>
+        <span class="module-tag">Compliance</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Compliance → GOSI Entry → New
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Employee</div>
+            <div class="step-desc">Saudi nationals only for full contribution; Expats only get Occupational Hazard (1% employer only).</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> Saudi — full rates</span>
+              <span class="example-val"><span class="who who-fatima">Fatima</span> Saudi — full rates</span>
+              <span class="example-val"><span class="who who-james">James</span> Expat — Occ. Hazard only</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Currency</div>
+            <div class="step-field-name">GOSI Wages <span class="field-type-badge">Currency</span></div>
+            <div class="step-desc">Contributory wages = Basic + Housing Allowance. Enter the figure used for the contribution base.</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Read-only · Currency</div>
+            <div class="step-field-name">Employee Contribution (9.75%) / Employer Contribution (11.75%)</div>
+            <div class="step-desc">Auto-calculated. Total = 21.5% of contributory wages for Saudi nationals.</div>
+            <div class="step-note"><span>💡</span> GOSI portal filing due by the 10th of the following month. Late payment incurs a 2% monthly penalty.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         DISCIPLINARY
+    ═══════════════════════════════════ -->
+    <div class="section-header">
+      <h2>Disciplinary</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <!-- Warning Letter -->
+    <div id="warning-letter" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#FAECEC">⚠️</div>
+        <div class="doctype-header-text">
+          <h2>Warning Letter</h2>
+          <div class="doctype-meta">HR Suite › Disciplinary · Formal written warning issued to an employee</div>
+        </div>
+        <span class="module-tag">Disciplinary</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Disciplinary → Warning Letter → New
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Employee</div>
+            <div class="step-desc">The employee receiving the warning.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> EMP-0156 — repeated absences</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Select</div>
+            <div class="step-field-name">Warning Level <span class="field-type-badge">Select</span></div>
+            <div class="step-desc">First Warning / Second Warning / Final Warning. Escalation path is documented here.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> First Warning (April 2027)</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Required · Small Text</div>
+            <div class="step-field-name">Reason / Violation</div>
+            <div class="step-desc">Specific policy or labor law article violated. Be factual and specific.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> "3 unauthorized absences — 07, 08, 09 April 2027. Violates Art. 80 KSA Labor Law."</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Required · Date</div>
+            <div class="step-field-name">Warning Date</div>
+            <div class="step-desc">Date the letter is issued and handed to the employee. Get a signed acknowledgement.</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-label">Optional · Small Text</div>
+            <div class="step-field-name">Corrective Action Required</div>
+            <div class="step-desc">State what the employee must do to remedy the situation and by when.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Disciplinary Action -->
+    <div id="disciplinary-action" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#FAECEC">⚖️</div>
+        <div class="doctype-header-text">
+          <h2>Disciplinary Action</h2>
+          <div class="doctype-meta">HR Suite › Disciplinary · Formal sanction: suspension, salary cut, or termination</div>
+        </div>
+        <span class="module-tag">Disciplinary</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Disciplinary → Disciplinary Action → New
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Employee</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Warning Letter <span class="field-type-badge">Link → Warning Letter</span></div>
+            <div class="step-desc">Link the preceding warning letter(s) for audit trail.</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Required · Select</div>
+            <div class="step-field-name">Action Type</div>
+            <div class="step-desc">Verbal Warning / Written Warning / Salary Deduction / Suspension / Termination.</div>
+            <div class="step-warn"><span>🔴</span> Termination for cause under Art. 80 eliminates EOSB entitlement. Ensure thorough documentation before selecting Termination.</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Small Text</div>
+            <div class="step-field-name">Action Details</div>
+            <div class="step-desc">Duration of suspension, percentage of salary deduction, or termination grounds. Include Article references.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         EMPLOYEE LIFECYCLE
+    ═══════════════════════════════════ -->
+    <div class="section-header">
+      <h2>Employee Lifecycle</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <!-- Employee Onboarding -->
+    <div id="employee-onboarding" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#F9F8F5">👤</div>
+        <div class="doctype-header-text">
+          <h2>Employee Onboarding</h2>
+          <div class="doctype-meta">HR Suite › Lifecycle · Checklist-driven onboarding workflow</div>
+        </div>
+        <span class="module-tag">Lifecycle</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Lifecycle → Employee Onboarding → New &nbsp;(triggered after Employee record created)
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Employee</div>
+            <div class="step-desc">The newly hired employee. Create the Employee master record first.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> 01/01/2025</span>
+              <span class="example-val"><span class="who who-fatima">Fatima</span> 01/03/2025</span>
+              <span class="example-val"><span class="who who-james">James</span> 01/03/2025 (Iqama pending)</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Onboarding Template <span class="field-type-badge">Link → Employee Onboarding Template</span></div>
+            <div class="step-desc">Select a template appropriate for the employee's role/nationality. Templates define checklist activities.</div>
+            <div class="step-note"><span>💡</span> Create separate templates for Saudi vs. Expat — expats need Iqama/work permit activities that Saudis don't.</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Table · Onboarding Activities</div>
+            <div class="step-field-name">Activities Checklist</div>
+            <div class="step-desc">Populated from the template. Assign each activity to a User (HR, IT, Finance, etc.) and set a Due Date. Track completion here.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> Activity: "Apply Iqama" → HR · Due: 30/03/2025</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Optional · Date</div>
+            <div class="step-field-name">Probation End Date</div>
+            <div class="step-desc">KSA default: 90 days (extendable to 180 days max). Set to trigger probation completion reminder.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> 31/03/2025 (90-day probation)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employee Transfer -->
+    <div id="employee-transfer" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#F9F8F5">🔄</div>
+        <div class="doctype-header-text">
+          <h2>Employee Transfer</h2>
+          <div class="doctype-meta">HR Suite › Lifecycle · Department, grade, or company transfer</div>
+        </div>
+        <span class="module-tag">Lifecycle</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Lifecycle → Employee Transfer → New
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Employee</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Date</div>
+            <div class="step-field-name">Transfer Date</div>
+            <div class="step-desc">Effective date of the transfer. Employee master updates on this date.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> 01/01/2026 — promoted to Senior Engineer</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Table</div>
+            <div class="step-field-name">Transfer Details</div>
+            <div class="step-desc">Add rows for each changed property: Department, Designation, Grade, Salary Structure, Branch. Old value auto-fills; enter New value.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-ahmed">Ahmed</span> Designation: Engineer → Senior Engineer · Basic: SAR 14,000 → SAR 16,000</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Check</div>
+            <div class="step-field-name">Create New Salary Structure Assignment</div>
+            <div class="step-desc">Tick if the salary structure changes. A new Salary Structure Assignment will be created automatically effective on Transfer Date.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employee Separation -->
+    <div id="employee-separation" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#F9F8F5">🚪</div>
+        <div class="doctype-header-text">
+          <h2>Employee Separation</h2>
+          <div class="doctype-meta">HR Suite › Lifecycle · Offboarding checklist for resignation / termination</div>
+        </div>
+        <span class="module-tag">Lifecycle</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Lifecycle → Employee Separation → New
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Employee</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> EMP-0156 — resigned May 2027</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Select</div>
+            <div class="step-field-name">Separation Type</div>
+            <div class="step-desc">Resignation / Termination (Without Cause) / Termination (With Cause) / End of Contract / Retirement.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> Resignation</span>
+            </div>
+            <div class="step-warn"><span>🔴</span> Termination With Cause eliminates EOSB per Art. 80. Ensure disciplinary docs are complete before selecting this.</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Required · Date</div>
+            <div class="step-field-name">Last Working Day</div>
+            <div class="step-desc">The final calendar day of employment. Used for EOSB, leave encashment, and final payroll calculation.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> 31/05/2027</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Table · Separation Activities</div>
+            <div class="step-field-name">Offboarding Checklist</div>
+            <div class="step-desc">From template: IT handover, access revocation, exit interview, company property return, Iqama cancellation (for expats).</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> Activity: "Cancel Iqama" → PRO · Due: 30/05/2027</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EOSB Calculation -->
+    <div id="eosb" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#F9F8F5">🏦</div>
+        <div class="doctype-header-text">
+          <h2>EOSB Calculation</h2>
+          <div class="doctype-meta">HR Suite › Lifecycle · End-of-Service Benefit per KSA Art. 84–88</div>
+        </div>
+        <span class="module-tag">Lifecycle</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Lifecycle → EOSB Calculation → New
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Employee</div>
+            <div class="step-desc">Joining date, last working day, and service duration auto-fill from the Employee master.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> Joined 01/03/2025 · LWD 31/05/2027 = 2.25 yrs</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Select</div>
+            <div class="step-field-name">Separation Reason</div>
+            <div class="step-desc">Resignation / Employer Termination / Mutual Agreement / Death / Disability. Determines the applicable entitlement fraction.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> Resignation → ⅓ of daily wage × 365 × yrs (for &lt;5 yrs service)</span>
+            </div>
+            <div class="step-note"><span>💡</span> Employer termination without cause = full EOSB. Resignation &lt;5 yrs = ⅓; 5–10 yrs = ⅔; &gt;10 yrs = full.</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Required · Currency</div>
+            <div class="step-field-name">Last Basic Salary</div>
+            <div class="step-desc">The monthly basic salary used as the base for EOSB. Do NOT include allowances.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> SAR 11,000</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Read-only · Currency</div>
+            <div class="step-field-name">EOSB Amount</div>
+            <div class="step-desc">Calculated automatically: (Last Basic ÷ 30) × 365 × Years × Fraction. Review the formula breakdown before submitting.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> (SAR 11,000÷30) × 365 × 2.25 × ⅓ = SAR 10,028</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-label">Optional · Currency</div>
+            <div class="step-field-name">Loan Deduction</div>
+            <div class="step-desc">Outstanding employee loan balance. Deducted from final settlement amount.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> SAR 0 (loan fully repaid by May 2027)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         HR DOCS
+    ═══════════════════════════════════ -->
+    <div class="section-header">
+      <h2>HR Documents</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <!-- Employee Loan -->
+    <div id="loan" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#F9F8F5">💳</div>
+        <div class="doctype-header-text">
+          <h2>Employee Loan</h2>
+          <div class="doctype-meta">HR Suite › HR Docs · Salary advance or loan with installment schedule</div>
+        </div>
+        <span class="module-tag">HR Docs</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → HR Documents → Employee Loan → New
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Employee</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> EMP-0156</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Currency</div>
+            <div class="step-field-name">Loan Amount</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> SAR 15,000</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Required · Int</div>
+            <div class="step-field-name">Repayment Periods</div>
+            <div class="step-desc">Number of monthly installments. Each month's deduction = Loan Amount ÷ Periods.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> 15 months → SAR 1,000/month</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Required · Date</div>
+            <div class="step-field-name">Repayment Start Date</div>
+            <div class="step-desc">First salary month from which the deduction begins.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-james">James</span> 01/04/2025</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-label">Table · Repayment Schedule</div>
+            <div class="step-field-name">Repayment Schedule</div>
+            <div class="step-desc">Auto-generated on save. Each row shows the monthly deduction, outstanding balance, and payment status. Payroll Entry deducts each installment automatically.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Training Bond -->
+    <div id="training-bond" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#F9F8F5">📜</div>
+        <div class="doctype-header-text">
+          <h2>Training Bond</h2>
+          <div class="doctype-meta">HR Suite › HR Docs · Clawback agreement if employee leaves within bond period</div>
+        </div>
+        <span class="module-tag">HR Docs</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → HR Documents → Training Bond → New
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Employee</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-fatima">Fatima</span> EMP-0089</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Currency</div>
+            <div class="step-field-name">Training Cost</div>
+            <div class="step-desc">Total company expenditure on training: fees, travel, accommodation.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-fatima">Fatima</span> SAR 8,400</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Required · Date</div>
+            <div class="step-field-name">Bond Start Date / Bond End Date</div>
+            <div class="step-desc">The retention period. If the employee resigns before Bond End Date, the Training Cost clawback triggers.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-fatima">Fatima</span> 01/08/2025 – 31/07/2027 (24-month bond)</span>
+            </div>
+            <div class="step-note"><span>💡</span> KSA law allows training bonds. Bond amount must be proportional to remaining bond period on exit.</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Small Text</div>
+            <div class="step-field-name">Training Description</div>
+            <div class="step-desc">Course name, provider, location, and objectives. This appears in the formal bond letter.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-fatima">Fatima</span> "CISA Certification — ISACA — Riyadh, July 2025"</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grievance -->
+    <div id="grievance" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#F9F8F5">📣</div>
+        <div class="doctype-header-text">
+          <h2>Grievance</h2>
+          <div class="doctype-meta">HR Suite › HR Docs · Formal employee complaint with resolution tracking</div>
+        </div>
+        <span class="module-tag">HR Docs</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → HR Documents → Grievance → New
+      </div>
+      <div class="mock-form">
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Employee</div>
+            <div class="step-desc">Employee filing the grievance.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-fatima">Fatima</span> EMP-0089</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Select</div>
+            <div class="step-field-name">Grievance Type</div>
+            <div class="step-desc">Workplace Harassment / Unfair Treatment / Pay Dispute / Policy Violation / Other.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-fatima">Fatima</span> Unfair Treatment (excessive sick leave deduction)</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Required · Small Text</div>
+            <div class="step-field-name">Complaint Description</div>
+            <div class="step-desc">Detailed description of the grievance. Include dates, parties involved, and specific incidents.</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Required · Link</div>
+            <div class="step-field-name">Raised Against (Employee/Manager)</div>
+            <div class="step-desc">The individual(s) against whom the grievance is filed. Ensure confidentiality during investigation.</div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-label">Select — updated as case progresses</div>
+            <div class="step-field-name">Status</div>
+            <div class="step-desc">Open → Under Investigation → Resolved → Closed. Update as HR works through the case.</div>
+            <div class="examples-row">
+              <span class="example-val"><span class="who who-fatima">Fatima</span> Resolved — sick deduction reversed, Oct 2025</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-step">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <div class="step-label">Small Text — fill on resolution</div>
+            <div class="step-field-name">Resolution Notes</div>
+            <div class="step-desc">Summarize findings and corrective actions taken. This is the formal closure record.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// Sidebar active link on scroll
+const sections = document.querySelectorAll('.tour-section');
+const links = document.querySelectorAll('.sidebar-link');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`.sidebar-link[href="#${e.target.id}"]`);
+      if (active) active.classList.add('active');
+    }
+  });
+}, { rootMargin: '-60px 0px -60% 0px', threshold: 0 });
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

@@ -1,0 +1,1921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR Suite — Manager Reference</title>
+<style>
+:root {
+  --ground:       #F4F3EF;
+  --surface:      #FFFFFF;
+  --surface-2:    #F9F8F5;
+  --text:         #1A1917;
+  --text-muted:   #6B6860;
+  --text-light:   #9E9B95;
+  --accent:       #006C45;
+  --accent-dim:   #E6F2EC;
+  --amber:        #B8751A;
+  --amber-dim:    #FDF3E3;
+  --rose:         #9B3535;
+  --rose-dim:     #FAECEC;
+  --border:       #DDD9D0;
+  --border-light: #ECEAE4;
+  --sidebar-w:    268px;
+  --ff-serif:     Georgia, 'Times New Roman', serif;
+  --ff-sans:      'Segoe UI', system-ui, -apple-system, Helvetica, sans-serif;
+  --ff-mono:      'SF Mono', 'Fira Code', Consolas, 'Courier New', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; font-size: 15px; }
+
+body {
+  background: var(--ground);
+  color: var(--text);
+  font-family: var(--ff-sans);
+  line-height: 1.65;
+}
+
+/* ── TOPBAR ─────────────────────────────────────────── */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 52px;
+  background: var(--text);
+  color: #fff;
+  display: flex; align-items: center;
+  padding: 0 24px;
+  gap: 0;
+}
+
+.topbar-brand {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--ff-serif);
+  font-size: 1rem;
+  font-weight: normal;
+  letter-spacing: 0.01em;
+  color: #fff;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.topbar-brand-mark {
+  width: 26px; height: 26px;
+  background: var(--accent);
+  border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  font-family: var(--ff-mono);
+  font-weight: bold;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+
+.topbar-divider {
+  width: 1px; height: 20px;
+  background: rgba(255,255,255,0.15);
+  margin: 0 16px;
+}
+
+.topbar-meta {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.45);
+  font-family: var(--ff-mono);
+}
+
+.topbar-right {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 16px;
+}
+
+.topbar-badge {
+  font-size: 0.7rem;
+  font-family: var(--ff-mono);
+  background: rgba(0,108,69,0.6);
+  color: #7FFFC4;
+  padding: 2px 8px;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+}
+
+.topbar-jurisdiction {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ── LAYOUT ─────────────────────────────────────────── */
+.shell {
+  display: flex;
+  margin-top: 52px;
+  min-height: calc(100vh - 52px);
+}
+
+/* ── SIDEBAR ─────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  position: sticky;
+  top: 52px;
+  height: calc(100vh - 52px);
+  overflow-y: auto;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 28px 0 40px;
+}
+
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); }
+
+.sidebar-heading {
+  font-size: 0.65rem;
+  font-family: var(--ff-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  padding: 0 20px;
+  margin-bottom: 8px;
+}
+
+.sidebar-heading + .sidebar-heading { margin-top: 20px; }
+
+.nav-chapter {
+  margin-bottom: 2px;
+}
+
+.nav-chapter-btn {
+  width: 100%;
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 20px;
+  background: none; border: none; cursor: pointer;
+  text-align: left;
+  color: var(--text-muted);
+  font-family: var(--ff-sans);
+  font-size: 0.83rem;
+  transition: color 0.15s, background 0.15s;
+  border-radius: 0;
+}
+
+.nav-chapter-btn:hover {
+  color: var(--text);
+  background: var(--ground);
+}
+
+.nav-chapter-btn.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.nav-chapter-num {
+  font-family: var(--ff-mono);
+  font-size: 0.68rem;
+  color: var(--text-light);
+  min-width: 18px;
+  line-height: 1;
+}
+
+.nav-chapter-btn.active .nav-chapter-num {
+  color: var(--accent);
+}
+
+.nav-sub {
+  list-style: none;
+  padding-left: 48px;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.25s ease;
+}
+
+.nav-sub.open { max-height: 600px; }
+
+.nav-sub li a {
+  display: block;
+  padding: 4px 16px 4px 0;
+  font-size: 0.78rem;
+  color: var(--text-light);
+  text-decoration: none;
+  transition: color 0.12s;
+  border-left: 2px solid transparent;
+  padding-left: 8px;
+}
+
+.nav-sub li a:hover {
+  color: var(--accent);
+  border-left-color: var(--accent);
+}
+
+.nav-divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: 12px 20px;
+}
+
+/* ── MAIN CONTENT ────────────────────────────────────── */
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 48px 56px 96px 56px;
+  max-width: 960px;
+}
+
+/* ── HERO ─────────────────────────────────────────────── */
+.hero {
+  margin-bottom: 56px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid var(--border);
+}
+
+.hero-eyebrow {
+  font-family: var(--ff-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.hero-title {
+  font-family: var(--ff-serif);
+  font-size: 2.5rem;
+  line-height: 1.2;
+  font-weight: normal;
+  color: var(--text);
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+}
+
+.hero-sub {
+  font-size: 1rem;
+  color: var(--text-muted);
+  max-width: 580px;
+  line-height: 1.7;
+  margin-bottom: 28px;
+}
+
+.hero-stats {
+  display: flex; gap: 32px; flex-wrap: wrap;
+}
+
+.stat {
+  display: flex; flex-direction: column; gap: 3px;
+}
+
+.stat-num {
+  font-family: var(--ff-serif);
+  font-size: 1.65rem;
+  color: var(--text);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.72rem;
+  font-family: var(--ff-mono);
+  color: var(--text-light);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ── SECTION ──────────────────────────────────────────── */
+.doc-section {
+  margin-bottom: 64px;
+  scroll-margin-top: 72px;
+}
+
+.section-header {
+  display: flex; align-items: baseline; gap: 14px;
+  margin-bottom: 28px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--text);
+}
+
+.section-num {
+  font-family: var(--ff-mono);
+  font-size: 0.72rem;
+  color: var(--text-light);
+  letter-spacing: 0.04em;
+  padding-top: 4px;
+}
+
+.section-title {
+  font-family: var(--ff-serif);
+  font-size: 1.55rem;
+  font-weight: normal;
+  letter-spacing: -0.01em;
+}
+
+/* ── MODULE CARD ──────────────────────────────────────── */
+.module-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.module-card-head {
+  padding: 18px 24px 14px;
+  display: flex; align-items: flex-start; gap: 14px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.module-card-head:hover { background: var(--surface-2); }
+
+.module-cat-bar {
+  width: 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  align-self: stretch;
+  min-height: 44px;
+}
+
+.cat-leave    { background: #006C45; }
+.cat-payroll  { background: #005235; }
+.cat-discipl  { background: #B8751A; }
+.cat-lifecycle{ background: #3A5EA8; }
+.cat-docs     { background: #7B52A8; }
+.cat-comply   { background: #9B3535; }
+.cat-recruit  { background: #2A7A8C; }
+
+.module-card-info { flex: 1; }
+
+.module-name {
+  font-family: var(--ff-serif);
+  font-size: 1rem;
+  font-weight: normal;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+.module-tagline {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.module-badges {
+  display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 0.67rem;
+  font-family: var(--ff-mono);
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-weight: normal;
+}
+
+.badge-green  { background: var(--accent-dim); color: var(--accent); }
+.badge-amber  { background: var(--amber-dim);  color: var(--amber); }
+.badge-rose   { background: var(--rose-dim);   color: var(--rose); }
+.badge-muted  { background: var(--border-light); color: var(--text-muted); }
+
+.module-toggle {
+  font-size: 1.1rem;
+  color: var(--text-light);
+  transition: transform 0.2s;
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+
+.module-card.open .module-toggle { transform: rotate(90deg); }
+
+.module-body {
+  display: none;
+  padding: 0 24px 24px 24px;
+  border-top: 1px solid var(--border-light);
+}
+
+.module-card.open .module-body { display: block; }
+
+/* ── LAW NOTE ─────────────────────────────────────────── */
+.law-note {
+  background: var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  padding: 10px 14px;
+  border-radius: 0 4px 4px 0;
+  margin: 16px 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.law-note strong { color: var(--accent); }
+
+.deadline-note {
+  background: var(--amber-dim);
+  border-left: 3px solid var(--amber);
+  padding: 10px 14px;
+  border-radius: 0 4px 4px 0;
+  margin: 16px 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.deadline-note strong { color: var(--amber); }
+
+.risk-note {
+  background: var(--rose-dim);
+  border-left: 3px solid var(--rose);
+  padding: 10px 14px;
+  border-radius: 0 4px 4px 0;
+  margin: 16px 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.risk-note strong { color: var(--rose); }
+
+/* ── WORKFLOW TIMELINE ────────────────────────────────── */
+.wf-label {
+  font-size: 0.75rem;
+  font-family: var(--ff-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin: 20px 0 10px;
+}
+
+.workflow {
+  position: relative;
+  padding-left: 26px;
+  margin: 0 0 20px;
+}
+
+.workflow::before {
+  content: '';
+  position: absolute;
+  left: 7px; top: 8px; bottom: 8px;
+  width: 1px;
+  background: var(--border);
+}
+
+.wf-step {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 5px 0;
+}
+
+.wf-dot {
+  position: absolute;
+  left: -22px;
+  top: 9px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+}
+
+.wf-step.wf-action .wf-dot {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.wf-step.wf-final .wf-dot {
+  width: 10px; height: 10px;
+  left: -23px; top: 8px;
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.wf-step-text {
+  font-size: 0.85rem;
+  color: var(--text);
+  padding-top: 1px;
+  line-height: 1.5;
+}
+
+.wf-step-text small {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+/* ── TABLES ───────────────────────────────────────────── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  margin: 16px 0;
+}
+
+.data-table th {
+  font-family: var(--ff-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 2px solid var(--border);
+  background: var(--surface-2);
+}
+
+.data-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: top;
+  color: var(--text);
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--surface-2); }
+
+/* ── GRID BLOCKS ──────────────────────────────────────── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 16px 0; }
+
+.info-block {
+  background: var(--surface-2);
+  border: 1px solid var(--border-light);
+  border-radius: 5px;
+  padding: 14px 16px;
+}
+
+.info-block-label {
+  font-size: 0.67rem;
+  font-family: var(--ff-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 6px;
+}
+
+.info-block-value {
+  font-size: 0.88rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* ── BODY TYPOGRAPHY ──────────────────────────────────── */
+.module-body h4 {
+  font-family: var(--ff-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 22px 0 10px;
+}
+
+.module-body p {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin-bottom: 10px;
+}
+
+.module-body ul {
+  padding-left: 18px;
+  margin-bottom: 10px;
+}
+
+.module-body ul li {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  line-height: 1.55;
+}
+
+/* ── SECTION: REPORTS ─────────────────────────────────── */
+.report-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.report-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 12px 16px;
+}
+
+.report-name {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.report-desc {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+/* ── ALERTS GRID ──────────────────────────────────────── */
+.alert-grid {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.alert-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+}
+
+.alert-icon {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.alert-icon.daily  { background: var(--accent); }
+.alert-icon.weekly { background: #3A5EA8; }
+.alert-icon.monthly { background: var(--amber); }
+
+.alert-name {
+  font-family: var(--ff-mono);
+  font-size: 0.75rem;
+  color: var(--text);
+  min-width: 260px;
+}
+
+.alert-desc { color: var(--text-muted); }
+
+/* ── ROLES TABLE ──────────────────────────────────────── */
+.role-pill {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-family: var(--ff-mono);
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+/* ── FOOTER ───────────────────────────────────────────── */
+.doc-footer {
+  margin-top: 80px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 12px;
+}
+
+.footer-brand {
+  font-family: var(--ff-serif);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.footer-meta {
+  font-family: var(--ff-mono);
+  font-size: 0.72rem;
+  color: var(--text-light);
+}
+
+/* ── RESPONSIVE ───────────────────────────────────────── */
+@media (max-width: 900px) {
+  .shell { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border); }
+  .main { padding: 32px 24px 64px; }
+  .two-col, .three-col { grid-template-columns: 1fr; }
+  .report-grid { grid-template-columns: 1fr; }
+  .hero-title { font-size: 1.9rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .module-toggle, .nav-sub { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── TOPBAR ─── -->
+<header class="topbar">
+  <a class="topbar-brand" href="#">
+    <div class="topbar-brand-mark">HR</div>
+    HR Suite
+  </a>
+  <div class="topbar-divider"></div>
+  <span class="topbar-meta">Manager Reference</span>
+  <div class="topbar-right">
+    <span class="topbar-badge">v1.0 · ERPNext 15</span>
+    <span class="topbar-jurisdiction">Kingdom of Saudi Arabia</span>
+  </div>
+</header>
+
+<!-- ── SHELL ─── -->
+<div class="shell">
+
+  <!-- ── SIDEBAR ─── -->
+  <nav class="sidebar" aria-label="Documentation sections">
+    <div class="sidebar-heading">Modules</div>
+
+    <div class="nav-chapter">
+      <button class="nav-chapter-btn active" onclick="toggleChapter(this, 'sub-leave')" aria-expanded="true">
+        <span class="nav-chapter-num">01</span> Leave Management
+      </button>
+      <ul class="nav-sub open" id="sub-leave">
+        <li><a href="#annual-leave">Annual Leave</a></li>
+        <li><a href="#sick-leave">Sick Leave</a></li>
+        <li><a href="#special-leave">Special Leave</a></li>
+        <li><a href="#maternity-leave">Maternity / Paternity</a></li>
+        <li><a href="#leave-disbursement">Leave Disbursement</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-chapter">
+      <button class="nav-chapter-btn" onclick="toggleChapter(this, 'sub-att')">
+        <span class="nav-chapter-num">02</span> Time &amp; Attendance
+      </button>
+      <ul class="nav-sub" id="sub-att">
+        <li><a href="#overtime">Overtime Request</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-chapter">
+      <button class="nav-chapter-btn" onclick="toggleChapter(this, 'sub-pay')">
+        <span class="nav-chapter-num">03</span> Payroll &amp; Compensation
+      </button>
+      <ul class="nav-sub" id="sub-pay">
+        <li><a href="#monthly-payroll">Monthly Payroll</a></li>
+        <li><a href="#salary-adjustment">Salary Adjustment</a></li>
+        <li><a href="#gosi">GOSI Contribution</a></li>
+        <li><a href="#wps">WPS Submission</a></li>
+        <li><a href="#eosb">End of Service Benefit</a></li>
+        <li><a href="#loan">Employee Loan</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-chapter">
+      <button class="nav-chapter-btn" onclick="toggleChapter(this, 'sub-dis')">
+        <span class="nav-chapter-num">04</span> Disciplinary
+      </button>
+      <ul class="nav-sub" id="sub-dis">
+        <li><a href="#penalty">Employee Penalty</a></li>
+        <li><a href="#disciplinary-proc">Disciplinary Procedure</a></li>
+        <li><a href="#absence-case">Absence Case</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-chapter">
+      <button class="nav-chapter-btn" onclick="toggleChapter(this, 'sub-lc')">
+        <span class="nav-chapter-num">05</span> Employee Lifecycle
+      </button>
+      <ul class="nav-sub" id="sub-lc">
+        <li><a href="#onboarding">Onboarding</a></li>
+        <li><a href="#contract">Employment Contract</a></li>
+        <li><a href="#promo-transfer">Promotion &amp; Transfer</a></li>
+        <li><a href="#performance">Performance Review</a></li>
+        <li><a href="#termination">Termination Notice</a></li>
+        <li><a href="#exit-clearance">Exit Clearance</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-chapter">
+      <button class="nav-chapter-btn" onclick="toggleChapter(this, 'sub-doc')">
+        <span class="nav-chapter-num">06</span> HR Documents
+      </button>
+      <ul class="nav-sub" id="sub-doc">
+        <li><a href="#hr-letter">HR Letter</a></li>
+        <li><a href="#policy-doc">Policy Documents</a></li>
+        <li><a href="#training">Training Records</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-chapter">
+      <button class="nav-chapter-btn" onclick="toggleChapter(this, 'sub-comp')">
+        <span class="nav-chapter-num">07</span> Compliance &amp; Regulatory
+      </button>
+      <ul class="nav-sub" id="sub-comp">
+        <li><a href="#nitaqat">Nitaqat (Saudization)</a></li>
+        <li><a href="#iqama">Work Permit / Iqama</a></li>
+        <li><a href="#labor-inspection">Labor Inspection</a></li>
+        <li><a href="#work-regulation">Work Regulation</a></li>
+        <li><a href="#ministry-filing">Ministry Filing Tracker</a></li>
+        <li><a href="#work-injury">Work Injury &amp; Safety</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-chapter">
+      <button class="nav-chapter-btn" onclick="toggleChapter(this, 'sub-rec')">
+        <span class="nav-chapter-num">08</span> Recruitment
+      </button>
+      <ul class="nav-sub" id="sub-rec">
+        <li><a href="#hiring-req">Hiring Requisition</a></li>
+        <li><a href="#candidate">Candidate Profile</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-divider"></div>
+    <div class="sidebar-heading">Reference</div>
+
+    <div class="nav-chapter">
+      <button class="nav-chapter-btn" onclick="toggleChapter(this, 'sub-ref')">
+        <span class="nav-chapter-num">—</span> Reports &amp; Roles
+      </button>
+      <ul class="nav-sub" id="sub-ref">
+        <li><a href="#reports">All Reports</a></li>
+        <li><a href="#roles">System Roles</a></li>
+        <li><a href="#automations">Scheduled Alerts</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ── MAIN ─── -->
+  <main class="main">
+
+    <!-- ── HERO ─── -->
+    <div class="hero">
+      <div class="hero-eyebrow">HR Suite · Saudi Arabia HR Management</div>
+      <h1 class="hero-title">Your complete reference<br>for every approval, deadline,<br>and compliance obligation.</h1>
+      <p class="hero-sub">Everything built into HR Suite — from a day's annual leave to an employee's final settlement — follows Saudi Labor Law exactly. This guide tells you which document to open, what the system does for you automatically, and what you must do yourself.</p>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-num">50+</span><span class="stat-label">Document types</span></div>
+        <div class="stat"><span class="stat-num">17</span><span class="stat-label">Scheduled alerts</span></div>
+        <div class="stat"><span class="stat-num">16</span><span class="stat-label">Built-in reports</span></div>
+        <div class="stat"><span class="stat-num">KSA</span><span class="stat-label">Jurisdiction</span></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- §01  LEAVE MANAGEMENT                          -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section class="doc-section" id="leave-management">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <h2 class="section-title">Leave Management</h2>
+      </div>
+
+      <!-- Annual Leave -->
+      <div class="module-card" id="annual-leave">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-leave"></div>
+          <div class="module-card-info">
+            <div class="module-name">Saudi Annual Leave</div>
+            <div class="module-tagline">Paid annual leave per Article 109 — 21 days/year for first 5 years, 30 days/year thereafter. Approval flows from manager to HR.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Auto-deducts balance</span>
+              <span class="badge badge-green">Feeds payroll</span>
+              <span class="badge badge-muted">Art. 109</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="law-note"><strong>Legal basis:</strong> Saudi Labor Law Article 109. Employees earn 21 days/year (years 1–5) or 30 days/year (year 6+). Unused leave must be paid out on exit.</div>
+
+          <div class="wf-label">Approval workflow</div>
+          <div class="workflow">
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Employee opens <strong>Saudi Annual Leave → New</strong> and submits request</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Direct manager receives in-app notification → <strong>Approve / Reject / Return</strong></div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">HR Manager gives final approval</div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">Status: <strong>Approved</strong> — leave balance decremented automatically<small>ERPNext Leave Allocation updated · Payroll picks up dates at next salary run</small></div></div>
+          </div>
+
+          <h4>What the system does for you</h4>
+          <ul>
+            <li>Calculates remaining balance and validates entitlement before allowing submission</li>
+            <li>Shows manager any overlapping team leaves before they approve</li>
+            <li>Passes approved leave dates directly to Saudi Monthly Payroll — no manual entry</li>
+            <li>Employees can only see their own records; HR sees all</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Sick Leave -->
+      <div class="module-card" id="sick-leave">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-leave"></div>
+          <div class="module-card-info">
+            <div class="module-name">Saudi Sick Leave</div>
+            <div class="module-tagline">Multi-tier sick leave: 30 days full pay → 60 days half pay → 30 days no pay. System applies correct tier automatically.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Auto-tiers pay</span>
+              <span class="badge badge-amber">Threshold alerts at 30 / 90 / 120 days</span>
+              <span class="badge badge-muted">Art. 117</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="law-note"><strong>Legal basis:</strong> Article 117 — up to 120 days/year total: first 30 full pay, next 60 half pay, final 30 no pay.</div>
+
+          <div class="two-col">
+            <div class="info-block">
+              <div class="info-block-label">Days 1–30</div>
+              <div class="info-block-value">Full pay<br><small style="color:var(--text-muted)">Medical certificate required if &gt;3 consecutive days</small></div>
+            </div>
+            <div class="info-block">
+              <div class="info-block-label">Days 31–90</div>
+              <div class="info-block-value">Half pay<br><small style="color:var(--text-muted)">Payroll deducts 50% of daily wage automatically</small></div>
+            </div>
+            <div class="info-block">
+              <div class="info-block-label">Days 91–120</div>
+              <div class="info-block-value">No pay<br><small style="color:var(--text-muted)">Full deduction applied in payroll</small></div>
+            </div>
+            <div class="info-block">
+              <div class="info-block-label">Beyond 120 days</div>
+              <div class="info-block-value">Termination eligible<br><small style="color:var(--text-muted)">HR Manager notified for employment status review</small></div>
+            </div>
+          </div>
+
+          <div class="deadline-note"><strong>Automatic alert:</strong> The system sends HR an alert when any employee approaches the 30-day, 90-day, and 120-day thresholds. You do not need to track this manually.</div>
+        </div>
+      </div>
+
+      <!-- Special Leave -->
+      <div class="module-card" id="special-leave">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-leave"></div>
+          <div class="module-card-info">
+            <div class="module-name">Special Leave</div>
+            <div class="module-tagline">Covers Hajj leave (once per employment), bereavement, exam leave, national service. System enforces once-per-tenure rules.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Enforces Hajj once-per-tenure</span>
+              <span class="badge badge-muted">Paid leave categories</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <table class="data-table">
+            <thead><tr><th>Category</th><th>Days</th><th>Pay</th><th>System rule</th></tr></thead>
+            <tbody>
+              <tr><td>Hajj</td><td>Up to 15</td><td>Full</td><td>Blocked if employee has prior Hajj leave on record</td></tr>
+              <tr><td>Bereavement (immediate family)</td><td>3</td><td>Full</td><td>Category validation on save</td></tr>
+              <tr><td>Official exam</td><td>Per exam days</td><td>Full</td><td>Certificate attachment required</td></tr>
+              <tr><td>National service</td><td>Duration of service</td><td>Full</td><td>Document link required</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Maternity / Paternity -->
+      <div class="module-card" id="maternity-leave">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-leave"></div>
+          <div class="module-card-info">
+            <div class="module-name">Maternity / Paternity Leave</div>
+            <div class="module-tagline">10 weeks paid maternity (Art. 151); 3 days paid paternity. Return-to-work date calculated and tracked automatically.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Auto-calculates end date</span>
+              <span class="badge badge-green">Return-to-work alert</span>
+              <span class="badge badge-muted">Art. 151</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="wf-label">How it works</div>
+          <div class="workflow">
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Employee submits <strong>Maternity Paternity Leave</strong> with expected birth date and medical proof</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">System auto-sets end date: Start + 70 calendar days (maternity) or +3 days (paternity)</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">HR reviews and approves — payroll treats all days as fully paid</div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text"><strong>7 days before return date</strong> — HR receives an automatic re-integration reminder<small>Prepare desk, system access, and manager briefing in advance</small></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leave Disbursement -->
+      <div class="module-card" id="leave-disbursement">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-leave"></div>
+          <div class="module-card-info">
+            <div class="module-name">Annual Leave Disbursement</div>
+            <div class="module-tagline">Convert unused leave balance to cash — used at exit or per company policy. Journal entry created automatically on submit.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Auto Journal Entry</span>
+              <span class="badge badge-muted">Feeds into EOSB settlement</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <p>Used when an employee leaves with unused annual leave, or when the company pays out accrued leave once per year by policy.</p>
+          <div class="info-block" style="margin: 12px 0;">
+            <div class="info-block-label">Calculation formula</div>
+            <div class="info-block-value" style="font-family: var(--ff-mono); font-size:0.9rem;">Amount = Daily Wage × Unused Leave Days<br><small style="font-family: var(--ff-sans); color: var(--text-muted)">Daily Wage = Monthly Basic ÷ 30</small></div>
+          </div>
+          <p>On submit: Journal Entry posted automatically (Dr. HR Expense / Cr. Payables). Amount flows into End of Service Benefit final settlement.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- §02  TIME & ATTENDANCE                          -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section class="doc-section" id="time-attendance">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <h2 class="section-title">Time &amp; Attendance</h2>
+      </div>
+
+      <div class="module-card" id="overtime">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-leave"></div>
+          <div class="module-card-info">
+            <div class="module-name">Overtime Request</div>
+            <div class="module-tagline">Art. 107 — OT paid at minimum 150% hourly rate. Accounting entry and payroll link created automatically on HR approval.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Auto Journal Entry</span>
+              <span class="badge badge-green">Flows to payroll</span>
+              <span class="badge badge-muted">Art. 107 · 150% rate</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="wf-label">Approval &amp; accounting flow</div>
+          <div class="workflow">
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Manager creates <strong>Overtime Request</strong> — links employees, date, hours, and reason</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">HR Manager approves and submits</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Journal Entry auto-created: <em>Dr. Overtime Expense / Cr. OT Payable</em><small>Amount = (Monthly salary ÷ 30 ÷ 8) × 1.5 × hours</small></div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text"><strong>Salary Adjustment</strong> records created per employee — auto-picked up at next payroll run</div></div>
+          </div>
+          <p>OT costs are visible by department via ERPNext Cost Centre reporting. All requests are traceable from Journal Entry back to the originating OT Request.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- §03  PAYROLL & COMPENSATION                     -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section class="doc-section" id="payroll-compensation">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <h2 class="section-title">Payroll &amp; Compensation</h2>
+      </div>
+
+      <!-- Monthly Payroll -->
+      <div class="module-card" id="monthly-payroll">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-payroll"></div>
+          <div class="module-card-info">
+            <div class="module-name">Saudi Monthly Payroll</div>
+            <div class="module-tagline">The master payroll document for an entire payroll cycle. Processes all employees simultaneously with Saudi-specific components — GOSI, housing, transport, WPS.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Bulk salary slips</span>
+              <span class="badge badge-green">Auto-WPS link</span>
+              <span class="badge badge-amber">Run monthly</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="wf-label">Monthly payroll cycle</div>
+          <div class="workflow">
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Open <strong>Saudi Monthly Payroll → New</strong>. Select Month and Company. Save.</div></div>
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">All active employees auto-populated with base salary, allowances, and pending deductions<small>Includes: GOSI deduction, loan installments, penalties, sick leave half-pay, approved adjustments</small></div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Review each employee line — adjust if mid-month salary change (system pro-rates)</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Submit → ERPNext Salary Slips created for all employees. Accounting entries posted.</div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text"><strong>WPS Submission</strong> document auto-linked. Export SIF bank transfer file.</div></div>
+          </div>
+
+          <h4>What gets auto-deducted from employee lines</h4>
+          <table class="data-table">
+            <thead><tr><th>Component</th><th>Source document</th><th>Action needed</th></tr></thead>
+            <tbody>
+              <tr><td>GOSI (employee share)</td><td>GOSI Contribution record</td><td>None — auto-applied</td></tr>
+              <tr><td>Loan installments</td><td>Employee Loan schedule</td><td>None — auto-applied</td></tr>
+              <tr><td>Penalties</td><td>Employee Penalty (submitted)</td><td>None — auto-applied</td></tr>
+              <tr><td>Sick leave half-pay</td><td>Saudi Sick Leave records</td><td>None — auto-applied</td></tr>
+              <tr><td>Overtime / bonuses</td><td>Salary Adjustment records</td><td>Approve Salary Adjustment first</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Salary Adjustment -->
+      <div class="module-card" id="salary-adjustment">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-payroll"></div>
+          <div class="module-card-info">
+            <div class="module-name">Salary Adjustment</div>
+            <div class="module-tagline">Ad-hoc one-time additions or deductions — OT pay, performance bonuses, equipment damage deductions. Attaches to the next payroll run automatically.</div>
+            <div class="module-badges">
+              <span class="badge badge-muted">Addition or Deduction</span>
+              <span class="badge badge-green">Auto-attaches to payroll</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <p>Use Salary Adjustment for anything that is a one-time change to pay — not a recurring change to salary structure. Link to the source document (OT Request, Penalty, etc.) for a complete audit trail.</p>
+          <div class="two-col">
+            <div class="info-block">
+              <div class="info-block-label">Addition examples</div>
+              <div class="info-block-value">Overtime pay<br>Performance bonus<br>Project completion award</div>
+            </div>
+            <div class="info-block">
+              <div class="info-block-label">Deduction examples</div>
+              <div class="info-block-value">Equipment damage<br>Traffic fine reimbursement<br>Uniform cost recovery</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GOSI -->
+      <div class="module-card" id="gosi">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-payroll"></div>
+          <div class="module-card-info">
+            <div class="module-name">GOSI Contribution</div>
+            <div class="module-tagline">Monthly mandatory social insurance. System calculates correct rates for Saudi nationals (10% employee + 12.5% employer) vs. expatriates (2% employer only).</div>
+            <div class="module-badges">
+              <span class="badge badge-amber">Due by 15th each month</span>
+              <span class="badge badge-green">Auto-splits national / expat</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <table class="data-table">
+            <thead><tr><th>Employee type</th><th>Employee pays</th><th>Employer pays</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr><td>Saudi national</td><td>10% of basic</td><td>11.75% + 0.75% injury</td><td>22.5%</td></tr>
+              <tr><td>Expatriate</td><td>None</td><td>2% injury insurance</td><td>2%</td></tr>
+            </tbody>
+          </table>
+          <div class="deadline-note"><strong>Monthly reminder:</strong> System sends a GOSI due alert before the 15th of each month. After submitting the GOSI Contribution record, export the GOSI Monthly Report for upload to the GOSI portal.</div>
+          <p>On submit: employee deductions auto-created as Additional Salary entries (appear in Salary Slips). Employer liability posted as Journal Entry.</p>
+        </div>
+      </div>
+
+      <!-- WPS -->
+      <div class="module-card" id="wps">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-payroll"></div>
+          <div class="module-card-info">
+            <div class="module-name">WPS Submission</div>
+            <div class="module-tagline">SAMA/Ministry of HR requirement to electronically record salary payments within 7 days of the due date. SIF file generated automatically from the payroll run.</div>
+            <div class="module-badges">
+              <span class="badge badge-rose">Fine: up to SAR 10,000 if late</span>
+              <span class="badge badge-amber">7-day deadline from payroll</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="risk-note"><strong>Compliance risk:</strong> Late WPS submission can result in fines up to SAR 10,000 per violation and can block new visa applications. The system sends daily alerts if the 7-day window approaches without submission.</div>
+          <div class="wf-label">WPS process</div>
+          <div class="workflow">
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Saudi Monthly Payroll submitted → WPS Submission document auto-created and linked</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Export SIF (Salary Information File) from the WPS Submission record</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Upload SIF to your bank's WPS portal</div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">Update WPS Submission status to <strong>Submitted</strong> — daily alerts stop</div></div>
+          </div>
+          <p>The WPS Submission Tracker report shows all months: green (on time), amber (approaching deadline), red (overdue).</p>
+        </div>
+      </div>
+
+      <!-- EOSB -->
+      <div class="module-card" id="eosb">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-payroll"></div>
+          <div class="module-card-info">
+            <div class="module-name">End of Service Benefit (EOSB)</div>
+            <div class="module-tagline">Mandatory severance per Art. 84–88. Auto-created when Termination Notice is submitted. System calculates based on years of service, reason for exit, and deductions.</div>
+            <div class="module-badges">
+              <span class="badge badge-rose">Must pay within 5 days of exit</span>
+              <span class="badge badge-green">Auto-created from Termination Notice</span>
+              <span class="badge badge-muted">Art. 84–88</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <table class="data-table">
+            <thead><tr><th>Service length</th><th>Rate (resignation)</th><th>Rate (employer termination)</th></tr></thead>
+            <tbody>
+              <tr><td>Under 2 years</td><td>No entitlement</td><td>No entitlement</td></tr>
+              <tr><td>2 – 5 years</td><td>1/3 month per year</td><td>1/2 month per year</td></tr>
+              <tr><td>5 – 10 years</td><td>2/3 month per year</td><td>1 month per year</td></tr>
+              <tr><td>Over 10 years</td><td>1 month per year</td><td>1 month per year</td></tr>
+            </tbody>
+          </table>
+          <div class="risk-note"><strong>5-day rule:</strong> KSA Labor Law requires EOSB payment within 5 days of the last working day. The Final Settlement SLA alert sends daily escalating notifications to Finance from day 3 if payment has not been processed.</div>
+          <div class="wf-label">What the system adds together</div>
+          <div class="workflow">
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">EOSB base amount — calculated from service years × applicable rate</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">+ Annual Leave Disbursement (unused leave balance × daily wage)</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">+ Any other entitlements (unpaid salary, expenses)</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">− Loan balance outstanding<br>− Training bond repayment (if resigned during bond period)<br>− Any other deductions</div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text"><strong>Net Final Settlement = Total entitlements − Total deductions</strong><small>Finance approves → Journal Entry → Bank transfer</small></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Employee Loan -->
+      <div class="module-card" id="loan">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-payroll"></div>
+          <div class="module-card-info">
+            <div class="module-name">Employee Loan</div>
+            <div class="module-tagline">Internal salary loans with auto-generated installment schedule. Monthly deductions flow into payroll automatically; outstanding balance deducted from EOSB at exit.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Auto-installment schedule</span>
+              <span class="badge badge-green">Payroll deductions auto-applied</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="wf-label">Loan lifecycle</div>
+          <div class="workflow">
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Employee requests loan → HR Manager approves → Finance approves</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Loan disbursed → Journal Entry created (Dr. Employee Loan Receivable / Cr. Cash)</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Monthly installment schedule auto-generated — each installment auto-deducted in Saudi Monthly Payroll</div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">Fully recovered → status: <strong>Settled</strong>. If employee exits early, balance deducted from EOSB.</div></div>
+          </div>
+          <p>Track outstanding balances via the <strong>Outstanding Employee Loans</strong> report.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- §04  DISCIPLINARY MANAGEMENT                    -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section class="doc-section" id="disciplinary">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <h2 class="section-title">Disciplinary Management</h2>
+      </div>
+
+      <!-- Penalty -->
+      <div class="module-card" id="penalty">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-discipl"></div>
+          <div class="module-card-info">
+            <div class="module-name">Employee Penalty</div>
+            <div class="module-tagline">Financial deduction for a specific violation — lighter than a full disciplinary procedure. Penalty amount auto-calculated from Penalty Type master rates and deducted in next payroll.</div>
+            <div class="module-badges">
+              <span class="badge badge-amber">Auto payroll deduction</span>
+              <span class="badge badge-muted">Standardised rates via Penalty Type master</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <p>Before creating individual penalties, configure your <strong>Penalty Type</strong> master records with standard rates (e.g., "Repeated Lateness = 0.5 day salary"). This ensures consistent application across departments.</p>
+          <div class="wf-label">Penalty flow</div>
+          <div class="workflow">
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">HR creates <strong>Employee Penalty</strong> — selects employee, Penalty Type, and violation date</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">System fetches rate from Penalty Type and calculates amount automatically</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Submit — penalty flagged for next payroll. Accounting entry queued.</div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">Next <strong>Saudi Monthly Payroll</strong> auto-deducts the penalty amount from employee's line<small>Cancelling the penalty creates a reversal entry and removes the payroll deduction</small></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Disciplinary Procedure -->
+      <div class="module-card" id="disciplinary-proc">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-discipl"></div>
+          <div class="module-card-info">
+            <div class="module-name">Disciplinary Procedure</div>
+            <div class="module-tagline">Full formal procedure for serious violations — suspension, written warning, or termination. Documents every required Saudi procedural step: investigation, hearing, notice, decision, appeal.</div>
+            <div class="module-badges">
+              <span class="badge badge-rose">High-stakes — audit trail critical</span>
+              <span class="badge badge-amber">Follow every step before dismissal</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="risk-note"><strong>Legal risk:</strong> Dismissal without a documented procedure is legally challenged as wrongful termination at the Ministry of HR Labor Courts. Every step below must be completed and documented.</div>
+
+          <div class="wf-label">Full disciplinary workflow</div>
+          <div class="workflow">
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text"><strong>Investigation Record</strong> — form the investigation committee, document findings</div></div>
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text"><strong>Employee Warning Notice</strong> — employee must be formally notified and given 5 working days to respond in writing</div></div>
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Hold hearing — document proceedings in Disciplinary Procedure record</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text"><strong>Disciplinary Decision Log</strong> — record outcome: Warning / Penalty / Suspension / Termination</div></div>
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Employee receives 15 days to file a <strong>Disciplinary Appeal</strong> if contesting the decision</div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">If Termination: submit <strong>Termination Notice</strong> → EOSB auto-created (zero if Art. 80 dismissal for cause)</div></div>
+          </div>
+
+          <div class="law-note"><strong>Art. 80 termination for cause:</strong> Employees dismissed for cause (e.g., fraud, assault, falsifying records) are not entitled to EOSB. The system sets EOSB to zero automatically when Termination Reason = Art. 80.</div>
+        </div>
+      </div>
+
+      <!-- Absence Case -->
+      <div class="module-card" id="absence-case">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-discipl"></div>
+          <div class="module-card-info">
+            <div class="module-name">Absence Case</div>
+            <div class="module-tagline">Tracks unauthorised absences. System counts unexcused days and alerts HR at 10 / 15 / 20 thresholds — Art. 80 allows termination after 20 cumulative or 10 consecutive days.</div>
+            <div class="module-badges">
+              <span class="badge badge-rose">Art. 80 trigger at 20 cumulative / 10 consecutive days</span>
+              <span class="badge badge-amber">Threshold alerts at 10 / 15 / 20 days</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="wf-label">Absence tracking workflow</div>
+          <div class="workflow">
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Unexplained absence identified in daily attendance reconciliation</div></div>
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text"><strong>Absence Case</strong> created — HR contacts employee for justification</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Justification approved → absence excused, not counted<br>Justification rejected → unexcused day counter incremented</div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">At <strong>10 / 15 / 20</strong> unexcused days — HR alerted to escalate to Disciplinary Procedure</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- §05  EMPLOYEE LIFECYCLE                         -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section class="doc-section" id="lifecycle">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <h2 class="section-title">Employee Lifecycle</h2>
+      </div>
+
+      <!-- Onboarding -->
+      <div class="module-card" id="onboarding">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-lifecycle"></div>
+          <div class="module-card-info">
+            <div class="module-name">Employee Onboarding</div>
+            <div class="module-tagline">Structured task checklist from offer acceptance to first day. Tasks assigned across HR, IT, Finance, and the hiring department. Employee goes Active when all tasks are complete.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Multi-department task assignment</span>
+              <span class="badge badge-muted">Status: Active on completion</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <h4>Standard onboarding tasks</h4>
+          <div class="two-col">
+            <div class="info-block">
+              <div class="info-block-label">HR tasks</div>
+              <div class="info-block-value">Iqama submission<br>Medical insurance enrolment<br>Contract signing<br>Policy acknowledgement</div>
+            </div>
+            <div class="info-block">
+              <div class="info-block-label">IT tasks</div>
+              <div class="info-block-value">Laptop provisioning<br>Email account creation<br>ERP access setup</div>
+            </div>
+            <div class="info-block">
+              <div class="info-block-label">Finance tasks</div>
+              <div class="info-block-value">Bank account details<br>Salary structure setup</div>
+            </div>
+            <div class="info-block">
+              <div class="info-block-label">Management tasks</div>
+              <div class="info-block-value">Office tour<br>Introduction meeting<br>Work assignment briefing</div>
+            </div>
+          </div>
+          <p>Each assignee checks off their task within the deadline. Once all tasks are complete, the employee's ERPNext record status updates to <strong>Active</strong>.</p>
+        </div>
+      </div>
+
+      <!-- Contract -->
+      <div class="module-card" id="contract">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-lifecycle"></div>
+          <div class="module-card-info">
+            <div class="module-name">Saudi Employment Contract</div>
+            <div class="module-tagline">Legally required contract per Saudi Labor Law. Captures all mandatory fields: contract type, probation period, salary components, notice period. Expiry alerts sent at 30 and 60 days.</div>
+            <div class="module-badges">
+              <span class="badge badge-amber">Expiry alerts at 60 and 30 days</span>
+              <span class="badge badge-muted">Definite or Indefinite term</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <table class="data-table">
+            <thead><tr><th>Field</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td>Contract type</td><td>Definite (fixed end date) or Indefinite. Definite contracts trigger expiry alerts automatically.</td></tr>
+              <tr><td>Probation period</td><td>Maximum 90 days, extendable once. System alerts manager when probation end date approaches.</td></tr>
+              <tr><td>Salary components</td><td>Basic + housing allowance + transport allowance. These feed directly into Payroll.</td></tr>
+              <tr><td>Notice period</td><td>Used to calculate last working day when Termination Notice is created.</td></tr>
+            </tbody>
+          </table>
+          <div class="deadline-note"><strong>Definite contract alert:</strong> 60 days before expiry the system reminds you to renew or issue a Termination Notice. Missing this window can create an implied indefinite contract under Saudi law.</div>
+        </div>
+      </div>
+
+      <!-- Promotion / Transfer -->
+      <div class="module-card" id="promo-transfer">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-lifecycle"></div>
+          <div class="module-card-info">
+            <div class="module-name">Promotion &amp; Transfer</div>
+            <div class="module-tagline">Documents role changes, salary increases, and inter-department or inter-site transfers. Updates the ERPNext Employee record and triggers a contract amendment.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Updates Employee record</span>
+              <span class="badge badge-muted">Effective-date tracked</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="wf-label">Approval flow</div>
+          <div class="workflow">
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Manager proposes promotion or transfer</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">HR reviews — Finance confirms budget availability</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Record approved → ERPNext Employee designation, department, and salary updated</div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">New Saudi Employment Contract (or amendment) issued. Payroll effective from the Effective Date.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Performance Review -->
+      <div class="module-card" id="performance">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-lifecycle"></div>
+          <div class="module-card-info">
+            <div class="module-name">Performance Review &amp; Staff Rating</div>
+            <div class="module-tagline">Annual/mid-year structured evaluation with KPI and competency scores. Supplemented by anonymous 360-degree Staff Rating — downward (manager rates employee) and upward (employee rates manager).</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Feeds Promotion decisions</span>
+              <span class="badge badge-green">Anonymous 360 ratings</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <p>Performance Review captures KPI scores, competency scores, a development plan, and reviewer notes. Outstanding reviews can directly trigger a Promotion/Transfer or Salary Adjustment for merit increases.</p>
+          <p><strong>Staff Rating</strong> runs in parallel as a lightweight anonymous system. Individual rater identities are never revealed — only aggregated scores are available via the <code>get_rating_summary()</code> API. Prevents duplicate ratings for the same period.</p>
+        </div>
+      </div>
+
+      <!-- Termination -->
+      <div class="module-card" id="termination">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-lifecycle"></div>
+          <div class="module-card-info">
+            <div class="module-name">Termination Notice</div>
+            <div class="module-tagline">Official end-of-employment record — resignation, termination, contract expiry, or retirement. Submitting this document triggers EOSB creation, Exit Interview, and Exit Clearance automatically.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Auto-creates EOSB, Exit Interview, Exit Clearance</span>
+              <span class="badge badge-amber">Notice period from Employment Contract</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="wf-label">What happens on submit</div>
+          <div class="workflow">
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Termination Notice submitted (Type: Resignation / Termination / Contract Expiry / Retirement)</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Notice period calculated from Employment Contract → last working day set</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text"><strong>EOSB record</strong> auto-created with service years and applicable rate</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text"><strong>Exit Interview</strong> initiated — HR schedules with departing employee</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text"><strong>Exit Clearance</strong> checklist initiated across IT, Finance, and Facilities</div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">Final working day confirmed → Employee status: <strong>Left</strong></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Exit Clearance -->
+      <div class="module-card" id="exit-clearance">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-lifecycle"></div>
+          <div class="module-card-info">
+            <div class="module-name">Exit Clearance</div>
+            <div class="module-tagline">Asset return and obligation checklist. EOSB payment is blocked until Exit Clearance status is Completed.</div>
+            <div class="module-badges">
+              <span class="badge badge-rose">EOSB blocked until clearance complete</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="two-col">
+            <ul>
+              <li>IT equipment returned</li>
+              <li>Company vehicle returned</li>
+              <li>Access cards deactivated</li>
+              <li>System accounts disabled</li>
+            </ul>
+            <ul>
+              <li>Uniforms / PPE returned</li>
+              <li>Petty cash settled</li>
+              <li>Outstanding loan balance confirmed</li>
+              <li>Company property cleared</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- §06  HR DOCUMENTS                               -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section class="doc-section" id="hr-documents">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <h2 class="section-title">HR Documents &amp; Communications</h2>
+      </div>
+
+      <div class="module-card" id="hr-letter">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-docs"></div>
+          <div class="module-card-info">
+            <div class="module-name">HR Letter &amp; Templates</div>
+            <div class="module-tagline">Generate salary certificates, experience letters, NOC letters, and warning letters from reusable templates. Employee data auto-populated — one click to PDF.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Jinja auto-fill from employee data</span>
+              <span class="badge badge-muted">Archived against employee record</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <h4>Common letter types</h4>
+          <table class="data-table">
+            <thead><tr><th>Letter type</th><th>Common use</th><th>Auto-populated fields</th></tr></thead>
+            <tbody>
+              <tr><td>Salary Certificate</td><td>Bank / mortgage applications</td><td>Name, title, salary, start date</td></tr>
+              <tr><td>Experience Letter</td><td>New employer reference</td><td>Name, title, service dates, department</td></tr>
+              <tr><td>NOC Letter</td><td>Visa / travel clearance</td><td>Employee details, destination, dates</td></tr>
+              <tr><td>Warning Letter</td><td>Formal disciplinary notice</td><td>Violation details, issued by, date</td></tr>
+              <tr><td>EOSB Certificate</td><td>Final settlement record</td><td>EOSB amount from live calculation</td></tr>
+            </tbody>
+          </table>
+          <p>Set up letter templates once using Jinja placeholders (e.g., <code>{{ employee.employee_name }}</code>). Every subsequent letter for any employee generates in seconds.</p>
+        </div>
+      </div>
+
+      <div class="module-card" id="policy-doc">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-docs"></div>
+          <div class="module-card-info">
+            <div class="module-name">HR Policy Document &amp; Policy Acknowledgement</div>
+            <div class="module-tagline">Versioned policy storage with employee acknowledgement tracking. Provides legal proof that employees were notified — critical in labor disputes.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">% acknowledgement tracked</span>
+              <span class="badge badge-rose">Required for Ministry audits</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <p>After publishing a policy, send Policy Acknowledgement requests to all applicable employees. Each employee reads and acknowledges digitally. The system tracks completion percentage per policy.</p>
+          <div class="law-note"><strong>Ministry audits:</strong> Ministry of HR inspectors routinely request proof that employees were informed of workplace policies. The Policy Compliance Register report exports this evidence instantly — by policy, by department, or company-wide.</div>
+        </div>
+      </div>
+
+      <div class="module-card" id="training">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-docs"></div>
+          <div class="module-card-info">
+            <div class="module-name">Training Record &amp; Training Agreement</div>
+            <div class="module-tagline">Documents training activities. If the company funds external training, a Training Agreement captures the bond period — repayment is auto-deducted from EOSB if the employee resigns during the bond.</div>
+            <div class="module-badges">
+              <span class="badge badge-amber">Bond repayment auto-deducted from EOSB</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <p>Create a <strong>Training Record</strong> for every training activity (internal or external). If the company sponsors the training, attach a <strong>Training Agreement</strong> specifying the total cost, bond period in months, and the repayment schedule if the employee resigns early.</p>
+          <p>When a Termination Notice is submitted during an active bond period, the outstanding repayment amount is automatically included as a deduction in the EOSB calculation.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- §07  COMPLIANCE & REGULATORY                    -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section class="doc-section" id="compliance">
+      <div class="section-header">
+        <span class="section-num">07</span>
+        <h2 class="section-title">Compliance &amp; Regulatory</h2>
+      </div>
+
+      <div class="module-card" id="nitaqat">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-comply"></div>
+          <div class="module-card-info">
+            <div class="module-name">Nitaqat Record (Saudization)</div>
+            <div class="module-tagline">Tracks your company's Saudization band — Platinum / Green / Yellow / Red. Yellow or Red bands block new visa applications. Real-time ratio monitoring with quarterly compliance reports.</div>
+            <div class="module-badges">
+              <span class="badge badge-rose">Yellow/Red = visa block risk</span>
+              <span class="badge badge-amber">Quarterly QIWA/Absher report</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="risk-note"><strong>Operational risk:</strong> A Yellow or Red Nitaqat band immediately blocks the company from filing new visa applications for expatriate employees. This can halt hiring plans. Monitor your band in the Nitaqat Compliance Report monthly.</div>
+          <table class="data-table">
+            <thead><tr><th>Band</th><th>Status</th><th>Consequence</th></tr></thead>
+            <tbody>
+              <tr><td>🟢 Platinum / Green</td><td>Compliant</td><td>Full government services access</td></tr>
+              <tr><td>🟡 Yellow</td><td>Warning</td><td>Limited government services</td></tr>
+              <tr><td>🔴 Red</td><td>Non-compliant</td><td>Visa applications blocked; fines possible</td></tr>
+            </tbody>
+          </table>
+          <p>When creating Hiring Requisitions for roles that require Saudi nationals per your Nitaqat target, the system flags this in the requisition review.</p>
+        </div>
+      </div>
+
+      <div class="module-card" id="iqama">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-comply"></div>
+          <div class="module-card-info">
+            <div class="module-name">Work Permit / Iqama Management</div>
+            <div class="module-tagline">Residency permit tracking for all expatriate employees. Automated expiry alerts at 90 and 30 days. Expired Iqama = immediate fine risk.</div>
+            <div class="module-badges">
+              <span class="badge badge-rose">Fine: SAR 10,000+ per expired Iqama</span>
+              <span class="badge badge-amber">Alerts at 90 days and 30 days before expiry</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="wf-label">Renewal process</div>
+          <div class="workflow">
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Daily scheduler checks all active Iqama records against today's date</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text"><strong>90 days before expiry</strong> — HR / PRO receive renewal alert</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text"><strong>30 days before expiry</strong> — escalated alert. Begin Absher renewal immediately.</div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">Renewal complete → update Iqama record with new expiry date. Alert cycle resets.</div></div>
+          </div>
+          <p>Use the <strong>Work Permit Expiry Report</strong> for a full list sorted by days remaining. Cross-reference against Employment Contract end dates to avoid renewing Iqamas for departing employees.</p>
+        </div>
+      </div>
+
+      <div class="module-card" id="labor-inspection">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-comply"></div>
+          <div class="module-card-info">
+            <div class="module-name">Labor Inspection</div>
+            <div class="module-tagline">Tracks Ministry of HR inspection visits — preparation, findings, violations, fines, and correction deadlines. SLA alerts prevent deadline misses that escalate fine amounts.</div>
+            <div class="module-badges">
+              <span class="badge badge-rose">Repeated violations = increasing fines</span>
+              <span class="badge badge-amber">Correction deadline SLA alerts</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="wf-label">Inspection management</div>
+          <div class="workflow">
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Inspection scheduled or surprise visit occurs → <strong>Labor Inspection</strong> record created</div></div>
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">For each violation found: <strong>Labor Inspection Violation</strong> record created (category, fine, correction deadline)</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">HR Action Plan created per violation — assign responsible owner</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Inspection Fine SLA fires daily alerts as correction deadline approaches</div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">Violation corrected → documented in <strong>HR Compliance Action Log</strong></div></div>
+          </div>
+          <p>The <strong>Labor Inspection Tracker</strong> report shows all open violations with correction deadlines. Review this weekly — in KSA, repeated violations found in follow-up inspections carry significantly higher fines.</p>
+        </div>
+      </div>
+
+      <div class="module-card" id="work-regulation">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-comply"></div>
+          <div class="module-card-info">
+            <div class="module-name">Work Regulation</div>
+            <div class="module-tagline">Companies with 10+ employees must have a Ministry of HR-approved internal Work Regulation. System tracks version, approval date, and sends renewal alerts 60 days before expiry.</div>
+            <div class="module-badges">
+              <span class="badge badge-rose">Mandatory for 10+ employees</span>
+              <span class="badge badge-amber">60-day renewal alert</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <p>The Work Regulation (نظام العمل الداخلي) must be registered and approved by the Ministry of Human Resources and Social Development. Store the current approved version in this document including all required sections and the Ministry approval date.</p>
+          <div class="law-note"><strong>Validation:</strong> The system validates required sections are present before the document can be submitted. Missing fields will be flagged on save.</div>
+        </div>
+      </div>
+
+      <div class="module-card" id="ministry-filing">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-comply"></div>
+          <div class="module-card-info">
+            <div class="module-name">Ministry Filing Tracker</div>
+            <div class="module-tagline">Calendar of all mandatory Ministry of HR and GOSI filings. Daily alerts at 7, 3, and 1 day before each deadline. Never miss a filing date again.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Alerts at 7 / 3 / 1 days before deadline</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <table class="data-table">
+            <thead><tr><th>Filing</th><th>Frequency</th><th>Due date</th></tr></thead>
+            <tbody>
+              <tr><td>GOSI monthly contribution</td><td>Monthly</td><td>15th of each month</td></tr>
+              <tr><td>WPS submission</td><td>Monthly</td><td>Within 7 days of payroll date</td></tr>
+              <tr><td>Work Regulation renewal</td><td>Annual</td><td>Per Ministry approval expiry</td></tr>
+              <tr><td>Nitaqat quarterly report</td><td>Quarterly</td><td>End of each quarter</td></tr>
+              <tr><td>Disability quota report</td><td>Annual</td><td>Per Ministry calendar</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="module-card" id="work-injury">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-comply"></div>
+          <div class="module-card-info">
+            <div class="module-name">Work Injury &amp; Safety Inspection</div>
+            <div class="module-tagline">Documents workplace accidents, injury reports, and safety risk assessments per KSA Occupational Health &amp; Safety requirements. Serious injuries trigger GOSI notification.</div>
+            <div class="module-badges">
+              <span class="badge badge-rose">Serious injuries notify GOSI</span>
+              <span class="badge badge-muted">OHS compliance</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <p><strong>Work Injury</strong> records the employee, injury date, nature of injury, days of incapacity, treatment cost, investigation findings, and preventive measures taken.</p>
+          <p><strong>Safety Inspection and Risk Control</strong> tracks periodic safety audits. Each <strong>Safety Risk Control Item</strong> records a specific hazard, its risk level, and the control action taken or planned.</p>
+          <div class="deadline-note"><strong>GOSI link:</strong> The 2% workplace injury insurance contribution (paid by employer for all employees) covers costs from work injuries. Serious injuries should be reported to GOSI to activate this coverage.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- §08  RECRUITMENT                                -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section class="doc-section" id="recruitment">
+      <div class="section-header">
+        <span class="section-num">08</span>
+        <h2 class="section-title">Recruitment</h2>
+      </div>
+
+      <div class="module-card" id="hiring-req">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-recruit"></div>
+          <div class="module-card-info">
+            <div class="module-name">Hiring Requisition</div>
+            <div class="module-tagline">Department heads formally request headcount. HR and Finance must approve before recruitment begins. Nitaqat check built in — flags if the role requires a Saudi national hire.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Finance budget check</span>
+              <span class="badge badge-green">Nitaqat check</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <p>Each Hiring Requisition captures department, job title, headcount requested, budget line, justification, Nitaqat check (Saudi national required?), and target start date.</p>
+          <p>Approved requisitions feed into Candidate Profile management. No recruitment agency or job posting should proceed without an approved Hiring Requisition on record — this creates a controlled headcount audit trail.</p>
+        </div>
+      </div>
+
+      <div class="module-card" id="candidate">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-recruit"></div>
+          <div class="module-card-info">
+            <div class="module-name">Candidate Profile</div>
+            <div class="module-tagline">Tracks each applicant from application through interviews to offer. Offer acceptance triggers automatic Employee creation and Onboarding document.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Auto-creates Employee + Onboarding on hire</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <div class="wf-label">Candidate journey</div>
+          <div class="workflow">
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Application received → Candidate Profile created, linked to Hiring Requisition</div></div>
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Interview stages documented (First / Technical / Final) with interviewer feedback scores</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Offer extended → offer details (salary, start date, contract type) recorded</div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">Offer accepted → ERPNext <strong>Employee record auto-created</strong>, <strong>Employee Onboarding triggered</strong></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- §REF  REPORTS & ROLES                           -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section class="doc-section" id="reports">
+      <div class="section-header">
+        <span class="section-num">—</span>
+        <h2 class="section-title">Reports</h2>
+      </div>
+
+      <div class="report-grid">
+        <div class="report-item"><div class="report-name">Saudi Leave Balance Report</div><div class="report-desc">Real-time leave balances per employee — entitlement vs. taken. Filter by department or year.</div></div>
+        <div class="report-item"><div class="report-name">GOSI Monthly Report</div><div class="report-desc">Per-employee GOSI breakdown ready for upload to the GOSI portal.</div></div>
+        <div class="report-item"><div class="report-name">WPS Submission Tracker</div><div class="report-desc">Monthly WPS status — green (on time), amber (approaching), red (overdue).</div></div>
+        <div class="report-item"><div class="report-name">EOSB Calculation Report</div><div class="report-desc">EOSB amount per employee based on current service tenure and last salary.</div></div>
+        <div class="report-item"><div class="report-name">Contract Expiry Report</div><div class="report-desc">Definite contracts expiring in next 90, 60, and 30 days.</div></div>
+        <div class="report-item"><div class="report-name">Work Permit Expiry Report</div><div class="report-desc">All Iqama / work permits sorted by days remaining.</div></div>
+        <div class="report-item"><div class="report-name">Nitaqat Compliance Report</div><div class="report-desc">Current Saudization band, headcount ratio, and trend.</div></div>
+        <div class="report-item"><div class="report-name">Labor Inspection Tracker</div><div class="report-desc">Open violations with correction deadlines and owners.</div></div>
+        <div class="report-item"><div class="report-name">Outstanding Employee Loans</div><div class="report-desc">Current loan balances per employee.</div></div>
+        <div class="report-item"><div class="report-name">Policy Compliance Register</div><div class="report-desc">Acknowledgement percentage per policy document.</div></div>
+        <div class="report-item"><div class="report-name">Saudi Compliance Obligation Backlog</div><div class="report-desc">All overdue regulatory obligations with responsible parties.</div></div>
+        <div class="report-item"><div class="report-name">Saudi Labor Coverage Matrix</div><div class="report-desc">Labor law coverage gap analysis — for legal review.</div></div>
+      </div>
+    </section>
+
+    <section class="doc-section" id="roles">
+      <div class="section-header">
+        <span class="section-num">—</span>
+        <h2 class="section-title">System Roles</h2>
+      </div>
+
+      <table class="data-table">
+        <thead><tr><th>Role</th><th>Access level</th><th>Typical assignment</th></tr></thead>
+        <tbody>
+          <tr><td><span class="role-pill">HR Manager</span></td><td>Full access to all HR Suite documents and reports</td><td>HR Manager, HR Director</td></tr>
+          <tr><td><span class="role-pill">HR User</span></td><td>Create/edit leaves, penalties; view payroll (no submit)</td><td>HR Officers, HR Generalists</td></tr>
+          <tr><td><span class="role-pill">Leave Approver</span></td><td>Approve or reject leave requests for assigned team</td><td>Department Managers, Team Leads</td></tr>
+          <tr><td><span class="role-pill">Payroll Manager</span></td><td>Saudi Monthly Payroll, GOSI, WPS, EOSB</td><td>Payroll Officer, Finance Manager</td></tr>
+          <tr><td><span class="role-pill">Compliance Officer</span></td><td>Labor inspection, regulatory tasks, Nitaqat</td><td>PRO, Compliance Specialist</td></tr>
+          <tr><td><span class="role-pill">Employee Self Service</span></td><td>Own leaves, own documents, own ratings only</td><td>All employees</td></tr>
+        </tbody>
+      </table>
+
+      <div class="law-note" style="margin-top: 16px;"><strong>Row-level privacy:</strong> Salary Adjustments, Leave records, and other sensitive documents are filtered automatically by role — employees see only their own records, managers see their team, HR sees all. This filtering is enforced at the database query level, not just the UI.</div>
+    </section>
+
+    <section class="doc-section" id="automations">
+      <div class="section-header">
+        <span class="section-num">—</span>
+        <h2 class="section-title">Scheduled Alerts</h2>
+      </div>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 20px;">All alerts run automatically. You do not configure them — they fire based on document data. This is the full list of what the system monitors on your behalf.</p>
+
+      <div class="alert-grid">
+        <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">send_iqama_expiry_alerts</div><div class="alert-desc">Iqama / work permits expiring in 90 or 30 days — daily + weekly</div></div>
+        <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">send_contract_expiry_alerts</div><div class="alert-desc">Definite employment contracts expiring in 60 or 30 days</div></div>
+        <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">send_sick_leave_threshold_alerts</div><div class="alert-desc">Employee approaching 30, 90, or 120 sick day tiers</div></div>
+        <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">send_probation_end_alerts</div><div class="alert-desc">Probation period ending — confirm, extend, or terminate decision required</div></div>
+        <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">send_final_settlement_sla_alerts</div><div class="alert-desc">EOSB not paid within 3 days of exit — escalating daily to Finance</div></div>
+        <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">send_wps_correction_due_alerts</div><div class="alert-desc">WPS not submitted within 7 days of payroll — daily alert to Payroll</div></div>
+        <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">send_inspection_fine_sla_alerts</div><div class="alert-desc">Labor inspection violation correction deadline approaching</div></div>
+        <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">send_ministry_filing_due_alerts</div><div class="alert-desc">Ministry or GOSI filing deadline in 7, 3, or 1 day</div></div>
+        <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">send_work_regulation_review_alerts</div><div class="alert-desc">Work Regulation renewal due in 60 days</div></div>
+        <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">send_expat_authorization_due_alerts</div><div class="alert-desc">Expat work authorization renewal approaching</div></div>
+        <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">send_training_disclosure_due_alerts</div><div class="alert-desc">Training compliance disclosure deadlines approaching</div></div>
+        <div class="alert-row"><div class="alert-icon daily"></div><div class="alert-name">send_employee_document_custody_alerts</div><div class="alert-desc">Employee document custody period expiring</div></div>
+        <div class="alert-row"><div class="alert-icon monthly"></div><div class="alert-name">send_gosi_due_alerts</div><div class="alert-desc">Monthly reminder before the GOSI 15th-of-month submission deadline</div></div>
+      </div>
+    </section>
+
+    <div class="doc-footer">
+      <div class="footer-brand">HR Suite — Saudi Arabia HR Management System</div>
+      <div class="footer-meta">v1.0 · ERPNext 15 · Frappe Framework · Developed by Enfono</div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+function toggleCard(card) {
+  card.classList.toggle('open');
+}
+
+function toggleChapter(btn, subId) {
+  const sub = document.getElementById(subId);
+  const isOpen = sub.classList.contains('open');
+  sub.classList.toggle('open', !isOpen);
+  btn.setAttribute('aria-expanded', String(!isOpen));
+  document.querySelectorAll('.nav-chapter-btn').forEach(b => b.classList.remove('active'));
+  if (!isOpen) btn.classList.add('active');
+}
+
+// Highlight active nav section on scroll
+const sections = document.querySelectorAll('.doc-section');
+const navBtns = document.querySelectorAll('.nav-chapter-btn');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      // Map section id to chapter button index
+      const map = {
+        'leave-management': 0,
+        'time-attendance': 1,
+        'payroll-compensation': 2,
+        'disciplinary': 3,
+        'lifecycle': 4,
+        'hr-documents': 5,
+        'compliance': 6,
+        'recruitment': 7
+      };
+      const idx = map[id];
+      if (idx !== undefined) {
+        navBtns.forEach((b, i) => {
+          b.classList.toggle('active', i === idx);
+        });
+      }
+    }
+  });
+}, { threshold: 0.15, rootMargin: '-60px 0px -60% 0px' });
+
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

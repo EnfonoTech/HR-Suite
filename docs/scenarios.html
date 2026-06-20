@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR Suite — Employee Scenarios</title>
+<style>
+:root {
+  --ground:       #F4F3EF;
+  --surface:      #FFFFFF;
+  --surface-2:    #F9F8F5;
+  --text:         #1A1917;
+  --text-muted:   #6B6860;
+  --text-light:   #9E9B95;
+  --accent:       #006C45;
+  --accent-dim:   #E6F2EC;
+  --amber:        #B8751A;
+  --amber-dim:    #FDF3E3;
+  --rose:         #9B3535;
+  --rose-dim:     #FAECEC;
+  --blue:         #1D4ED8;
+  --blue-dim:     #EFF6FF;
+  --border:       #DDD9D0;
+  --border-light: #ECEAE4;
+  --ff-serif:     Georgia, 'Times New Roman', serif;
+  --ff-sans:      'Segoe UI', system-ui, -apple-system, Helvetica, sans-serif;
+  --ff-mono:      'SF Mono', 'Fira Code', Consolas, 'Courier New', monospace;
+
+  /* Per-employee accent colors */
+  --emp1: #006C45;
+  --emp1-dim: #E6F2EC;
+  --emp1-border: #A8D5C0;
+  --emp2: #1D4ED8;
+  --emp2-dim: #EFF6FF;
+  --emp2-border: #BFDBFE;
+  --emp3: #B8751A;
+  --emp3-dim: #FDF3E3;
+  --emp3-border: #F6D99A;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 15px; }
+body {
+  background: var(--ground);
+  color: var(--text);
+  font-family: var(--ff-sans);
+  line-height: 1.65;
+}
+
+/* ── TOPBAR ─────────────────────────────────────────── */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 52px;
+  background: var(--text);
+  color: #fff;
+  display: flex; align-items: center;
+  padding: 0 24px;
+}
+
+.topbar-brand {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--ff-serif);
+  font-size: 1rem;
+  color: #fff;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.topbar-brand-mark {
+  width: 26px; height: 26px;
+  background: var(--accent);
+  border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  font-family: var(--ff-mono);
+  font-weight: bold;
+  color: #fff;
+}
+
+.topbar-divider {
+  width: 1px; height: 20px;
+  background: rgba(255,255,255,0.15);
+  margin: 0 16px;
+}
+
+.topbar-meta { font-size: 0.8rem; color: rgba(255,255,255,0.45); }
+
+.topbar-tabs {
+  display: flex; align-items: stretch;
+  margin-left: 24px;
+  height: 100%;
+}
+
+.topbar-tab {
+  display: flex; align-items: center;
+  padding: 0 14px;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.5);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.topbar-tab:hover { color: rgba(255,255,255,0.85); }
+.topbar-tab.active { color: #fff; border-bottom-color: var(--accent); }
+
+.topbar-right {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 16px;
+}
+
+.topbar-badge {
+  font-size: 0.7rem;
+  font-family: var(--ff-mono);
+  background: rgba(0,108,69,0.6);
+  color: #7FFFC4;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+/* ── LAYOUT ─────────────────────────────────────────── */
+.page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 84px 40px 96px;
+}
+
+/* ── PAGE HEADER ─────────────────────────────────────── */
+.page-eyebrow {
+  font-family: var(--ff-mono);
+  font-size: 0.72rem;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.page-title {
+  font-family: var(--ff-serif);
+  font-size: 2.2rem;
+  font-weight: normal;
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+}
+
+.page-desc {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  max-width: 620px;
+  line-height: 1.7;
+  margin-bottom: 40px;
+}
+
+/* ── EMPLOYEE CARDS OVERVIEW ─────────────────────────── */
+.emp-overview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 64px;
+}
+
+.emp-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  border-top: 3px solid;
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+  text-decoration: none;
+  display: block;
+  color: inherit;
+}
+
+.emp-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+.emp-card-1 { border-top-color: var(--emp1); }
+.emp-card-2 { border-top-color: var(--emp2); }
+.emp-card-3 { border-top-color: var(--emp3); }
+
+.emp-card-avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--ff-serif);
+  font-size: 1.1rem;
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+.emp-card-1 .emp-card-avatar { background: var(--emp1); }
+.emp-card-2 .emp-card-avatar { background: var(--emp2); }
+.emp-card-3 .emp-card-avatar { background: var(--emp3); }
+
+.emp-card-name {
+  font-family: var(--ff-serif);
+  font-size: 1rem;
+  margin-bottom: 2px;
+}
+
+.emp-card-role {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.emp-card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.emp-tag {
+  font-size: 0.67rem;
+  font-family: var(--ff-mono);
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.03em;
+}
+
+.tag-green  { background: var(--emp1-dim); color: var(--emp1); }
+.tag-blue   { background: var(--emp2-dim); color: var(--emp2); }
+.tag-amber  { background: var(--emp3-dim); color: var(--emp3); }
+.tag-muted  { background: var(--border-light); color: var(--text-muted); }
+.tag-rose   { background: var(--rose-dim); color: var(--rose); }
+
+/* ── CHAPTER DIVIDER ─────────────────────────────────── */
+.chapter {
+  margin-bottom: 80px;
+  scroll-margin-top: 72px;
+}
+
+.chapter-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--text);
+}
+
+.chapter-avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--ff-serif);
+  font-size: 1.4rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.ch1 .chapter-avatar { background: var(--emp1); }
+.ch2 .chapter-avatar { background: var(--emp2); }
+.ch3 .chapter-avatar { background: var(--emp3); }
+
+.chapter-header-info { flex: 1; }
+
+.chapter-num {
+  font-family: var(--ff-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.ch1 .chapter-num { color: var(--emp1); }
+.ch2 .chapter-num { color: var(--emp2); }
+.ch3 .chapter-num { color: var(--emp3); }
+
+.chapter-name {
+  font-family: var(--ff-serif);
+  font-size: 1.5rem;
+  font-weight: normal;
+  margin-bottom: 2px;
+}
+
+.chapter-subtitle {
+  font-size: 0.83rem;
+  color: var(--text-muted);
+}
+
+.chapter-stat-row {
+  display: flex; gap: 24px; flex-wrap: wrap;
+}
+
+.chapter-stat { text-align: right; }
+.chapter-stat-val {
+  font-family: var(--ff-serif);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+.chapter-stat-key {
+  font-size: 0.68rem;
+  font-family: var(--ff-mono);
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── PROFILE BLOCK ───────────────────────────────────── */
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 32px;
+}
+
+.profile-cell {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 5px;
+  padding: 12px 14px;
+}
+
+.profile-cell-label {
+  font-size: 0.67rem;
+  font-family: var(--ff-mono);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 4px;
+}
+
+.profile-cell-value {
+  font-size: 0.88rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* ── TIMELINE ────────────────────────────────────────── */
+.timeline-label {
+  font-size: 0.68rem;
+  font-family: var(--ff-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 16px;
+}
+
+.timeline {
+  position: relative;
+  padding-left: 28px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 6px; bottom: 6px;
+  width: 1px;
+  background: var(--border);
+}
+
+.tl-event {
+  position: relative;
+  margin-bottom: 0;
+  display: flex;
+  gap: 0;
+}
+
+.tl-dot-col {
+  position: absolute;
+  left: -28px;
+  top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tl-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+}
+
+.tl-event.ev-key .tl-dot {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.tl-event.ev-amber .tl-dot {
+  border-color: var(--amber);
+  background: var(--amber);
+}
+
+.tl-event.ev-blue .tl-dot {
+  border-color: var(--blue);
+  background: var(--blue);
+}
+
+.tl-event.ev-rose .tl-dot {
+  border-color: var(--rose);
+  background: var(--rose);
+}
+
+.tl-event.ev-final .tl-dot {
+  width: 13px; height: 13px;
+  left: -29.5px; top: 6px;
+  box-shadow: 0 0 0 3px var(--accent-dim);
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.tl-body {
+  flex: 1;
+  padding: 0 0 24px 0;
+}
+
+.tl-date {
+  font-family: var(--ff-mono);
+  font-size: 0.68rem;
+  color: var(--text-light);
+  letter-spacing: 0.05em;
+  margin-bottom: 3px;
+}
+
+.tl-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.tl-module {
+  display: inline-block;
+  font-size: 0.67rem;
+  font-family: var(--ff-mono);
+  padding: 1px 7px;
+  border-radius: 3px;
+  margin-bottom: 6px;
+  letter-spacing: 0.03em;
+}
+
+.mod-green  { background: var(--emp1-dim); color: var(--emp1); }
+.mod-blue   { background: var(--emp2-dim); color: var(--emp2); }
+.mod-amber  { background: var(--emp3-dim); color: var(--emp3); }
+.mod-muted  { background: var(--border-light); color: var(--text-muted); }
+.mod-rose   { background: var(--rose-dim); color: var(--rose); }
+
+.tl-desc {
+  font-size: 0.83rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.tl-auto {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  background: var(--surface-2);
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  padding: 8px 11px;
+  margin-top: 6px;
+}
+
+.tl-auto-icon {
+  font-size: 0.7rem;
+  font-family: var(--ff-mono);
+  background: var(--accent-dim);
+  color: var(--accent);
+  padding: 1px 5px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-weight: 600;
+}
+
+.tl-auto-text {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.tl-auto-text strong { color: var(--accent); }
+
+.tl-year-marker {
+  font-family: var(--ff-serif);
+  font-size: 1.1rem;
+  color: var(--text-light);
+  padding: 8px 0 16px;
+  border-top: 1px dashed var(--border);
+  margin-top: -8px;
+  margin-bottom: 8px;
+}
+
+/* ── SUMMARY BOX ─────────────────────────────────────── */
+.summary-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px 28px;
+  margin-top: 8px;
+}
+
+.summary-box-title {
+  font-family: var(--ff-serif);
+  font-size: 1rem;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.85rem;
+}
+
+.summary-row:last-child { border-bottom: none; font-weight: 600; }
+.summary-row-label { color: var(--text-muted); }
+.summary-row-value { font-family: var(--ff-mono); color: var(--text); }
+
+.summary-row-value.add { color: var(--accent); }
+.summary-row-value.ded { color: var(--rose); }
+.summary-row-value.net { color: var(--text); font-size: 1rem; font-family: var(--ff-serif); }
+
+/* ── NOTE BOXES ──────────────────────────────────────── */
+.note {
+  display: flex; gap: 10px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  border-left: 3px solid;
+  margin: 8px 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.note-green { background: var(--emp1-dim); border-color: var(--emp1); }
+.note-blue  { background: var(--emp2-dim); border-color: var(--emp2); }
+.note-amber { background: var(--emp3-dim); border-color: var(--emp3); }
+.note-rose  { background: var(--rose-dim); border-color: var(--rose); }
+.note strong { color: var(--text); }
+
+/* ── FOOTER ──────────────────────────────────────────── */
+.doc-footer {
+  margin-top: 64px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 12px;
+}
+
+.footer-brand { font-family: var(--ff-serif); font-size: 0.9rem; color: var(--text-muted); }
+.footer-meta  { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--text-light); }
+
+/* ── RESPONSIVE ──────────────────────────────────────── */
+@media (max-width: 860px) {
+  .emp-overview { grid-template-columns: 1fr; }
+  .profile-grid { grid-template-columns: 1fr 1fr; }
+  .chapter-stat-row { display: none; }
+  .page { padding: 76px 20px 64px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="topbar-brand" href="index.html">
+    <div class="topbar-brand-mark">HR</div>
+    HR Suite
+  </a>
+  <div class="topbar-divider"></div>
+  <span class="topbar-meta">Manager Reference</span>
+  <nav class="topbar-tabs">
+    <a class="topbar-tab" href="index.html">Reference</a>
+    <a class="topbar-tab active" href="scenarios.html">Employee Scenarios</a>
+    <a class="topbar-tab" href="tour.html">Guided Tour</a>
+  </nav>
+  <div class="topbar-right">
+    <span class="topbar-badge">v1.0 · ERPNext 15</span>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- PAGE HEADER -->
+  <div class="page-eyebrow">HR Suite · Employee Scenarios</div>
+  <h1 class="page-title">Three employees. Full HR cycles.</h1>
+  <p class="page-desc">These scenarios trace three real employees from their first day through every HR event — leave, payroll, disciplinary action, exit — showing which module is used at each step, what HR must do, and what the system handles automatically.</p>
+
+  <!-- OVERVIEW CARDS -->
+  <div class="emp-overview">
+
+    <a class="emp-card emp-card-1" href="#ahmed">
+      <div class="emp-card-avatar">AG</div>
+      <div class="emp-card-name">Ahmed Al-Ghamdi</div>
+      <div class="emp-card-role">Engineer → Senior Engineer · EMP-0042</div>
+      <div class="emp-card-tags">
+        <span class="emp-tag tag-green">Saudi National</span>
+        <span class="emp-tag tag-muted">Promotion path</span>
+        <span class="emp-tag tag-green">GOSI</span>
+        <span class="emp-tag tag-muted">Annual leave</span>
+        <span class="emp-tag tag-muted">Overtime</span>
+      </div>
+    </a>
+
+    <a class="emp-card emp-card-2" href="#fatima">
+      <div class="emp-card-avatar">FZ</div>
+      <div class="emp-card-name">Fatima Al-Zahrani</div>
+      <div class="emp-card-role">HR Coordinator · EMP-0089</div>
+      <div class="emp-card-tags">
+        <span class="emp-tag tag-blue">Saudi National</span>
+        <span class="emp-tag tag-muted">Maternity leave</span>
+        <span class="emp-tag tag-muted">Sick leave</span>
+        <span class="emp-tag tag-blue">Training bond</span>
+        <span class="emp-tag tag-muted">Grievance</span>
+      </div>
+    </a>
+
+    <a class="emp-card emp-card-3" href="#james">
+      <div class="emp-card-avatar">JM</div>
+      <div class="emp-card-name">James Mathew</div>
+      <div class="emp-card-role">IT Specialist · EMP-0156</div>
+      <div class="emp-card-tags">
+        <span class="emp-tag tag-amber">Expatriate</span>
+        <span class="emp-tag tag-muted">Iqama renewal</span>
+        <span class="emp-tag tag-amber">Loan</span>
+        <span class="emp-tag tag-rose">Disciplinary</span>
+        <span class="emp-tag tag-muted">EOSB exit</span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- EMPLOYEE 1: AHMED AL-GHAMDI                        -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="chapter ch1" id="ahmed">
+
+    <div class="chapter-header">
+      <div class="chapter-avatar">AG</div>
+      <div class="chapter-header-info">
+        <div class="chapter-num">Employee 01 — Promotion Path</div>
+        <div class="chapter-name">Ahmed Al-Ghamdi</div>
+        <div class="chapter-subtitle">Engineer → Senior Engineer &nbsp;·&nbsp; EMP-0042 &nbsp;·&nbsp; Saudi National</div>
+      </div>
+      <div class="chapter-stat-row">
+        <div class="chapter-stat">
+          <div class="chapter-stat-val">2.5 yrs</div>
+          <div class="chapter-stat-key">Service</div>
+        </div>
+        <div class="chapter-stat">
+          <div class="chapter-stat-val">Active</div>
+          <div class="chapter-stat-key">Status</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-grid">
+      <div class="profile-cell"><div class="profile-cell-label">Joined</div><div class="profile-cell-value">1 Jan 2023</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Contract</div><div class="profile-cell-value">Indefinite</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Basic salary</div><div class="profile-cell-value">SAR 12,000</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Nationality</div><div class="profile-cell-value">Saudi National</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">GOSI rate</div><div class="profile-cell-value">10% employee · 12.5% employer</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Leave entitlement</div><div class="profile-cell-value">21 days/year (yrs 1–5)</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Probation</div><div class="profile-cell-value">90 days (ends 1 Apr 2023)</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Department</div><div class="profile-cell-value">Engineering</div></div>
+    </div>
+
+    <div class="timeline-label">Full HR journey</div>
+    <div class="timeline">
+
+      <!-- 2023 -->
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-year-marker">2023</div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-key">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Jan 2023</div>
+          <div class="tl-title">Onboarding &amp; Employment Contract</div>
+          <span class="tl-module mod-green">Employee Onboarding</span>&nbsp;
+          <span class="tl-module mod-green">Saudi Employment Contract</span>
+          <div class="tl-desc">HR creates Ahmed's onboarding checklist. Tasks assigned to IT (laptop, ERP access), Finance (salary setup), HR (Iqama not required — Saudi national), and Ahmed's manager (office tour). Ahmed signs his indefinite-term Employment Contract: Basic SAR 12,000 + Housing SAR 3,000 + Transport SAR 1,000. Probation set to 90 days.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">When all onboarding tasks are checked off, Ahmed's ERPNext Employee status updates to <strong>Active</strong> automatically.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-key">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">1 Apr 2023</div>
+          <div class="tl-title">Probation end — confirmed</div>
+          <span class="tl-module mod-green">Saudi Employment Contract</span>
+          <div class="tl-desc">Ahmed's 90-day probation ends. His manager confirms employment. No action needed on the contract — probation confirmation is recorded as a note.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Daily scheduler fires <strong>send_probation_end_alerts</strong> 7 days before 1 Apr, prompting the manager to decide: confirm, extend, or terminate.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Jun 2023</div>
+          <div class="tl-title">Annual leave — 10 days (family visit)</div>
+          <span class="tl-module mod-green">Saudi Annual Leave</span>
+          <div class="tl-desc">Ahmed applies for 10 days leave (15–26 Jun). Balance check: 21 days entitlement, 0 taken → 21 remaining. Manager Khalid approves. HR Manager Sara gives final approval.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Leave balance decremented by 10. June payroll marks these days as paid annual leave — <strong>no deduction from salary</strong>.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-amber">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Jul 2023</div>
+          <div class="tl-title">Overtime — project deadline (3 hrs × 5 days)</div>
+          <span class="tl-module mod-amber">Overtime Request</span>&nbsp;
+          <span class="tl-module mod-amber">Salary Adjustment</span>
+          <div class="tl-desc">Engineering team worked late to meet a client deadline. Manager creates Overtime Request for 5 employees including Ahmed: 3 hrs/day × 5 days = 15 OT hours. HR Manager approves.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Journal Entry created: <strong>Dr. Overtime Expense / Cr. OT Payable</strong>. Amount = (12,000 ÷ 30 ÷ 8) × 1.5 × 15 hrs = <strong>SAR 1,125</strong>. Salary Adjustment record auto-created and picked up in July payroll.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Oct 2023</div>
+          <div class="tl-title">Policy acknowledgement — updated code of conduct</div>
+          <span class="tl-module mod-muted">Policy Acknowledgement</span>
+          <div class="tl-desc">Company issues updated Code of Conduct. HR sends Policy Acknowledgement requests to all employees. Ahmed reads and acknowledges digitally.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Policy Compliance Register updated — acknowledgement % for this document incremented.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-key">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Dec 2023</div>
+          <div class="tl-title">Annual performance review — score 4.2 / 5</div>
+          <span class="tl-module mod-green">Performance Review</span>&nbsp;
+          <span class="tl-module mod-green">Staff Rating</span>
+          <div class="tl-desc">Year-end formal review. KPI score: 4.4. Competency score: 4.0. Manager's notes: "Delivered project 3 weeks ahead of deadline. Strong technical output." Development plan: leadership training in 2024. Staff Rating (Q4 2023): manager-to-employee rating 4.3, peers 4.1 — both anonymous and aggregated.</div>
+        </div>
+      </div>
+
+      <!-- 2024 -->
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-year-marker">2024</div>
+        </div>
+      </div>
+
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Mar 2024</div>
+          <div class="tl-title">Annual leave — 15 days (Umrah trip)</div>
+          <span class="tl-module mod-green">Saudi Annual Leave</span>
+          <div class="tl-desc">Ahmed applies for 15 days leave. Balance: 21 days new entitlement + 11 remaining from 2023 = 32 days. Manager and HR approve. Payroll marks dates as paid leave.</div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-amber">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Jul 2024</div>
+          <div class="tl-title">Performance bonus — SAR 6,000</div>
+          <span class="tl-module mod-amber">Salary Adjustment</span>
+          <div class="tl-desc">Management approves a one-time performance bonus for Ahmed linked to Q2 delivery. HR creates a Salary Adjustment (type: Addition, SAR 6,000) referencing the Performance Review record.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Salary Adjustment auto-attaches to July Saudi Monthly Payroll — bonus appears in Ahmed's salary slip without a separate entry.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-key">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Sep 2024</div>
+          <div class="tl-title">Mid-year review triggers promotion proposal</div>
+          <span class="tl-module mod-green">Performance Review</span>&nbsp;
+          <span class="tl-module mod-green">Promotion &amp; Transfer</span>
+          <div class="tl-desc">Mid-year review score: 4.5/5. Manager formally proposes promotion to Senior Engineer with salary increase to SAR 16,000. HR reviews headcount and role alignment. Finance confirms budget availability.</div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-final">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">1 Oct 2024</div>
+          <div class="tl-title">Promotion confirmed — Senior Engineer, SAR 16,000</div>
+          <span class="tl-module mod-green">Promotion &amp; Transfer</span>&nbsp;
+          <span class="tl-module mod-green">Saudi Employment Contract</span>&nbsp;
+          <span class="tl-module mod-green">GOSI Contribution</span>
+          <div class="tl-desc">Promotion &amp; Transfer record approved. ERPNext Employee record updated: designation → Senior Engineer, department unchanged, salary → SAR 16,000. New Employment Contract amendment issued and signed. GOSI contribution recalculated on the new salary from October payroll.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">October Saudi Monthly Payroll uses the new salary from the promotion effective date. GOSI employee deduction updates to <strong>SAR 1,600/month</strong> (10% of SAR 16,000). Employer contribution: <strong>SAR 2,000/month</strong>.</span>
+          </div>
+          <div class="note note-green" style="margin-top:10px;"><strong>Status as of Jun 2026:</strong> Ahmed is Active, 3.5 years service as Senior Engineer, accruing 21 days annual leave (year 4 of 5). EOSB if resigned today: 3.5 years × ⅓ month × SAR 16,000 = SAR 18,667.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- EMPLOYEE 2: FATIMA AL-ZAHRANI                      -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="chapter ch2" id="fatima">
+
+    <div class="chapter-header">
+      <div class="chapter-avatar">FZ</div>
+      <div class="chapter-header-info">
+        <div class="chapter-num">Employee 02 — Maternity, Training Bond &amp; Grievance</div>
+        <div class="chapter-name">Fatima Al-Zahrani</div>
+        <div class="chapter-subtitle">HR Coordinator &nbsp;·&nbsp; EMP-0089 &nbsp;·&nbsp; Saudi National</div>
+      </div>
+      <div class="chapter-stat-row">
+        <div class="chapter-stat">
+          <div class="chapter-stat-val">4 yrs</div>
+          <div class="chapter-stat-key">Service</div>
+        </div>
+        <div class="chapter-stat">
+          <div class="chapter-stat-val">Active</div>
+          <div class="chapter-stat-key">Status</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-grid">
+      <div class="profile-cell"><div class="profile-cell-label">Joined</div><div class="profile-cell-value">1 Mar 2022</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Contract</div><div class="profile-cell-value">Indefinite</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Basic salary</div><div class="profile-cell-value">SAR 9,500</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Nationality</div><div class="profile-cell-value">Saudi National</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">GOSI rate</div><div class="profile-cell-value">10% employee · 12.5% employer</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Leave entitlement</div><div class="profile-cell-value">21 days/yr (yrs 1–5) → 30 days from yr 6</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Probation</div><div class="profile-cell-value">90 days (ended 29 May 2022)</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Department</div><div class="profile-cell-value">Human Resources</div></div>
+    </div>
+
+    <div class="timeline-label">Full HR journey</div>
+    <div class="timeline">
+
+      <!-- 2022 -->
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-year-marker">2022</div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-blue">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Mar 2022</div>
+          <div class="tl-title">Onboarding, contract &amp; policy acknowledgement</div>
+          <span class="tl-module mod-blue">Employee Onboarding</span>&nbsp;
+          <span class="tl-module mod-blue">Saudi Employment Contract</span>
+          <div class="tl-desc">Fatima joins as HR Coordinator. Onboarding tasks completed across HR, IT, and Finance. Employment contract signed: Basic SAR 9,500, Housing SAR 2,500, Transport SAR 800. Probation 90 days. Fatima acknowledges the HR Policy Document and Employee Code of Conduct digitally on Day 1.</div>
+        </div>
+      </div>
+
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Sep 2022</div>
+          <div class="tl-title">Sick leave — 5 days (medical certificate attached)</div>
+          <span class="tl-module mod-muted">Saudi Sick Leave</span>
+          <div class="tl-desc">Fatima falls ill for 5 days. Year-to-date sick total: 5 days. Within the 30-day full-pay tier. HR attaches the medical certificate (required for absences over 3 consecutive days).</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">September payroll: 5 days full pay — <strong>no deduction</strong>. No threshold alert triggered (well below 30-day mark).</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Dec 2022</div>
+          <div class="tl-title">Annual performance review — score 3.8 / 5</div>
+          <span class="tl-module mod-muted">Performance Review</span>
+          <div class="tl-desc">First full-year review. Solid KPIs. Development areas: documentation and process writing. Plan: enroll in HR certification course in 2023.</div>
+        </div>
+      </div>
+
+      <!-- 2023 -->
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-year-marker">2023</div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-blue">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Apr 2023</div>
+          <div class="tl-title">Maternity leave — 10 weeks (expected birth 30 Apr)</div>
+          <span class="tl-module mod-blue">Maternity Paternity Leave</span>
+          <div class="tl-body">
+          <div class="tl-desc">Fatima submits Maternity Paternity Leave with expected birth date 30 Apr 2023. Medical certificate attached. HR approves.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">System sets end date to <strong>8 Jul 2023</strong> (30 Apr + 70 calendar days). April, May, Jun, and July payrolls treat all days as <strong>fully paid maternity leave</strong> — zero deduction.</span>
+          </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-blue">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">1 Jul 2023</div>
+          <div class="tl-title">Return-to-work — re-integration alert fired</div>
+          <span class="tl-module mod-blue">Maternity Paternity Leave</span>
+          <div class="tl-desc">7 days before Fatima's 8 Jul return date, HR receives an automatic re-integration reminder. HR prepares: desk setup confirmed, ERP access refreshed, manager briefed on workload phasing.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Return alert fired automatically on <strong>1 Jul 2023</strong> (7 days prior). No manual tracking needed.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-blue">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Aug 2023</div>
+          <div class="tl-title">Company-sponsored training + training bond</div>
+          <span class="tl-module mod-blue">Training Record</span>&nbsp;
+          <span class="tl-module mod-blue">Training Agreement</span>
+          <div class="tl-desc">Company sponsors Fatima for an external CIPD Level 3 HR certification. Cost: SAR 8,400. HR creates a Training Record and a Training Agreement: 6-month bond period. If Fatima resigns before Feb 2024, the full SAR 8,400 is deducted from her EOSB.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Training disclosure alert will fire when the disclosure deadline approaches. Bond repayment auto-deducted from EOSB if she exits before Feb 2024.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-amber">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Oct – Nov 2023</div>
+          <div class="tl-title">Sick leave recurrence — 28 additional days (half-pay tier reached)</div>
+          <span class="tl-module mod-amber">Saudi Sick Leave</span>
+          <div class="tl-desc">Fatima has a post-maternity health complication. She takes 28 more sick days across Oct and Nov. Year-to-date: 5 (from Sep 2022) + 28 = 33 sick days. Days 31–33 fall into the half-pay tier.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">System fires <strong>sick leave threshold alert</strong> when Fatima crosses 30 days. October payroll: days 1–30 full pay. Days 31–33 (3 days): 50% deduction = <strong>SAR 475 deducted</strong> (3 × SAR 9,500 ÷ 30 × 0.5).</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Dec 2023</div>
+          <div class="tl-title">Annual performance review — score 3.2 / 5</div>
+          <span class="tl-module mod-muted">Performance Review</span>
+          <div class="tl-desc">Review reflects a difficult year: maternity leave + health issues = reduced output. Score 3.2/5 — below expectations in deliverables. Reviewer notes: context acknowledged. No merit increase for 2024. Development plan updated: light duties Q1 2024.</div>
+        </div>
+      </div>
+
+      <!-- 2024 -->
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-year-marker">2024</div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-amber">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Jan 2024</div>
+          <div class="tl-title">Employee grievance — excessive workload on return from maternity</div>
+          <span class="tl-module mod-amber">Employee Grievance</span>
+          <div class="tl-desc">Fatima formally raises a grievance: she was assigned the full pre-maternity workload immediately on return with no phasing-in period, contributing to her health deterioration. Grievance submitted confidentially. HR Manager assigns it to the Operations Director for review.</div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-blue">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Mar 2024</div>
+          <div class="tl-title">Grievance resolved internally — workload policy updated</div>
+          <span class="tl-module mod-blue">Employee Grievance</span>&nbsp;
+          <span class="tl-module mod-blue">HR Policy Document</span>
+          <div class="tl-desc">Operations Director and HR review the case. Finding: workload assignment did not follow return-from-leave protocol. Resolution: formal apology, updated Return-from-Leave policy issued company-wide. Fatima accepts the resolution. Case closed.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">New HR Policy Document published. Policy Acknowledgement requests sent to all managers. <strong>Fatima not required to escalate to Ministry of HR Labor Courts.</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-final">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Dec 2024</div>
+          <div class="tl-title">Annual review — score 4.0 / 5 · merit increase approved</div>
+          <span class="tl-module mod-blue">Performance Review</span>&nbsp;
+          <span class="tl-module mod-blue">Salary Adjustment</span>
+          <div class="tl-desc">Recovery year. Score 4.0/5 — back to strong performance. Management approves a merit salary increase to SAR 10,500 effective Jan 2025 plus a one-time bonus of SAR 4,000. New Employment Contract amendment issued.</div>
+          <div class="note note-blue" style="margin-top:10px;"><strong>Status as of Jun 2026:</strong> Fatima is Active at SAR 10,500 basic, year 4 of service, 21 days annual leave entitlement. Training bond expired Feb 2024 — no longer at risk. GOSI contributions recalculated on new salary since Jan 2025.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- EMPLOYEE 3: JAMES MATHEW                           -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="chapter ch3" id="james">
+
+    <div class="chapter-header">
+      <div class="chapter-avatar">JM</div>
+      <div class="chapter-header-info">
+        <div class="chapter-num">Employee 03 — Disciplinary &amp; Exit with EOSB</div>
+        <div class="chapter-name">James Mathew</div>
+        <div class="chapter-subtitle">IT Specialist &nbsp;·&nbsp; EMP-0156 &nbsp;·&nbsp; Indian National (Expatriate)</div>
+      </div>
+      <div class="chapter-stat-row">
+        <div class="chapter-stat">
+          <div class="chapter-stat-val">2 yr 2 mo</div>
+          <div class="chapter-stat-key">Service at exit</div>
+        </div>
+        <div class="chapter-stat">
+          <div class="chapter-stat-val">Left</div>
+          <div class="chapter-stat-key">Status</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-grid">
+      <div class="profile-cell"><div class="profile-cell-label">Joined</div><div class="profile-cell-value">1 Feb 2022</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Contract</div><div class="profile-cell-value">Definite — 2 years</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Basic salary</div><div class="profile-cell-value">SAR 11,000</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Nationality</div><div class="profile-cell-value">Indian (Expatriate)</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">GOSI rate</div><div class="profile-cell-value">Employer only — 2% injury insurance</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Iqama</div><div class="profile-cell-value">Expires 1 Feb 2023 (annually renewable)</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Probation</div><div class="profile-cell-value">90 days (ended 1 May 2022)</div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Department</div><div class="profile-cell-value">Information Technology</div></div>
+    </div>
+
+    <div class="timeline-label">Full HR journey</div>
+    <div class="timeline">
+
+      <!-- 2022 -->
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-year-marker">2022</div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-amber">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Feb 2022</div>
+          <div class="tl-title">Onboarding — Iqama &amp; Work Permit registered</div>
+          <span class="tl-module mod-amber">Employee Onboarding</span>&nbsp;
+          <span class="tl-module mod-amber">Work Permit / Iqama</span>
+          <div class="tl-desc">James joins on a 2-year definite contract. As an expatriate, HR creates his Work Permit / Iqama record: Iqama No. 2305xxxxx, Issue date 1 Feb 2022, Expiry 1 Feb 2023. Profession on Iqama: IT Specialist. GOSI: employer-only 2% injury insurance contribution.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Daily scheduler registered. <strong>90-day alert will fire on 3 Nov 2022</strong>, and 30-day alert on 2 Jan 2023, prompting PRO to begin Absher renewal.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Jul – Aug 2022</div>
+          <div class="tl-title">Overtime — server migration project (2 months)</div>
+          <span class="tl-module mod-muted">Overtime Request</span>
+          <div class="tl-desc">James works 10 extra hours per month across Jul and Aug for a data centre migration. Manager submits two Overtime Requests. HR approves. OT pay: (11,000 ÷ 30 ÷ 8) × 1.5 × 10 hrs × 2 = SAR 1,375 across two months.</div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-amber">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Sep 2022</div>
+          <div class="tl-title">Employee loan — SAR 15,000 (12-month repayment)</div>
+          <span class="tl-module mod-amber">Employee Loan</span>
+          <div class="tl-desc">James requests an emergency personal loan of SAR 15,000. HR Manager and Finance approve. Disbursed immediately. Installment schedule: SAR 1,250/month × 12 months (Sep 2022 – Aug 2023).</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">SAR 1,250 deducted from James's payroll line each month automatically. Journal Entry: <strong>Dr. Employee Loan Receivable / Cr. Cash</strong>. Outstanding balance visible in Outstanding Employee Loans report at all times.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-amber">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">3 Nov 2022</div>
+          <div class="tl-title">Iqama renewal alert — 90 days before expiry</div>
+          <span class="tl-module mod-amber">Work Permit / Iqama</span>
+          <div class="tl-desc">HR and PRO receive automatic 90-day renewal alert. PRO initiates Absher renewal process. Renewal approved and renewed for another year: new expiry 1 Feb 2024. Iqama record updated.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Alert cycle resets. Next 90-day alert will now fire on <strong>3 Nov 2023</strong> for the Feb 2024 expiry.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2023 -->
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-year-marker">2023</div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-amber">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Jan 2023</div>
+          <div class="tl-title">Absence case — 3 days unexplained absence</div>
+          <span class="tl-module mod-amber">Absence Case</span>
+          <div class="tl-body">
+          <div class="tl-desc">James misses 3 days without notification or documentation. Attendance reconciliation flags the gap. HR creates Absence Case and contacts James. He provides a family emergency explanation and submits supporting documentation.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Justification accepted → absence excused. Unexcused day counter: <strong>0</strong>. No threshold alert triggered.</span>
+          </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-rose">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Apr – May 2023</div>
+          <div class="tl-title">Second absence episode — 8 days, justification rejected</div>
+          <span class="tl-module mod-rose">Absence Case</span>
+          <div class="tl-desc">James misses 8 more days across two weeks. No documentation provided. HR contacts him twice — no response in the first 5 days. Justification eventually submitted but deemed insufficient by HR Manager.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Justification rejected → unexcused day counter: <strong>8 days</strong>. Threshold alert fires (approaching 10-day mark) — HR alerted to take action.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-rose">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">May 2023</div>
+          <div class="tl-title">Employee Warning Notice issued</div>
+          <span class="tl-module mod-rose">Employee Warning Notice</span>&nbsp;
+          <span class="tl-module mod-rose">Disciplinary Procedure</span>
+          <div class="tl-desc">HR initiates a Disciplinary Procedure. Investigation Record created. Employee Warning Notice issued to James: 8 unexcused absences constitute a serious breach. James is given 5 working days to respond in writing.</div>
+          <div class="note note-amber">James responds in writing acknowledging the absences and commits to improved attendance. Disciplinary Decision Log: Outcome = <strong>Written Warning</strong> (not termination — 8 days below the Art. 80 threshold of 20).</div>
+        </div>
+      </div>
+
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Aug 2023</div>
+          <div class="tl-title">Loan fully recovered</div>
+          <span class="tl-module mod-muted">Employee Loan</span>
+          <div class="tl-desc">Final installment of SAR 1,250 deducted in August payroll. Loan status automatically updated to <strong>Settled</strong>. Outstanding balance: SAR 0.</div>
+        </div>
+      </div>
+
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Nov 2023</div>
+          <div class="tl-title">2nd Iqama renewal alert — 90 days before Feb 2024 expiry</div>
+          <span class="tl-module mod-muted">Work Permit / Iqama</span>
+          <div class="tl-desc">PRO receives automatic alert. Iqama renewed via Absher. Record updated: new expiry 1 Feb 2025.</div>
+        </div>
+      </div>
+
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Oct 2023</div>
+          <div class="tl-title">Performance review — score 2.8 / 5</div>
+          <span class="tl-module mod-muted">Performance Review</span>
+          <div class="tl-desc">Attendance issues weigh on the review. KPI score 3.1, conduct score 2.0 following the warning. No merit increase. Improvement plan set for Q1 2024. Manager notes low team morale impact from James's absences.</div>
+        </div>
+      </div>
+
+      <!-- 2024 EXIT -->
+      <div class="tl-event">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-year-marker">2024</div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-rose">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">1 Mar 2024</div>
+          <div class="tl-title">James submits resignation — 30-day notice</div>
+          <span class="tl-module mod-rose">Termination Notice</span>
+          <div class="tl-desc">James submits a resignation letter citing a better opportunity in Canada. HR creates Termination Notice, type: Resignation. Notice period from contract: 30 days → last working day 31 Mar 2024.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">On submit: <strong>EOSB record auto-created</strong> · <strong>Exit Interview initiated</strong> · <strong>Exit Clearance checklist started</strong> — all three documents created simultaneously.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-rose">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Mar 2024</div>
+          <div class="tl-title">Exit Clearance completed</div>
+          <span class="tl-module mod-rose">Exit Clearance</span>
+          <div class="tl-desc">IT returns laptop and access card. System accounts (ERP, email, VPN) disabled. Petty cash reconciled. No outstanding equipment. Loan balance: SAR 0 (fully settled Aug 2023). Exit Clearance status: <strong>Completed</strong>.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Exit Clearance completion <strong>unblocks the EOSB payment</strong>.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-rose">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Mar 2024</div>
+          <div class="tl-title">Exit Interview conducted</div>
+          <span class="tl-module mod-rose">Exit Interview</span>
+          <div class="tl-desc">James cites better career opportunity, no complaints about the company. Would consider rejoining: Yes. Departure reason: External opportunity. Interviewer notes filed.</div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-final">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">31 Mar 2024</div>
+          <div class="tl-title">EOSB calculated &amp; paid — Day 4 (within 5-day SLA)</div>
+          <span class="tl-module mod-rose">End of Service Benefit</span>&nbsp;
+          <span class="tl-module mod-rose">Annual Leave Disbursement</span>
+
+          <div class="summary-box" style="margin-top:12px;">
+            <div class="summary-box-title">Final Settlement — James Mathew (EMP-0156)</div>
+            <div class="summary-row">
+              <span class="summary-row-label">Service period</span>
+              <span class="summary-row-value">1 Feb 2022 → 31 Mar 2024 = 2 years, 2 months (2.17 yrs)</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-row-label">EOSB rate (resignation, 2–5 yrs)</span>
+              <span class="summary-row-value">⅓ month per year</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-row-label">EOSB base</span>
+              <span class="summary-row-value add">+ SAR 7,957 &nbsp;(SAR 11,000 × ⅓ × 2.17)</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-row-label">Annual Leave Disbursement (8 unused days)</span>
+              <span class="summary-row-value add">+ SAR 2,933 &nbsp;(8 × SAR 11,000 ÷ 30)</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-row-label">Employee Loan outstanding</span>
+              <span class="summary-row-value">SAR 0 &nbsp;(fully recovered Aug 2023)</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-row-label">Net Final Settlement</span>
+              <span class="summary-row-value net">SAR 10,890</span>
+            </div>
+          </div>
+
+          <div class="tl-auto" style="margin-top:10px;">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Journal Entry posted: <strong>Dr. EOSB Expense SAR 10,890 / Cr. EOSB Payable SAR 10,890</strong>. Final Settlement SLA tracker monitors the 5-day payment deadline — payment processed Day 4. <strong>SLA met.</strong> Employee status updated to <strong>Left</strong>.</span>
+          </div>
+
+          <div class="note note-amber" style="margin-top:10px;"><strong>Iqama note:</strong> As James has exited employment, HR must cancel his Iqama via Absher within 30 days to avoid continued employer liability for the work permit.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="doc-footer">
+    <div class="footer-brand">HR Suite — Saudi Arabia HR Management System</div>
+    <div class="footer-meta">v1.0 · ERPNext 15 · Frappe Framework · Developed by Enfono</div>
+  </div>
+
+</div>
+</body>
+</html>

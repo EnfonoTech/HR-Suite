@@ -1,6 +1,8 @@
-### Hr Suite
+### HR Suite — Saudi Arabia HR Management System
 
-Hr Suite
+A comprehensive HR management app for Frappe/ERPNext v15, built for the Kingdom of Saudi Arabia. Covers leave management, payroll, disciplinary procedures, employee lifecycle, GOSI, WPS, Nitaqat compliance, and more — fully aligned with KSA Labor Law.
+
+**📖 Documentation (HR Manager Guide):** https://hr-suite-docs.vercel.app
 
 ### Installation
 
