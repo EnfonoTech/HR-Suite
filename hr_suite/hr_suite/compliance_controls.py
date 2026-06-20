@@ -107,7 +107,7 @@ def make_doctype(name, fields, **kwargs):
 		"doctype": "DocType",
 		"name": name,
 		"module": "Hr Suite",
-		"custom": 0,
+		"custom": 1,
 		"engine": "InnoDB",
 		"field_order": [row["fieldname"] for row in fields],
 		"fields": fields,
