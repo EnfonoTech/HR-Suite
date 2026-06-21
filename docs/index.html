@@ -740,7 +740,7 @@ body {
   </nav>
   <div class="topbar-right">
     <span class="topbar-badge">v2.0 · ERPNext 15</span>
-    <span class="topbar-jurisdiction">Kingdom of Saudi Arabia</span>
+    <span class="topbar-jurisdiction">Global · SA · AE · BH · IN · OM</span>
   </div>
 </header>
 
@@ -895,12 +895,12 @@ body {
     <div class="hero">
       <div class="hero-eyebrow">HR Suite · Multi-Country HR Management</div>
       <h1 class="hero-title">Your complete reference<br>for every approval, deadline,<br>and compliance obligation.</h1>
-      <p class="hero-sub">Everything built into HR Suite — from a day's annual leave to an employee's final settlement — follows Saudi Labor Law exactly. This guide tells you which document to open, what the system does for you automatically, and what you must do yourself.</p>
+      <p class="hero-sub">Everything built into HR Suite — from a day's annual leave to an employee's final settlement — follows each employee's local labor law automatically. This guide tells you which document to open, what the system does for you automatically, and what you must do yourself.</p>
       <div class="hero-stats">
         <div class="stat"><span class="stat-num">50+</span><span class="stat-label">Document types</span></div>
         <div class="stat"><span class="stat-num">21</span><span class="stat-label">Scheduled alerts</span></div>
         <div class="stat"><span class="stat-num">16</span><span class="stat-label">Built-in reports</span></div>
-        <div class="stat"><span class="stat-num">KSA</span><span class="stat-label">Jurisdiction</span></div>
+        <div class="stat"><span class="stat-num">5</span><span class="stat-label">Countries supported</span></div>
       </div>
     </div>
 
@@ -918,22 +918,22 @@ body {
         <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
           <div class="module-cat-bar cat-leave"></div>
           <div class="module-card-info">
-            <div class="module-name">Saudi Annual Leave</div>
-            <div class="module-tagline">Paid annual leave per Article 109 — 21 days/year for first 5 years, 30 days/year thereafter. Approval flows from manager to HR.</div>
+            <div class="module-name">Annual Leave</div>
+            <div class="module-tagline">Paid annual leave — entitlement days set per country in Country Config (e.g. 21/30 days for SA, 30 days for AE). Approval flows from manager to HR.</div>
             <div class="module-badges">
               <span class="badge badge-green">Auto-deducts balance</span>
               <span class="badge badge-green">Feeds payroll</span>
-              <span class="badge badge-muted">Art. 109</span>
+              <span class="badge badge-muted">Country-specific entitlement</span>
             </div>
           </div>
           <div class="module-toggle">›</div>
         </div>
         <div class="module-body">
-          <div class="law-note"><strong>Legal basis:</strong> Saudi Labor Law Article 109. Employees earn 21 days/year (years 1–5) or 30 days/year (year 6+). Unused leave must be paid out on exit.</div>
+          <div class="law-note"><strong>Country-aware entitlement:</strong> Days are resolved from the employee's Country Config — SA: 21/30 days (Art. 109), AE: 30 days (Art. 75), BH: 30 days, IN: 12 days, OM: 15/30 days (Art. 60). Unused leave is paid out on exit per local law.</div>
 
           <div class="wf-label">Approval workflow</div>
           <div class="workflow">
-            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Employee opens <strong>Saudi Annual Leave → New</strong> and submits request</div></div>
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Employee opens <strong>Annual Leave → New</strong> and submits request</div></div>
             <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Direct manager receives in-app notification → <strong>Approve / Reject / Return</strong></div></div>
             <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">HR Manager gives final approval</div></div>
             <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">Status: <strong>Approved</strong> — leave balance decremented automatically<small>ERPNext Leave Allocation updated · Payroll picks up dates at next salary run</small></div></div>
@@ -943,7 +943,7 @@ body {
           <ul>
             <li>Calculates remaining balance and validates entitlement before allowing submission</li>
             <li>Shows manager any overlapping team leaves before they approve</li>
-            <li>Passes approved leave dates directly to Saudi Monthly Payroll — no manual entry</li>
+            <li>Passes approved leave dates directly to Monthly Payroll — no manual entry</li>
             <li>Employees can only see their own records; HR sees all</li>
           </ul>
         </div>
@@ -954,18 +954,18 @@ body {
         <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
           <div class="module-cat-bar cat-leave"></div>
           <div class="module-card-info">
-            <div class="module-name">Saudi Sick Leave</div>
-            <div class="module-tagline">Multi-tier sick leave: 30 days full pay → 60 days half pay → 30 days no pay. System applies correct tier automatically.</div>
+            <div class="module-name">Sick Leave</div>
+            <div class="module-tagline">Multi-tier sick leave with pay tiers resolved from Country Config. System applies the correct tier and pay rate automatically per country.</div>
             <div class="module-badges">
               <span class="badge badge-green">Auto-tiers pay</span>
-              <span class="badge badge-amber">Threshold alerts at 30 / 90 / 120 days</span>
-              <span class="badge badge-muted">Art. 117</span>
+              <span class="badge badge-amber">Threshold alerts</span>
+              <span class="badge badge-muted">Country-specific tiers</span>
             </div>
           </div>
           <div class="module-toggle">›</div>
         </div>
         <div class="module-body">
-          <div class="law-note"><strong>Legal basis:</strong> Article 117 — up to 120 days/year total: first 30 full pay, next 60 half pay, final 30 no pay.</div>
+          <div class="law-note"><strong>Country-specific tiers:</strong> SA (Art. 117): 30 full → 60 half → 30 no-pay. AE: 15 full → 30 half → 45 no-pay. IN: 10 full days. Tiers and pay rates are read from Country Config — no hardcoding.</div>
 
           <div class="two-col">
             <div class="info-block">
@@ -1118,8 +1118,8 @@ body {
         <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
           <div class="module-cat-bar cat-payroll"></div>
           <div class="module-card-info">
-            <div class="module-name">Saudi Monthly Payroll</div>
-            <div class="module-tagline">The master payroll document for an entire payroll cycle. Processes all employees simultaneously with Saudi-specific components — GOSI, housing, transport, WPS.</div>
+            <div class="module-name">Monthly Payroll</div>
+            <div class="module-tagline">The master payroll document for an entire payroll cycle. Processes all employees simultaneously — statutory deductions, allowances, and WPS/bank transfer format resolved per country.</div>
             <div class="module-badges">
               <span class="badge badge-green">Bulk salary slips</span>
               <span class="badge badge-green">Auto-WPS link</span>
@@ -1131,7 +1131,7 @@ body {
         <div class="module-body">
           <div class="wf-label">Monthly payroll cycle</div>
           <div class="workflow">
-            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Open <strong>Saudi Monthly Payroll → New</strong>. Select Month and Company. Save.</div></div>
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Open <strong>Monthly Payroll → New</strong>. Select Month and Company. Save.</div></div>
             <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">All active employees auto-populated with base salary, allowances, and pending deductions<small>Includes: GOSI deduction, loan installments, penalties, sick leave half-pay, approved adjustments</small></div></div>
             <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Review each employee line — adjust if mid-month salary change (system pro-rates)</div></div>
             <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Submit → ERPNext Salary Slips created for all employees. Accounting entries posted.</div></div>
@@ -1145,7 +1145,7 @@ body {
               <tr><td>GOSI (employee share)</td><td>GOSI Contribution record</td><td>None — auto-applied</td></tr>
               <tr><td>Loan installments</td><td>Employee Loan schedule</td><td>None — auto-applied</td></tr>
               <tr><td>Penalties</td><td>Employee Penalty (submitted)</td><td>None — auto-applied</td></tr>
-              <tr><td>Sick leave half-pay</td><td>Saudi Sick Leave records</td><td>None — auto-applied</td></tr>
+              <tr><td>Sick leave half-pay</td><td>Sick Leave records</td><td>None — auto-applied</td></tr>
               <tr><td>Overtime / bonuses</td><td>Salary Adjustment records</td><td>Approve Salary Adjustment first</td></tr>
             </tbody>
           </table>
@@ -1227,7 +1227,7 @@ body {
           <div class="risk-note"><strong>Compliance risk:</strong> Late WPS submission can result in fines up to SAR 10,000 per violation and can block new visa applications. The system sends daily alerts if the 7-day window approaches without submission.</div>
           <div class="wf-label">WPS process</div>
           <div class="workflow">
-            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Saudi Monthly Payroll submitted → WPS Submission document auto-created and linked</div></div>
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Monthly Payroll submitted → WPS Submission document auto-created and linked</div></div>
             <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Export SIF (Salary Information File) from the WPS Submission record</div></div>
             <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Upload SIF to your bank's WPS portal</div></div>
             <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">Update WPS Submission status to <strong>Submitted</strong> — daily alerts stop</div></div>
@@ -1292,7 +1292,7 @@ body {
           <div class="workflow">
             <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Employee requests loan → HR Manager approves → Finance approves</div></div>
             <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Loan disbursed → Journal Entry created (Dr. Employee Loan Receivable / Cr. Cash)</div></div>
-            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Monthly installment schedule auto-generated — each installment auto-deducted in Saudi Monthly Payroll</div></div>
+            <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Monthly installment schedule auto-generated — each installment auto-deducted in Monthly Payroll</div></div>
             <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">Fully recovered → status: <strong>Settled</strong>. If employee exits early, balance deducted from EOSB.</div></div>
           </div>
           <p>Track outstanding balances via the <strong>Outstanding Employee Loans</strong> report.</p>
@@ -1330,7 +1330,7 @@ body {
             <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">HR creates <strong>Employee Penalty</strong> — selects employee, Penalty Type, and violation date</div></div>
             <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">System fetches rate from Penalty Type and calculates amount automatically</div></div>
             <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Submit — penalty flagged for next payroll. Accounting entry queued.</div></div>
-            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">Next <strong>Saudi Monthly Payroll</strong> auto-deducts the penalty amount from employee's line<small>Cancelling the penalty creates a reversal entry and removes the payroll deduction</small></div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">Next <strong>Monthly Payroll</strong> auto-deducts the penalty amount from employee's line<small>Cancelling the penalty creates a reversal entry and removes the payroll deduction</small></div></div>
           </div>
         </div>
       </div>
@@ -1444,8 +1444,8 @@ body {
         <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
           <div class="module-cat-bar cat-lifecycle"></div>
           <div class="module-card-info">
-            <div class="module-name">Saudi Employment Contract</div>
-            <div class="module-tagline">Legally required contract per Saudi Labor Law. Captures all mandatory fields: contract type, probation period, salary components, notice period. Expiry alerts sent at 30 and 60 days.</div>
+            <div class="module-name">Country Employment Contract</div>
+            <div class="module-tagline">Legally required contract per local labor law. Captures all mandatory fields: contract type, probation period, salary components, notice period. Expiry alerts sent at 30 and 60 days.</div>
             <div class="module-badges">
               <span class="badge badge-amber">Expiry alerts at 60 and 30 days</span>
               <span class="badge badge-muted">Definite or Indefinite term</span>
@@ -1463,7 +1463,7 @@ body {
               <tr><td>Notice period</td><td>Used to calculate last working day when Termination Notice is created.</td></tr>
             </tbody>
           </table>
-          <div class="deadline-note"><strong>Definite contract alert:</strong> 60 days before expiry the system reminds you to renew or issue a Termination Notice. Missing this window can create an implied indefinite contract under Saudi law.</div>
+          <div class="deadline-note"><strong>Definite contract alert:</strong> 60 days before expiry the system reminds you to renew or issue a Termination Notice. Missing this window can create an implied indefinite contract under local labor law.</div>
         </div>
       </div>
 
@@ -1487,7 +1487,7 @@ body {
             <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Manager proposes promotion or transfer</div></div>
             <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">HR reviews — Finance confirms budget availability</div></div>
             <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Record approved → ERPNext Employee designation, department, and salary updated</div></div>
-            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">New Saudi Employment Contract (or amendment) issued. Payroll effective from the Effective Date.</div></div>
+            <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text">New Country Employment Contract (or amendment) issued. Payroll effective from the Effective Date.</div></div>
           </div>
         </div>
       </div>
@@ -2016,7 +2016,7 @@ body {
 
           <div class="wf-label">WPS process with Mudad integration</div>
           <div class="workflow">
-            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Run Saudi Monthly Payroll → submit all Salary Slips</div></div>
+            <div class="wf-step"><div class="wf-dot"></div><div class="wf-step-text">Run Monthly Payroll → submit all Salary Slips</div></div>
             <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text">Open Payroll Entry → WPS/Mudad group → <strong>Preview WPS File</strong> — review employee count and totals</div></div>
             <div class="wf-step wf-action"><div class="wf-dot"></div><div class="wf-step-text"><strong>Submit WPS to Mudad</strong> — SIF uploaded; Mudad returns reference number. Record saved in Sync Log.</div></div>
             <div class="wf-step wf-final"><div class="wf-dot"></div><div class="wf-step-text"><strong>Check WPS Status</strong> to confirm Compliant. Finance team has the reference number for records.</div></div>
@@ -2303,7 +2303,7 @@ body {
           <tr><td><span class="role-pill">HR Manager</span></td><td>Full access to all HR Suite documents and reports</td><td>HR Manager, HR Director</td></tr>
           <tr><td><span class="role-pill">HR User</span></td><td>Create/edit leaves, penalties; view payroll (no submit)</td><td>HR Officers, HR Generalists</td></tr>
           <tr><td><span class="role-pill">Leave Approver</span></td><td>Approve or reject leave requests for assigned team</td><td>Department Managers, Team Leads</td></tr>
-          <tr><td><span class="role-pill">Payroll Manager</span></td><td>Saudi Monthly Payroll, GOSI, WPS, EOSB</td><td>Payroll Officer, Finance Manager</td></tr>
+          <tr><td><span class="role-pill">Payroll Manager</span></td><td>Monthly Payroll, GOSI, WPS, EOSB</td><td>Payroll Officer, Finance Manager</td></tr>
           <tr><td><span class="role-pill">Compliance Officer</span></td><td>Labor inspection, regulatory tasks, Nitaqat</td><td>PRO, Compliance Specialist</td></tr>
           <tr><td><span class="role-pill">Employee Self Service</span></td><td>Own leaves, own documents, own ratings only</td><td>All employees</td></tr>
         </tbody>
