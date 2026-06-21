@@ -2,7 +2,7 @@
 tasks.py — Scheduled Tasks for daily alerts.
 """
 import frappe
-from frappe.utils import today, add_days, getdate
+from frappe.utils import today, add_days, flt, get_first_day, get_last_day, getdate
 
 
 DEFAULT_ALERT_MILESTONES = (30, 14, 7, 1, 0)
@@ -427,3 +427,81 @@ def send_training_disclosure_due_alerts():
 		closed_statuses=["Accepted", "Closed"],
 		days_ahead=30,
 	)
+
+
+def allocate_monthly_leave():
+	"""Auto-create HRMS Leave Allocations for the current month for every active employee.
+
+	Reads leave types and annual days from Country Config; prorates to monthly (annual / 12).
+	Skips employees whose country config has no leave_types configured.
+	Skips if an allocation already exists for the same employee + leave_type + period.
+	Runs on the 1st of each month via scheduler_events["monthly"].
+	"""
+	if not frappe.db.get_single_value("Hr Suite Settings", "monthly_leave_allocation_enabled"):
+		return
+
+	from hr_suite.hr_suite.utils import get_employee_work_country, get_country_config
+
+	run_date = getdate(today())
+	from_date = str(get_first_day(run_date))
+	to_date = str(get_last_day(run_date))
+
+	employees = frappe.get_all(
+		"Employee",
+		filters={"status": "Active"},
+		fields=["name", "employee_name", "company", "department"],
+	)
+
+	created = 0
+	for emp in employees:
+		country = get_employee_work_country(emp.name)
+		cfg = get_country_config(country)
+		if not cfg or not cfg.leave_types:
+			continue
+
+		for lt in cfg.leave_types:
+			leave_type_name = (lt.leave_type_name or "").strip()
+			if not leave_type_name:
+				continue
+			# Verify the Leave Type exists in HRMS
+			if not frappe.db.exists("Leave Type", leave_type_name):
+				continue
+
+			annual_days = flt(lt.get("days_per_year") or lt.get("days_below_threshold") or 0)
+			if annual_days <= 0:
+				continue
+
+			monthly_days = round(annual_days / 12, 4)
+
+			# Skip if allocation for this period already exists
+			if frappe.db.exists("Leave Allocation", {
+				"employee": emp.name,
+				"leave_type": leave_type_name,
+				"from_date": from_date,
+				"to_date": to_date,
+				"docstatus": ["<", 2],
+			}):
+				continue
+
+			try:
+				doc = frappe.new_doc("Leave Allocation")
+				doc.employee = emp.name
+				doc.employee_name = emp.employee_name
+				doc.department = emp.department
+				doc.company = emp.company
+				doc.leave_type = leave_type_name
+				doc.from_date = from_date
+				doc.to_date = to_date
+				doc.new_leaves_allocated = monthly_days
+				doc.carry_forward = 0
+				doc.insert(ignore_permissions=True)
+				doc.submit()
+				created += 1
+			except Exception:
+				frappe.log_error(
+					f"Monthly leave allocation failed for {emp.name} / {leave_type_name}",
+					"HR Suite Monthly Leave Allocation",
+				)
+
+	if created:
+		frappe.logger().info(f"HR Suite: created {created} monthly Leave Allocation records for {from_date} – {to_date}")

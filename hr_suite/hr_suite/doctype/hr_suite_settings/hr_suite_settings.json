@@ -23,6 +23,9 @@
   "sick_leave_full_pay_days",
   "sick_leave_partial_pay_days",
   "sick_leave_partial_pay_percentage",
+  "monthly_leave_alloc_section",
+  "monthly_leave_allocation_enabled",
+  "monthly_leave_alloc_help",
   "contract_section",
   "probation_period_days",
   "max_probation_period_days",
@@ -194,6 +197,23 @@
    "fieldname": "sick_leave_partial_pay_percentage",
    "fieldtype": "Percent",
    "label": "Partial Pay %"
+  },
+  {
+   "fieldname": "monthly_leave_alloc_section",
+   "fieldtype": "Section Break",
+   "label": "Monthly Leave Allocation"
+  },
+  {
+   "default": "0",
+   "fieldname": "monthly_leave_allocation_enabled",
+   "fieldtype": "Check",
+   "label": "Enable Monthly Leave Allocation",
+   "description": "When enabled, a Leave Allocation is auto-created for each active employee on the 1st of every month, prorating the annual entitlement from Country Config (annual_days / 12)."
+  },
+  {
+   "fieldname": "monthly_leave_alloc_help",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted\" style=\"font-size:0.85rem;\">Leave types and annual days are read from the Country Config for each employee's work country. A Leave Allocation (docstatus=Submitted) is created per employee per leave type. Existing allocations for the same period are skipped.</p>"
   },
   {
    "fieldname": "contract_section",

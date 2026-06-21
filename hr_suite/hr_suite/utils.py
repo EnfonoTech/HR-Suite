@@ -464,12 +464,26 @@ _COUNTRY_NAME_TO_CODE = {
 
 
 def country_name_to_code(country_name: str) -> str:
-    """Convert a Frappe country name (e.g. 'Saudi Arabia') to an ISO-2 code."""
-    key = (country_name or "").strip().lower()
+    """Convert a Frappe country name (e.g. 'Saudi Arabia') to an ISO-2 code.
+
+    Primary lookup: Country.code field in Frappe's Country DocType.
+    Fallback: static map for offline/test environments.
+    """
+    if not country_name:
+        return ""
+    key = country_name.strip()
     # Direct ISO-2 pass-through
-    if len(key) == 2 and key.upper() in ("SA", "AE", "BH", "IN", "OM"):
+    if len(key) == 2 and key.upper() in ("SA", "AE", "BH", "IN", "OM", "QA", "KW", "JO", "EG", "GB", "US"):
         return key.upper()
-    return _COUNTRY_NAME_TO_CODE.get(key, "")
+    # Use Frappe's Country DocType code field — works for any country, not just our 5
+    try:
+        code = frappe.db.get_value("Country", key, "code") or ""
+        if code:
+            return code.upper()
+    except Exception:
+        pass
+    # Fallback to static map
+    return _COUNTRY_NAME_TO_CODE.get(key.lower(), "")
 
 
 @frappe.whitelist()

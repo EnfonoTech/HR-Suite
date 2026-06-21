@@ -43,6 +43,7 @@ scheduler_events = {
 	],
 	"monthly": [
 		"hr_suite.hr_suite.tasks.send_gosi_due_alerts",
+		"hr_suite.hr_suite.tasks.allocate_monthly_leave",
 		"hr_suite.hr_suite.integrations.qiwa.sync_nitaqat_monthly",
 		"hr_suite.hr_suite.integrations.mudad.sync_wps_monthly",
 	],
