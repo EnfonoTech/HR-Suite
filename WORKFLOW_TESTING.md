@@ -283,6 +283,89 @@ Expected: `get_establishment_status()` called; sync log entry created.
 
 ---
 
+## Test 14 — Global Compliance: UAE Employee (Gratuity + GPSSA)
+
+**Setup:** Company country = United Arab Emirates. Employee work_country = AE. Active Country Employment Contract with basic = AED 15,000.
+
+| Step | Action | Expected Result |
+|---|---|---|
+| 1 | Open Employee form | Button group "UAE Statutory" visible: GPSSA Contribution, DEWS/Gratuity, Work Permit, Settlement Breakdown |
+| 2 | Click "Settlement Breakdown" → Termination: Resignation, 6 years service | Modal: Formula = Gratuity-AE, Gross = 21 days × 6 yrs × daily rate, Factor = 2/3 (5yr+ resignation), Net ≠ 0 |
+| 3 | Submit Leave Application (Annual Leave, 5 days) | Validate hook fires; if Country Config has AE annual leave type, warns if type doesn't match |
+| 4 | Submit Salary Slip | GPSSA deduction injected at national_employee_rate from AE Country Config |
+| 5 | Submit Payroll Entry (company = AE company) | Statutory Contribution record auto-created for the payroll month (scheme = GPSSA) |
+| 6 | Submit Employee Separation | End of Service Benefit auto-created; termination_date = Employee.relieving_date; formula = Gratuity-AE |
+
+**Pass criteria:** No Saudi-specific buttons visible. Settlement uses UAE formula. GPSSA deduction on salary slip.
+
+---
+
+## Test 15 — Global Compliance: India Employee (EPF/ESI)
+
+**Setup:** Company country = India. Employee work_country = IN. Basic salary = ₹18,000.
+
+| Step | Action | Expected Result |
+|---|---|---|
+| 1 | Open Employee form | Button group "IN Statutory": EPF/ESI Contribution, Professional Tax, Gratuity Estimate |
+| 2 | Click "Gratuity Estimate" → 3 years service → Resignation | Modal: Formula = Gratuity-IN; result = 0 (not yet 5 years eligible) |
+| 3 | Submit Salary Slip | EPF deduction = ₹1,800 (12% of ₹15,000 wage ceiling); ESI deduction = ₹135 (0.75% of ₹18,000 < ₹21,000) |
+| 4 | Submit Payroll Entry | EPF ESI Contribution record auto-created for the payroll month |
+| 5 | Submit Leave Application (Sick Leave, 35 days this year) | Warn: "partial pay" at 75% — employee is past 30-day full-pay threshold |
+
+**Pass criteria:** No Saudi buttons. EPF/ESI amounts correct. Gratuity correctly shows 0 for <5 years.
+
+---
+
+## Test 16 — Leave Application Country Validation
+
+**Setup:** Any employee with an active Country Config that has leave_types defined.
+
+| Step | Action | Expected Result |
+|---|---|---|
+| 1 | Submit Leave Application with leave type not in Country Config | Orange alert: "Leave type X is not in the Country Config for [Country]" — submission NOT blocked |
+| 2 | Submit Leave Application with leave type matching Country Config | No warning |
+| 3 | Employee has 35 sick days already submitted this year; submit new Sick Leave | Orange alert: "additional sick leave will be unpaid" |
+| 4 | Employee has 20 sick days already this year; submit new Sick Leave | Blue alert: "this leave will be at Partial Pay 75%" |
+
+---
+
+## Test 17 — Payroll Entry → Statutory Contribution Auto-Creation
+
+| Step | Action | Expected Result |
+|---|---|---|
+| 1 | SA company: Submit Payroll Entry for May 2026 | GOSI Contribution record created: month=May, year=2026, company=X, payment_status=Pending |
+| 2 | Submit same SA Payroll Entry again (cancel + resubmit) | No duplicate GOSI Contribution created (idempotent — year compared as Int) |
+| 3 | IN company: Submit Payroll Entry | EPF ESI Contribution record created, not GOSI |
+| 4 | AE company: Submit Payroll Entry | Statutory Contribution record created with country_code=AE, scheme=GPSSA |
+
+---
+
+## Test 18 — Employee Separation → EOSB Auto-Creation
+
+**Setup:** Employee.relieving_date set. Employee.reason_for_leaving = "Resigned".
+
+| Step | Action | Expected Result |
+|---|---|---|
+| 1 | Submit HRMS Employee Separation | EOSB auto-created; termination_date = Employee.relieving_date (not today) |
+| 2 | EOSB calculation_notes field | Contains country code and formula name |
+| 3 | Try to submit Separation twice | Second submit skips EOSB creation (existing Draft record found) |
+| 4 | Employee.reason_for_leaving = "Terminated" | EOSB factor = 1.0 (full entitlement) |
+
+---
+
+## Test 19 — Minimum Wage Guard (Salary Structure Assignment)
+
+**Setup:** Country Config for SA has `minimum_wage = 4000` (SAR).
+
+| Step | Action | Expected Result |
+|---|---|---|
+| 1 | Submit Salary Structure Assignment with base = 3500 | Frappe.throw: "Below Minimum Wage" — submission blocked |
+| 2 | Submit with base = 0 | Also blocked (zero salary below any minimum wage) |
+| 3 | Submit with base = 4500 | Passes without error |
+| 4 | Country Config has no minimum_wage (0) | No minimum wage check, all salaries pass |
+
+---
+
 ## Scheduler Task Tests
 
 Run these manually to verify all scheduled tasks work:
@@ -320,10 +403,30 @@ Employee Onboarding (all tasks checked, submitted)
 Saudi Employment Contract (submitted)
     └─► Employee: GOSI salary, Employee Type, Designation synced  [auto]
 
+Leave Application (validate)
+    └─► Country Config leave type check  [warn only]
+    └─► Sick leave pay tier warning  [warn only]
+
+Leave Allocation (submitted)
+    └─► Country Config entitlement comparison  [warn if mismatch]
+
+Salary Structure Assignment (submitted)
+    └─► Minimum wage check vs Country Config  [blocks if below]
+
+Salary Slip (submitted)
+    └─► Statutory deduction injected per country (GOSI/GPSSA/SIO/PASI/EPF+ESI)
+
+Payroll Entry (submitted)
+    └─► GOSI Contribution stub (SA)  [auto]
+    └─► EPF/ESI Contribution stub (IN)  [auto]
+    └─► Statutory Contribution stub (AE/BH/OM)  [auto]
+
+HRMS Employee Separation (submitted)
+    └─► End of Service Benefit (draft, country-formula calculated)  [auto]
+
 Termination Notice (submitted)
     └─► Exit Interview (draft)  [auto]
     └─► Exit Clearance (draft)  [auto]
-    └─► End of Service Benefit (draft, calculated)  [auto]
 
 EOSB (submitted)
     └─► Employee status = "Left"  [auto]

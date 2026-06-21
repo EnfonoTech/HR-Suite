@@ -414,11 +414,41 @@ HR Suite hooks into Frappe HRMS standard events automatically via `doc_events` i
 |---|---|---|
 | `Job Offer → on_submit` | Creates Employee | `work_country` from Job Opening `custom_work_country` → branch keyword → Company.country |
 | `Employee → after_insert` | Seeds leave allocations | Calls `seed_country_leave_types()` with Country Config |
-| `Salary Slip → before_submit` | Injects deductions | GOSI (SA/BH/OM), EPF+ESI (IN) as Salary Components |
-| `Appraisal → on_submit` | Creates Staff Rating | Maps `total_score` to Staff Rating record |
-| `Employee.status = "Left"` | Triggers exit workflow | Auto-creates Exit Clearance + Final Settlement SLA |
+| `Employee → on_update` (status=Left) | Triggers exit workflow | Auto-creates Exit Clearance + Final Settlement SLA |
+| `Salary Slip → before_submit` | Injects statutory deductions | GOSI (SA), GPSSA/SIO/PASI (AE/BH/OM), EPF+ESI (IN) via Country Config rates |
+| `Appraisal → on_submit` | Creates Staff Rating | Maps `total_score` to Staff Rating for EOSB multiplier |
+| `Leave Application → validate` | Country leave validation | Warns if leave type not in Country Config; warns on sick-pay tier exhaustion |
+| `Leave Allocation → on_submit` | Entitlement check | Compares allocated days against Country Config leave entitlement — warns on mismatch |
+| `Salary Structure Assignment → on_submit` | Minimum wage check | Blocks submission if base salary < `minimum_wage` in Country Config |
+| `Payroll Entry → on_submit` | Statutory contribution stub | Auto-creates GOSI Contribution (SA), EPF/ESI Contribution (IN), or Statutory Contribution (AE/BH/OM) |
+| `Employee Separation → on_submit` | EOSB auto-calculation | Reads `reason_for_leaving` + `relieving_date` from Employee; runs `calculate_settlement()` for the country; creates End of Service Benefit record |
 
 Salary Components (GOSI, EPF, ESI, SIO, PASI) are created automatically in Frappe HRMS if not present.
+
+### Country Resolution Chain
+
+Every hook resolves the employee's country via a 4-step chain (highest priority first):
+
+1. `Employee.work_country` custom field (explicit HR override)
+2. Active `Country Employment Contract.work_country`
+3. `Employee.company → Company.country` (mapped to ISO-2 code)
+4. `Hr Suite Settings.default_work_country` (global fallback)
+
+This means setting `Company.country = "Saudi Arabia"` is enough for SA compliance — no per-employee configuration needed.
+
+### Salary Slip Deduction Injection
+
+When a Salary Slip is submitted, HR Suite injects the correct statutory deduction component automatically:
+
+| Country | Scheme | Employee Rate | Employer Rate | Ceiling |
+|---|---|---|---|---|
+| SA | GOSI | 10% (national) / 0% (expat) | 12% / 2% | Per Country Config |
+| AE | GPSSA or DEWS | Per Country Config | Per Country Config | Per Country Config |
+| BH | SIO | Per Country Config | Per Country Config | Per Country Config |
+| OM | PASI | Per Country Config | Per Country Config | Per Country Config |
+| IN | EPF + ESI | 12% + 0.75% | 12% + 3.25% | ₹15,000 / ₹21,000 |
+
+Rates are read from Country Config — change the config to change all future slips.
 
 ---
 
