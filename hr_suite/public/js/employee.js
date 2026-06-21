@@ -345,16 +345,22 @@ function _hr_suite_gosi_buttons(frm, emp, enabled) {
 function _hr_suite_gosi_estimate(frm) {
 	// Fetch GOSI rates from Hr Suite Settings and basic from active contract
 	Promise.all([
-		frappe.db.get_single_value("Hr Suite Settings", "gosi_employee_rate"),
-		frappe.db.get_single_value("Hr Suite Settings", "gosi_employer_rate"),
+		frappe.db.get_value("Hr Suite Settings", null, [
+			"gosi_saudi_employee_rate", "gosi_saudi_employer_rate",
+			"gosi_non_saudi_employee_rate", "gosi_non_saudi_employer_rate",
+		]),
 		frappe.db.get_list("Country Employment Contract", {
 			filters: { employee: frm.doc.name, contract_status: "Active" },
 			fields: ["basic_salary", "currency"],
 			limit: 1,
 		}),
-	]).then(function ([empRate, emplRate, contracts]) {
-		empRate = flt(empRate) || 9.75;
-		emplRate = flt(emplRate) || 12.5;
+	]).then(function ([ratesResp, contracts]) {
+		const rates = (ratesResp && ratesResp.message) ? ratesResp.message : {};
+		const isNational = (frm.doc.nationality || "").toLowerCase().includes("saudi");
+		const empRate  = isNational ? (flt(rates.gosi_saudi_employee_rate) || 9.75)
+		                            : (flt(rates.gosi_non_saudi_employee_rate) || 0);
+		const emplRate = isNational ? (flt(rates.gosi_saudi_employer_rate) || 12.5)
+		                            : (flt(rates.gosi_non_saudi_employer_rate) || 0);
 
 		let basic = 0, currency = "SAR";
 		if (contracts && contracts.length) {
@@ -369,32 +375,30 @@ function _hr_suite_gosi_estimate(frm) {
 				limit: 1,
 			}).then(function (rows) {
 				basic = rows && rows.length ? flt(rows[0].base) : 0;
-				_show_gosi_estimate_dialog(frm, basic, currency, empRate, emplRate);
+				_show_gosi_estimate_dialog(frm, basic, currency, empRate, emplRate, isNational);
 			});
 			return;
 		}
-		_show_gosi_estimate_dialog(frm, basic, currency, empRate, emplRate);
+		_show_gosi_estimate_dialog(frm, basic, currency, empRate, emplRate, isNational);
 	});
 }
 
-function _show_gosi_estimate_dialog(frm, basic, currency, empRate, emplRate) {
+function _show_gosi_estimate_dialog(frm, basic, currency, empRate, emplRate, isNational) {
 	const fmt = (amt) => frappe.format(amt, { fieldtype: "Currency", currency: currency });
 	const ceiling = 45000;
 	const base = Math.min(basic, ceiling);
 
-	const empAmt = Math.round(base * empRate / 100 * 100) / 100;
+	const empAmt  = Math.round(base * empRate  / 100 * 100) / 100;
 	const emplAmt = Math.round(base * emplRate / 100 * 100) / 100;
-	const injuryAmt = Math.round(base * 2 / 100 * 100) / 100;  // 2% work injury
-	const total = empAmt + emplAmt + injuryAmt;
+	const injuryAmt = Math.round(base * 2 / 100 * 100) / 100;
 
-	const isNational = (frm.doc.nationality || "").toLowerCase().includes("saudi");
 	const expatNote = isNational
 		? `<small class="text-muted">${__("Saudi national — both employee and employer contributions apply.")}</small>`
 		: `<small class="text-muted">${__("Expatriate — employer pays 2% work injury only. Employee contribution: 0.")}</small>`;
 
-	const effEmpAmt = isNational ? empAmt : 0;
+	const effEmpAmt  = isNational ? empAmt  : 0;
 	const effEmplAmt = isNational ? emplAmt : 0;
-	const effTotal = effEmpAmt + effEmplAmt + injuryAmt;
+	const effTotal   = effEmpAmt + effEmplAmt + injuryAmt;
 
 	frappe.msgprint({
 		title: __("GOSI Monthly Estimate"),
