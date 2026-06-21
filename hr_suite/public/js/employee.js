@@ -43,7 +43,7 @@ function _hr_suite_common_buttons(frm, country) {
 	}, __("HR Suite"));
 
 	frm.add_custom_button(__("Leave Balance"), function () {
-		frappe.set_route("List", "Annual Leave", { employee: frm.doc.name });
+		frappe.set_route("List", "Leave Allocation", { employee: frm.doc.name });
 	}, __("HR Suite"));
 
 	frm.add_custom_button(__("Settlement Estimate"), function () {
@@ -125,209 +125,218 @@ function _hr_suite_common_buttons(frm, country) {
 function _hr_suite_sa_buttons(frm) {
 	const emp = frm.doc.name;
 
-	// ── Muqeem (MOI) ──
-	frappe.db.get_single_value("Hr Suite Settings", "muqeem_enabled").then(enabled => {
-		if (!enabled) return;
-
-		frm.add_custom_button(__("Verify Iqama"), function () {
-			frappe.call({
-				method: "hr_suite.hr_suite.integrations.muqeem.verify_iqama",
-				args: { employee: emp },
-				freeze: true,
-				freeze_message: __("Checking Muqeem…"),
-				callback(r) {
-					if (r.exc) return;
-					const d = r.message || {};
-					frappe.msgprint({
-						title: __("Iqama Status — Muqeem"),
-						message: `<b>${__("Status")}:</b> ${d.status || "—"}<br>
-							<b>${__("Expiry")}:</b> ${d.expiry_date || "—"}<br>
-							<b>${__("Nationality")}:</b> ${d.nationality || "—"}`,
-						indicator: d.status === "Valid" ? "green" : "red",
-					});
-					frm.reload_doc();
-				},
-			});
-		}, __("Muqeem"));
-
-		frm.add_custom_button(__("Exit / Re-entry Status"), function () {
-			frappe.call({
-				method: "hr_suite.hr_suite.integrations.muqeem.get_exit_reentry",
-				args: { employee: emp },
-				freeze: true,
-				freeze_message: __("Checking Muqeem…"),
-				callback(r) {
-					if (r.exc) return;
-					const d = r.message || {};
-					frappe.msgprint({
-						title: __("Exit / Re-entry Status"),
-						message: `<b>${__("Status")}:</b> ${d.status || "—"}<br>
-							<b>${__("Visa Type")}:</b> ${d.visa_type || "—"}<br>
-							<b>${__("Expiry")}:</b> ${d.expiry_date || "—"}`,
-						indicator: "blue",
-					});
-				},
-			});
-		}, __("Muqeem"));
-
-		frm.add_custom_button(__("Initiate Final Exit"), function () {
-			frappe.confirm(
-				__("Submit a Final Exit request to Muqeem for this employee?"),
-				function () {
-					frappe.call({
-						method: "hr_suite.hr_suite.integrations.muqeem.initiate_final_exit",
-						args: { employee: emp },
-						freeze: true,
-						freeze_message: __("Submitting to Muqeem…"),
-						callback(r) {
-							if (r.exc) return;
-							frappe.show_alert({ message: __("Final exit submitted to Muqeem."), indicator: "green" });
-						},
-					});
-				}
-			);
-		}, __("Muqeem"));
-
-		frm.add_custom_button(__("Sync Log"), function () {
-			frappe.set_route("List", "Government Portal Sync Log", { employee: emp, portal: "Muqeem" });
-		}, __("Muqeem"));
+	// Batch all three portal flags in one request
+	frappe.db.get_value(
+		"Hr Suite Settings",
+		null,
+		["muqeem_enabled", "qiwa_enabled", "gosi_api_enabled"]
+	).then(r => {
+		const flags = r.message || {};
+		_hr_suite_muqeem_buttons(frm, emp, flags.muqeem_enabled);
+		_hr_suite_qiwa_buttons(frm, emp, flags.qiwa_enabled);
+		_hr_suite_gosi_buttons(frm, emp, flags.gosi_api_enabled);
 	});
+}
 
-	// ── Qiwa (HRSD) ──
-	frappe.db.get_single_value("Hr Suite Settings", "qiwa_enabled").then(enabled => {
-		if (!enabled) return;
+function _hr_suite_muqeem_buttons(frm, emp, enabled) {
+	if (!enabled) return;
 
-		frm.add_custom_button(__("Verify Qiwa Contract"), function () {
-			frappe.call({
-				method: "hr_suite.hr_suite.integrations.qiwa.verify_contract",
-				args: { employee: emp },
-				freeze: true,
-				freeze_message: __("Checking Qiwa…"),
-				callback(r) {
-					if (r.exc) return;
-					const d = r.message || {};
-					frappe.msgprint({
-						title: __("Qiwa Contract Status"),
-						message: `<b>${__("Status")}:</b> ${d.status || "—"}<br>
-							<b>${__("Contract ID")}:</b> ${d.contract_id || "—"}<br>
-							<b>${__("Valid Until")}:</b> ${d.expiry_date || "—"}`,
-						indicator: d.status === "Active" ? "green" : "orange",
-					});
-					frm.reload_doc();
-				},
-			});
-		}, __("Qiwa"));
+	frm.add_custom_button(__("Verify Iqama"), function () {
+		frappe.call({
+			method: "hr_suite.hr_suite.integrations.muqeem.verify_iqama",
+			args: { employee: emp },
+			freeze: true,
+			freeze_message: __("Checking Muqeem…"),
+			callback(r) {
+				if (r.exc) return;
+				const d = r.message || {};
+				frappe.msgprint({
+					title: __("Iqama Status — Muqeem"),
+					message: `<b>${__("Status")}:</b> ${d.status || "—"}<br>
+						<b>${__("Expiry")}:</b> ${d.expiry_date || "—"}<br>
+						<b>${__("Nationality")}:</b> ${d.nationality || "—"}`,
+					indicator: d.status === "Valid" ? "green" : "red",
+				});
+				frm.reload_doc();
+			},
+		});
+	}, __("Muqeem"));
 
-		frm.add_custom_button(__("Nitaqat Status"), function () {
-			frappe.call({
-				method: "hr_suite.hr_suite.integrations.qiwa.get_nitaqat_status",
-				args: { employee: emp },
-				freeze: true,
-				freeze_message: __("Checking Qiwa…"),
-				callback(r) {
-					if (r.exc) return;
-					const d = r.message || {};
-					frappe.msgprint({
-						title: __("Nitaqat Status"),
-						message: `<b>${__("Band")}:</b> ${d.band || "—"}<br>
-							<b>${__("Saudization %")}:</b> ${d.saudization_pct || "—"}%`,
-						indicator: "blue",
-					});
-				},
-			});
-		}, __("Qiwa"));
+	frm.add_custom_button(__("Exit / Re-entry Status"), function () {
+		frappe.call({
+			method: "hr_suite.hr_suite.integrations.muqeem.get_exit_reentry",
+			args: { employee: emp },
+			freeze: true,
+			freeze_message: __("Checking Muqeem…"),
+			callback(r) {
+				if (r.exc) return;
+				const d = r.message || {};
+				frappe.msgprint({
+					title: __("Exit / Re-entry Status"),
+					message: `<b>${__("Status")}:</b> ${d.status || "—"}<br>
+						<b>${__("Visa Type")}:</b> ${d.visa_type || "—"}<br>
+						<b>${__("Expiry")}:</b> ${d.expiry_date || "—"}`,
+					indicator: "blue",
+				});
+			},
+		});
+	}, __("Muqeem"));
 
-		frm.add_custom_button(__("Sync Log"), function () {
-			frappe.set_route("List", "Government Portal Sync Log", { employee: emp, portal: "Qiwa" });
-		}, __("Qiwa"));
-	});
-
-	// ── GOSI API ──
-	frappe.db.get_single_value("Hr Suite Settings", "gosi_api_enabled").then(enabled => {
-		if (!enabled) return;
-
-		frm.add_custom_button(__("Register with GOSI"), function () {
-			frappe.confirm(
-				__("Register this employee with GOSI? This will submit their details to the GOSI portal."),
-				function () {
-					frappe.call({
-						method: "hr_suite.hr_suite.integrations.gosi_api.register_employee",
-						args: { employee: emp },
-						freeze: true,
-						freeze_message: __("Registering with GOSI…"),
-						callback(r) {
-							if (r.exc) return;
-							frappe.show_alert({
-								message: __(`GOSI registration submitted. Member ID: ${(r.message || {}).member_id || "—"}`),
-								indicator: "green",
-							});
-							frm.reload_doc();
-						},
-					});
-				}
-			);
-		}, __("GOSI"));
-
-		frm.add_custom_button(__("GOSI Member Status"), function () {
-			frappe.call({
-				method: "hr_suite.hr_suite.integrations.gosi_api.get_employee_status",
-				args: { employee: emp },
-				freeze: true,
-				freeze_message: __("Checking GOSI…"),
-				callback(r) {
-					if (r.exc) return;
-					const d = r.message || {};
-					frappe.msgprint({
-						title: __("GOSI Member Status"),
-						message: `<b>${__("Status")}:</b> ${d.status || "—"}<br>
-							<b>${__("Member ID")}:</b> ${d.member_id || "—"}<br>
-							<b>${__("Contribution Base")}:</b> ${d.contribution_base || "—"}`,
-						indicator: d.status === "Active" ? "green" : "orange",
-					});
-				},
-			});
-		}, __("GOSI"));
-
-		frm.add_custom_button(__("Deregister from GOSI"), function () {
-			frappe.prompt(
-				[
-					{
-						fieldname: "exit_date",
-						label: __("Exit Date"),
-						fieldtype: "Date",
-						reqd: 1,
-						default: frappe.datetime.get_today(),
+	frm.add_custom_button(__("Initiate Final Exit"), function () {
+		frappe.confirm(
+			__("Submit a Final Exit request to Muqeem for this employee?"),
+			function () {
+				frappe.call({
+					method: "hr_suite.hr_suite.integrations.muqeem.initiate_final_exit",
+					args: { employee: emp },
+					freeze: true,
+					freeze_message: __("Submitting to Muqeem…"),
+					callback(r) {
+						if (r.exc) return;
+						frappe.show_alert({ message: __("Final exit submitted to Muqeem."), indicator: "green" });
 					},
-					{
-						fieldname: "reason",
-						label: __("Reason"),
-						fieldtype: "Select",
-						options: "Resignation\nTermination\nEnd of Contract\nDeath\nRetirement",
-						reqd: 1,
-					},
-				],
-				function (vals) {
-					frappe.call({
-						method: "hr_suite.hr_suite.integrations.gosi_api.deregister_employee",
-						args: { employee: emp, exit_date: vals.exit_date, reason: vals.reason },
-						freeze: true,
-						freeze_message: __("Deregistering from GOSI…"),
-						callback(r) {
-							if (r.exc) return;
-							frappe.show_alert({ message: __("Employee deregistered from GOSI."), indicator: "green" });
-							frm.reload_doc();
-						},
-					});
-				},
-				__("Deregister from GOSI"),
-				__("Submit")
-			);
-		}, __("GOSI"));
+				});
+			}
+		);
+	}, __("Muqeem"));
 
-		frm.add_custom_button(__("Sync Log"), function () {
-			frappe.set_route("List", "Government Portal Sync Log", { employee: emp, portal: "GOSI" });
-		}, __("GOSI"));
-	});
+	frm.add_custom_button(__("Sync Log"), function () {
+		frappe.set_route("List", "Government Portal Sync Log", { employee: emp, portal: "Muqeem" });
+	}, __("Muqeem"));
+}
+
+function _hr_suite_qiwa_buttons(frm, emp, enabled) {
+	if (!enabled) return;
+
+	frm.add_custom_button(__("Verify Qiwa Contract"), function () {
+		frappe.call({
+			method: "hr_suite.hr_suite.integrations.qiwa.verify_contract",
+			args: { employee: emp },
+			freeze: true,
+			freeze_message: __("Checking Qiwa…"),
+			callback(r) {
+				if (r.exc) return;
+				const d = r.message || {};
+				frappe.msgprint({
+					title: __("Qiwa Contract Status"),
+					message: `<b>${__("Status")}:</b> ${d.status || "—"}<br>
+						<b>${__("Contract ID")}:</b> ${d.contract_id || "—"}<br>
+						<b>${__("Valid Until")}:</b> ${d.expiry_date || "—"}`,
+					indicator: d.status === "Active" ? "green" : "orange",
+				});
+				frm.reload_doc();
+			},
+		});
+	}, __("Qiwa"));
+
+	frm.add_custom_button(__("Nitaqat Status"), function () {
+		frappe.call({
+			method: "hr_suite.hr_suite.integrations.qiwa.get_nitaqat_status",
+			args: { employee: emp },
+			freeze: true,
+			freeze_message: __("Checking Qiwa…"),
+			callback(r) {
+				if (r.exc) return;
+				const d = r.message || {};
+				frappe.msgprint({
+					title: __("Nitaqat Status"),
+					message: `<b>${__("Band")}:</b> ${d.band || "—"}<br>
+						<b>${__("Saudization %")}:</b> ${d.saudization_pct || "—"}%`,
+					indicator: "blue",
+				});
+			},
+		});
+	}, __("Qiwa"));
+
+	frm.add_custom_button(__("Sync Log"), function () {
+		frappe.set_route("List", "Government Portal Sync Log", { employee: emp, portal: "Qiwa" });
+	}, __("Qiwa"));
+}
+
+function _hr_suite_gosi_buttons(frm, emp, enabled) {
+	if (!enabled) return;
+
+	frm.add_custom_button(__("Register with GOSI"), function () {
+		frappe.confirm(
+			__("Register this employee with GOSI? This will submit their details to the GOSI portal."),
+			function () {
+				frappe.call({
+					method: "hr_suite.hr_suite.integrations.gosi_api.register_employee",
+					args: { employee: emp },
+					freeze: true,
+					freeze_message: __("Registering with GOSI…"),
+					callback(r) {
+						if (r.exc) return;
+						frappe.show_alert({
+							message: __("GOSI registration submitted. Member ID: ") + ((r.message || {}).member_id || "—"),
+							indicator: "green",
+						});
+						frm.reload_doc();
+					},
+				});
+			}
+		);
+	}, __("GOSI"));
+
+	frm.add_custom_button(__("GOSI Member Status"), function () {
+		frappe.call({
+			method: "hr_suite.hr_suite.integrations.gosi_api.get_employee_status",
+			args: { employee: emp },
+			freeze: true,
+			freeze_message: __("Checking GOSI…"),
+			callback(r) {
+				if (r.exc) return;
+				const d = r.message || {};
+				frappe.msgprint({
+					title: __("GOSI Member Status"),
+					message: `<b>${__("Status")}:</b> ${d.status || "—"}<br>
+						<b>${__("Member ID")}:</b> ${d.member_id || "—"}<br>
+						<b>${__("Contribution Base")}:</b> ${d.contribution_base || "—"}`,
+					indicator: d.status === "Active" ? "green" : "orange",
+				});
+			},
+		});
+	}, __("GOSI"));
+
+	frm.add_custom_button(__("Deregister from GOSI"), function () {
+		frappe.prompt(
+			[
+				{
+					fieldname: "exit_date",
+					label: __("Exit Date"),
+					fieldtype: "Date",
+					reqd: 1,
+					default: frappe.datetime.get_today(),
+				},
+				{
+					fieldname: "reason",
+					label: __("Reason"),
+					fieldtype: "Select",
+					options: "Resignation\nTermination\nEnd of Contract\nDeath\nRetirement",
+					reqd: 1,
+				},
+			],
+			function (vals) {
+				frappe.call({
+					method: "hr_suite.hr_suite.integrations.gosi_api.deregister_employee",
+					args: { employee: emp, exit_date: vals.exit_date, reason: vals.reason },
+					freeze: true,
+					freeze_message: __("Deregistering from GOSI…"),
+					callback(r) {
+						if (r.exc) return;
+						frappe.show_alert({ message: __("Employee deregistered from GOSI."), indicator: "green" });
+						frm.reload_doc();
+					},
+				});
+			},
+			__("Deregister from GOSI"),
+			__("Submit")
+		);
+	}, __("GOSI"));
+
+	frm.add_custom_button(__("Sync Log"), function () {
+		frappe.set_route("List", "Government Portal Sync Log", { employee: emp, portal: "GOSI" });
+	}, __("GOSI"));
 }
 
 // ── UAE buttons (GPSSA / MOHRE) ───────────────────────────────────────────────
@@ -513,7 +522,8 @@ function _hr_suite_document_alerts(frm) {
 // ── Dashboard contract banner — works for Country Employment Contract ─────────
 
 function _hr_suite_contract_banner(frm) {
-	// Try Country Employment Contract first (multi-country)
+	// Try Country Employment Contract first (multi-country).
+	// If the doctype doesn't exist on this instance, fall back to Saudi Employment Contract.
 	frappe.db
 		.get_list("Country Employment Contract", {
 			filters: { employee: frm.doc.name, contract_status: "Active" },
@@ -533,41 +543,51 @@ function _hr_suite_contract_banner(frm) {
 				const empType = frm.doc.hr_suite_employee_type
 					? ` &nbsp;|&nbsp; <b>${frm.doc.hr_suite_employee_type}</b>`
 					: "";
+				// Use frappe.format so currency is rendered correctly for any currency code
 				frm.dashboard.add_comment(
 					`<b>${__("Active Contract")}${flag}:</b> ${c.contract_type || ""}${empType}
-					 &nbsp;|&nbsp; ${__("Basic")}: <b>${format_currency(c.basic_salary, c.currency)}</b>
-					 &nbsp;|&nbsp; ${__("Total")}: <b>${format_currency(c.total_salary, c.currency)}</b>${prob}`,
+					 &nbsp;|&nbsp; ${__("Basic")}: <b>${frappe.format(c.basic_salary, {fieldtype: "Currency", currency: c.currency || frappe.boot.sysdefaults.currency})}</b>
+					 &nbsp;|&nbsp; ${__("Total")}: <b>${frappe.format(c.total_salary, {fieldtype: "Currency", currency: c.currency || frappe.boot.sysdefaults.currency})}</b>${prob}`,
 					"blue", true
 				);
 				return;
 			}
-			// Fallback: Saudi Employment Contract (legacy)
-			frappe.db
-				.get_list("Saudi Employment Contract", {
-					filters: { employee: frm.doc.name, contract_status: "Active" },
-					fields: [
-						"name", "basic_salary", "housing_allowance", "transport_allowance",
-						"total_salary", "probation_end_date", "contract_type",
-					],
-					limit: 1,
-				})
-				.then(function (saContracts) {
-					if (!saContracts || !saContracts.length) return;
-					const c = saContracts[0];
-					const prob = c.probation_end_date
-						? ` &nbsp;|&nbsp; ${__("Probation ends")}: <b>${c.probation_end_date}</b>`
-						: "";
-					const empType = frm.doc.hr_suite_employee_type
-						? ` &nbsp;|&nbsp; <b>${frm.doc.hr_suite_employee_type}</b>`
-						: "";
-					frm.dashboard.add_comment(
-						`<b>${__("Active Contract")} [SA]:</b> ${c.contract_type || ""}${empType}
-						 &nbsp;|&nbsp; ${__("Basic")}: <b>${format_currency(c.basic_salary)}</b>
-						 &nbsp;|&nbsp; ${__("Total")}: <b>${format_currency(c.total_salary)}</b>${prob}`,
-						"blue", true
-					);
-				});
+			// Fallback: Saudi Employment Contract (legacy / existing SA deployments)
+			_hr_suite_sa_contract_banner(frm);
+		})
+		.catch(function () {
+			// Country Employment Contract doctype not installed — fall back gracefully
+			_hr_suite_sa_contract_banner(frm);
 		});
+}
+
+function _hr_suite_sa_contract_banner(frm) {
+	frappe.db
+		.get_list("Saudi Employment Contract", {
+			filters: { employee: frm.doc.name, contract_status: "Active" },
+			fields: [
+				"name", "basic_salary", "housing_allowance", "transport_allowance",
+				"total_salary", "probation_end_date", "contract_type",
+			],
+			limit: 1,
+		})
+		.then(function (saContracts) {
+			if (!saContracts || !saContracts.length) return;
+			const c = saContracts[0];
+			const prob = c.probation_end_date
+				? ` &nbsp;|&nbsp; ${__("Probation ends")}: <b>${c.probation_end_date}</b>`
+				: "";
+			const empType = frm.doc.hr_suite_employee_type
+				? ` &nbsp;|&nbsp; <b>${frm.doc.hr_suite_employee_type}</b>`
+				: "";
+			frm.dashboard.add_comment(
+				`<b>${__("Active Contract")} [SA]:</b> ${c.contract_type || ""}${empType}
+				 &nbsp;|&nbsp; ${__("Basic")}: <b>${format_currency(c.basic_salary)}</b>
+				 &nbsp;|&nbsp; ${__("Total")}: <b>${format_currency(c.total_salary)}</b>${prob}`,
+				"blue", true
+			);
+		})
+		.catch(function () {});
 }
 
 // ── Onboarding banner ─────────────────────────────────────────────────────────

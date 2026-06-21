@@ -295,13 +295,15 @@ def on_leave_application_validate(doc, method=None):
         from frappe.utils import get_year_start, get_year_ending
         year_start = get_year_start(getdate(doc.from_date))
         year_end = get_year_ending(getdate(doc.from_date))
+        # Exclude current doc only if it's already in the DB (submitted amendment)
+        exclude_name = doc.name if not doc.is_new() else "__never__"
         existing_sick = frappe.db.sql(
             """SELECT COALESCE(SUM(total_leave_days), 0)
                FROM `tabLeave Application`
                WHERE employee=%s AND leave_type LIKE %s
                  AND from_date BETWEEN %s AND %s
                  AND docstatus=1 AND name!=%s""",
-            (employee, "%sick%", year_start, year_end, doc.name or "__new__"),
+            (employee, "%sick%", year_start, year_end, exclude_name),
         )
         sick_days_used = flt(existing_sick[0][0]) if existing_sick else 0
         pay_info = get_sick_leave_pay(employee, int(sick_days_used))
@@ -365,8 +367,8 @@ def on_salary_structure_assignment_submit(doc, method=None):
     if not min_wage:
         return
 
-    base = flt(doc.base or 0)
-    if base and base < min_wage:
+    base = flt(doc.base)  # flt(None)=0; intentional zero salary should still be checked
+    if base < min_wage:
         from frappe.utils import fmt_money
         frappe.throw(
             f"Assigned base salary <b>{fmt_money(base, currency=cfg.currency)}</b> is below the "
@@ -398,8 +400,12 @@ def on_payroll_entry_submit(doc, method=None):
     if not cfg:
         return
 
-    month_name = _month_from_payroll_date(doc.start_date or doc.posting_date)
-    year = str(getdate(doc.start_date or doc.posting_date).year)
+    payroll_date = doc.start_date or doc.posting_date
+    if not payroll_date:
+        frappe.log_error("HR Suite: Payroll Entry has no start_date or posting_date — skipping contribution stub creation")
+        return
+    month_name = _month_from_payroll_date(payroll_date)
+    year = getdate(payroll_date).year  # Int — matches DocType field type
 
     if country == "SA":
         _ensure_gosi_contribution(company, month_name, year)
@@ -507,8 +513,17 @@ def on_employee_separation_submit(doc, method=None):
         "Death": "Death",
         "Absconding": "Disciplinary Dismissal (Article 80)",
     }
-    termination_reason = reason_map.get(doc.reason_for_leaving or "", "Termination by Employer")
-    separation_date = str(doc.resignation_date or doc.last_working_day or getdate())
+    # HRMS Employee Separation doctype: reason is on the Employee record itself
+    hrms_reason = frappe.db.get_value("Employee", employee, "reason_for_leaving") or ""
+    termination_reason = reason_map.get(hrms_reason, "Termination by Employer")
+    # Employee Separation has resignation_letter_date and boarding_begins_on;
+    # authoritative exit date is Employee.relieving_date
+    separation_date = str(
+        doc.resignation_letter_date
+        or doc.boarding_begins_on
+        or frappe.db.get_value("Employee", employee, "relieving_date")
+        or getdate()
+    )
 
     try:
         result = calculate_settlement(

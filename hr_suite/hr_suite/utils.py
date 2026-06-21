@@ -154,22 +154,27 @@ def get_annual_leave_entitlement(employee: str, date: str = None) -> int:
 	ref_date = getdate(date) if date else getdate()
 	years = date_diff(ref_date, joining_date) / 365.0
 
+	# Load settings once — used both in Country Config path and fallback
+	settings = frappe.get_single("Hr Suite Settings")
+	threshold = flt(settings.annual_leave_years_threshold) or 5
+
 	country = get_employee_work_country(employee)
 	cfg = get_country_config(country)
 	if cfg and cfg.leave_types:
 		for lt in cfg.leave_types:
 			lt_name = (lt.leave_type_name or "").lower()
 			if "annual" in lt_name:
-				# Country Config stores days_per_year — use years threshold from settings
-				settings = frappe.get_single("Hr Suite Settings")
-				threshold = flt(settings.annual_leave_years_threshold) or 5
-				days_below = flt(lt.get("days_below_threshold") or lt.get("days_per_year") or 21)
-				days_above = flt(lt.get("days_above_threshold") or days_below)
-				return int(days_above) if years >= threshold else int(days_below)
+				# Use explicit None-checks so a configured 0 isn't treated as "missing"
+				days_below_raw = lt.get("days_below_threshold")
+				days_per_year_raw = lt.get("days_per_year")
+				days_above_raw = lt.get("days_above_threshold")
+				days_below = flt(days_below_raw if days_below_raw is not None else (days_per_year_raw if days_per_year_raw is not None else 21))
+				days_above = flt(days_above_raw if days_above_raw is not None else days_below)
+				# Guard: if Country Config gives 0, fall through to SA settings default
+				if days_below > 0:
+					return int(days_above) if years >= threshold else int(days_below)
 
 	# Fallback: SA defaults from Hr Suite Settings
-	settings = frappe.get_single("Hr Suite Settings")
-	threshold = flt(settings.annual_leave_years_threshold) or 5
 	return int(settings.annual_leave_after_threshold or 30) if years >= threshold else int(settings.annual_leave_before_threshold or 21)
 
 
@@ -826,9 +831,13 @@ def get_sick_leave_pay(employee: str, sick_days_this_year: int) -> dict:
 		for lt in cfg.leave_types:
 			lt_name = (lt.leave_type_name or "").lower()
 			if "sick" in lt_name:
-				full_days = int(lt.get("full_pay_days") or 30)
-				partial_days = int(lt.get("partial_pay_days") or 60)
-				partial_pct = flt(lt.get("partial_pay_percentage") or 75) / 100
+				# Use explicit None-checks so configured 0 isn't overridden by the SA default
+				fd_raw = lt.get("full_pay_days")
+				pd_raw = lt.get("partial_pay_days")
+				pp_raw = lt.get("partial_pay_percentage")
+				full_days = int(fd_raw) if fd_raw is not None else 30
+				partial_days = int(pd_raw) if pd_raw is not None else 60
+				partial_pct = flt(pp_raw if pp_raw is not None else 75) / 100
 				used = sick_days_this_year
 				if used <= full_days:
 					return {"rate": 1.0, "label": "Full Pay"}
