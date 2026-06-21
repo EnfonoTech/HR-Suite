@@ -146,13 +146,28 @@ def get_annual_leave_balance(employee: str, reference_date: str | None = None, e
 
 def get_annual_leave_entitlement(employee: str, date: str = None) -> int:
 	"""
-	Return the number of annual leave days based on years of service (Article 109).
-	< 5 years: 21 days | >= 5 years: 30 days
+	Return annual leave days for the employee based on their work country's Country Config.
+	Falls back to Hr Suite Settings for SA or when no Country Config is found.
 	"""
 	emp = frappe.get_doc("Employee", employee)
 	joining_date = getdate(emp.date_of_joining)
 	ref_date = getdate(date) if date else getdate()
 	years = date_diff(ref_date, joining_date) / 365.0
+
+	country = get_employee_work_country(employee)
+	cfg = get_country_config(country)
+	if cfg and cfg.leave_types:
+		for lt in cfg.leave_types:
+			lt_name = (lt.leave_type_name or "").lower()
+			if "annual" in lt_name:
+				# Country Config stores days_per_year — use years threshold from settings
+				settings = frappe.get_single("Hr Suite Settings")
+				threshold = flt(settings.annual_leave_years_threshold) or 5
+				days_below = flt(lt.get("days_below_threshold") or lt.get("days_per_year") or 21)
+				days_above = flt(lt.get("days_above_threshold") or days_below)
+				return int(days_above) if years >= threshold else int(days_below)
+
+	# Fallback: SA defaults from Hr Suite Settings
 	settings = frappe.get_single("Hr Suite Settings")
 	threshold = flt(settings.annual_leave_years_threshold) or 5
 	return int(settings.annual_leave_after_threshold or 30) if years >= threshold else int(settings.annual_leave_before_threshold or 21)
@@ -452,6 +467,7 @@ def country_name_to_code(country_name: str) -> str:
     return _COUNTRY_NAME_TO_CODE.get(key, "")
 
 
+@frappe.whitelist()
 def get_employee_work_country(employee: str) -> str:
     """
     Return the ISO-2 work country code for an employee.
@@ -797,20 +813,37 @@ def seed_country_leave_types(employee: str):
 
 def get_sick_leave_pay(employee: str, sick_days_this_year: int) -> dict:
 	"""
-	Calculate sick leave pay per Article 117:
-	  Days 1-30   -> 100%
-	  Days 31-90  -> 75%
-	  Days 91-120 -> 0%
+	Calculate sick leave pay per country labor law:
+	- SA/GCC: Days 1-30 full, 31-90 partial (75%), 91+ no pay (configurable via Settings)
+	- IN: As per Factories Act / ESI — 91+ days ESI-funded sick leave
+	- Others: Reads Country Config sick leave type if defined, else SA defaults
 	"""
+	country = get_employee_work_country(employee)
+	cfg = get_country_config(country)
+
+	# Try to read sick leave rules from Country Config leave_types
+	if cfg and cfg.leave_types:
+		for lt in cfg.leave_types:
+			lt_name = (lt.leave_type_name or "").lower()
+			if "sick" in lt_name:
+				full_days = int(lt.get("full_pay_days") or 30)
+				partial_days = int(lt.get("partial_pay_days") or 60)
+				partial_pct = flt(lt.get("partial_pay_percentage") or 75) / 100
+				used = sick_days_this_year
+				if used <= full_days:
+					return {"rate": 1.0, "label": "Full Pay"}
+				elif used <= full_days + partial_days:
+					return {"rate": partial_pct, "label": f"Partial Pay {partial_pct*100:.0f}%"}
+				return {"rate": 0.0, "label": "No Pay"}
+
+	# Fallback to Hr Suite Settings (SA defaults)
 	settings = frappe.get_single("Hr Suite Settings")
 	full_days = int(settings.sick_leave_full_pay_days or 30)
 	partial_days = int(settings.sick_leave_partial_pay_days or 60)
 	partial_pct = flt(settings.sick_leave_partial_pay_percentage or 75) / 100
-
 	used = sick_days_this_year
 	if used <= full_days:
 		return {"rate": 1.0, "label": "Full Pay"}
 	elif used <= full_days + partial_days:
 		return {"rate": partial_pct, "label": f"Partial Pay {partial_pct*100:.0f}%"}
-	else:
-		return {"rate": 0.0, "label": "No Pay"}
+	return {"rate": 0.0, "label": "No Pay"}
