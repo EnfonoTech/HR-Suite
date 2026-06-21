@@ -33,10 +33,8 @@ frappe.ui.form.on("Employee", {
 // ── Common buttons shown for every country ────────────────────────────────────
 
 function _hr_suite_common_buttons(frm, country) {
-	// Active Contract — prefer Country Employment Contract, fallback Saudi for SA
 	frm.add_custom_button(__("Active Contract"), function () {
-		const doctype = country === "SA" ? "Saudi Employment Contract" : "Country Employment Contract";
-		frappe.set_route("List", doctype, {
+		frappe.set_route("List", "Country Employment Contract", {
 			employee: frm.doc.name,
 			contract_status: "Active",
 		});
@@ -126,6 +124,11 @@ function _hr_suite_sa_buttons(frm) {
 	const emp = frm.doc.name;
 
 	// Batch all three portal flags in one request
+	// GOSI estimate is always visible — does not require API credentials
+	frm.add_custom_button(__("GOSI Estimate"), function () {
+		_hr_suite_gosi_estimate(frm);
+	}, __("GOSI"));
+
 	frappe.db.get_value(
 		"Hr Suite Settings",
 		null,
@@ -339,6 +342,77 @@ function _hr_suite_gosi_buttons(frm, emp, enabled) {
 	}, __("GOSI"));
 }
 
+function _hr_suite_gosi_estimate(frm) {
+	// Fetch GOSI rates from Hr Suite Settings and basic from active contract
+	Promise.all([
+		frappe.db.get_single_value("Hr Suite Settings", "gosi_employee_rate"),
+		frappe.db.get_single_value("Hr Suite Settings", "gosi_employer_rate"),
+		frappe.db.get_list("Country Employment Contract", {
+			filters: { employee: frm.doc.name, contract_status: "Active" },
+			fields: ["basic_salary", "currency"],
+			limit: 1,
+		}),
+	]).then(function ([empRate, emplRate, contracts]) {
+		empRate = flt(empRate) || 9.75;
+		emplRate = flt(emplRate) || 12.5;
+
+		let basic = 0, currency = "SAR";
+		if (contracts && contracts.length) {
+			basic = flt(contracts[0].basic_salary);
+			currency = contracts[0].currency || "SAR";
+		} else {
+			// Fallback: try Salary Structure Assignment
+			frappe.db.get_list("Salary Structure Assignment", {
+				filters: { employee: frm.doc.name, docstatus: 1 },
+				fields: ["base"],
+				order_by: "from_date desc",
+				limit: 1,
+			}).then(function (rows) {
+				basic = rows && rows.length ? flt(rows[0].base) : 0;
+				_show_gosi_estimate_dialog(frm, basic, currency, empRate, emplRate);
+			});
+			return;
+		}
+		_show_gosi_estimate_dialog(frm, basic, currency, empRate, emplRate);
+	});
+}
+
+function _show_gosi_estimate_dialog(frm, basic, currency, empRate, emplRate) {
+	const fmt = (amt) => frappe.format(amt, { fieldtype: "Currency", currency: currency });
+	const ceiling = 45000;
+	const base = Math.min(basic, ceiling);
+
+	const empAmt = Math.round(base * empRate / 100 * 100) / 100;
+	const emplAmt = Math.round(base * emplRate / 100 * 100) / 100;
+	const injuryAmt = Math.round(base * 2 / 100 * 100) / 100;  // 2% work injury
+	const total = empAmt + emplAmt + injuryAmt;
+
+	const isNational = (frm.doc.nationality || "").toLowerCase().includes("saudi");
+	const expatNote = isNational
+		? `<small class="text-muted">${__("Saudi national — both employee and employer contributions apply.")}</small>`
+		: `<small class="text-muted">${__("Expatriate — employer pays 2% work injury only. Employee contribution: 0.")}</small>`;
+
+	const effEmpAmt = isNational ? empAmt : 0;
+	const effEmplAmt = isNational ? emplAmt : 0;
+	const effTotal = effEmpAmt + effEmplAmt + injuryAmt;
+
+	frappe.msgprint({
+		title: __("GOSI Monthly Estimate"),
+		message: `<table class="table table-condensed" style="margin-top:8px">
+			<tr><td>${__("Monthly Basic")}</td><td><b>${fmt(basic)}</b></td></tr>
+			<tr><td>${__("Contribution Base")} <small>(capped at SAR ${ceiling.toLocaleString()})</small></td><td><b>${fmt(base)}</b></td></tr>
+			<tr><td colspan="2"><hr style="margin:4px 0"></td></tr>
+			<tr><td>${__("Employee Contribution")} (${empRate}%)</td><td><b>${fmt(effEmpAmt)}</b></td></tr>
+			<tr><td>${__("Employer Contribution")} (${emplRate}%)</td><td><b>${fmt(effEmplAmt)}</b></td></tr>
+			<tr><td>${__("Work Injury Levy")} (2%)</td><td><b>${fmt(injuryAmt)}</b></td></tr>
+			<tr><td colspan="2"><hr style="margin:4px 0"></td></tr>
+			<tr><td><b>${__("Total Monthly GOSI")}</b></td><td><b>${fmt(effTotal)}</b></td></tr>
+		</table>
+		${expatNote}`,
+		indicator: "blue",
+	});
+}
+
 // ── UAE buttons (GPSSA / MOHRE) ───────────────────────────────────────────────
 
 function _hr_suite_ae_buttons(frm) {
@@ -480,7 +554,6 @@ function _hr_suite_document_alerts(frm) {
 		.get_list("Work Permit Iqama", {
 			filters: { employee: frm.doc.name },
 			fields: [
-				"permit_type",
 				"iqama_expiry_date",
 				"work_permit_expiry_date",
 				"exit_reentry_expiry_date",
@@ -492,7 +565,7 @@ function _hr_suite_document_alerts(frm) {
 			const today = frappe.datetime.get_today();
 			const rec = docs[0];
 			const checks = [
-				{ label: rec.permit_type || __("Residence Permit"), date: rec.iqama_expiry_date },
+				{ label: __("Residence Permit / Iqama"), date: rec.iqama_expiry_date },
 				{ label: __("Work Permit"), date: rec.work_permit_expiry_date },
 				{ label: __("Exit / Re-entry Visa"), date: rec.exit_reentry_expiry_date },
 			];

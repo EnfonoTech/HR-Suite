@@ -492,21 +492,14 @@ def get_employee_work_country(employee: str) -> str:
     Return the ISO-2 work country code for an employee.
 
     Resolution order:
-    1. Employee.work_country custom field (explicit override set by HR)
-    2. Active Country Employment Contract.work_country
-    3. Employee's Company.country → mapped to ISO-2 code
-    4. Hr Suite Settings.default_work_country (global fallback)
+    1. Active Country Employment Contract.work_country
+    2. Employee's Company.country → mapped to ISO-2 code
+    3. Hr Suite Settings.default_work_country (global fallback)
     """
     if not employee:
         return ""
 
-    # 1. Explicit work_country on Employee record
-    if frappe.db.has_column("Employee", "work_country"):
-        country = frappe.db.get_value("Employee", employee, "work_country") or ""
-        if country:
-            return country.strip().upper()
-
-    # 2. Active Country Employment Contract
+    # 1. Active Country Employment Contract
     row = frappe.db.get_value(
         "Country Employment Contract",
         {"employee": employee, "contract_status": "Active"},
@@ -516,7 +509,7 @@ def get_employee_work_country(employee: str) -> str:
     if row:
         return row.strip().upper()
 
-    # 3. Derive from Employee's Company country (Frappe standard field)
+    # 2. Derive from Employee's Company country (Frappe standard field)
     company = frappe.db.get_value("Employee", employee, "company") or ""
     if company:
         company_country = frappe.db.get_value("Company", company, "country") or ""
@@ -524,7 +517,7 @@ def get_employee_work_country(employee: str) -> str:
         if code:
             return code
 
-    # 4. Global default in Hr Suite Settings
+    # 3. Global default in Hr Suite Settings
     default = frappe.db.get_single_value("Hr Suite Settings", "default_work_country") or ""
     return default.strip().upper()
 

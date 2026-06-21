@@ -12,10 +12,7 @@ from frappe.utils import flt, getdate
 # ── Job Offer → Employee creation ────────────────────────────────────────────
 
 def on_job_offer_submit(doc, method=None):
-    """
-    When a Job Offer is submitted in Frappe HRMS, auto-create an Employee record
-    with work_country derived from the Job Opening or the company's country.
-    """
+    """When a Job Offer is submitted in Frappe HRMS, auto-create an Employee record."""
     if not doc.applicant_name:
         return
 
@@ -62,9 +59,6 @@ def on_job_offer_submit(doc, method=None):
     })
     emp.insert(ignore_permissions=True)
 
-    if frappe.db.has_column("Employee", "work_country"):
-        frappe.db.set_value("Employee", emp.name, "work_country", work_country)
-
     frappe.msgprint(
         f"Employee record <b>{emp.name}</b> created from Job Offer. "
         "Please complete the employee profile.",
@@ -92,10 +86,6 @@ def _country_from_branch(branch: str) -> str:
 # ── Employee after_insert → seed country defaults ────────────────────────────
 
 def on_employee_insert(doc, method=None):
-    """
-    After a new Employee is created, seed leave allocations and fire country
-    default setup based on work_country.
-    """
     _seed_leave_allocations(doc)
 
 
@@ -378,34 +368,6 @@ def on_leave_allocation_submit(doc, method=None):
                     alert=True,
                 )
             break
-
-
-# ── Salary Structure Assignment → minimum wage check ─────────────────────────
-
-def on_salary_structure_assignment_submit(doc, method=None):
-    """
-    Block submission if the assigned base salary is below the country minimum wage
-    defined in Country Config.
-    """
-    from hr_suite.hr_suite.utils import get_employee_work_country, get_country_config
-    country = get_employee_work_country(doc.employee)
-    cfg = get_country_config(country)
-    if not cfg:
-        return
-
-    min_wage = flt(cfg.get("minimum_wage") or 0)
-    if not min_wage:
-        return
-
-    base = flt(doc.base)  # flt(None)=0; intentional zero salary should still be checked
-    if base < min_wage:
-        from frappe.utils import fmt_money
-        frappe.throw(
-            f"Assigned base salary <b>{fmt_money(base, currency=cfg.currency)}</b> is below the "
-            f"minimum wage for <b>{cfg.country_name}</b> "
-            f"(<b>{fmt_money(min_wage, currency=cfg.currency)}</b>).",
-            title="Below Minimum Wage",
-        )
 
 
 # ── Payroll Entry → statutory contribution stubs ──────────────────────────────

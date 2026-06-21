@@ -142,10 +142,7 @@ doc_events = {
 	"Leave Allocation": {
 		"on_submit": "hr_suite.hr_suite.integrations.hrms.on_leave_allocation_submit",
 	},
-	"Salary Structure Assignment": {
-		"on_submit": "hr_suite.hr_suite.integrations.hrms.on_salary_structure_assignment_submit",
-	},
-	"Payroll Entry": {
+"Payroll Entry": {
 		"on_submit": "hr_suite.hr_suite.integrations.hrms.on_payroll_entry_submit",
 	},
 	"Employee Separation": {
