@@ -518,7 +518,7 @@ COMPLIANCE_DOCTYPES.extend(
 				field("violation_code", "Data", "Violation Code", reqd=1, unique=1, in_list_view=1),
 				field("violation_name", "Data", "Violation Name", reqd=1, in_list_view=1),
 				column("column_break_1"),
-				field("category", "Select", "Category", reqd=1, in_list_view=1, options="\nAttendance"),
+				field("category", "Select", "Category", reqd=1, in_list_view=1, options="\nAttendance\nWork Organization\nConduct\nIntegrity\nSafety"),
 				field("status", "Select", "Status", in_list_view=1, options="Active", default="Active"),
 				section("penalty_section", "Progressive Penalties"),
 				field("penalty_first", "Small Text", "First Time", reqd=1),
