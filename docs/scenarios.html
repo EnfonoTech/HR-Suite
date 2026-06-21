@@ -580,8 +580,8 @@ body {
 
   <!-- PAGE HEADER -->
   <div class="page-eyebrow">HR Suite · Employee Scenarios</div>
-  <h1 class="page-title">Four scenarios. Full HR cycles.</h1>
-  <p class="page-desc">These scenarios trace three real employees from their first day through every HR event — leave, payroll, disciplinary action, exit — and a fourth scenario covering a monthly compliance run with Saudi portal integrations (GOSI, WPS/Mudad, Muqeem).</p>
+  <h1 class="page-title">Five scenarios. Full HR cycles.</h1>
+  <p class="page-desc">These scenarios trace three real employees from their first day through every HR event — leave, payroll, disciplinary action, exit — a fourth scenario covering a monthly compliance run with Saudi portal integrations (GOSI, WPS/Mudad, Muqeem), and a fifth scenario showing global compliance across three countries in a single deployment.</p>
 
   <!-- OVERVIEW CARDS -->
   <div class="emp-overview" style="grid-template-columns: repeat(2, 1fr);">
@@ -634,6 +634,18 @@ body {
         <span class="emp-tag" style="background:#E3F0F5; color:#0F5B7A;">GOSI API</span>
         <span class="emp-tag" style="background:#E3F0F5; color:#0F5B7A;">Muqeem</span>
         <span class="emp-tag tag-muted">Salary Override</span>
+      </div>
+    </a>
+
+    <a class="emp-card" href="#global-deployment" style="border-top-color: #2D6A4F; grid-column: 1 / -1;">
+      <div class="emp-card-avatar" style="background:#2D6A4F;">GD</div>
+      <div class="emp-card-name">Global Deployment — Riyadh · Dubai · Bangalore</div>
+      <div class="emp-card-role">HR Manager · Multi-Country Compliance</div>
+      <div class="emp-card-tags">
+        <span class="emp-tag" style="background:#D4EDE1; color:#2D6A4F;">SA: GOSI · Muqeem · EOSB</span>
+        <span class="emp-tag" style="background:#D4EDE1; color:#2D6A4F;">AE: GPSSA · Gratuity</span>
+        <span class="emp-tag" style="background:#D4EDE1; color:#2D6A4F;">IN: EPF/ESI · Gratuity Act</span>
+        <span class="emp-tag tag-muted">Country Config · Auto separation</span>
       </div>
     </a>
 
@@ -1455,6 +1467,148 @@ body {
       <div class="note note-green" style="margin-top: 12px;"><strong>Example:</strong> Ahmed's housing allowance increases from SAR 3,500 to SAR 4,200 effective 1 July 2026. Click the pen icon on Housing Allowance in his Salary Structure Assignment, enter the new amount and date, add a note referencing the promotion letter. The July payroll will pick up the new amount automatically — no amendment to the Salary Structure needed.</div>
     </div>
 
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SCENARIO 5: GLOBAL DEPLOYMENT                       -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="chapter" id="global-deployment" style="--ch-accent: #2D6A4F; --ch-dim: #D4EDE1; --ch-border: #8DC4A8;">
+
+    <div class="chapter-header" style="border-bottom-color: #2D6A4F;">
+      <div class="chapter-avatar" style="background: #2D6A4F;">GD</div>
+      <div class="chapter-header-info">
+        <div class="chapter-num" style="color: #2D6A4F;">Scenario 05 — Global Deployment</div>
+        <div class="chapter-name">Riyadh · Dubai · Bangalore</div>
+        <div class="chapter-subtitle">One HR system · Three countries · Three statutory regimes · Compliance automatic per employee location</div>
+      </div>
+      <div class="chapter-stat-row">
+        <div class="chapter-stat">
+          <div class="chapter-stat-val">3</div>
+          <div class="chapter-stat-key">Countries</div>
+        </div>
+        <div class="chapter-stat">
+          <div class="chapter-stat-val">Auto</div>
+          <div class="chapter-stat-key">Compliance</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-grid">
+      <div class="profile-cell"><div class="profile-cell-label">Company — Riyadh</div><div class="profile-cell-value">TechCo Saudi LLC<br><small style="color:var(--text-muted)">Company.country = SA</small></div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Company — Dubai</div><div class="profile-cell-value">TechCo UAE FZE<br><small style="color:var(--text-muted)">Company.country = AE</small></div></div>
+      <div class="profile-cell"><div class="profile-cell-label">Company — Bangalore</div><div class="profile-cell-value">TechCo India Pvt Ltd<br><small style="color:var(--text-muted)">Company.country = IN</small></div></div>
+      <div class="profile-cell"><div class="profile-cell-label">HR Setup</div><div class="profile-cell-value">Country Config records for SA, AE, IN — configured once in HR Suite Settings</div></div>
+    </div>
+
+    <div class="note note-green" style="margin-bottom: 24px;">
+      <strong>How it works:</strong> Each company entity has Company.country set. When an Employee record is created and linked to a company, HR Suite resolves the country via the detection chain (Employee.work_country → Active Contract → Company.country → Settings default). All statutory hooks fire automatically based on that resolved country — zero per-employee configuration.
+    </div>
+
+    <!-- Three employee profiles -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 32px;">
+      <div class="profile-cell" style="border-top: 3px solid #2D6A4F;">
+        <div class="profile-cell-label">Riyadh — SA</div>
+        <div class="profile-cell-value" style="font-size:0.92rem; margin-bottom:6px;">Khalid Al-Rashidi</div>
+        <div style="font-size:0.78rem; color:var(--text-muted);">Senior Engineer<br>Saudi National<br>Basic: SAR 18,000<br>Statutory: GOSI (10% + 12.5%)</div>
+      </div>
+      <div class="profile-cell" style="border-top: 3px solid #1D4ED8;">
+        <div class="profile-cell-label">Dubai — AE</div>
+        <div class="profile-cell-value" style="font-size:0.92rem; margin-bottom:6px;">Sara Al-Mansoori</div>
+        <div style="font-size:0.78rem; color:var(--text-muted);">Product Manager<br>UAE National<br>Basic: AED 22,000<br>Statutory: GPSSA (5% + 12.5%)</div>
+      </div>
+      <div class="profile-cell" style="border-top: 3px solid #B8751A;">
+        <div class="profile-cell-label">Bangalore — IN</div>
+        <div class="profile-cell-value" style="font-size:0.92rem; margin-bottom:6px;">Priya Nair</div>
+        <div style="font-size:0.78rem; color:var(--text-muted);">Software Engineer<br>Indian National<br>Basic: INR 85,000/mo<br>Statutory: EPF (12%) + ESI (0.75%)</div>
+      </div>
+    </div>
+
+    <div class="timeline-label">Same HR actions — different compliance outcomes automatically</div>
+    <div class="timeline">
+
+      <div class="tl-event ev-key">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Step 1 — Onboarding (same month, three offices)</div>
+          <div class="tl-title">HR creates three Employee records — one per entity</div>
+          <span class="tl-module" style="background:#D4EDE1;color:#2D6A4F;">Employee Onboarding</span>&nbsp;
+          <span class="tl-module" style="background:#D4EDE1;color:#2D6A4F;">Country Employment Contract</span>
+          <div class="tl-desc">Each employee is linked to their respective company entity. HR Suite resolves their country from Company.country. No additional per-employee country configuration is needed. The correct Country Employment Contract template is offered based on the resolved country, with the correct local currency pre-filled.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Khalid's employee form shows <strong>Muqeem, Qiwa, and GOSI</strong> button groups (SA). Sara's form shows <strong>UAE Statutory</strong> group with GPSSA and DEWS buttons (AE). Priya's form shows <strong>IN Statutory</strong> group with EPF/ESI and Professional Tax buttons (IN).</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-key">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Step 2 — Monthly payroll run (all three entities, same day)</div>
+          <div class="tl-title">Payroll Entry submitted per company → different statutory contributions auto-created</div>
+          <span class="tl-module" style="background:#D4EDE1;color:#2D6A4F;">Payroll Entry</span>&nbsp;
+          <span class="tl-module" style="background:#D4EDE1;color:#2D6A4F;">HRMS Hook: on_submit</span>
+          <div class="tl-desc">The Payroll Manager submits a Payroll Entry for each entity separately. For each entry, the HRMS hook fires on_submit and auto-creates the correct statutory contribution record based on the resolved country of each employee in that payroll.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">
+              <strong>Riyadh (SA):</strong> GOSI Contribution record auto-created for Khalid. Employee: SAR 1,800 (10%). Employer: SAR 2,250 (12.5%).<br>
+              <strong>Dubai (AE):</strong> Statutory Contribution (GPSSA) auto-created for Sara. Employee: AED 1,100 (5%). Employer: AED 2,750 (12.5%).<br>
+              <strong>Bangalore (IN):</strong> EPF/ESI Contribution auto-created for Priya. EPF employee: INR 10,200 (12%). ESI employee: INR 638 (0.75%).
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-amber">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Step 3 — Salary Structure Assignment (minimum wage enforcement)</div>
+          <div class="tl-title">HR tries to assign a salary below the country minimum wage</div>
+          <span class="tl-module" style="background:#D4EDE1;color:#2D6A4F;">Salary Structure Assignment</span>&nbsp;
+          <span class="tl-module" style="background:#D4EDE1;color:#2D6A4F;">HRMS Hook: on_submit</span>
+          <div class="tl-desc">A new hire is proposed for the Bangalore office with a basic salary below the applicable minimum wage. When HR submits the Salary Structure Assignment, the HRMS hook compares the base salary against the minimum_wage field in the IN Country Config record.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">Submission <strong>blocked</strong> with a clear error message: "Base salary INR 12,000 is below the minimum wage of INR 15,000 configured for IN. Update the salary structure before submitting." This prevents a non-compliant salary from being activated in payroll.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-key">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Step 4 — Employee separation (same week, three different countries)</div>
+          <div class="tl-title">Khalid resigns (SA), Sara's contract ends (AE), Priya completes 5+ years and resigns (IN)</div>
+          <span class="tl-module" style="background:#D4EDE1;color:#2D6A4F;">Employee Separation</span>&nbsp;
+          <span class="tl-module" style="background:#D4EDE1;color:#2D6A4F;">HRMS Hook: on_submit</span>
+          <div class="tl-desc">HR submits an Employee Separation record for each of the three employees. The HRMS on_submit hook fires for each, calls calculate_settlement() with the resolved country, and auto-creates the correct End of Service Benefit record dated to Employee.relieving_date.</div>
+          <div class="tl-auto">
+            <span class="tl-auto-icon">AUTO</span>
+            <span class="tl-auto-text">
+              <strong>Khalid (SA — Art. 84 EOSB):</strong> 3.5 years, resignation. Formula: ⅓ month/yr. EOSB = SAR 18,000 × ⅓ × 3.5 = <strong>SAR 21,000</strong>.<br>
+              <strong>Sara (AE — Art. 51 Gratuity):</strong> 4 years, end of contract. Formula: 21 days/yr for &lt;5 yrs. Gratuity = (AED 22,000 ÷ 30) × 21 × 4 = <strong>AED 61,600</strong>.<br>
+              <strong>Priya (IN — Gratuity Act 1972):</strong> 6 years of continuous service. Formula: (Basic + DA) ÷ 26 × 15 × 6. Gratuity = (85,000 ÷ 26) × 15 × 6 = <strong>INR 293,269</strong>. (5-year rule satisfied.)
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-event ev-final">
+        <div class="tl-dot-col"><div class="tl-dot"></div></div>
+        <div class="tl-body">
+          <div class="tl-date">Step 5 — Compliance review</div>
+          <div class="tl-title">HR reviews the Government Portal Sync Log and statutory contribution records across all three entities</div>
+          <span class="tl-module" style="background:#D4EDE1;color:#2D6A4F;">Portal Sync Log</span>&nbsp;
+          <span class="tl-module" style="background:#D4EDE1;color:#2D6A4F;">Country Config</span>
+          <div class="tl-desc">The HR Manager opens the Government Portal Sync Log and filters by date range. All GOSI submissions (Khalid, SA), GPSSA filings (Sara, AE), and EPF/ESI contributions (Priya, IN) are logged with status = Success and the relevant reference numbers from each country's statutory authority. All three EOSB/Gratuity records are auto-created and linked to their respective separation documents — no manual calculation or form filling required.</div>
+          <div class="note" style="background:#D4EDE1; border-color:#2D6A4F; border-left:3px solid #2D6A4F; margin-top:10px; font-size:0.82rem; color:var(--text-muted);">
+            <strong style="color:#2D6A4F;">Global compliance achieved:</strong> Three employees in three countries went through the full HR lifecycle — onboarding, payroll, and separation — and received the correct statutory treatment in every step, automatically, because Company.country was set correctly and Country Config records were configured once.
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
   <!-- FOOTER -->

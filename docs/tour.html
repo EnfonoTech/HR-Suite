@@ -341,6 +341,12 @@ body {
       <a class="sidebar-link" href="#wps-submit"><span class="sidebar-dot" style="background:#0F5B7A"></span>WPS / Mudad Submit</a>
       <a class="sidebar-link" href="#portal-log"><span class="sidebar-dot" style="background:#0F5B7A"></span>Portal Sync Log</a>
     </div>
+    <div class="sidebar-section">
+      <div class="sidebar-group">Global Compliance</div>
+      <a class="sidebar-link" href="#country-config-tour"><span class="sidebar-dot" style="background:#2D6A4F"></span>Country Config</a>
+      <a class="sidebar-link" href="#uae-employee-form"><span class="sidebar-dot" style="background:#2D6A4F"></span>UAE Employee Form</a>
+      <a class="sidebar-link" href="#auto-eosb-separation"><span class="sidebar-dot" style="background:#2D6A4F"></span>Auto EOSB on Separation</a>
+    </div>
   </nav>
 
   <!-- MAIN CONTENT -->
@@ -1958,6 +1964,285 @@ body {
             <div class="step-label">Read-only · JSON</div>
             <div class="step-field-name">Response Data</div>
             <div class="step-desc">The full API response from the government portal. For successful calls, this contains confirmation data (member IDs, reference numbers, compliance flags). For failed calls, the error code and message from the portal are stored here.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         GLOBAL COMPLIANCE
+    ═══════════════════════════════════ -->
+    <div class="section-header">
+      <h2>Global Compliance</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <!-- Country Config -->
+    <div id="country-config-tour" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#D4EDE1">🌍</div>
+        <div class="doctype-header-text">
+          <h2>Country Config</h2>
+          <div class="doctype-meta">HR Suite › Global Compliance · Per-country statutory rates, settlement formula, leave types, WPS format</div>
+        </div>
+        <span class="module-tag" style="background:#D4EDE1; color:#2D6A4F;">Global</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HR Suite → Global Compliance → Country Config → [select country, e.g. SA or IN]
+      </div>
+      <div class="mock-form">
+        <p class="form-intro">Country Config is a master record — one per country. It drives every statutory calculation in HR Suite. Configure it once; the system reads from it on every payroll run, leave validation, and separation.</p>
+
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Read-only · Select</div>
+            <div class="step-field-name">Country <span class="field-type-badge">Select</span></div>
+            <div class="step-desc">The country this record applies to. One record per country. Pre-configured records exist for SA, AE, BH, IN, and OM.</div>
+            <div class="examples-row">
+              <span class="example-val">SA — Saudi Arabia</span>
+              <span class="example-val">IN — India</span>
+              <span class="example-val">AE — UAE</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Data · Statutory Scheme</div>
+            <div class="step-field-name">Statutory Scheme <span class="field-type-badge">Data</span></div>
+            <div class="step-desc">The name of the national social insurance or pension scheme. Used in contribution record names and reports.</div>
+            <div class="examples-row">
+              <span class="example-val">SA: GOSI</span>
+              <span class="example-val">IN: EPF + ESI + PT</span>
+              <span class="example-val">AE: GPSSA / DEWS</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Percent · Contribution Rates</div>
+            <div class="step-field-name">Employee Rate / Employer Rate <span class="field-type-badge">Percent</span></div>
+            <div class="step-desc">Statutory contribution percentages. The Payroll Entry hook reads these to calculate the correct contribution amount for each employee in this country.</div>
+            <div class="examples-row">
+              <span class="example-val">SA national: 10% emp · 11.75%+0.75% er</span>
+              <span class="example-val">IN EPF: 12% emp · 12% er</span>
+            </div>
+            <div class="step-note"><span>💡</span> Update these fields whenever the government announces a rate change — the change takes effect from the next payroll run automatically.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Small Text · Settlement Formula</div>
+            <div class="step-field-name">Settlement Formula <span class="field-type-badge">Small Text</span></div>
+            <div class="step-desc">Identifies which calculate_settlement() branch to use on Employee Separation. This field drives automatic EOSB/Gratuity/Indemnity creation.</div>
+            <div class="examples-row">
+              <span class="example-val">SA: EOSB (Art. 84)</span>
+              <span class="example-val">AE: Gratuity (Art. 51/132)</span>
+              <span class="example-val">IN: Gratuity Act 1972</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-label">Table · Leave Types</div>
+            <div class="step-field-name">Country Leave Types</div>
+            <div class="step-desc">Lists the leave types applicable in this country with their statutory entitlement days. The Leave Application and Leave Allocation hooks compare against this table to warn on mismatches.</div>
+            <div class="examples-row">
+              <span class="example-val">SA: Annual Leave 21 days (yrs 1–5) / 30 days (yr 6+)</span>
+              <span class="example-val">IN: Earned Leave 18 days / Casual Leave 12 days</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <div class="step-label">Data · WPS Format</div>
+            <div class="step-field-name">WPS Format <span class="field-type-badge">Data</span></div>
+            <div class="step-desc">The wage protection system file format for this country. Used when generating payroll transfer files.</div>
+            <div class="examples-row">
+              <span class="example-val">SA: Mudad / SARIE</span>
+              <span class="example-val">AE: SIF-AE</span>
+              <span class="example-val">BH: WPS-BH</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">7</div>
+          <div class="step-body">
+            <div class="step-label">Currency · Minimum Wage</div>
+            <div class="step-field-name">Minimum Wage <span class="field-type-badge">Currency</span></div>
+            <div class="step-desc">The national minimum wage in local currency. Salary Structure Assignment is blocked on submit if the base salary is below this figure.</div>
+            <div class="step-warn"><span>🔴</span> Keep this field current. If the national minimum wage increases and you do not update Country Config, the system will not block non-compliant salary structures.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">8</div>
+          <div class="step-body">
+            <div class="step-label">Data · Nationalization Scheme</div>
+            <div class="step-field-name">Nationalization Scheme <span class="field-type-badge">Data</span></div>
+            <div class="step-desc">The name of the local workforce nationalization program. Used in Nitaqat / quota reports and hiring requisition checks.</div>
+            <div class="examples-row">
+              <span class="example-val">SA: Nitaqat (Saudization)</span>
+              <span class="example-val">AE: Emiratisation</span>
+              <span class="example-val">OM: Omanization</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UAE Employee Form -->
+    <div id="uae-employee-form" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#D4EDE1">🇦🇪</div>
+        <div class="doctype-header-text">
+          <h2>UAE Employee Form</h2>
+          <div class="doctype-meta">Employee › UAE Statutory group · Country-resolved buttons replace SA-specific groups</div>
+        </div>
+        <span class="module-tag" style="background:#D4EDE1; color:#2D6A4F;">Global</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;Employee → open a UAE employee record (Company.country = AE or Employee.work_country = AE)
+      </div>
+      <div class="mock-form">
+        <p class="form-intro">When you open an Employee record whose resolved country is AE, HR Suite replaces the SA-specific button groups (Muqeem, Qiwa, GOSI) with a "UAE Statutory" group containing the relevant UAE compliance actions. This happens automatically on every page refresh — no configuration on the Employee record is needed.</p>
+
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Observe on form load</div>
+            <div class="step-field-name">UAE Statutory group appears — SA groups absent</div>
+            <div class="step-desc">Open a UAE employee record. Scroll down the form. You will see a "UAE Statutory" section instead of Muqeem, Qiwa, or GOSI groups. This is the country-detection chain in action: HR Suite called the country resolution API on page load and rendered the correct buttons.</div>
+            <div class="step-note"><span>💡</span> If you see SA groups on a UAE employee, check that the company's country is set to AE in the Company DocType, and that the employee has no conflicting Employee.work_country set to SA.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Button · UAE Statutory group</div>
+            <div class="step-field-name">GPSSA Contribution</div>
+            <div class="step-desc">For UAE nationals: opens or creates the GPSSA Contribution record for this employee. Rates: 5% employee + 12.5% employer. For expatriates: opens the DEWS/Gratuity record instead (the button label changes based on nationality).</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Button · UAE Statutory group</div>
+            <div class="step-field-name">Work Permit</div>
+            <div class="step-desc">Opens the UAE work permit and Emirates ID record for this employee. Similar to the SA Muqeem Iqama record, but for UAE residency documentation.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Button · UAE Statutory group</div>
+            <div class="step-field-name">Settlement Breakdown</div>
+            <div class="step-desc">Opens a dialog showing the AE Gratuity calculation for this employee using Art. 51/132 — 21 calendar days per year for the first 5 years, 30 days per year thereafter. The breakdown uses the current last basic salary from the Salary Structure Assignment.</div>
+            <div class="examples-row">
+              <span class="example-val">Sara Al-Mansoori · 4 yrs service · AED 22,000 basic → Gratuity: AED 61,600</span>
+            </div>
+            <div class="step-note"><span>💡</span> The Settlement Breakdown dialog is a live preview — it updates automatically if the salary or service dates change. It does not create any document; it is for reference only until Employee Separation is submitted.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-label">Observe · Contract banner</div>
+            <div class="step-field-name">Country Employment Contract banner (AED currency)</div>
+            <div class="step-desc">The contract banner at the top of the form shows the Country Employment Contract (not Saudi Employment Contract) and displays the salary in AED. This currency is resolved from the Company's default currency for the AE entity.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auto EOSB on Separation -->
+    <div id="auto-eosb-separation" class="doctype-section tour-section">
+      <div class="doctype-header">
+        <div class="doctype-icon" style="background:#D4EDE1">🏦</div>
+        <div class="doctype-header-text">
+          <h2>Auto EOSB on Separation</h2>
+          <div class="doctype-meta">HRMS › Employee Separation · On submit, End of Service Benefit is auto-created using country formula and Employee.relieving_date</div>
+        </div>
+        <span class="module-tag" style="background:#D4EDE1; color:#2D6A4F;">Global</span>
+      </div>
+      <div class="action-bar">
+        <strong>Path:</strong>&nbsp;HRMS → Employee Separation → open or create record → Submit
+      </div>
+      <div class="mock-form">
+        <p class="form-intro">Employee Separation in HRMS is the trigger point for HR Suite's settlement calculation hook. When the record is submitted, HR Suite intercepts the on_submit event, resolves the employee's country, runs the correct formula, and creates the End of Service Benefit record automatically — using Employee.relieving_date as the settlement date.</p>
+
+        <div class="form-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-label">Pre-requisite</div>
+            <div class="step-field-name">Employee.relieving_date must be set</div>
+            <div class="step-desc">Open the Employee record and ensure the Relieving Date field is filled with the employee's last working day. The auto-created EOSB record will use this date as its settlement date.</div>
+            <div class="examples-row">
+              <span class="example-val">Khalid Al-Rashidi · Relieving Date: 31 Jul 2026</span>
+            </div>
+            <div class="step-warn"><span>🔴</span> If Relieving Date is blank, the settlement record will be created with today's date, which may not match the correct last working day. Always set Relieving Date before submitting Employee Separation.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-label">Required · Select</div>
+            <div class="step-field-name">Separation Type <span class="field-type-badge">Select</span></div>
+            <div class="step-desc">Resignation / Termination (Without Cause) / End of Contract / Retirement. This feeds into calculate_settlement() and determines the applicable entitlement fraction.</div>
+            <div class="examples-row">
+              <span class="example-val">Khalid: Resignation (SA → ⅓ month/yr for &lt;5 yrs)</span>
+              <span class="example-val">Sara: End of Contract (AE → full gratuity at 21 days/yr)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-label">Action</div>
+            <div class="step-field-name">Submit the Employee Separation record</div>
+            <div class="step-desc">Click Submit. The HRMS on_submit hook fires instantly. HR Suite resolves the employee's country, calls calculate_settlement() with the correct country dispatch, and creates the End of Service Benefit record.</div>
+            <div class="step-note"><span>💡</span> The entire process happens synchronously — by the time the submit confirmation dialog closes, the EOSB record already exists and is linked in the document's "Links" section.</div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-label">Verify · Linked documents</div>
+            <div class="step-field-name">End of Service Benefit — auto-created</div>
+            <div class="step-desc">After submit, scroll to the Links section of the Employee Separation form. You will see the auto-created End of Service Benefit record. Open it to review the amount, formula used, and settlement date.</div>
+            <div class="examples-row">
+              <span class="example-val">Khalid (SA) → EOSB-2026-0041 · SAR 21,000 · Art. 84 · Date: 31 Jul 2026</span>
+              <span class="example-val">Sara (AE) → EOSB-2026-0042 · AED 61,600 · Art. 51/132 · Date: 30 Sep 2026</span>
+              <span class="example-val">Priya (IN) → EOSB-2026-0043 · INR 293,269 · Gratuity Act 1972 · Date: 15 Aug 2026</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-label">Note · SA employees only</div>
+            <div class="step-field-name">Muqeem Final Exit — initiate after EOSB is settled</div>
+            <div class="step-desc">For Saudi Arabia expatriate employees only: after the EOSB is paid and Exit Clearance is complete, navigate to the Employee form → Muqeem group → Initiate Final Exit to submit the final exit request via the Muqeem API.</div>
+            <div class="step-note"><span>💡</span> For AE, BH, IN, and OM employees, work permit cancellation is handled via the respective country's statutory group buttons on the Employee form, not via Muqeem.</div>
           </div>
         </div>
       </div>

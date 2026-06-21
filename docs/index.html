@@ -362,6 +362,7 @@ body {
 .cat-comply   { background: #9B3535; }
 .cat-recruit  { background: #2A7A8C; }
 .cat-portal   { background: #0F5B7A; }
+.cat-global   { background: #2D6A4F; }
 
 .module-card-info { flex: 1; }
 
@@ -860,6 +861,18 @@ body {
       </ul>
     </div>
 
+    <div class="nav-chapter">
+      <button class="nav-chapter-btn" onclick="toggleChapter(this, 'sub-global')">
+        <span class="nav-chapter-num">10</span> Global Compliance
+      </button>
+      <ul class="nav-sub" id="sub-global">
+        <li><a href="#country-config">Country Config</a></li>
+        <li><a href="#hrms-hooks">HRMS Hooks</a></li>
+        <li><a href="#settlement-by-country">Settlement by Country</a></li>
+        <li><a href="#statutory-deductions">Statutory Deductions</a></li>
+      </ul>
+    </div>
+
     <div class="nav-divider"></div>
     <div class="sidebar-heading">Reference</div>
 
@@ -1136,6 +1149,7 @@ body {
               <tr><td>Overtime / bonuses</td><td>Salary Adjustment records</td><td>Approve Salary Adjustment first</td></tr>
             </tbody>
           </table>
+          <div class="law-note"><strong>Global statutory deductions:</strong> When Payroll Entry is submitted, HR Suite auto-creates the correct statutory contribution record based on the employee's country — GOSI Contribution (SA), EPF/ESI Contribution (IN), or Statutory Contribution (AE/BH/OM). No manual setup is required per employee; the system resolves the country via the Country Config chain. See <a href="#global-compliance" style="color:var(--accent);">§10 Global Compliance</a> for details.</div>
         </div>
       </div>
 
@@ -2091,6 +2105,167 @@ body {
     </section>
 
     <!-- ═══════════════════════════════════════════════ -->
+    <!-- §10  GLOBAL COMPLIANCE                          -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <section class="doc-section" id="global-compliance">
+      <div class="section-header">
+        <span class="section-num">10</span>
+        <h2 class="section-title">Global Compliance</h2>
+      </div>
+
+      <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom: 24px; line-height:1.65;">HR Suite automatically applies the correct statutory rules based on the employee's company country. No per-employee configuration is needed — set Company.country and the system handles the rest.</p>
+
+      <!-- Country Config -->
+      <div class="module-card" id="country-config">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-global"></div>
+          <div class="module-card-info">
+            <div class="module-name">Country Config</div>
+            <div class="module-tagline">Per-country master that stores statutory rates, settlement formula, leave types, WPS format, and nationalization scheme. One record per country — configure once.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">5 countries pre-configured</span>
+              <span class="badge badge-muted">SA · AE · BH · IN · OM</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <h4 id="country-detection">Country detection chain</h4>
+          <p>HR Suite resolves an employee's country through a 4-step priority chain. The first source that returns a value wins:</p>
+          <table class="data-table">
+            <thead><tr><th>Priority</th><th>Source</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td>1 — Highest</td><td>Employee.work_country</td><td>Set directly on the Employee record; overrides everything else</td></tr>
+              <tr><td>2</td><td>Active Country Employment Contract</td><td>The country field on the most recent active contract linked to the employee</td></tr>
+              <tr><td>3</td><td>Company.country</td><td>The default country of the employee's assigned company in ERPNext</td></tr>
+              <tr><td>4 — Lowest</td><td>HR Suite Settings.default_work_country</td><td>System-wide fallback; used when no other source resolves a country</td></tr>
+            </tbody>
+          </table>
+
+          <h4 id="country-matrix">Country compliance matrix</h4>
+          <table class="data-table">
+            <thead><tr><th>Country</th><th>Statutory Scheme</th><th>Settlement Formula</th><th>WPS Format</th><th>Nationalization</th></tr></thead>
+            <tbody>
+              <tr><td><strong>SA</strong> — Saudi Arabia</td><td>GOSI</td><td>EOSB (Art. 84)</td><td>Mudad / SARIE</td><td>Nitaqat (Saudization)</td></tr>
+              <tr><td><strong>AE</strong> — UAE</td><td>GPSSA / DEWS</td><td>Gratuity (Art. 51/132)</td><td>SIF-AE</td><td>Emiratisation</td></tr>
+              <tr><td><strong>BH</strong> — Bahrain</td><td>SIO</td><td>Indemnity (Art. 116-117)</td><td>WPS-BH</td><td>Bahrainization</td></tr>
+              <tr><td><strong>IN</strong> — India</td><td>EPF + ESI + PT</td><td>Gratuity Act 1972</td><td>—</td><td>—</td></tr>
+              <tr><td><strong>OM</strong> — Oman</td><td>PASI</td><td>Indemnity (Art. 39-40)</td><td>WPS-OM</td><td>Omanization</td></tr>
+            </tbody>
+          </table>
+
+          <h4>Employee form — per-country button groups</h4>
+          <p>When an Employee record is opened, HR Suite resolves the country via the detection chain above and renders only the relevant button groups. Saudi Arabia employees see Muqeem, Qiwa, and GOSI groups; employees in other countries see their respective statutory groups instead.</p>
+          <table class="data-table">
+            <thead><tr><th>Country</th><th>Button Group</th><th>Actions available</th></tr></thead>
+            <tbody>
+              <tr><td>SA</td><td>Muqeem group</td><td>Verify Iqama, Exit/Re-entry, Final Exit (gated on Settings flags)</td></tr>
+              <tr><td>SA</td><td>Qiwa group</td><td>Verify Contract, Nitaqat Status</td></tr>
+              <tr><td>SA</td><td>GOSI group</td><td>Register, Member Status, Deregister</td></tr>
+              <tr><td>AE</td><td>UAE Statutory group</td><td>GPSSA Contribution, DEWS/Gratuity, Work Permit, Settlement Breakdown</td></tr>
+              <tr><td>BH</td><td>BH Statutory group</td><td>SIO Contribution, CPR Work Permit, Settlement Breakdown</td></tr>
+              <tr><td>IN</td><td>IN Statutory group</td><td>EPF/ESI Contribution, Professional Tax, Gratuity Estimate</td></tr>
+              <tr><td>OM</td><td>OM Statutory group</td><td>PASI Contribution, Work Permit, Settlement Breakdown</td></tr>
+            </tbody>
+          </table>
+          <div class="law-note"><strong>Contract banner:</strong> The Employee form shows a country-aware contract banner — it displays the Country Employment Contract first, falling back to Saudi Employment Contract if no country contract exists. Currency on the banner uses the correct local currency per country.</div>
+        </div>
+      </div>
+
+      <!-- HRMS Hooks -->
+      <div class="module-card" id="hrms-hooks">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-global"></div>
+          <div class="module-card-info">
+            <div class="module-name">HRMS Integration Hooks</div>
+            <div class="module-tagline">HR Suite intercepts key HRMS events and injects country-aware compliance logic automatically — leave validation, payroll blocking, and auto statutory contributions.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">5 HRMS doctypes hooked</span>
+              <span class="badge badge-amber">Blocks non-compliant payroll</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <table class="data-table">
+            <thead><tr><th>HRMS Event</th><th>What HR Suite does</th></tr></thead>
+            <tbody>
+              <tr><td>Leave Application → validate</td><td>Warns if the leave type is not listed in the Country Config for the employee's country; warns when a sick-pay tier changes</td></tr>
+              <tr><td>Leave Allocation → on_submit</td><td>Warns if the allocated days mismatch the Country Config entitlement for that leave type</td></tr>
+              <tr><td>Salary Structure Assignment → on_submit</td><td>Blocks submission if the base salary is below the minimum_wage configured in Country Config — prevents non-compliant salary structures being activated</td></tr>
+              <tr><td>Payroll Entry → on_submit</td><td>Auto-creates the correct statutory contribution record: GOSI Contribution (SA), EPF/ESI Contribution (IN), or Statutory Contribution (AE/BH/OM)</td></tr>
+              <tr><td>Employee Separation → on_submit</td><td>Runs calculate_settlement() dispatched by country; auto-creates End of Service Benefit record using Employee.relieving_date and the country formula</td></tr>
+            </tbody>
+          </table>
+          <div class="deadline-note"><strong>No manual trigger needed:</strong> All hooks fire automatically when the HRMS document is submitted. HR does not need to open a separate form or run a script — the statutory contribution or settlement record appears in the linked documents section of the originating HRMS document.</div>
+        </div>
+      </div>
+
+      <!-- Settlement by Country -->
+      <div class="module-card" id="settlement-by-country">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-global"></div>
+          <div class="module-card-info">
+            <div class="module-name">Settlement by Country</div>
+            <div class="module-tagline">calculate_settlement() dispatches by country to the correct legal formula. On Employee Separation submit, EOSB/Indemnity/Gratuity is auto-created using Employee.relieving_date.</div>
+            <div class="module-badges">
+              <span class="badge badge-green">Auto-created on separation</span>
+              <span class="badge badge-muted">5 country formulas</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <table class="data-table">
+            <thead><tr><th>Country</th><th>Law / Article</th><th>Formula summary</th></tr></thead>
+            <tbody>
+              <tr><td>SA — Saudi Arabia</td><td>Art. 84 (EOSB)</td><td>Resignation: ⅓ month/yr (&lt;5 yrs), ⅔ month/yr (5–10 yrs), 1 month/yr (&gt;10 yrs). Employer termination: ½ month/yr (&lt;5 yrs), 1 month/yr thereafter.</td></tr>
+              <tr><td>AE — UAE</td><td>Art. 51/132 (Gratuity)</td><td>21 calendar days' basic wage per year for first 5 years; 30 days' basic wage per year thereafter. Capped at 2 years' total wages.</td></tr>
+              <tr><td>IN — India</td><td>Gratuity Act 1972</td><td>(Last drawn basic + DA) ÷ 26 × 15 × years of service. Payable after 5 continuous years of service.</td></tr>
+              <tr><td>BH — Bahrain</td><td>Art. 116-117 (Indemnity)</td><td>Half month's wage per year of service for first 3 years; one month's wage per year thereafter.</td></tr>
+              <tr><td>OM — Oman</td><td>Art. 39-40 (Indemnity)</td><td>15 days' basic wage per year for first 3 years; one month's basic wage per year thereafter.</td></tr>
+            </tbody>
+          </table>
+          <div class="law-note"><strong>Auto-creation flow:</strong> When Employee Separation is submitted in HRMS, HR Suite calls calculate_settlement() with the employee's country. The resulting End of Service Benefit record is created automatically with the correct amount, linked to the separation, and dated using Employee.relieving_date.</div>
+        </div>
+      </div>
+
+      <!-- Statutory Deductions -->
+      <div class="module-card" id="statutory-deductions">
+        <div class="module-card-head" onclick="toggleCard(this.closest('.module-card'))">
+          <div class="module-cat-bar cat-global"></div>
+          <div class="module-card-info">
+            <div class="module-name">Statutory Deduction Rates</div>
+            <div class="module-tagline">Reference rates for all five countries. Stored in Country Config and used by the payroll hook to calculate the correct contribution amounts automatically.</div>
+            <div class="module-badges">
+              <span class="badge badge-muted">Read from Country Config</span>
+            </div>
+          </div>
+          <div class="module-toggle">›</div>
+        </div>
+        <div class="module-body">
+          <table class="data-table">
+            <thead><tr><th>Country</th><th>Scheme</th><th>Employee rate</th><th>Employer rate</th><th>Basis</th></tr></thead>
+            <tbody>
+              <tr><td>SA</td><td>GOSI (Saudi national)</td><td>10%</td><td>11.75% + 0.75% injury</td><td>Basic salary</td></tr>
+              <tr><td>SA</td><td>GOSI (Expatriate)</td><td>0%</td><td>2% injury insurance</td><td>Basic salary</td></tr>
+              <tr><td>AE</td><td>GPSSA (UAE national)</td><td>5%</td><td>12.5%</td><td>Basic + allowances</td></tr>
+              <tr><td>AE</td><td>DEWS / Gratuity (Expatriate)</td><td>0%</td><td>As per DIFC or UAE Labour Law</td><td>Basic salary</td></tr>
+              <tr><td>BH</td><td>SIO (Bahraini national)</td><td>7%</td><td>12%</td><td>Gross salary</td></tr>
+              <tr><td>BH</td><td>SIO (Expatriate)</td><td>1%</td><td>3%</td><td>Gross salary</td></tr>
+              <tr><td>IN</td><td>EPF</td><td>12%</td><td>12% (8.33% goes to EPS)</td><td>Basic + DA (capped at INR 15,000)</td></tr>
+              <tr><td>IN</td><td>ESI</td><td>0.75%</td><td>3.25%</td><td>Gross wages (applicable below INR 21,000/month)</td></tr>
+              <tr><td>OM</td><td>PASI (Omani national)</td><td>7%</td><td>10.5%</td><td>Basic salary</td></tr>
+              <tr><td>OM</td><td>PASI (Expatriate)</td><td>0%</td><td>1% (social protection)</td><td>Basic salary</td></tr>
+            </tbody>
+          </table>
+          <div class="risk-note"><strong>Minimum wage enforcement:</strong> Salary Structure Assignment → on_submit is blocked if the base salary is below the minimum_wage stored in Country Config. This prevents activating non-compliant salary structures. Update the minimum_wage in Country Config whenever the national minimum wage changes.</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ -->
     <!-- §REF  REPORTS & ROLES                           -->
     <!-- ═══════════════════════════════════════════════ -->
     <section class="doc-section" id="reports">
@@ -2205,7 +2380,8 @@ const observer = new IntersectionObserver((entries) => {
         'hr-documents': 5,
         'compliance': 6,
         'recruitment': 7,
-        'saudi-portals': 8
+        'saudi-portals': 8,
+        'global-compliance': 9
       };
       const idx = map[id];
       if (idx !== undefined) {
