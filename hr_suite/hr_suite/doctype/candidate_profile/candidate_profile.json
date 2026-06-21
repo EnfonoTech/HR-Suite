@@ -10,7 +10,7 @@
   "candidate_name",
   "arabic_name",
   "column_break_1",
-  "hiring_requisition",
+  "job_requisition",
   "status",
   "contact_section",
   "email_address",
@@ -54,10 +54,10 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "hiring_requisition",
+   "fieldname": "job_requisition",
    "fieldtype": "Link",
-   "label": "Hiring Requisition",
-   "options": "Hiring Requisition"
+   "label": "Job Requisition",
+   "options": "Job Requisition"
   },
   {
    "fieldname": "status",

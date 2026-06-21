@@ -13,7 +13,7 @@
   "company",
   "department",
   "movement_context_section",
-  "performance_review",
+  "appraisal",
   "salary_adjustment",
   "movement_type",
   "effective_date",
@@ -86,10 +86,10 @@
    "label": "Movement Context"
   },
   {
-   "fieldname": "performance_review",
+   "fieldname": "appraisal",
    "fieldtype": "Link",
-   "label": "Performance Review",
-   "options": "Performance Review"
+   "label": "Appraisal",
+   "options": "Appraisal"
   },
   {
    "fieldname": "salary_adjustment",
@@ -225,8 +225,8 @@
  "links": [
   {
    "group": "References",
-   "link_doctype": "Performance Review",
-   "link_fieldname": "promotion_transfer"
+   "link_doctype": "Appraisal",
+   "link_fieldname": "hrsuite_promotion_transfer"
   }
  ],
  "modified": "2026-04-05 00:00:00.000000",

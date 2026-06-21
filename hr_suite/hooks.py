@@ -151,6 +151,10 @@ doc_events = {
 	"Employee Separation": {
 		"on_submit": "hr_suite.hr_suite.integrations.hrms.on_employee_separation_submit",
 	},
+	"Exit Interview": {
+		"on_update": "hr_suite.hr_suite.integrations.hrms.on_exit_interview_update",
+		"on_trash": "hr_suite.hr_suite.integrations.hrms.on_exit_interview_trash",
+	},
 }
 
 doctype_js = {

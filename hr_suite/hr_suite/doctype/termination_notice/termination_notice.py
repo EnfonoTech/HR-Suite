@@ -85,8 +85,8 @@ class TerminationNotice(Document):
 				"employee_name": self.employee_name,
 				"company": self.company,
 				"department": self.department,
-				"termination_notice": self.name,
-				"interview_date": last_day,
+				"hrsuite_termination_notice": self.name,
+				"date": last_day,
 				"status": "Scheduled",
 			}).insert(ignore_permissions=True)
 

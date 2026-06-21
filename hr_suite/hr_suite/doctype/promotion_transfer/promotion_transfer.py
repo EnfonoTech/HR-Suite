@@ -20,23 +20,23 @@ class PromotionTransfer(Document):
 		if self.status == "Implemented" and not self.implementation_date:
 			self.implementation_date = self.effective_date
 
-		if self.performance_review:
-			self._sync_performance_review()
+		if self.appraisal:
+			self._sync_appraisal()
 
 	def on_update(self):
-		if self.performance_review:
-			self._sync_performance_review()
+		if self.appraisal:
+			self._sync_appraisal()
 
-	def _sync_performance_review(self):
-		if not frappe.db.exists("Performance Review", self.performance_review):
+	def _sync_appraisal(self):
+		if not frappe.db.exists("Appraisal", self.appraisal):
 			return
 
 		frappe.db.set_value(
-			"Performance Review",
-			self.performance_review,
+			"Appraisal",
+			self.appraisal,
 			{
-				"promotion_recommended": 1,
-				"promotion_transfer": self.name,
+				"hrsuite_promotion_recommended": 1,
+				"hrsuite_promotion_transfer": self.name,
 			},
 			update_modified=False,
 		)

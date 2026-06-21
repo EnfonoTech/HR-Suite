@@ -217,6 +217,26 @@ def on_appraisal_submit(doc, method=None):
     except Exception:
         frappe.log_error(frappe.get_traceback(), f"HR Suite: Staff Rating sync failed for {doc.employee}")
 
+    # Sync HR Suite custom fields on Appraisal → linked documents
+    if doc.get("hrsuite_promotion_transfer"):
+        if frappe.db.exists("Promotion Transfer", doc.hrsuite_promotion_transfer):
+            frappe.db.set_value(
+                "Promotion Transfer",
+                doc.hrsuite_promotion_transfer,
+                "appraisal",
+                doc.name,
+                update_modified=False,
+            )
+    if doc.get("hrsuite_salary_adjustment"):
+        if frappe.db.exists("Salary Adjustment", doc.hrsuite_salary_adjustment):
+            frappe.db.set_value(
+                "Salary Adjustment",
+                doc.hrsuite_salary_adjustment,
+                "appraisal",
+                doc.name,
+                update_modified=False,
+            )
+
 
 # ── Employee status "Left" → trigger exit checklist ──────────────────────────
 
@@ -563,3 +583,32 @@ def on_employee_separation_submit(doc, method=None):
         )
     except Exception:
         frappe.log_error(frappe.get_traceback(), f"HR Suite: EOSB auto-create failed for {employee}")
+
+
+# ── Exit Interview → sync Exit Clearance completion flag ─────────────────────
+
+def on_exit_interview_update(doc, method=None):
+    """Sync exit interview completion flag back to linked Exit Clearance."""
+    _sync_exit_clearance_completion(doc, force_incomplete=False)
+
+
+def on_exit_interview_trash(doc, method=None):
+    """Clear the exit interview completion flag when the record is deleted."""
+    _sync_exit_clearance_completion(doc, force_incomplete=True)
+
+
+def _sync_exit_clearance_completion(doc, force_incomplete=False):
+    ec = doc.get("hrsuite_exit_clearance") or frappe.db.get_value(
+        "Exit Clearance", {"exit_interview": doc.name, "docstatus": ["<", 2]}, "name"
+    )
+    if not ec or not frappe.db.exists("Exit Clearance", ec):
+        return
+    COMPLETED = {"Completed", "Cancelled"}
+    is_completed = 0 if force_incomplete else int((doc.status or "") in COMPLETED)
+    frappe.db.set_value(
+        "Exit Clearance",
+        ec,
+        "exit_interview_completed",
+        is_completed,
+        update_modified=False,
+    )

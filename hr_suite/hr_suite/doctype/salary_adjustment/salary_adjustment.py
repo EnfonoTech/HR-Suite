@@ -29,23 +29,23 @@ class SalaryAdjustment(Document):
 		if self.status == "Implemented" and not self.implementation_date:
 			self.implementation_date = self.effective_date
 
-		if self.performance_review:
+		if self.appraisal:
 			self._sync_review_recommendation()
 
 	def on_update(self):
-		if self.performance_review:
+		if self.appraisal:
 			self._sync_review_recommendation()
 
 	def _sync_review_recommendation(self):
-		if not frappe.db.exists("Performance Review", self.performance_review):
+		if not frappe.db.exists("Appraisal", self.appraisal):
 			return
 
 		frappe.db.set_value(
-			"Performance Review",
-			self.performance_review,
+			"Appraisal",
+			self.appraisal,
 			{
-				"salary_adjustment_recommended": 1,
-				"salary_adjustment": self.name,
+				"hrsuite_salary_adjustment_recommended": 1,
+				"hrsuite_salary_adjustment": self.name,
 			},
 			update_modified=False,
 		)

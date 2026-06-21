@@ -17,8 +17,8 @@ class CandidateProfile(Document):
 	def _auto_create_employee(self):
 		"""When a candidate is accepted, create a draft Employee + Onboarding automatically."""
 		company = (
-			frappe.db.get_value("Hiring Requisition", self.hiring_requisition, "company")
-			if self.hiring_requisition
+			frappe.db.get_value("Job Requisition", self.job_requisition, "company")
+			if self.job_requisition
 			else frappe.defaults.get_global_default("company")
 		)
 		emp = frappe.get_doc({

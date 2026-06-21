@@ -13,7 +13,7 @@
   "company",
   "department",
   "adjustment_context_section",
-  "performance_review",
+  "appraisal",
   "effective_date",
   "adjustment_type",
   "column_break_2",
@@ -83,10 +83,10 @@
    "label": "Adjustment Context"
   },
   {
-   "fieldname": "performance_review",
+   "fieldname": "appraisal",
    "fieldtype": "Link",
-   "label": "Performance Review",
-   "options": "Performance Review"
+   "label": "Appraisal",
+   "options": "Appraisal"
   },
   {
    "fieldname": "effective_date",
@@ -205,8 +205,8 @@
  "links": [
   {
    "group": "References",
-   "link_doctype": "Performance Review",
-   "link_fieldname": "salary_adjustment"
+   "link_doctype": "Appraisal",
+   "link_fieldname": "hrsuite_salary_adjustment"
   }
  ],
  "modified": "2026-04-05 00:00:00.000000",

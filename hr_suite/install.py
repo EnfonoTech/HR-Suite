@@ -36,6 +36,7 @@ def after_install():
 def after_migrate():
 	"""Called after every bench migrate — ensures workflow states always exist."""
 	rename_saudi_doctypes()
+	_cleanup_deprecated_doctypes()
 	create_workflow_states()
 	sync_workflow_configs()
 	sync_compliance_controls()
@@ -51,6 +52,16 @@ def after_migrate():
 	ensure_employee_custom_fields()
 	seed_country_configs()
 	remove_obsolete_reports()
+
+
+def _cleanup_deprecated_doctypes():
+	"""Remove DocType records for doctypes eliminated in favour of HRMS equivalents."""
+	for dt in ("Hiring Requisition", "Performance Review"):
+		if frappe.db.exists("DocType", dt):
+			try:
+				frappe.delete_doc("DocType", dt, ignore_permissions=True, force=True)
+			except Exception:
+				frappe.log_error(f"Could not delete deprecated DocType {dt}", "HR Suite cleanup")
 
 
 def ensure_department_approver_role():
