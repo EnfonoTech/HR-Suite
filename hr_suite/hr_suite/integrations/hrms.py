@@ -22,11 +22,21 @@ def on_job_offer_submit(doc, method=None):
     if frappe.db.exists("Employee", {"employee_name": doc.applicant_name, "status": "Active"}):
         return  # Employee already exists — do nothing
 
-    job_opening = frappe.db.get_value(
-        "Job Opening",
-        doc.job_title,
-        ["branch", "custom_work_country"],
-        as_dict=True,
+    # Job Offer has no direct job_title field; resolve via Job Applicant → Job Opening
+    job_opening_name = (
+        frappe.db.get_value("Job Applicant", doc.job_applicant, "job_title")
+        if doc.job_applicant
+        else None
+    )
+    job_opening = (
+        frappe.db.get_value(
+            "Job Opening",
+            job_opening_name,
+            ["branch", "custom_work_country"],
+            as_dict=True,
+        )
+        if job_opening_name
+        else {}
     ) or {}
 
     # Derive country: explicit field > branch keyword > company country
@@ -47,7 +57,7 @@ def on_job_offer_submit(doc, method=None):
         "company": doc.company or frappe.defaults.get_user_default("company"),
         "status": "Active",
         "date_of_joining": doc.offer_date or getdate(),
-        "employment_type": "Regular",
+        "designation": doc.designation or "",
         "gender": "Male",  # placeholder — HR updates during onboarding
     })
     emp.insert(ignore_permissions=True)
