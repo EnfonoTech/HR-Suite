@@ -182,7 +182,7 @@
   {
    "fieldname": "retirement_reason",
    "fieldtype": "Small Text",
-   "depends_on": "eval:doc.status === 'Retired",
+   "depends_on": "eval:doc.status === 'Retired'",
    "label": "Retirement Reason"
   },
   {

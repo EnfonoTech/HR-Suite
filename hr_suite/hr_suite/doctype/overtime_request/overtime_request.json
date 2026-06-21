@@ -185,7 +185,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval:doc.approval_status=='Rejected",
+   "depends_on": "eval:doc.approval_status === 'Rejected'",
    "fieldname": "rejection_reason",
    "fieldtype": "Small Text",
    "label": "Rejection Reason"

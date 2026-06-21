@@ -132,7 +132,7 @@
    "options": "Company Employees\nDepartment Employees"
   },
   {
-   "depends_on": "eval:doc.target_scope === 'Department Employees",
+   "depends_on": "eval:doc.target_scope === 'Department Employees'",
    "fieldname": "target_department",
    "fieldtype": "Link",
    "label": "Target Department",

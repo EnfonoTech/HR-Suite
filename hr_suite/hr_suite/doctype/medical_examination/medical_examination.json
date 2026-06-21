@@ -128,7 +128,7 @@
    "label": "Examination Cost (SAR)"
   },
   {
-   "depends_on": "eval:['Post-Injury",
+   "depends_on": "eval:doc.examination_type === 'Post-Injury'",
    "fieldname": "work_injury_reference",
    "fieldtype": "Link",
    "label": "Work Injury Reference",
@@ -148,7 +148,7 @@
    "reqd": 1
   },
   {
-   "depends_on": "eval:['Fit with Restrictions",
+   "depends_on": "eval:doc.fitness_result === 'Fit with Restrictions'",
    "fieldname": "restrictions_notes",
    "fieldtype": "Text Editor",
    "label": "Restrictions / Notes"
