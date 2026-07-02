@@ -12,6 +12,12 @@
   "column_break_1",
   "job_requisition",
   "status",
+  "personal_details_section",
+  "first_name",
+  "last_name",
+  "gender",
+  "column_break_3",
+  "date_of_birth",
   "contact_section",
   "email_address",
   "mobile_number",
@@ -66,6 +72,39 @@
    "label": "Status",
    "options": "Applied\nScreening\nInterview\nOffer\nAccepted\nRejected\nOnboarded",
    "default": "Applied"
+  },
+  {
+   "fieldname": "personal_details_section",
+   "fieldtype": "Section Break",
+   "label": "Personal Details"
+  },
+  {
+   "fieldname": "first_name",
+   "fieldtype": "Data",
+   "label": "First Name",
+   "mandatory_depends_on": "eval:doc.status==\"Accepted\""
+  },
+  {
+   "fieldname": "last_name",
+   "fieldtype": "Data",
+   "label": "Last Name"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender",
+   "mandatory_depends_on": "eval:doc.status==\"Accepted\""
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "label": "Date of Birth",
+   "mandatory_depends_on": "eval:doc.status==\"Accepted\""
   },
   {
    "fieldname": "contact_section",

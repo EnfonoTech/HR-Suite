@@ -278,7 +278,7 @@ def send_probation_end_alerts():
 			"probation_end_date": ["between", [today(), two_weeks_ahead]],
 			"contract_status": "Active",
 		},
-		fields=["name", "employee", "employee_name", "probation_end_date", "probation_period_months"],
+		fields=["name", "employee", "employee_name", "probation_end_date", "probation_period_days"],
 	)
 
 	for rec in records:

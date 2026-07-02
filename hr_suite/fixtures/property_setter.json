@@ -1,1 +1,28 @@
-[]
+[
+ {
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "doc_type": "Employee Onboarding",
+  "field_name": "job_applicant",
+  "property": "reqd",
+  "property_type": "Check",
+  "value": "0",
+  "default_value": "1",
+  "module": "Hr Suite",
+  "name": "Employee Onboarding-job_applicant-reqd",
+  "is_system_generated": 0
+ },
+ {
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "doc_type": "Employee Onboarding",
+  "field_name": "job_offer",
+  "property": "reqd",
+  "property_type": "Check",
+  "value": "0",
+  "default_value": "1",
+  "module": "Hr Suite",
+  "name": "Employee Onboarding-job_offer-reqd",
+  "is_system_generated": 0
+ }
+]

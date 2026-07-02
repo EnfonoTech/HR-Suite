@@ -57,11 +57,6 @@ doc_events = {
 	"Overtime Request": {
 		"on_submit": "hr_suite.hr_suite.doctype.overtime_request.overtime_request.create_overtime_journal_entry",
 	},
-	"Employee Penalty": {
-		"before_save": "hr_suite.hr_suite.doctype.employee_penalty.employee_penalty.before_save",
-		"on_submit":   "hr_suite.hr_suite.doctype.employee_penalty.employee_penalty.on_submit",
-		"on_cancel":   "hr_suite.hr_suite.doctype.employee_penalty.employee_penalty.on_cancel",
-	},
 	"GOSI Contribution": {
 		"on_submit": "hr_suite.hr_suite.doctype.gosi_contribution.gosi_contribution.create_payroll_entries",
 	},
