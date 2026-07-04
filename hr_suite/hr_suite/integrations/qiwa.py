@@ -325,7 +325,7 @@ def sync_employee_contracts(employee: str):
         frappe.throw("Qiwa integration is not enabled.")
 
     iqama = frappe.db.get_value(
-        "Work Permit / Iqama",
+        "Work Permit Iqama",
         {"employee": employee, "iqama_status": ["!=", "Expired"]},
         "iqama_number",
         order_by="iqama_expiry_date desc",

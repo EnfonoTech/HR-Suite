@@ -115,7 +115,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Termination Reason",
-   "options": "Resignation\nTermination by Employer\nEnd of Fixed Term\nDismissal\nDeath\nTotal Disability",
+   "options": "Resignation\nTermination by Employer\nEnd of Fixed Term\nDismissal\nDeath\nTotal Disability\nRetirement",
    "reqd": 1
   },
   {

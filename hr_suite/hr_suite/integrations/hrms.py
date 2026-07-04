@@ -117,12 +117,20 @@ def before_salary_slip_submit(doc, method=None):
     if not cfg:
         return
 
-    basic = flt(doc.get("base_gross_pay") or get_employee_basic_salary_global(employee))
+    # Must be the employee's actual Basic component, not Salary Slip gross pay —
+    # EPF/GCC ceilings apply to Basic only, and gross pay overstates it whenever
+    # HRA/other allowances exist.
+    basic = flt(get_employee_basic_salary_global(employee))
 
     if country in ("SA", "AE", "BH", "OM"):
         _inject_gcc_deduction(doc, cfg, basic, country)
     elif country == "IN":
         _inject_india_deductions(doc, basic)
+
+    # before_submit runs after HRMS's own validate()/set_net_pay(), which already
+    # computed total_deduction/net_pay from the deductions table as it stood then.
+    # Recompute now so the injected row above is actually reflected on the submitted slip.
+    doc.set_net_pay()
 
 
 def _inject_gcc_deduction(doc, cfg, basic, country):
@@ -325,7 +333,11 @@ def on_leave_application_validate(doc, method=None):
                  AND docstatus=1 AND name!=%s""",
             (employee, "%sick%", year_start, year_end, exclude_name),
         )
-        sick_days_used = flt(existing_sick[0][0]) if existing_sick else 0
+        # Threshold applies to the cumulative total *including* this application,
+        # not just what was used before it — otherwise the request that actually
+        # crosses a tier boundary never gets the warning for its own days.
+        sick_days_before = flt(existing_sick[0][0]) if existing_sick else 0
+        sick_days_used = sick_days_before + flt(doc.total_leave_days)
         pay_info = get_sick_leave_pay(employee, int(sick_days_used))
         if pay_info["rate"] == 0.0:
             frappe.msgprint(
@@ -375,21 +387,14 @@ def on_leave_allocation_submit(doc, method=None):
 def on_payroll_entry_submit(doc, method=None):
     """
     After HRMS Payroll Entry is submitted, auto-create the appropriate statutory
-    contribution record for the company's country.
+    contribution record for each employee in the run, based on their work country.
     """
-    from hr_suite.hr_suite.utils import country_name_to_code, get_country_config
+    from hr_suite.hr_suite.utils import (
+        country_name_to_code, get_country_config, get_employee_work_country,
+        get_employee_basic_salary_global,
+    )
     company = doc.company or frappe.defaults.get_user_default("company")
     if not company:
-        return
-
-    company_country = frappe.db.get_value("Company", company, "country") or ""
-    country = country_name_to_code(company_country) or \
-        (frappe.db.get_single_value("Hr Suite Settings", "default_work_country") or "")
-    if not country:
-        return
-
-    cfg = get_country_config(country)
-    if not cfg:
         return
 
     payroll_date = doc.start_date or doc.posting_date
@@ -399,12 +404,28 @@ def on_payroll_entry_submit(doc, method=None):
     month_name = _month_from_payroll_date(payroll_date)
     year = getdate(payroll_date).year  # Int — matches DocType field type
 
-    if country == "SA":
-        _ensure_gosi_contribution(company, month_name, year)
-    elif country == "IN":
-        _ensure_epfesi_contribution(company, month_name, year)
-    else:
-        _ensure_statutory_contribution(company, country, cfg, month_name, year)
+    default_country = country_name_to_code(frappe.db.get_value("Company", company, "country") or "") or \
+        (frappe.db.get_single_value("Hr Suite Settings", "default_work_country") or "")
+
+    for row in doc.employees:
+        country = get_employee_work_country(row.employee) or default_country
+        if not country:
+            continue
+
+        cfg = get_country_config(country)
+        if not cfg:
+            continue
+
+        basic = get_employee_basic_salary_global(row.employee)
+        if not basic:
+            continue
+
+        if country == "SA":
+            _ensure_gosi_contribution(row.employee, row.employee_name, company, month_name, year, basic)
+        elif country == "IN":
+            _ensure_epfesi_contribution(row.employee, row.employee_name, company, month_name, year, basic)
+        else:
+            _ensure_statutory_contribution(row.employee, row.employee_name, company, country, cfg, month_name, year, basic)
 
 
 def _month_from_payroll_date(date_str):
@@ -416,68 +437,75 @@ def _month_from_payroll_date(date_str):
         return "January"
 
 
-def _ensure_gosi_contribution(company, month_name, year):
+def _ensure_gosi_contribution(employee, employee_name, company, month_name, year, contribution_base):
     if not frappe.db.exists("DocType", "GOSI Contribution"):
         return
-    if frappe.db.exists("GOSI Contribution", {"month": month_name, "year": year, "company": company}):
+    if frappe.db.exists("GOSI Contribution", {"employee": employee, "month": month_name, "year": year, "company": company}):
         return
     try:
         frappe.get_doc({
             "doctype": "GOSI Contribution",
+            "employee": employee,
+            "employee_name": employee_name,
+            "company": company,
             "month": month_name,
             "year": year,
-            "company": company,
+            "contribution_base": contribution_base,
             "payment_status": "Pending",
         }).insert(ignore_permissions=True)
         frappe.msgprint(
-            f"GOSI Contribution record created for {month_name} {year}. Open it to review and submit.",
+            f"GOSI Contribution record created for {employee_name} — {month_name} {year}. Open it to review and submit.",
             indicator="blue", alert=True,
         )
     except Exception:
         frappe.log_error(frappe.get_traceback(), "HR Suite: GOSI Contribution auto-create failed")
 
 
-def _ensure_epfesi_contribution(company, month_name, year):
+def _ensure_epfesi_contribution(employee, employee_name, company, month_name, year, basic_salary):
     if not frappe.db.exists("DocType", "EPF ESI Contribution"):
         return
-    if frappe.db.exists("EPF ESI Contribution", {"month": month_name, "year": year, "company": company}):
+    if frappe.db.exists("EPF ESI Contribution", {"employee": employee, "month": month_name, "year": year, "company": company}):
         return
     try:
         frappe.get_doc({
             "doctype": "EPF ESI Contribution",
+            "employee": employee,
+            "employee_name": employee_name,
+            "company": company,
             "month": month_name,
             "year": year,
-            "company": company,
-            "payment_status": "Pending",
+            "basic_salary": basic_salary,
         }).insert(ignore_permissions=True)
         frappe.msgprint(
-            f"EPF/ESI Contribution record created for {month_name} {year}.",
+            f"EPF/ESI Contribution record created for {employee_name} — {month_name} {year}.",
             indicator="blue", alert=True,
         )
     except Exception:
         frappe.log_error(frappe.get_traceback(), "HR Suite: EPF/ESI Contribution auto-create failed")
 
 
-def _ensure_statutory_contribution(company, country, cfg, month_name, year):
+def _ensure_statutory_contribution(employee, employee_name, company, country, cfg, month_name, year, contribution_base):
     if not frappe.db.exists("DocType", "Statutory Contribution"):
         return
     if frappe.db.exists("Statutory Contribution", {
-        "month": month_name, "year": year, "company": company, "country_code": country,
+        "employee": employee, "month": month_name, "year": year, "company": company, "work_country": country,
     }):
         return
     try:
         frappe.get_doc({
             "doctype": "Statutory Contribution",
+            "employee": employee,
+            "employee_name": employee_name,
+            "company": company,
+            "work_country": country,
+            "scheme": cfg.statutory_scheme or "Other",
             "month": month_name,
             "year": year,
-            "company": company,
-            "country_code": country,
-            "scheme": cfg.statutory_scheme or "",
-            "payment_status": "Pending",
+            "contribution_base": contribution_base,
         }).insert(ignore_permissions=True)
         frappe.msgprint(
             f"{cfg.statutory_scheme or 'Statutory'} Contribution record created for "
-            f"{month_name} {year} ({cfg.country_name}).",
+            f"{employee_name} — {month_name} {year} ({cfg.country_name}).",
             indicator="blue", alert=True,
         )
     except Exception:
@@ -537,14 +565,14 @@ def on_employee_separation_submit(doc, method=None):
             "doctype": "End of Service Benefit",
             "employee": employee,
             "termination_date": separation_date,
-            "termination_reason": termination_reason,
+            "termination_reason": _eosb_select_reason(termination_reason),
             "last_basic_salary": flt(result.get("basic_salary")),
             "eosb_gross": flt(result.get("gross_entitlement")),
             "net_eosb": flt(result.get("net_entitlement")),
             "calculation_notes": (
                 f"Auto-created from Employee Separation {doc.name}.\n"
                 f"Country: {country} | Formula: {result.get('formula', '')}\n"
-                f"{result.get('notes', '')}"
+                f"{result.get('notes') or result.get('calculation_notes') or ''}"
             ),
         })
         eosb.insert(ignore_permissions=True)
@@ -555,6 +583,23 @@ def on_employee_separation_submit(doc, method=None):
         )
     except Exception:
         frappe.log_error(frappe.get_traceback(), f"HR Suite: EOSB auto-create failed for {employee}")
+
+
+# End of Service Benefit.termination_reason is a Select field with a fixed set of
+# options; the human-readable reasons used for settlement-formula token matching
+# (e.g. "Resignation by Employee") don't all line up with it, so translate here.
+_EOSB_SELECT_REASON_MAP = {
+    "Resignation by Employee": "Resignation",
+    "Termination by Employer": "Termination by Employer",
+    "End of Contract": "End of Fixed Term",
+    "Retirement": "Retirement",
+    "Death": "Death",
+    "Disciplinary Dismissal (Article 80)": "Dismissal",
+}
+
+
+def _eosb_select_reason(termination_reason: str) -> str:
+    return _EOSB_SELECT_REASON_MAP.get(termination_reason, "Termination by Employer")
 
 
 # ── Exit Interview → sync Exit Clearance completion flag ─────────────────────
@@ -584,3 +629,26 @@ def _sync_exit_clearance_completion(doc, force_incomplete=False):
         is_completed,
         update_modified=False,
     )
+
+
+# ── Salary Structure Assignment → minimum wage guard ──────────────────────────
+
+def validate_minimum_wage(doc, method=None):
+    """Block submission if Base is below the employee's country's configured minimum wage."""
+    from frappe import _
+    from frappe.utils import flt
+    from hr_suite.hr_suite.utils import get_employee_work_country, get_country_config
+
+    if not doc.employee:
+        return
+
+    country = get_employee_work_country(doc.employee)
+    cfg = get_country_config(country)
+    minimum_wage = flt(cfg.minimum_wage) if cfg else 0
+    if not minimum_wage:
+        return
+
+    if flt(doc.base) < minimum_wage:
+        frappe.throw(_("Below Minimum Wage: Base ({0}) is less than the minimum wage ({1}) for {2}").format(
+            flt(doc.base), minimum_wage, cfg.country_name or country
+        ))

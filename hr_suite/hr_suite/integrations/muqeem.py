@@ -64,7 +64,7 @@ def verify_iqama(iqama_number: str, employee: str = None):
     """
     Verify an Iqama number against the Muqeem portal.
     Returns live status, profession, expiry date and nationality.
-    Saves a sync log and updates the Work Permit / Iqama record if one exists.
+    Saves a sync log and updates the Work Permit Iqama record if one exists.
     """
     _assert_enabled()
     token = _get_token()
@@ -100,7 +100,7 @@ def verify_iqama(iqama_number: str, employee: str = None):
         response_data=frappe.as_json(result),
     )
 
-    # Push data back into Work Permit / Iqama if record exists
+    # Push data back into Work Permit Iqama if record exists
     _update_work_permit_from_muqeem(iqama_number, result)
 
     return result
@@ -217,7 +217,7 @@ def sync_expiring_iqamas(days_ahead: int = 90):
 
     cutoff = add_days(getdate(), days_ahead)
     records = frappe.get_all(
-        "Work Permit / Iqama",
+        "Work Permit Iqama",
         filters={
             "iqama_expiry_date": ["<=", cutoff],
             "iqama_status": ["!=", "Expired"],
@@ -294,9 +294,9 @@ def _log_sync(portal, sync_type, reference_no, status, response_data, employee=N
 
 
 def _update_work_permit_from_muqeem(iqama_number: str, result: dict):
-    """Push verified Muqeem data back into the Work Permit / Iqama DocType."""
+    """Push verified Muqeem data back into the Work Permit Iqama DocType."""
     wp = frappe.db.get_value(
-        "Work Permit / Iqama",
+        "Work Permit Iqama",
         {"iqama_number": iqama_number},
         ["name", "iqama_expiry_date", "iqama_status"],
         as_dict=True,
@@ -311,11 +311,11 @@ def _update_work_permit_from_muqeem(iqama_number: str, result: dict):
     if result.get("profession"):
         updates["profession"] = result["profession"]
     if updates:
-        frappe.db.set_value("Work Permit / Iqama", wp.name, updates, update_modified=True)
+        frappe.db.set_value("Work Permit Iqama", wp.name, updates, update_modified=True)
 
 
 def _update_exit_reentry_fields(iqama_number: str, data: dict):
-    wp = frappe.db.get_value("Work Permit / Iqama", {"iqama_number": iqama_number}, "name")
+    wp = frappe.db.get_value("Work Permit Iqama", {"iqama_number": iqama_number}, "name")
     if not wp:
         return
     updates = {}
@@ -324,4 +324,4 @@ def _update_exit_reentry_fields(iqama_number: str, data: dict):
     if data.get("expiry_date"):
         updates["exit_reentry_expiry_date"] = data["expiry_date"]
     if updates:
-        frappe.db.set_value("Work Permit / Iqama", wp, updates, update_modified=True)
+        frappe.db.set_value("Work Permit Iqama", wp, updates, update_modified=True)

@@ -93,6 +93,16 @@ class EmployeePenalty(Document):
 		component = frappe.db.get_single_value("Hr Suite Settings", "penalty_salary_component")
 		if not component:
 			component = "Penalty Deduction"
+
+		if not frappe.db.exists("Salary Component", component):
+			frappe.get_doc({
+				"doctype": "Salary Component",
+				"salary_component": component,
+				"salary_component_abbr": component[:4].upper(),
+				"type": "Deduction",
+				"is_tax_applicable": 0,
+			}).insert(ignore_permissions=True)
+
 		return component
 
 	def on_cancel(self):

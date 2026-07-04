@@ -44,7 +44,8 @@ function _hr_suite_common_buttons(frm, country) {
 		frappe.set_route("List", "Leave Allocation", { employee: frm.doc.name });
 	}, __("HR Suite"));
 
-	frm.add_custom_button(__("Settlement Estimate"), function () {
+	const settlement_label = country === "SA" ? __("EOSB Estimate") : __("Settlement Estimate");
+	frm.add_custom_button(settlement_label, function () {
 		frappe.prompt(
 			[
 				{
@@ -81,7 +82,7 @@ function _hr_suite_common_buttons(frm, country) {
 						if (!r.message) return;
 						let d = r.message;
 						frappe.msgprint({
-							title: __("Settlement Estimate"),
+							title: settlement_label,
 							message: `<table class="table table-condensed" style="margin-top:8px">
 								<tr><td>${__("Country / Formula")}</td><td><b>${d.country || country} — ${d.formula || ""}</b></td></tr>
 								<tr><td>${__("Years of Service")}</td><td><b>${flt(d.years_of_service, 2)}</b></td></tr>
@@ -96,7 +97,7 @@ function _hr_suite_common_buttons(frm, country) {
 					},
 				});
 			},
-			__("Settlement Estimate"),
+			settlement_label,
 			__("Calculate")
 		);
 	}, __("HR Suite"));
@@ -124,20 +125,18 @@ function _hr_suite_sa_buttons(frm) {
 	const emp = frm.doc.name;
 
 	// Batch all three portal flags in one request
-	// GOSI estimate is always visible — does not require API credentials
-	frm.add_custom_button(__("GOSI Estimate"), function () {
-		_hr_suite_gosi_estimate(frm);
-	}, __("GOSI"));
-
-	frappe.db.get_value(
-		"Hr Suite Settings",
-		null,
-		["muqeem_enabled", "qiwa_enabled", "gosi_api_enabled"]
-	).then(r => {
-		const flags = r.message || {};
+	frappe.db.get_doc("Hr Suite Settings").then(flags => {
 		_hr_suite_muqeem_buttons(frm, emp, flags.muqeem_enabled);
 		_hr_suite_qiwa_buttons(frm, emp, flags.qiwa_enabled);
 		_hr_suite_gosi_buttons(frm, emp, flags.gosi_api_enabled);
+		// GOSI Estimate doesn't call the live API, but it's part of the GOSI
+		// button group — gated the same as the rest so disabling GOSI API
+		// integration hides the whole group, not just the live-call buttons.
+		if (flags.gosi_api_enabled) {
+			frm.add_custom_button(__("GOSI Estimate"), function () {
+				_hr_suite_gosi_estimate(frm);
+			}, __("GOSI"));
+		}
 	});
 }
 
@@ -145,23 +144,30 @@ function _hr_suite_muqeem_buttons(frm, emp, enabled) {
 	if (!enabled) return;
 
 	frm.add_custom_button(__("Verify Iqama"), function () {
-		frappe.call({
-			method: "hr_suite.hr_suite.integrations.muqeem.verify_iqama",
-			args: { employee: emp },
-			freeze: true,
-			freeze_message: __("Checking Muqeem…"),
-			callback(r) {
-				if (r.exc) return;
-				const d = r.message || {};
-				frappe.msgprint({
-					title: __("Iqama Status — Muqeem"),
-					message: `<b>${__("Status")}:</b> ${d.status || "—"}<br>
-						<b>${__("Expiry")}:</b> ${d.expiry_date || "—"}<br>
-						<b>${__("Nationality")}:</b> ${d.nationality || "—"}`,
-					indicator: d.status === "Valid" ? "green" : "red",
-				});
-				frm.reload_doc();
-			},
+		frappe.db.get_value("Work Permit Iqama", { employee: emp }, "iqama_number").then(r => {
+			const iqama_number = r.message && r.message.iqama_number;
+			if (!iqama_number) {
+				frappe.msgprint(__("No Work Permit Iqama record with an Iqama Number found for this employee."));
+				return;
+			}
+			frappe.call({
+				method: "hr_suite.hr_suite.integrations.muqeem.verify_iqama",
+				args: { employee: emp, iqama_number: iqama_number },
+				freeze: true,
+				freeze_message: __("Checking Muqeem…"),
+				callback(r) {
+					if (r.exc) return;
+					const d = r.message || {};
+					frappe.msgprint({
+						title: __("Iqama Status — Muqeem"),
+						message: `<b>${__("Status")}:</b> ${d.status || "—"}<br>
+							<b>${__("Expiry")}:</b> ${d.expiry_date || "—"}<br>
+							<b>${__("Nationality")}:</b> ${d.nationality || "—"}`,
+						indicator: d.status === "Valid" ? "green" : "red",
+					});
+					frm.reload_doc();
+				},
+			});
 		});
 	}, __("Muqeem"));
 
@@ -211,23 +217,57 @@ function _hr_suite_muqeem_buttons(frm, emp, enabled) {
 function _hr_suite_qiwa_buttons(frm, emp, enabled) {
 	if (!enabled) return;
 
-	frm.add_custom_button(__("Verify Qiwa Contract"), function () {
+	frm.add_custom_button(__("Verify Wathiqa Contract"), function () {
+		frappe.db.get_value("Work Permit Iqama", { employee: emp }, "iqama_number").then(r => {
+			const iqama_number = r.message && r.message.iqama_number;
+			if (!iqama_number) {
+				frappe.msgprint(__("No Work Permit Iqama record with an Iqama Number found for this employee."));
+				return;
+			}
+			frappe.call({
+				method: "hr_suite.hr_suite.integrations.qiwa.verify_contract",
+				args: { employee: emp, iqama_number: iqama_number },
+				freeze: true,
+				freeze_message: __("Checking Qiwa…"),
+				callback(r) {
+					if (r.exc) return;
+					const d = r.message || {};
+					frappe.msgprint({
+						title: __("Wathiqa Contract Status"),
+						message: `<b>${__("Status")}:</b> ${d.status || "—"}<br>
+							<b>${__("Contract ID")}:</b> ${d.contract_id || "—"}<br>
+							<b>${__("Job Title")}:</b> ${d.job_title || "—"}<br>
+							<b>${__("Salary")}:</b> ${d.salary || "—"}<br>
+							<b>${__("Valid Until")}:</b> ${d.expiry_date || "—"}`,
+						indicator: d.status === "Active" ? "green" : "orange",
+					});
+					frm.reload_doc();
+				},
+			});
+		});
+	}, __("Qiwa"));
+
+	frm.add_custom_button(__("Labor Notices"), function () {
 		frappe.call({
-			method: "hr_suite.hr_suite.integrations.qiwa.verify_contract",
+			method: "hr_suite.hr_suite.integrations.qiwa.get_labor_notices",
 			args: { employee: emp },
 			freeze: true,
 			freeze_message: __("Checking Qiwa…"),
 			callback(r) {
 				if (r.exc) return;
-				const d = r.message || {};
+				const notices = (r.message && r.message.notices) || r.message || [];
+				const list = Array.isArray(notices) ? notices : [];
+				const rows = list.length
+					? list.map(n => `<tr><td>${n.type || n.notice_type || "—"}</td><td>${n.date || n.notice_date || "—"}</td><td>${n.description || n.details || "—"}</td></tr>`).join("")
+					: `<tr><td colspan="3" style="text-align:center;color:#28a745;">${__("No open labor notices — compliant")}</td></tr>`;
 				frappe.msgprint({
-					title: __("Qiwa Contract Status"),
-					message: `<b>${__("Status")}:</b> ${d.status || "—"}<br>
-						<b>${__("Contract ID")}:</b> ${d.contract_id || "—"}<br>
-						<b>${__("Valid Until")}:</b> ${d.expiry_date || "—"}`,
-					indicator: d.status === "Active" ? "green" : "orange",
+					title: __("Labor Notices — Qiwa"),
+					message: `<table class="table table-condensed" style="margin-top:8px">
+						<thead><tr><th>${__("Type")}</th><th>${__("Date")}</th><th>${__("Details")}</th></tr></thead>
+						<tbody>${rows}</tbody>
+					</table>`,
+					indicator: list.length ? "orange" : "green",
 				});
-				frm.reload_doc();
 			},
 		});
 	}, __("Qiwa"));
@@ -292,10 +332,10 @@ function _hr_suite_gosi_buttons(frm, emp, enabled) {
 				const d = r.message || {};
 				frappe.msgprint({
 					title: __("GOSI Member Status"),
-					message: `<b>${__("Status")}:</b> ${d.status || "—"}<br>
-						<b>${__("Member ID")}:</b> ${d.member_id || "—"}<br>
-						<b>${__("Contribution Base")}:</b> ${d.contribution_base || "—"}`,
-					indicator: d.status === "Active" ? "green" : "orange",
+					message: `<b>${__("Status")}:</b> ${d.gosi_status || "—"}<br>
+						<b>${__("Registration Date")}:</b> ${d.registration_date || "—"}<br>
+						<b>${__("Last Contribution Month")}:</b> ${d.last_contribution_month || "—"}`,
+					indicator: d.gosi_status === "Active" ? "green" : "orange",
 				});
 			},
 		});
@@ -327,7 +367,7 @@ function _hr_suite_gosi_buttons(frm, emp, enabled) {
 					freeze_message: __("Deregistering from GOSI…"),
 					callback(r) {
 						if (r.exc) return;
-						frappe.show_alert({ message: __("Employee deregistered from GOSI."), indicator: "green" });
+						frappe.show_alert({ message: __("Employee deregistered from GOSI."), indicator: "orange" });
 						frm.reload_doc();
 					},
 				});
@@ -345,17 +385,14 @@ function _hr_suite_gosi_buttons(frm, emp, enabled) {
 function _hr_suite_gosi_estimate(frm) {
 	// Fetch GOSI rates from Hr Suite Settings and basic from active contract
 	Promise.all([
-		frappe.db.get_value("Hr Suite Settings", null, [
-			"gosi_saudi_employee_rate", "gosi_saudi_employer_rate",
-			"gosi_non_saudi_employee_rate", "gosi_non_saudi_employer_rate",
-		]),
+		frappe.db.get_doc("Hr Suite Settings"),
 		frappe.db.get_list("Country Employment Contract", {
 			filters: { employee: frm.doc.name, contract_status: "Active" },
 			fields: ["basic_salary", "currency"],
 			limit: 1,
 		}),
-	]).then(function ([ratesResp, contracts]) {
-		const rates = (ratesResp && ratesResp.message) ? ratesResp.message : {};
+	]).then(function ([rates, contracts]) {
+		rates = rates || {};
 		const isNational = (frm.doc.nationality || "").toLowerCase().includes("saudi");
 		const empRate  = isNational ? (flt(rates.gosi_saudi_employee_rate) || 9.75)
 		                            : (flt(rates.gosi_non_saudi_employee_rate) || 0);

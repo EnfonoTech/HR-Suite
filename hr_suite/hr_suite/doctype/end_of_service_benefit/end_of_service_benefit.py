@@ -1,7 +1,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt, nowdate
+from frappe.utils import date_diff, flt, getdate, nowdate
 
 from hr_suite.hr_suite.utils import calculate_eosb_components, get_employee_basic_salary, get_employee_salary_components
 
@@ -21,6 +21,19 @@ class EndofServiceBenefit(Document):
 			return
 
 		salary_base = self._get_salary_base_for_eosb()
+
+		from hr_suite.hr_suite.utils import get_employee_work_country
+		country = get_employee_work_country(self.employee)
+
+		# calculate_eosb_components() below is the Saudi EOSB formula only. Employees
+		# in other countries need their own country's formula (Gratuity-AE/IN,
+		# Indemnity-BH/OM) — this used to always run the Saudi formula regardless of
+		# country, silently overwriting whatever a country-aware caller (e.g. the
+		# Employee Separation auto-create flow) had already computed correctly.
+		if country and country != "SA":
+			self._calculate_eosb_non_sa(country, salary_base)
+			return
+
 		details = calculate_eosb_components(
 			self.joining_date,
 			self.termination_date,
@@ -36,6 +49,38 @@ class EndofServiceBenefit(Document):
 		self.resignation_factor_label = details["resignation_factor_label"]
 		self.net_eosb = details["net_eosb"]
 		self.calculation_notes = details["calculation_notes"]
+		self._append_wage_basis_note(salary_base)
+
+	def _calculate_eosb_non_sa(self, country, salary_base):
+		from hr_suite.hr_suite.utils import (
+			_calculate_uae_gratuity, _calculate_india_gratuity,
+			_calculate_bh_indemnity, _calculate_om_indemnity,
+		)
+
+		years = date_diff(getdate(self.termination_date), getdate(self.joining_date)) / 365.0
+		basic = flt(salary_base)
+		reason = self.termination_reason or ""
+		deductions = flt(self.eosb_deductions)
+
+		if country == "AE":
+			result = _calculate_uae_gratuity(self.employee, years, basic, reason, deductions)
+		elif country == "IN":
+			result = _calculate_india_gratuity(years, basic, reason, deductions)
+		elif country == "BH":
+			result = _calculate_bh_indemnity(years, basic, reason, deductions)
+		elif country == "OM":
+			result = _calculate_om_indemnity(years, basic, reason, deductions)
+		else:
+			return
+
+		self.years_of_service = round(years, 2)
+		self.eosb_years_1_5 = 0
+		self.eosb_years_above_5 = 0
+		self.eosb_gross = flt(result.get("gross_entitlement"))
+		self.resignation_factor = flt(result.get("factor"))
+		self.resignation_factor_label = result.get("factor_label", "")
+		self.net_eosb = flt(result.get("net_entitlement"))
+		self.calculation_notes = f"Formula: {result.get('formula', '')}\n{result.get('notes', '')}"
 		self._append_wage_basis_note(salary_base)
 
 	def _get_salary_base_for_eosb(self):

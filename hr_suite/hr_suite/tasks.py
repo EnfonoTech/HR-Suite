@@ -391,7 +391,7 @@ def send_wps_correction_due_alerts():
 		"correction_due_date",
 		"pay_period",
 		"WPS Correction Deadline Alert",
-		closed_statuses=["Accepted", "Cancelled"],
+		closed_statuses=["Submitted", "Accepted", "Cancelled"],
 		days_ahead=5,
 	)
 

@@ -138,7 +138,7 @@ class TerminationNotice(Document):
 				"department": self.department,
 				"joining_date": emp.date_of_joining,
 				"termination_date": last_day,
-				"termination_reason": self.termination_reason,
+				"termination_reason": EOSB_REASON_MAP.get(self.termination_reason, self.termination_reason),
 				"last_basic_salary": basic,
 			})
 			eosb.insert(ignore_permissions=True)
