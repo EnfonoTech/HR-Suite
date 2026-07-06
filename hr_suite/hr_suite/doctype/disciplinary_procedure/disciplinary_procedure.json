@@ -135,7 +135,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft\nUnder Investigation\nPending Decision\nDecision Issued\nAppealed\nClosed"
+   "options": "Draft\nUnder Investigation\nPending Decision\nDecision Made\nDecision Issued\nAppealed\nClosed"
   },
   {
    "fieldname": "incident_description",

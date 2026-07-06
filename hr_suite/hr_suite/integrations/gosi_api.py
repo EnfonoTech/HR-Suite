@@ -87,7 +87,7 @@ def register_employee(employee: str):
 
     emp = frappe.get_doc("Employee", employee)
     saudi_id = (
-        frappe.db.get_value("Work Permit / Iqama", {"employee": employee}, "iqama_number")
+        frappe.db.get_value("Work Permit Iqama", {"employee": employee}, "iqama_number")
         or emp.get("custom_national_id")
         or ""
     )
@@ -126,7 +126,7 @@ def deregister_employee(employee: str, exit_date: str, reason: str = "Resignatio
     if not s.gosi_api_enabled:
         frappe.throw("GOSI API integration is not enabled.")
 
-    saudi_id = frappe.db.get_value("Work Permit / Iqama", {"employee": employee}, "iqama_number") or ""
+    saudi_id = frappe.db.get_value("Work Permit Iqama", {"employee": employee}, "iqama_number") or ""
     if not saudi_id:
         frappe.throw(f"No Iqama ID found for employee {employee}.")
 
@@ -152,7 +152,7 @@ def get_employee_status(employee: str):
     if not s.gosi_api_enabled:
         frappe.throw("GOSI API integration is not enabled.")
 
-    saudi_id = frappe.db.get_value("Work Permit / Iqama", {"employee": employee}, "iqama_number") or ""
+    saudi_id = frappe.db.get_value("Work Permit Iqama", {"employee": employee}, "iqama_number") or ""
     if not saudi_id:
         frappe.throw(f"No Iqama ID found for employee {employee}.")
 
@@ -189,7 +189,7 @@ def submit_contribution(gosi_contribution: str):
     if doc.docstatus != 1:
         frappe.throw("Only submitted GOSI Contribution records can be pushed to GOSI.")
 
-    saudi_id = frappe.db.get_value("Work Permit / Iqama", {"employee": doc.employee}, "iqama_number") or ""
+    saudi_id = frappe.db.get_value("Work Permit Iqama", {"employee": doc.employee}, "iqama_number") or ""
 
     payload = {
         "establishment_id": s.gosi_establishment_id,
@@ -251,7 +251,7 @@ def submit_monthly_batch(company: str, month: str, year: str):
     # Build batch payload
     members = []
     for r in records:
-        saudi_id = frappe.db.get_value("Work Permit / Iqama", {"employee": r.employee}, "iqama_number") or ""
+        saudi_id = frappe.db.get_value("Work Permit Iqama", {"employee": r.employee}, "iqama_number") or ""
         members.append({
             "saudi_id": saudi_id,
             "employee_name": r.employee_name,

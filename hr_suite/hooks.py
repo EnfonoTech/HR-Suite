@@ -26,7 +26,6 @@ scheduler_events = {
 	"daily": [
 		"hr_suite.hr_suite.salary_override_api.apply_pending_salary_overrides",
 		"hr_suite.hr_suite.integrations.muqeem.sync_expiring_iqamas",
-		"hr_suite.hr_suite.integrations.gosi_api.sync_monthly_gosi",
 		"hr_suite.hr_suite.tasks.send_iqama_expiry_alerts",
 		"hr_suite.hr_suite.tasks.send_contract_expiry_alerts",
 		"hr_suite.hr_suite.tasks.send_work_permit_expiry_alerts",
@@ -46,6 +45,7 @@ scheduler_events = {
 		"hr_suite.hr_suite.tasks.allocate_monthly_leave",
 		"hr_suite.hr_suite.integrations.qiwa.sync_nitaqat_monthly",
 		"hr_suite.hr_suite.integrations.mudad.sync_wps_monthly",
+		"hr_suite.hr_suite.integrations.gosi_api.sync_monthly_gosi",
 	],
 	"weekly": [
 		"hr_suite.hr_suite.tasks.send_iqama_expiry_alerts",
@@ -56,11 +56,6 @@ scheduler_events = {
 doc_events = {
 	"Overtime Request": {
 		"on_submit": "hr_suite.hr_suite.doctype.overtime_request.overtime_request.create_overtime_journal_entry",
-	},
-	"Employee Penalty": {
-		"before_save": "hr_suite.hr_suite.doctype.employee_penalty.employee_penalty.before_save",
-		"on_submit":   "hr_suite.hr_suite.doctype.employee_penalty.employee_penalty.on_submit",
-		"on_cancel":   "hr_suite.hr_suite.doctype.employee_penalty.employee_penalty.on_cancel",
 	},
 	"GOSI Contribution": {
 		"on_submit": "hr_suite.hr_suite.doctype.gosi_contribution.gosi_contribution.create_payroll_entries",
@@ -152,12 +147,14 @@ doc_events = {
 		"on_update": "hr_suite.hr_suite.integrations.hrms.on_exit_interview_update",
 		"on_trash": "hr_suite.hr_suite.integrations.hrms.on_exit_interview_trash",
 	},
+	"Salary Structure Assignment": {
+		"before_submit": "hr_suite.hr_suite.integrations.hrms.validate_minimum_wage",
+	},
 }
 
 doctype_js = {
 	"Employee": "public/js/employee.js",
 	"Salary Structure Assignment": "public/js/salary_structure_assignment.js",
-	"Work Permit / Iqama": "public/js/work_permit_iqama.js",
 	"Nitaqat Record": "public/js/nitaqat_record.js",
 	"Payroll Entry": "public/js/wps_payroll.js",
 }

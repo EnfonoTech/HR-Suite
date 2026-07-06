@@ -54,7 +54,7 @@ FEATURES = [
 	{"id": "employee-profile", "category": "onboarding", "title": "Employee Profile", "summary": "Open the employee master profile for core employment data.", "target_type": "DocType", "target": "Employee", "priority": "Primary"},
 	{"id": "country-employment-contract", "category": "onboarding", "title": "Country Employment Contract", "summary": "Manage multi-country employment contracts, terms, expiry, and renewals.", "target_type": "DocType", "target": "Country Employment Contract", "priority": "Primary"},
 	{"id": "medical-examination", "category": "onboarding", "title": "Medical Examination", "summary": "Track pre-employment and periodic medical examination requirements and results.", "target_type": "DocType", "target": "Medical Examination"},
-	{"id": "work-permit-iqama", "category": "onboarding", "title": "Work Permit / Iqama", "summary": "Track work permit and residency records, expiry dates, and renewals.", "target_type": "DocType", "target": "Work Permit / Iqama", "priority": "Primary"},
+	{"id": "work-permit-iqama", "category": "onboarding", "title": "Work Permit Iqama", "summary": "Track work permit and residency records, expiry dates, and renewals.", "target_type": "DocType", "target": "Work Permit Iqama", "priority": "Primary"},
 	{"id": "employee-document", "category": "onboarding", "title": "Employee Document", "summary": "Track employee documents, custodians, and document expiry dates.", "target_type": "DocType", "target": "Employee Document"},
 
 	# ── Leave and Payroll ────────────────────────────────────────────────────

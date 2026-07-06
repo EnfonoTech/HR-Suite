@@ -1,68 +1,113 @@
-/* ── HR Suite Workspace — Modern Styling ──────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   HR Suite Workspace — Modern Styling
+   Scoped to the HR Suite workspace page only
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Shortcut widget boxes — bolder, coloured background */
+/* ── Page background ─────────────────────────────────────────────────────── */
+.desk-page[data-page-route="hr-suite"],
+.page-container[data-page-route^="hr-suite"] {
+	background: #f4f6fb;
+}
+
+/* ── Workspace wrapper ───────────────────────────────────────────────────── */
+.desk-page[data-page-route="hr-suite"] .workspace-container,
+.page-container[data-page-route^="hr-suite"] .workspace-container {
+	padding: 20px 24px 40px;
+}
+
+/* ── Section headers (h4 spans) ─────────────────────────────────────────── */
+.desk-page[data-page-route="hr-suite"] .workspace-section-header .h4,
+.desk-page[data-page-route="hr-suite"] .h4,
+.page-container[data-page-route^="hr-suite"] .h4 {
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: #374151;
+	display: inline-block;
+	padding: 5px 14px 5px 12px;
+	border-left: 3px solid #4F46E5;
+	background: linear-gradient(90deg, rgba(79,70,229,0.07) 0%, transparent 100%);
+	border-radius: 0 6px 6px 0;
+}
+
+/* ── Shortcut widget boxes ───────────────────────────────────────────────── */
 .desk-page[data-page-route="hr-suite"] .widget.shortcut-widget-box,
 .page-container[data-page-route^="hr-suite"] .widget.shortcut-widget-box {
-	border-radius: 10px;
+	border-radius: 12px;
 	border: none;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.05);
 	transition: transform 0.15s ease, box-shadow 0.15s ease;
+	background: #ffffff;
 }
 
 .desk-page[data-page-route="hr-suite"] .widget.shortcut-widget-box:hover,
 .page-container[data-page-route^="hr-suite"] .widget.shortcut-widget-box:hover {
-	transform: translateY(-2px);
-	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.13);
+	transform: translateY(-3px);
+	box-shadow: 0 8px 24px rgba(0,0,0,0.12);
 }
 
-/* Shortcut icon circle */
+/* Icon circle */
 .desk-page[data-page-route="hr-suite"] .shortcut-widget-box .widget-icon,
 .page-container[data-page-route^="hr-suite"] .shortcut-widget-box .widget-icon {
-	border-radius: 8px;
-	padding: 8px;
+	border-radius: 10px;
+	padding: 9px;
 }
 
-/* Card widget — rounded, subtle shadow */
+/* Shortcut label */
+.desk-page[data-page-route="hr-suite"] .shortcut-widget-box .widget-title,
+.page-container[data-page-route^="hr-suite"] .shortcut-widget-box .widget-title {
+	font-size: 12.5px;
+	font-weight: 600;
+	color: #1e293b;
+}
+
+/* ── Card (links-widget) boxes ───────────────────────────────────────────── */
 .desk-page[data-page-route="hr-suite"] .widget.links-widget-box,
 .page-container[data-page-route^="hr-suite"] .widget.links-widget-box {
-	border-radius: 10px;
-	border: 1px solid #e8eaed;
-	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+	border-radius: 12px;
+	border: 1px solid #e2e8f0;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+	background: #ffffff;
+	transition: box-shadow 0.15s ease;
 }
 
-/* Card header — bolder section title */
+.desk-page[data-page-route="hr-suite"] .widget.links-widget-box:hover,
+.page-container[data-page-route^="hr-suite"] .widget.links-widget-box:hover {
+	box-shadow: 0 4px 16px rgba(0,0,0,0.09);
+}
+
+/* Card header/title */
 .desk-page[data-page-route="hr-suite"] .links-widget-box .widget-title,
 .page-container[data-page-route^="hr-suite"] .links-widget-box .widget-title {
-	font-weight: 600;
-	font-size: 13px;
-	letter-spacing: 0.01em;
-	color: #1a1f36;
+	font-weight: 700;
+	font-size: 12.5px;
+	letter-spacing: 0.02em;
+	color: #0f172a;
+	padding-bottom: 8px;
+	border-bottom: 2px solid #f1f5f9;
+	margin-bottom: 4px;
 }
 
-/* Card links — cleaner hover */
+/* Card link items */
 .desk-page[data-page-route="hr-suite"] .links-widget-box .link-item,
 .page-container[data-page-route^="hr-suite"] .links-widget-box .link-item {
 	border-radius: 6px;
 	padding: 4px 8px;
-	transition: background 0.1s;
+	font-size: 12.5px;
+	color: #334155;
+	transition: background 0.1s, color 0.1s;
 }
 
 .desk-page[data-page-route="hr-suite"] .links-widget-box .link-item:hover,
 .page-container[data-page-route^="hr-suite"] .links-widget-box .link-item:hover {
-	background: #f4f5f7;
+	background: #eff6ff;
+	color: #1d4ed8;
 }
 
-/* Section headers — stronger visual separation */
-.desk-page[data-page-route="hr-suite"] .workspace-section-header,
-.page-container[data-page-route^="hr-suite"] .workspace-section-header {
-	border-bottom: 2px solid #e8eaed;
-	padding-bottom: 8px;
-	margin-bottom: 4px;
-}
-
-/* Quick Actions header label */
-.desk-page[data-page-route="hr-suite"] .h4,
-.page-container[data-page-route^="hr-suite"] .h4 {
-	color: #1a1f36;
-	letter-spacing: -0.01em;
+/* ── Section separators (spacer between groups) ──────────────────────────── */
+.desk-page[data-page-route="hr-suite"] .workspace-section-break,
+.page-container[data-page-route^="hr-suite"] .workspace-section-break {
+	border-top: 1px solid #e2e8f0;
+	margin: 12px 0 4px;
 }

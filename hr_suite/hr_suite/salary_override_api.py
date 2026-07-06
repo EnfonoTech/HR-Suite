@@ -62,11 +62,13 @@ def save_component_override(
     # Read the current value before changing it
     last_value = _current_field_value(salary_structure_assignment, component_name)
 
-    # Close any open previous override for this component
-    _supersede_open_overrides(employee, component_name, effective_date)
-
     status = "Pending" if effective_date > today else "Applied"
     applied_on = now_datetime() if status == "Applied" else None
+
+    # Only retire the previously-active override once this one actually takes effect —
+    # a merely-scheduled (Pending) override must not disturb what's currently Applied.
+    if status == "Applied":
+        _supersede_open_overrides(employee, component_name, effective_date)
 
     override = frappe.get_doc({
         "doctype": "Salary Component Override",
@@ -130,18 +132,26 @@ def _current_field_value(ssa_name: str, component_name: str) -> float:
         return 0.0
 
 
-def _supersede_open_overrides(employee: str, component_name: str, new_start_date):
+def _supersede_open_overrides(employee: str, component_name: str, new_start_date, exclude_name: str = None):
     """Mark earlier Pending/Applied overrides for the same component as Superseded,
-    and set their end_date to new_start_date - 1 day."""
+    and set their end_date to new_start_date - 1 day.
+
+    Only records that take effect on or before new_start_date are affected — a
+    later-dated Pending override (still in the future) is left alone."""
     from frappe.utils import add_days
+
+    filters = {
+        "employee": employee,
+        "component_name": component_name,
+        "status": ["in", ["Pending", "Applied"]],
+        "start_date": ["<=", new_start_date],
+    }
+    if exclude_name:
+        filters["name"] = ["!=", exclude_name]
 
     open_records = frappe.get_all(
         "Salary Component Override",
-        filters={
-            "employee": employee,
-            "component_name": component_name,
-            "status": ["in", ["Pending", "Applied"]],
-        },
+        filters=filters,
         fields=["name", "start_date"],
         order_by="start_date desc",
     )
@@ -188,6 +198,7 @@ def apply_pending_salary_overrides():
     for rec in pending:
         try:
             ssa = rec.salary_structure_assignment or _active_ssa(rec.employee, today)
+            _supersede_open_overrides(rec.employee, rec.component_name, rec.start_date, exclude_name=rec.name)
             if ssa:
                 _apply_to_ssa(ssa, rec.component_name, flt(rec.new_value))
             frappe.db.set_value(

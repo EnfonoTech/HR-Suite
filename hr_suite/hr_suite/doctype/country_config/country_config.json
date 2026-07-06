@@ -11,6 +11,7 @@
   {"fieldname": "column_break_1", "fieldtype": "Column Break"},
   {"fieldname": "currency", "fieldtype": "Link", "label": "Currency", "options": "Currency"},
   {"fieldname": "is_active", "fieldtype": "Check", "label": "Active", "default": "1"},
+  {"fieldname": "minimum_wage", "fieldtype": "Currency", "label": "Minimum Wage", "description": "Lowest allowed Base salary for this country. Leave 0 to disable the check."},
   {"fieldname": "statutory_section", "fieldtype": "Section Break", "label": "Statutory Contribution"},
   {"fieldname": "statutory_scheme", "fieldtype": "Select", "label": "Statutory Scheme", "options": "\nGOSI\nGPSSA\nSIO\nPASI\nEPF+ESI\nDEWS\nNone", "in_list_view": 1},
   {"fieldname": "contribution_basis", "fieldtype": "Select", "label": "Contribution Basis", "options": "Basic Salary\nBasic + Housing\nTotal Salary", "default": "Basic Salary"},

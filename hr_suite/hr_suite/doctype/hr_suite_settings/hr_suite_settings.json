@@ -32,6 +32,8 @@
   "column_break_contract",
   "notice_period_monthly_days",
   "notice_period_non_monthly_days",
+  "penalty_section",
+  "penalty_salary_component",
    "voice_section",
    "enable_voice_verification",
   "voice_verification_mode",
@@ -249,6 +251,18 @@
    "fieldname": "notice_period_non_monthly_days",
    "fieldtype": "Int",
    "label": "Notice Period — Non-Monthly (Days)"
+   },
+   {
+    "fieldname": "penalty_section",
+    "fieldtype": "Section Break",
+    "label": "Employee Penalty"
+   },
+   {
+    "fieldname": "penalty_salary_component",
+    "fieldtype": "Link",
+    "label": "Penalty Salary Component",
+    "options": "Salary Component",
+    "description": "Deduction component used for Employee Penalty payroll integration. Defaults to \"Penalty Deduction\" if left blank (auto-created on first use)."
    },
    {
     "fieldname": "voice_section",

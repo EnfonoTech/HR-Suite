@@ -161,18 +161,26 @@ def get_annual_leave_entitlement(employee: str, date: str = None) -> int:
 	country = get_employee_work_country(employee)
 	cfg = get_country_config(country)
 	if cfg and cfg.leave_types:
+		# Collect day values from every "annual leave" row — Country Config may express
+		# the below/above-threshold tiers either as two fields on one row, or as two
+		# separate rows (e.g. "Annual Leave" and "Annual Leave (5+ Years)"). Either way,
+		# the lower value is the below-threshold entitlement and the higher value is the
+		# above-threshold one — this avoids relying on which row happens to be listed first.
+		day_values = []
 		for lt in cfg.leave_types:
 			lt_name = (lt.leave_type_name or "").lower()
-			if "annual" in lt_name:
-				# Use explicit None-checks so a configured 0 isn't treated as "missing"
-				days_below_raw = lt.get("days_below_threshold")
-				days_per_year_raw = lt.get("days_per_year")
-				days_above_raw = lt.get("days_above_threshold")
-				days_below = flt(days_below_raw if days_below_raw is not None else (days_per_year_raw if days_per_year_raw is not None else 21))
-				days_above = flt(days_above_raw if days_above_raw is not None else days_below)
-				# Guard: if Country Config gives 0, fall through to SA settings default
-				if days_below > 0:
-					return int(days_above) if years >= threshold else int(days_below)
+			if "annual" not in lt_name:
+				continue
+			# Use explicit None-checks so a configured 0 isn't treated as "missing"
+			for raw in (lt.get("days_below_threshold"), lt.get("days_per_year"), lt.get("days_above_threshold")):
+				if raw is not None:
+					day_values.append(flt(raw))
+
+		day_values = [d for d in day_values if d > 0]
+		if day_values:
+			days_below = min(day_values)
+			days_above = max(day_values)
+			return int(days_above) if years >= threshold else int(days_below)
 
 	# Fallback: SA defaults from Hr Suite Settings
 	return int(settings.annual_leave_after_threshold or 30) if years >= threshold else int(settings.annual_leave_before_threshold or 21)
@@ -225,9 +233,7 @@ def get_eosb_factor_and_label(termination_reason: str, years: float) -> tuple[fl
 	if text_matches_tokens(reason, "resignation", "resignation"):
 		if years < 2:
 			return 0.0, "Resignation < 2 yrs — No EOSB"
-		if years <= 10:
-			return round(1 / 3, 4), "Resignation 2–10 yrs — 1/3 EOSB"
-		return round(2 / 3, 4), "Resignation > 10 yrs — 2/3 EOSB"
+		return 1.0, "Resignation ≥ 2 yrs — Full EOSB"
 
 	return 1.0, "Full EOSB"
 
@@ -276,10 +282,10 @@ def calculate_eosb_components(joining_date, termination_date, last_basic_salary,
 		eosb_years_1_5 = 0.0
 		eosb_years_above_5 = 0.0
 	elif years <= 5:
-		eosb_years_1_5 = round((monthly_basic / 2) * years, 2)
+		eosb_years_1_5 = round((monthly_basic * 2 / 3) * years, 2)
 		eosb_years_above_5 = 0.0
 	else:
-		eosb_years_1_5 = round((monthly_basic / 2) * 5, 2)
+		eosb_years_1_5 = round((monthly_basic * 2 / 3) * 5, 2)
 		eosb_years_above_5 = round(monthly_basic * (years - 5), 2)
 
 	eosb_gross = round(eosb_years_1_5 + eosb_years_above_5, 2)

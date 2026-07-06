@@ -30,6 +30,14 @@ ARTICLE_MAP = {
 	),
 }
 
+EOSB_REASON_MAP = {
+	"Resignation by Employee": "Resignation",
+	"Termination by Employer": "Termination by Employer",
+	"End of Fixed Term": "End of Fixed Term",
+	"Mutual Agreement": "Termination by Employer",
+	"Dismissal Without Notice": "Dismissal",
+}
+
 
 class TerminationNotice(Document):
 
@@ -103,7 +111,7 @@ class TerminationNotice(Document):
 				"department": self.department,
 				"termination_notice": self.name,
 				"last_working_day": last_day,
-				"status": "Open",
+				"status": "Draft",
 			})
 			ec.insert(ignore_permissions=True)
 			ec_name = ec.name
@@ -130,7 +138,7 @@ class TerminationNotice(Document):
 				"department": self.department,
 				"joining_date": emp.date_of_joining,
 				"termination_date": last_day,
-				"termination_reason": self.termination_reason,
+				"termination_reason": EOSB_REASON_MAP.get(self.termination_reason, self.termination_reason),
 				"last_basic_salary": basic,
 			})
 			eosb.insert(ignore_permissions=True)
