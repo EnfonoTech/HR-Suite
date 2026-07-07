@@ -1,0 +1,63 @@
+{
+ "actions": [],
+ "autoname": "prompt",
+ "creation": "2026-07-08 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "description",
+  "col_break",
+  "requires_expiry_date",
+  "requires_document_no"
+ ],
+ "fields": [
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "col_break",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "requires_expiry_date",
+   "fieldtype": "Check",
+   "default": "0",
+   "label": "Requires Expiry Date"
+  },
+  {
+   "fieldname": "requires_document_no",
+   "fieldtype": "Check",
+   "default": "1",
+   "label": "Requires Document No."
+  }
+ ],
+ "links": [],
+ "modified": "2026-07-08 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Employee Document Type",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "HR User"
+  }
+ ],
+ "sort_field": "name",
+ "sort_order": "ASC",
+ "states": []
+}

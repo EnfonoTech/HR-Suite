@@ -17,10 +17,10 @@
  "fields": [
   {
    "fieldname": "document_type",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Document Type",
-   "options": "\nIqama\nPassport\nHealth Insurance\nDriving License",
+   "options": "Employee Document Type",
    "reqd": 1
   },
   {

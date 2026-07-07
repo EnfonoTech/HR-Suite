@@ -30,6 +30,7 @@ def after_install():
 	create_default_settings()
 	ensure_employee_custom_fields()
 	seed_country_configs()
+	seed_employee_document_types()
 	frappe.db.commit()
 
 
@@ -51,6 +52,7 @@ def after_migrate():
 	migrate_legacy_employee_loans()
 	ensure_employee_custom_fields()
 	seed_country_configs()
+	seed_employee_document_types()
 	remove_obsolete_reports()
 
 
@@ -818,6 +820,33 @@ def seed_country_configs():
 
 		# restore leave_types key in _COUNTRY_CONFIGS entry for idempotent re-runs
 		cfg_data["leave_types"] = leave_types
+
+
+# ─── Employee Document Types ────────────────────────────────────────────────────
+
+def seed_employee_document_types():
+	defaults = [
+		{"name": "Iqama", "description": "Saudi residency permit for expatriate employees", "requires_expiry_date": 1, "requires_document_no": 1},
+		{"name": "Passport", "description": "International travel document", "requires_expiry_date": 1, "requires_document_no": 1},
+		{"name": "National ID", "description": "National identity card", "requires_expiry_date": 1, "requires_document_no": 1},
+		{"name": "Health Insurance", "description": "Employee health insurance card or policy", "requires_expiry_date": 1, "requires_document_no": 1},
+		{"name": "Driving License", "description": "Motor vehicle driving license", "requires_expiry_date": 1, "requires_document_no": 1},
+		{"name": "Work Permit", "description": "Government-issued work authorization permit", "requires_expiry_date": 1, "requires_document_no": 1},
+		{"name": "Visa", "description": "Entry or residency visa", "requires_expiry_date": 1, "requires_document_no": 1},
+		{"name": "Employment Contract", "description": "Signed employment contract copy", "requires_expiry_date": 0, "requires_document_no": 0},
+		{"name": "Educational Certificate", "description": "Degree, diploma, or certificate of qualification", "requires_expiry_date": 0, "requires_document_no": 1},
+		{"name": "Professional License", "description": "Trade, professional, or occupational license", "requires_expiry_date": 1, "requires_document_no": 1},
+		{"name": "Medical Certificate", "description": "Fitness-to-work or pre-employment medical report", "requires_expiry_date": 0, "requires_document_no": 0},
+		{"name": "Police Clearance", "description": "Criminal background clearance certificate", "requires_expiry_date": 1, "requires_document_no": 0},
+		{"name": "Bank Account Details", "description": "Salary payment bank account information", "requires_expiry_date": 0, "requires_document_no": 1},
+		{"name": "Other", "description": "Any other employee document not listed above", "requires_expiry_date": 0, "requires_document_no": 0},
+	]
+	for doc in defaults:
+		if not frappe.db.exists("Employee Document Type", doc["name"]):
+			try:
+				frappe.get_doc({"doctype": "Employee Document Type", **doc}).insert(ignore_permissions=True)
+			except Exception:
+				frappe.log_error(frappe.get_traceback(), f"HR Suite: failed to seed Employee Document Type '{doc['name']}'")
 
 
 # ─── Remove Obsolete Reports ───────────────────────────────────────────────────

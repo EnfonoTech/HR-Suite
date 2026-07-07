@@ -56,6 +56,7 @@ FEATURES = [
 	{"id": "medical-examination", "category": "onboarding", "title": "Medical Examination", "summary": "Track pre-employment and periodic medical examination requirements and results.", "target_type": "DocType", "target": "Medical Examination"},
 	{"id": "work-permit-iqama", "category": "onboarding", "title": "Work Permit Iqama", "summary": "Track work permit and residency records, expiry dates, and renewals.", "target_type": "DocType", "target": "Work Permit Iqama", "priority": "Primary"},
 	{"id": "employee-document", "category": "onboarding", "title": "Employee Document", "summary": "Track employee documents, custodians, and document expiry dates.", "target_type": "DocType", "target": "Employee Document"},
+	{"id": "employee-document-type", "category": "onboarding", "title": "Employee Document Type", "summary": "Configure document types available for employee document tracking.", "target_type": "DocType", "target": "Employee Document Type"},
 
 	# ── Leave and Payroll ────────────────────────────────────────────────────
 	{"id": "monthly-payroll", "category": "time", "title": "Monthly Payroll", "summary": "Run monthly payroll with deductions, contributions, and settlement context.", "target_type": "DocType", "target": "Monthly Payroll", "priority": "Primary"},
