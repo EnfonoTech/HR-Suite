@@ -4,11 +4,92 @@ frappe.ui.form.on("Salary Structure Assignment", {
 	refresh(frm) {
 		if (frm.is_new()) return;
 		_inject_override_buttons(frm);
+		frm.add_custom_button(__("Apply Salary Breakup"), () => _show_breakup_dialog(frm));
 	},
 	after_save(frm) {
 		_inject_override_buttons(frm);
 	},
 });
+
+// ── Apply Salary Breakup ────────────────────────────────────────────────────
+
+function _show_breakup_dialog(frm) {
+	const today = frappe.datetime.get_today();
+
+	const d = new frappe.ui.Dialog({
+		title: __("Apply Salary Breakup"),
+		fields: [
+			{
+				fieldname: "total_salary",
+				fieldtype: "Currency",
+				label: __("Total Salary"),
+				reqd: 1,
+				description: __("Must match a Total Salary value in the imported Salary Breakup Table exactly."),
+			},
+			{ fieldtype: "Column Break" },
+			{
+				fieldname: "effective_date",
+				fieldtype: "Date",
+				label: __("Effective From"),
+				reqd: 1,
+				default: today,
+				description: __("Past/today → applied immediately. Future → scheduled."),
+			},
+			{ fieldtype: "Section Break" },
+			{
+				fieldname: "notes",
+				fieldtype: "Small Text",
+				label: __("Notes (optional)"),
+			},
+		],
+		primary_action_label: __("Apply"),
+		primary_action(values) {
+			d.disable_primary_action();
+
+			frappe.call({
+				method: "hr_suite.hr_suite.salary_override_api.apply_salary_breakup",
+				args: {
+					employee: frm.doc.employee,
+					salary_structure_assignment: frm.doc.name,
+					total_salary: values.total_salary,
+					effective_date: values.effective_date,
+					notes: values.notes || "",
+				},
+				callback(r) {
+					if (r.exc) {
+						d.enable_primary_action();
+						return;
+					}
+					const result = r.message || {};
+					d.hide();
+
+					const all_applied = (result.results || []).every(row => row.status === "Applied");
+					if (all_applied) {
+						frm.reload_doc();
+						frappe.show_alert({
+							message: __("Salary breakup applied for Total Salary {0}.", [
+								frappe.format(values.total_salary, { fieldtype: "Currency" }),
+							]),
+							indicator: "green",
+						});
+					} else {
+						frappe.show_alert({
+							message: __("Salary breakup scheduled for {0}.", [
+								frappe.format(values.effective_date, { fieldtype: "Date" }),
+							]),
+							indicator: "blue",
+						});
+					}
+				},
+				error() {
+					d.enable_primary_action();
+				},
+			});
+		},
+	});
+
+	d.show();
+}
 
 // ── Button injection ──────────────────────────────────────────────────────────
 

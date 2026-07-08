@@ -7,7 +7,7 @@ app_publisher = "siva@enfono.com"
 app_description = "Hr Suite - Multi-Country HR Management System"
 app_email = "siva@enfono.com"
 app_license = "mit"
-required_apps = ["frappe/erpnext"]
+required_apps = ["frappe/erpnext", "frappe/hrms"]
 
 # Apps Screen
 add_to_apps_screen = [
