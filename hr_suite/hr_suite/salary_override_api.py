@@ -128,7 +128,7 @@ def apply_salary_breakup(
 
     components = [
         ("custom_total_salary", _("Total Salary"), total_salary),
-        ("custom_basic_amount", _("Basic"), breakup["basic"]),
+        ("base", _("Basic"), breakup["basic"]),
         ("custom_hra_amount", _("HRA / Living Allowances"), breakup["hra"]),
         ("custom_transport_amount", _("Transport / Food Allowance"), breakup["transport"]),
         ("custom_other_allowance_amount", _("Other Allowance"), breakup["other_allowance"]),
