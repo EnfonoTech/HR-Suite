@@ -10,11 +10,9 @@ from frappe.utils.file_manager import save_file
 from frappe.utils.xlsxutils import make_xlsx
 from openpyxl import load_workbook
 
-from hrms.payroll.doctype.salary_structure.salary_structure import create_salary_structure_assignment
-
 ALLOWED_WORKBOOK_EXTENSIONS = {".xlsx", ".xlsm"}
 MAX_WORKBOOK_FILE_SIZE_BYTES = 5 * 1024 * 1024
-SYNC_ROW_LIMIT = 50
+SYNC_ROW_LIMIT = 200
 REQUIRED_COLUMNS = {"employee", "salary structure"}
 
 
@@ -42,7 +40,67 @@ def import_workbook(doc_name):
 	return _process_workbook_rows(doc_name=doc.name)
 
 
-def _process_workbook_rows(doc_name):
+@frappe.whitelist()
+def retry_failed_rows(doc_name):
+	"""Re-process only the rows that previously failed, merging results back into the log."""
+	doc = frappe.get_doc("Salary Structure Assignment Import", doc_name)
+	frappe.has_permission(doc.doctype, "write", doc=doc, throw=True)
+
+	if not doc.import_log:
+		frappe.throw(_("No import log found. Run a full import first."))
+	try:
+		existing_log = json.loads(doc.import_log)
+	except Exception:
+		frappe.throw(_("Import log is corrupted. Re-run the full import."))
+
+	only_rows = {r["row"] for r in existing_log if r.get("status") == "Failed"}
+	if not only_rows:
+		frappe.throw(_("No failed rows to retry."))
+
+	return _process_workbook_rows(doc_name=doc_name, only_rows=only_rows, existing_log=existing_log)
+
+
+@frappe.whitelist()
+def cancel_import(doc_name):
+	"""Cancel all submitted Salary Structure Assignments created by this import."""
+	frappe.has_permission("Salary Structure Assignment Import", "write", throw=True)
+	frappe.has_permission("Salary Structure Assignment", "cancel", throw=True)
+
+	ssa_names = frappe.get_all(
+		"Salary Structure Assignment",
+		filters={"custom_import_reference": doc_name, "docstatus": 1},
+		pluck="name",
+	)
+	if not ssa_names:
+		frappe.throw(_("No active Salary Structure Assignments are linked to this import."))
+
+	cancelled = 0
+	errors = []
+	for name in ssa_names:
+		try:
+			ssa_doc = frappe.get_doc("Salary Structure Assignment", name)
+			ssa_doc.cancel()
+			cancelled += 1
+		except Exception as e:
+			errors.append(f"{name}: {cstr(e)}")
+
+	new_status = "Cancelled" if not errors else "Cancelled with Errors"
+	frappe.db.set_value(
+		"Salary Structure Assignment Import", doc_name, "status", new_status, update_modified=False
+	)
+	frappe.db.commit()
+
+	return {"cancelled": cancelled, "errors": errors, "status": new_status}
+
+
+def _process_workbook_rows(doc_name, only_rows=None, existing_log=None):
+	from hrms.payroll.doctype.salary_structure.salary_structure import (
+		create_salary_structure_assignment,
+	)
+	from hr_suite.hr_suite.doctype.salary_breakup_table.salary_breakup_table import (
+		get_breakup_for_total_salary,
+	)
+
 	doc = frappe.get_doc("Salary Structure Assignment Import", doc_name)
 	rows = _read_workbook_rows(doc.workbook)
 
@@ -50,13 +108,22 @@ def _process_workbook_rows(doc_name):
 	success = skipped = failed = 0
 
 	for idx, row in enumerate(rows, start=2):  # row 1 is the header
+		if only_rows and idx not in only_rows:
+			continue
 		employee_value = row.get("employee")
 		structure_value = row.get("salary_structure")
 		from_date = row.get("from_date") or doc.default_from_date
 		base = row.get("base")
 		variable = row.get("variable")
+		total_salary = row.get("total_salary")
 
-		row_result = {"row": idx, "employee": employee_value, "salary_structure": structure_value}
+		row_result = {
+			"row": idx,
+			"employee": employee_value,
+			"salary_structure": structure_value,
+			"total_salary": total_salary,
+			"breakup_band": None,
+		}
 
 		if not employee_value or not structure_value:
 			failed += 1
@@ -80,7 +147,7 @@ def _process_workbook_rows(doc_name):
 			employee_id, employee_company = _resolve_employee(employee_value, doc.company)
 			structure = _resolve_salary_structure(structure_value)
 
-			if frappe.db.exists(
+			existing_ssa = frappe.db.get_value(
 				"Salary Structure Assignment",
 				{
 					"employee": employee_id,
@@ -88,23 +155,52 @@ def _process_workbook_rows(doc_name):
 					"from_date": getdate(from_date),
 					"docstatus": 1,
 				},
-			):
+				"name",
+			)
+
+			if existing_ssa:
+				# SSA already exists — still apply breakup if total_salary given
+				ssa_name = existing_ssa
 				skipped += 1
 				row_result.update(status="Skipped", message=_("Already assigned for this From Date."))
-				results.append(row_result)
-				continue
+			else:
+				# Resolve base: prefer breakup basic if total_salary given, else use base column
+				resolved_base = flt(base) if base not in (None, "") else None
+				if total_salary not in (None, ""):
+					breakup = get_breakup_for_total_salary(flt(total_salary), employee_company)
+					if breakup:
+						resolved_base = breakup["basic"]
 
-			create_salary_structure_assignment(
-				employee=employee_id,
-				salary_structure=structure.name,
-				company=employee_company,
-				currency=structure.currency,
-				from_date=getdate(from_date),
-				base=flt(base) if base not in (None, "") else None,
-				variable=flt(variable) if variable not in (None, "") else None,
-			)
-			success += 1
-			row_result.update(status="Assigned", message="")
+				ssa_name = create_salary_structure_assignment(
+					employee=employee_id,
+					salary_structure=structure.name,
+					company=employee_company,
+					currency=structure.currency,
+					from_date=getdate(from_date),
+					base=resolved_base,
+					variable=flt(variable) if variable not in (None, "") else None,
+				)
+				# Tag the new SSA with this import record for traceability
+				if frappe.db.has_column("Salary Structure Assignment", "custom_import_reference"):
+					frappe.db.set_value(
+						"Salary Structure Assignment", ssa_name,
+						"custom_import_reference", doc_name, update_modified=False
+					)
+				success += 1
+				row_result.update(status="Assigned", message="", ssa_name=ssa_name)
+
+			# Apply breakup custom fields if total_salary column is present
+			if total_salary not in (None, "") and ssa_name:
+				breakup = get_breakup_for_total_salary(flt(total_salary), employee_company)
+				if breakup:
+					_write_breakup_to_ssa(ssa_name, flt(total_salary), breakup, import_name=doc_name)
+					row_result["breakup_band"] = breakup["matched_total"]
+				else:
+					if row_result.get("status") != "Failed":
+						row_result["message"] = (row_result.get("message") or "") + _(
+							" Warning: no breakup band found for Total Salary {0} for company {1}."
+						).format(total_salary, employee_company)
+
 		except Exception as e:
 			frappe.db.rollback(save_point=savepoint)
 			failed += 1
@@ -115,9 +211,19 @@ def _process_workbook_rows(doc_name):
 			)
 		results.append(row_result)
 
+	# When retrying: merge new results back into the existing log and recalculate totals
+	if only_rows and existing_log:
+		by_row = {r["row"]: r for r in existing_log}
+		for r in results:
+			by_row[r["row"]] = r
+		results = sorted(by_row.values(), key=lambda r: r["row"])
+		success  = sum(1 for r in results if r.get("status") == "Assigned")
+		skipped  = sum(1 for r in results if r.get("status") == "Skipped")
+		failed   = sum(1 for r in results if r.get("status") == "Failed")
+
 	doc.db_set(
 		{
-			"total_rows": len(rows),
+			"total_rows": len(results) if only_rows else len(rows),
 			"success_count": success,
 			"skipped_count": skipped,
 			"failed_count": failed,
@@ -128,7 +234,7 @@ def _process_workbook_rows(doc_name):
 	)
 
 	summary = {
-		"total_rows": len(rows),
+		"total_rows": len(results) if only_rows else len(rows),
 		"success_count": success,
 		"skipped_count": skipped,
 		"failed_count": failed,
@@ -138,6 +244,24 @@ def _process_workbook_rows(doc_name):
 	return summary
 
 
+def _write_breakup_to_ssa(ssa_name, total_salary, breakup, import_name=None):
+	"""Write breakup amounts directly to SSA custom fields (fast path for bulk import)."""
+	fields = {
+		"custom_total_salary": total_salary,
+		"base": breakup["basic"],
+		"custom_hra_amount": breakup["hra"],
+		"custom_transport_amount": breakup["transport"],
+		"custom_other_allowance_amount": breakup["other_allowance"],
+	}
+	if import_name and frappe.db.has_column("Salary Structure Assignment", "custom_import_reference"):
+		fields["custom_import_reference"] = import_name
+	for fieldname, value in fields.items():
+		if frappe.db.has_column("Salary Structure Assignment", fieldname):
+			frappe.db.set_value(
+				"Salary Structure Assignment", ssa_name, fieldname, value, update_modified=False
+			)
+
+
 def _resolve_employee(value, default_company):
 	value = cstr(value).strip()
 	employee_id = value if frappe.db.exists("Employee", value) else None
@@ -145,7 +269,14 @@ def _resolve_employee(value, default_company):
 	if not employee_id:
 		employee_id = frappe.db.get_value("Employee", {"user_id": value}, "name")
 	if not employee_id:
-		employee_id = frappe.db.get_value("Employee", {"employee_name": value}, "name")
+		# employee_name is not unique — only use if exactly one match
+		matches = frappe.get_all("Employee", filters={"employee_name": value}, pluck="name", limit=2)
+		if len(matches) == 1:
+			employee_id = matches[0]
+		elif len(matches) > 1:
+			frappe.throw(
+				_("Multiple employees found with name {0}. Use the Employee ID instead.").format(value)
+			)
 	if not employee_id:
 		frappe.throw(_("No Employee found matching {0}.").format(value))
 
@@ -221,6 +352,7 @@ def _read_workbook_rows(file_url):
 				"from_date": get(values, "from date"),
 				"base": get(values, "base"),
 				"variable": get(values, "variable"),
+				"total_salary": get(values, "total salary"),
 			}
 		)
 	return rows
@@ -242,9 +374,9 @@ def download_template(doc_name):
 		order_by="employee_name asc",
 	)
 
-	rows = [["Employee", "Employee Name", "Salary Structure", "From Date", "Base", "Variable"]]
+	rows = [["Employee", "Employee Name", "Salary Structure", "From Date", "Total Salary", "Base", "Variable"]]
 	for emp in employees:
-		rows.append([emp.name, emp.employee_name, "", "", "", ""])
+		rows.append([emp.name, emp.employee_name, "", "", "", "", ""])
 
 	file_name = f"salary-structure-assignment-template-{doc.name}.xlsx"
 	file_doc = save_file(

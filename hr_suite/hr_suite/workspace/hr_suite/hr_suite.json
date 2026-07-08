@@ -232,6 +232,26 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Salary Breakup Table",
+   "link_count": 0,
+   "link_to": "Salary Breakup Table",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Bulk Salary Structure Assignment",
+   "link_count": 0,
+   "link_to": "Salary Structure Assignment Import",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Disciplinary",
    "link_count": 0,
    "link_type": "DocType",

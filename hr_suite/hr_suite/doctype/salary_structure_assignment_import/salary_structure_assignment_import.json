@@ -39,7 +39,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "Columns: Employee, Salary Structure, From Date (optional), Base (optional), Variable (optional). Use Download Template for a prefilled sheet of this company's active employees.",
+   "description": "Required: Employee, Salary Structure. Optional: From Date, Total Salary, Base, Variable. If Total Salary is filled the breakup table is looked up automatically — HRA / Transport / Other Allowance are set on the assignment. Use Download Template for a prefilled sheet.",
    "fieldname": "workbook",
    "fieldtype": "Attach",
    "label": "Employee Salary Structure Workbook"
@@ -54,7 +54,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Draft\nQueued\nCompleted\nCompleted with Errors",
+   "options": "Draft\nQueued\nCompleted\nCompleted with Errors\nCancelled\nCancelled with Errors",
    "read_only": 1
   },
   {
@@ -98,7 +98,14 @@
    "read_only": 1
   }
  ],
- "links": [],
+ "links": [
+  {
+   "group": "Salary Assignments",
+   "link_doctype": "Salary Structure Assignment",
+   "link_fieldname": "custom_import_reference",
+   "label": "Salary Structure Assignment"
+  }
+ ],
  "modified": "2026-07-08 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hr Suite",

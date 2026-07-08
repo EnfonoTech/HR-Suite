@@ -285,11 +285,12 @@ def ensure_workflow_actions(workflow_data):
 def rename_saudi_doctypes():
 	"""Idempotent migration: rename Saudi-prefixed generic DocTypes to country-neutral names."""
 	renames = [
-		("Monthly Payroll Employee", "Monthly Payroll Employee"),
-		("Monthly Payroll", "Monthly Payroll"),
-		("Annual Leave", "Annual Leave"),
-		("Sick Leave", "Sick Leave"),
-		("Regulatory Task", "Regulatory Task"),
+		("Saudi Monthly Payroll Employee", "Monthly Payroll Employee"),
+		("Saudi Monthly Payroll", "Monthly Payroll"),
+		("Saudi Annual Leave", "Annual Leave"),
+		("Saudi Sick Leave", "Sick Leave"),
+		("Saudi Regulatory Task", "Regulatory Task"),
+		("Saudi Employment Contract", "Country Employment Contract"),
 	]
 	for old_name, new_name in renames:
 		if frappe.db.exists("DocType", old_name) and not frappe.db.exists("DocType", new_name):

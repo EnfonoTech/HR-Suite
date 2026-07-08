@@ -1,10 +1,13 @@
 {
  "actions": [],
  "allow_rename": 0,
+ "autoname": "field:company",
  "creation": "2026-07-08 00:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "company",
+  "country_note",
   "import_section",
   "import_help",
   "breakup_workbook",
@@ -16,12 +19,28 @@
  ],
  "fields": [
   {
-   "fieldname": "import_section",
-   "fieldtype": "Section Break",
-   "label": "Salary Breakup Table"
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "One Salary Breakup Table per company. The record is named after the company."
   },
   {
-   "default": "Attach an Excel sheet mapping Total Salary to its Basic / HRA / Transport / Other Allowance split, then click Import Breakup Table. Re-uploading and re-importing replaces the table below with the new file's rows.",
+   "default": "One record per company. The breakup rows are used for all employees assigned to this company.",
+   "fieldname": "country_note",
+   "fieldtype": "Small Text",
+   "label": "Country Code Guide",
+   "read_only": 1
+  },
+  {
+   "fieldname": "import_section",
+   "fieldtype": "Section Break",
+   "label": "Salary Breakup Workbook"
+  },
+  {
+   "default": "Attach an Excel sheet mapping Total Salary to its Basic / HRA / Transport / Other Allowance split, then click Import Breakup Table. Re-uploading and re-importing replaces the table with the new file's rows.",
    "fieldname": "import_help",
    "fieldtype": "Small Text",
    "label": "Instructions",
@@ -64,12 +83,12 @@
    "read_only": 1
   }
  ],
- "issingle": 1,
  "links": [],
  "modified": "2026-07-08 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hr Suite",
  "name": "Salary Breakup Table",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {

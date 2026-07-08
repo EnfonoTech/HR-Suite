@@ -4,7 +4,7 @@
 from frappe.model.document import Document
 
 
-class HrLetter(Document):
+class HRLetter(Document):
 
 	def on_submit(self):
 		self.status = "Issued"

@@ -10,6 +10,21 @@ frappe.ui.form.on("Salary Structure Assignment Import", {
 			}).addClass("btn-primary");
 		}
 
+		// Retry failed rows
+		if (frm.doc.status === "Completed with Errors" && frm.doc.failed_count > 0) {
+			frm.add_custom_button(__("Retry Failed Rows ({0})", [frm.doc.failed_count]), function () {
+				hr_suite_ssai.retry_failed_rows(frm);
+			}).addClass("btn-warning");
+		}
+
+		// Cancel all assignments created by this import
+		const cancellable = ["Completed", "Completed with Errors"].includes(frm.doc.status);
+		if (cancellable && frm.doc.success_count > 0) {
+			frm.add_custom_button(__("Cancel Assignments"), function () {
+				hr_suite_ssai.cancel_import(frm);
+			}).addClass("btn-danger");
+		}
+
 		hr_suite_ssai.render_log(frm);
 	},
 
@@ -101,34 +116,46 @@ hr_suite_ssai.render_log = function (frm) {
 hr_suite_ssai.show_result_dialog = function (summary) {
 	const rows = summary.results || [];
 	const status_color = { Assigned: "green", Skipped: "orange", Failed: "red" };
+	const has_breakup = rows.some(r => r.total_salary != null);
+	const has_ssa = rows.some(r => r.ssa_name);
 
 	let html = `<div class="text-muted margin-bottom">
 		${__("Assigned")}: <strong>${summary.success_count}</strong> &nbsp;
 		${__("Skipped")}: <strong>${summary.skipped_count}</strong> &nbsp;
 		${__("Failed")}: <strong>${summary.failed_count}</strong>
 	</div>
+	<div style="overflow-x:auto;">
 	<table class="table table-bordered table-sm">
 		<thead><tr>
 			<th>${__("Row")}</th>
 			<th>${__("Employee")}</th>
 			<th>${__("Salary Structure")}</th>
+			${has_breakup ? `<th style="text-align:right;">${__("Total Salary")}</th><th style="text-align:right;">${__("Band Applied")}</th>` : ""}
 			<th>${__("Status")}</th>
 			<th>${__("Message")}</th>
+			${has_ssa ? `<th>${__("Assignment")}</th>` : ""}
 		</tr></thead>
 		<tbody>`;
 
 	rows.forEach(function (row) {
 		const color = status_color[row.status] || "dark";
+		const fmt_sal = row.total_salary ? frappe.format(row.total_salary, { fieldtype: "Currency" }) : "";
+		const fmt_band = row.breakup_band ? frappe.format(row.breakup_band, { fieldtype: "Currency" }) : (row.total_salary ? '<span style="color:#e74c3c">—</span>' : "");
+		const ssa_link = row.ssa_name
+			? `<a href="/app/salary-structure-assignment/${encodeURIComponent(row.ssa_name)}" target="_blank" style="font-size:11px;">${frappe.utils.escape_html(row.ssa_name)}</a>`
+			: "";
 		html += `<tr>
 			<td>${frappe.utils.escape_html(row.row)}</td>
 			<td>${frappe.utils.escape_html(row.employee || "")}</td>
 			<td>${frappe.utils.escape_html(row.salary_structure || "")}</td>
+			${has_breakup ? `<td style="text-align:right;font-family:monospace;">${fmt_sal}</td><td style="text-align:right;font-family:monospace;">${fmt_band}</td>` : ""}
 			<td><span class="indicator ${color}">${frappe.utils.escape_html(row.status)}</span></td>
 			<td>${frappe.utils.escape_html(row.message || "")}</td>
+			${has_ssa ? `<td>${ssa_link}</td>` : ""}
 		</tr>`;
 	});
 
-	html += "</tbody></table>";
+	html += "</tbody></table></div>";
 
 	const d = new frappe.ui.Dialog({
 		title: __("Import Results"),
@@ -141,4 +168,58 @@ hr_suite_ssai.show_result_dialog = function (summary) {
 	});
 	d.fields_dict.results_html.$wrapper.html(html);
 	d.show();
+};
+
+hr_suite_ssai.retry_failed_rows = function (frm) {
+	frappe.confirm(
+		__("Re-process the {0} failed row(s) from the original workbook?", [frm.doc.failed_count]),
+		function () {
+			frappe.call({
+				method: "hr_suite.hr_suite.doctype.salary_structure_assignment_import.salary_structure_assignment_import.retry_failed_rows",
+				args: { doc_name: frm.doc.name },
+				freeze: true,
+				freeze_message: __("Retrying failed rows..."),
+				callback: function (r) {
+					frm.reload_doc();
+					if (r.message) {
+						hr_suite_ssai.show_result_dialog(r.message);
+					}
+				},
+			});
+		}
+	);
+};
+
+hr_suite_ssai.cancel_import = function (frm) {
+	frappe.confirm(
+		__("This will cancel all <b>{0}</b> Salary Structure Assignment(s) created by this import. This cannot be undone if salary slips already exist. Continue?", [frm.doc.success_count]),
+		function () {
+			frappe.call({
+				method: "hr_suite.hr_suite.doctype.salary_structure_assignment_import.salary_structure_assignment_import.cancel_import",
+				args: { doc_name: frm.doc.name },
+				freeze: true,
+				freeze_message: __("Cancelling assignments..."),
+				callback: function (r) {
+					frm.reload_doc();
+					if (!r.message) return;
+					const msg = r.message;
+					if (msg.errors && msg.errors.length) {
+						frappe.msgprint({
+							title: __("Cancelled with Errors"),
+							message: __("{0} assignment(s) cancelled. Could not cancel:<br>{1}", [
+								msg.cancelled,
+								msg.errors.map(e => frappe.utils.escape_html(e)).join("<br>"),
+							]),
+							indicator: "orange",
+						});
+					} else {
+						frappe.show_alert({
+							message: __("{0} assignment(s) cancelled.", [msg.cancelled]),
+							indicator: "green",
+						});
+					}
+				},
+			});
+		}
+	);
 };

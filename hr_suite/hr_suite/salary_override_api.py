@@ -103,9 +103,11 @@ def apply_salary_breakup(
     notes: str = None,
 ):
     """
-    Look up the Salary Breakup Table for an exact Total Salary match and apply the
-    Basic / HRA / Transport / Other Allowance split (plus Total Salary itself) to the
-    given Salary Structure Assignment, one Salary Component Override per field.
+    Look up the country-specific Salary Breakup Table (nearest band at or below
+    total_salary) and apply the Basic / HRA / Transport / Other Allowance split
+    to the given Salary Structure Assignment, one Salary Component Override per field.
+
+    Country is derived automatically from the employee's active contract / company.
     """
     from hr_suite.hr_suite.doctype.salary_breakup_table.salary_breakup_table import (
         get_breakup_for_total_salary,
@@ -114,17 +116,25 @@ def apply_salary_breakup(
     frappe.has_permission("Salary Component Override", "create", throw=True)
 
     total_salary = flt(total_salary)
-    breakup = get_breakup_for_total_salary(total_salary)
+    company = frappe.db.get_value("Employee", employee, "company")
+    breakup = get_breakup_for_total_salary(total_salary, company)
     if not breakup:
         frappe.throw(
             _(
-                "No salary breakup found for Total Salary {0}. Please check the imported Salary Breakup Table."
-            ).format(total_salary)
+                "No salary breakup band found for Total Salary {0} for company {1}. "
+                "Please import the Salary Breakup Table for {1} first."
+            ).format(total_salary, company)
         )
 
+    matched_total = breakup.get("matched_total", total_salary)
+    if matched_total != total_salary:
+        band_note = _(" (band {0})").format(matched_total)
+    else:
+        band_note = ""
+
     default_notes = notes or _(
-        "Applied from Salary Breakup Table for Total Salary {0}"
-    ).format(total_salary)
+        "Applied from Salary Breakup Table for Total Salary {0}{1}"
+    ).format(total_salary, band_note)
 
     components = [
         ("custom_total_salary", _("Total Salary"), total_salary),
@@ -147,7 +157,7 @@ def apply_salary_breakup(
         )
         results.append({"component": label, "value": value, **result})
 
-    return {"total_salary": total_salary, "breakup": breakup, "results": results}
+    return {"total_salary": total_salary, "company": company, "breakup": breakup, "results": results}
 
 
 @frappe.whitelist()

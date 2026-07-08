@@ -15,6 +15,7 @@ frappe.ui.form.on("Salary Structure Assignment", {
 
 function _show_breakup_dialog(frm) {
 	const today = frappe.datetime.get_today();
+	let _preview_timer = null;
 
 	const d = new frappe.ui.Dialog({
 		title: __("Apply Salary Breakup"),
@@ -24,7 +25,11 @@ function _show_breakup_dialog(frm) {
 				fieldtype: "Currency",
 				label: __("Total Salary"),
 				reqd: 1,
-				description: __("Must match a Total Salary value in the imported Salary Breakup Table exactly."),
+				description: __("Applies the nearest band at or below this amount from the Salary Breakup Table."),
+				onchange() {
+					clearTimeout(_preview_timer);
+					_preview_timer = setTimeout(() => _load_preview(d, frm), 400);
+				},
 			},
 			{ fieldtype: "Column Break" },
 			{
@@ -34,6 +39,12 @@ function _show_breakup_dialog(frm) {
 				reqd: 1,
 				default: today,
 				description: __("Past/today → applied immediately. Future → scheduled."),
+			},
+			{ fieldtype: "Section Break" },
+			{
+				fieldname: "breakup_preview",
+				fieldtype: "HTML",
+				options: `<div id="breakup-preview-area" style="min-height:28px;"></div>`,
 			},
 			{ fieldtype: "Section Break" },
 			{
@@ -89,6 +100,56 @@ function _show_breakup_dialog(frm) {
 	});
 
 	d.show();
+}
+
+function _load_preview(d, frm) {
+	const total_salary = d.get_value("total_salary");
+	const $area = d.$body.find("#breakup-preview-area");
+
+	if (!total_salary || total_salary <= 0) {
+		$area.empty();
+		return;
+	}
+
+	$area.html(`<span style="color:#8d99a6;font-size:12px;">${__("Loading preview…")}</span>`);
+
+	frappe.call({
+		method: "hr_suite.hr_suite.doctype.salary_breakup_table.salary_breakup_table.get_breakup_preview",
+		args: { employee: frm.doc.employee, total_salary },
+		callback(r) {
+			const b = r.message;
+			if (!b) {
+				$area.html(`<span style="color:#e74c3c;font-size:12px;">⚠ ${__("No breakup band found for this amount.")}</span>`);
+				return;
+			}
+
+			const fmt = v => frappe.format(v, { fieldtype: "Currency" });
+			const isExact = flt(b.matched_total) === flt(total_salary);
+			const bandNote = isExact
+				? `<span style="color:#27ae60;">✓ ${__("Exact match")}</span>`
+				: `<span style="color:#e67e22;">↓ ${__("Using band:")} <b>${fmt(b.matched_total)}</b></span>`;
+
+			$area.html(`
+				<div style="background:#f8f9fa;border:1px solid #e2e6ea;border-radius:4px;padding:10px 12px;font-size:12px;">
+					<div style="margin-bottom:6px;">${bandNote}</div>
+					<table style="width:100%;border-collapse:collapse;">
+						<tr>
+							<td style="padding:2px 8px 2px 0;color:#6c757d;">${__("Basic")}</td>
+							<td style="text-align:right;font-weight:600;font-family:monospace;">${fmt(b.basic)}</td>
+							<td style="padding:2px 0 2px 16px;color:#6c757d;">${__("HRA / Living")}</td>
+							<td style="text-align:right;font-weight:600;font-family:monospace;">${fmt(b.hra)}</td>
+						</tr>
+						<tr>
+							<td style="padding:2px 8px 2px 0;color:#6c757d;">${__("Transport / Food")}</td>
+							<td style="text-align:right;font-weight:600;font-family:monospace;">${fmt(b.transport)}</td>
+							<td style="padding:2px 0 2px 16px;color:#6c757d;">${__("Other Allowance")}</td>
+							<td style="text-align:right;font-weight:600;font-family:monospace;">${fmt(b.other_allowance)}</td>
+						</tr>
+					</table>
+				</div>
+			`);
+		},
+	});
 }
 
 // ── Button injection ──────────────────────────────────────────────────────────

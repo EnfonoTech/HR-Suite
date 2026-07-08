@@ -107,7 +107,7 @@ def validate_annual_leave_coverage(item):
 	if not all(run_check(check) for check in item.get("checks", [])):
 		return GAP
 
-	return IMPLEMENTED if frappe.db.exists("DocType", "Saudi Annual Leave") else PARTIAL
+	return IMPLEMENTED if frappe.db.exists("DocType", "Annual Leave") else PARTIAL
 
 
 def validate_special_leave_coverage(item):
@@ -224,8 +224,8 @@ def get_coverage_items():
 			"legal_reference": "Art. 37-46",
 			"requirement": _("Employment contracts and terms"),
 			"component_type": "DocType",
-			"component_name": "Saudi Employment Contract",
-			"checks": [{"kind": "doctype", "name": "Saudi Employment Contract"}],
+			"component_name": "Country Employment Contract",
+			"checks": [{"kind": "doctype", "name": "Country Employment Contract"}],
 			"evidence": _("Contract DocType with probation, hours, and expiry tracking."),
 			"notes": _("Core contract coverage is implemented in the employment lifecycle."),
 		},
@@ -234,9 +234,9 @@ def get_coverage_items():
 			"legal_reference": "Art. 53",
 			"requirement": _("Probation controls and alerts"),
 			"component_type": "Scheduler + DocType",
-			"component_name": "Saudi Employment Contract + Probation End Alert",
+			"component_name": "Country Employment Contract + Probation End Alert",
 			"checks": [
-				{"kind": "doctype", "name": "Saudi Employment Contract"},
+				{"kind": "doctype", "name": "Country Employment Contract"},
 				{"kind": "scheduler", "name": "hr_suite.hr_suite.tasks.send_probation_end_alerts"},
 			],
 			"evidence": _("Probation validation in contract plus scheduled reminder before end date."),
@@ -316,9 +316,9 @@ def get_coverage_items():
 			"legal_reference": "Art. 90-102",
 			"requirement": _("Payroll, attendance, and official records"),
 			"component_type": "DocType",
-			"component_name": "Saudi Monthly Payroll + Monthly Attendance Record",
+			"component_name": "Monthly Payroll + Monthly Attendance Record",
 			"checks": [
-				{"kind": "doctype", "name": "Saudi Monthly Payroll"},
+				{"kind": "doctype", "name": "Monthly Payroll"},
 				{"kind": "doctype", "name": "Monthly Attendance Record"},
 			],
 			"evidence": _("Monthly payroll batch plus official attendance register with daily details."),
@@ -368,9 +368,9 @@ def get_coverage_items():
 			"legal_reference": "Art. 117",
 			"requirement": _("Sick leave thresholds and pay tiers"),
 			"component_type": "DocType + Scheduler",
-			"component_name": "Saudi Sick Leave + Sick Leave Alerts",
+			"component_name": "Sick Leave + Sick Leave Alerts",
 			"checks": [
-				{"kind": "doctype", "name": "Saudi Sick Leave"},
+				{"kind": "doctype", "name": "Sick Leave"},
 				{"kind": "scheduler", "name": "hr_suite.hr_suite.tasks.send_sick_leave_threshold_alerts"},
 			],
 			"evidence": _("Sick leave record plus threshold alerts and pay-rate handling."),

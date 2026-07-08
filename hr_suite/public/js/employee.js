@@ -710,15 +710,15 @@ function _hr_suite_onboarding_banner(frm) {
 	if (frm.doc.status !== "Active") return;
 	frappe.db
 		.get_list("Employee Onboarding", {
-			filters: { employee: frm.doc.name, status: ["in", ["Draft", "In Progress"]] },
-			fields: ["name", "status", "completion_percentage", "joining_date"],
+			filters: { employee: frm.doc.name, boarding_status: ["in", ["Pending", "In Process"]] },
+			fields: ["name", "boarding_status", "date_of_joining"],
 			limit: 1,
 		})
 		.then(function (rows) {
 			if (!rows || !rows.length) return;
 			const r = rows[0];
 			frm.dashboard.add_comment(
-				`${__("Onboarding")} ${r.status}: <b>${r.completion_percentage}%</b> complete
+				`${__("Onboarding")} ${r.boarding_status}
 				 — <a href="/app/employee-onboarding/${r.name}">${r.name}</a>`,
 				"orange", true
 			);
