@@ -1,0 +1,103 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-07-08 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "import_section",
+  "import_help",
+  "breakup_workbook",
+  "column_break_import",
+  "last_imported_on",
+  "imported_row_count",
+  "rows_section",
+  "rows"
+ ],
+ "fields": [
+  {
+   "fieldname": "import_section",
+   "fieldtype": "Section Break",
+   "label": "Salary Breakup Table"
+  },
+  {
+   "default": "Attach an Excel sheet mapping Total Salary to its Basic / HRA / Transport / Other Allowance split, then click Import Breakup Table. Re-uploading and re-importing replaces the table below with the new file's rows.",
+   "fieldname": "import_help",
+   "fieldtype": "Small Text",
+   "label": "Instructions",
+   "read_only": 1
+  },
+  {
+   "description": "Expected columns: Total Salary, Basic, HRA / Living Allowances, Transport / Food Allowance, Other Allowance.",
+   "fieldname": "breakup_workbook",
+   "fieldtype": "Attach",
+   "label": "Salary Breakup Workbook"
+  },
+  {
+   "fieldname": "column_break_import",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "last_imported_on",
+   "fieldtype": "Datetime",
+   "label": "Last Imported On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "imported_row_count",
+   "fieldtype": "Int",
+   "label": "Imported Rows",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rows_section",
+   "fieldtype": "Section Break",
+   "label": "Breakup Rows"
+  },
+  {
+   "cannot_add_rows": 1,
+   "cannot_delete_rows": 1,
+   "fieldname": "rows",
+   "fieldtype": "Table",
+   "label": "Rows",
+   "options": "Salary Breakup Row",
+   "read_only": 1
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-07-08 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Salary Breakup Table",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

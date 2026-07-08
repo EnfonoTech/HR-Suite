@@ -5,6 +5,7 @@ Whitelist API for Salary Component Override — history lookup, create override,
 and the scheduled task that applies pending future-dated overrides.
 """
 import frappe
+from frappe import _
 from frappe.utils import flt, getdate, now_datetime
 
 
@@ -91,6 +92,62 @@ def save_component_override(
 
     frappe.db.commit()
     return {"name": override.name, "status": status}
+
+
+@frappe.whitelist()
+def apply_salary_breakup(
+    employee: str,
+    salary_structure_assignment: str,
+    total_salary,
+    effective_date: str,
+    notes: str = None,
+):
+    """
+    Look up the Salary Breakup Table for an exact Total Salary match and apply the
+    Basic / HRA / Transport / Other Allowance split (plus Total Salary itself) to the
+    given Salary Structure Assignment, one Salary Component Override per field.
+    """
+    from hr_suite.hr_suite.doctype.salary_breakup_table.salary_breakup_table import (
+        get_breakup_for_total_salary,
+    )
+
+    frappe.has_permission("Salary Component Override", "create", throw=True)
+
+    total_salary = flt(total_salary)
+    breakup = get_breakup_for_total_salary(total_salary)
+    if not breakup:
+        frappe.throw(
+            _(
+                "No salary breakup found for Total Salary {0}. Please check the imported Salary Breakup Table."
+            ).format(total_salary)
+        )
+
+    default_notes = notes or _(
+        "Applied from Salary Breakup Table for Total Salary {0}"
+    ).format(total_salary)
+
+    components = [
+        ("custom_total_salary", _("Total Salary"), total_salary),
+        ("custom_basic_amount", _("Basic"), breakup["basic"]),
+        ("custom_hra_amount", _("HRA / Living Allowances"), breakup["hra"]),
+        ("custom_transport_amount", _("Transport / Food Allowance"), breakup["transport"]),
+        ("custom_other_allowance_amount", _("Other Allowance"), breakup["other_allowance"]),
+    ]
+
+    results = []
+    for fieldname, label, value in components:
+        result = save_component_override(
+            employee=employee,
+            component_name=fieldname,
+            component_label=label,
+            new_value=value,
+            effective_date=effective_date,
+            salary_structure_assignment=salary_structure_assignment,
+            notes=default_notes,
+        )
+        results.append({"component": label, "value": value, **result})
+
+    return {"total_salary": total_salary, "breakup": breakup, "results": results}
 
 
 @frappe.whitelist()
