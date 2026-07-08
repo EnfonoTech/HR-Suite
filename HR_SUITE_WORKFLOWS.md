@@ -40,8 +40,11 @@ hr_suite                               permission_manager (separate app)
 │   ├── Overtime Request
 │   ├── GOSI Contribution          ──► GOSI API (gosi.gov.sa)
 │   ├── WPS / Mudad Submission     ──► Mudad WPS (mudad.com.sa)
-│   └── Salary Adjustment
-│       └── Salary Component Override (pen/clock on SSA fields)
+│   ├── Salary Adjustment
+│   │   └── Salary Component Override (pen/clock on SSA fields)
+│   ├── Salary Breakup Table       (per-company band lookup, 489 rows)
+│   └── Salary Structure Assignment Import  (bulk SSA from Excel)
+│       └── Salary Structure Assignment  ←─ custom_import_reference
 │
 ├── Government Portal Integrations
 │   ├── Muqeem  ──► MOI (muqeem.sa)        Iqama verify / final exit
@@ -520,6 +523,158 @@ Deducted automatically from Saudi Monthly Payroll each month
 
 ---
 
+### 6. Salary Breakup Table — Setup (per company)
+
+**Doctype:** `Salary Breakup Table`  
+**File:** `salary_breakup_table/salary_breakup_table.py`
+
+One `Salary Breakup Table` record exists per company (autoname = company name). It holds a lookup of Total Salary → Basic / HRA / Transport / Other Allowance splits derived from the client's HR Excel table.
+
+```
+[HR Admin] HR Suite Workspace → Payroll → Salary Breakup Table → New
+    │
+    ├── Select Company (Link field; record name = company name)
+    ├── Save → attach Excel workbook (Salary breakup - <Company>.xlsx)
+    ▼
+Import Breakup Table button
+    │  Reads Excel rows: Total Salary | Basic | HRA | Transport | Other Allowance
+    ├── Clears existing rows and writes new child rows (Salary Breakup Row)
+    └── Prompts: "Create {Company} Common Structure?"
+    │
+    ▼  (if confirmed)
+Salary Structure auto-created:
+    ├── Name:       "{Company} Common Structure"
+    ├── Payroll Frequency: Monthly
+    ├── Currency:   from Company.default_currency
+    └── 4 Earnings components (Basic, HRA, Transport, Other Allowance)
+            formula references SSA custom fields:
+            Basic → base  |  HRA → custom_hra_amount
+            Transport → custom_transport_amount
+            Other → custom_other_allowance_amount
+```
+
+**Lookup logic** (`get_breakup_for_total_salary`):
+- Exact match wins.
+- No exact match → highest band ≤ requested total (nearest-lower fallback).
+- Returns `None` if company has no Salary Breakup Table or salary is below all bands.
+
+---
+
+### 7. Apply Salary Breakup — Single Employee
+
+**Entry point:** Salary Structure Assignment form → **Apply Salary Breakup** button  
+**File:** `public/js/salary_structure_assignment.js`, `salary_override_api.py`
+
+```
+[HR] Opens Salary Structure Assignment → Apply Salary Breakup
+    │
+    ▼
+Dialog opens:
+    ├── Total Salary (Currency field)
+    └── Effective From (Date field)
+    │
+    │  After 400 ms debounce
+    ▼
+Live preview (calls get_breakup_preview):
+    ├── Exact match → ✓ Band: SAR X,XXX
+    ├── Nearest-lower → ↓ Nearest band: SAR X,XXX
+    └── 2×2 grid: Basic | HRA
+                  Transport | Other Allowance
+    │
+    ▼  [Apply] clicked
+apply_salary_breakup(employee, ssa, total_salary, effective_date)
+    ├── Looks up company from Employee record
+    ├── Calls get_breakup_for_total_salary(total_salary, company)
+    └── Writes 5 Salary Component Override records:
+            custom_total_salary, base, custom_hra_amount,
+            custom_transport_amount, custom_other_allowance_amount
+    │
+    ├── Effective date = today / past → Applied immediately
+    └── Effective date = future      → Pending (scheduler applies on due date)
+```
+
+---
+
+### 8. Bulk Salary Structure Assignment Import
+
+**Doctype:** `Salary Structure Assignment Import`  
+**File:** `salary_structure_assignment_import/salary_structure_assignment_import.py`  
+**Entry point:** HR Suite Workspace → Payroll → Bulk Salary Structure Assignment → New
+
+#### Excel Template Columns
+
+| Column | Required | Notes |
+|--------|----------|-------|
+| Employee | Yes | Employee ID, email, or full name (ambiguous name → row fails) |
+| Employee Name | No | Display only |
+| Salary Structure | Yes | Must be a submitted Salary Structure |
+| From Date | No | Falls back to Default From Date on the import doc |
+| Total Salary | No | Triggers automatic breakup lookup |
+| Base | No | Overridden by breakup Basic when Total Salary is provided |
+| Variable | No | Optional variable component |
+
+#### Import Flow
+
+```
+[HR] Salary Structure Assignment Import → New
+    ├── Select Company + Default From Date
+    ├── Download Template (prefilled with active employees for the company)
+    ├── Fill in salaries in Excel → attach as workbook
+    └── Import Workbook button
+    │
+    ▼
+_process_workbook_rows (per row):
+    ├── Resolve Employee (ID / email / name)
+    ├── Validate Salary Structure is submitted
+    ├── Lookup Salary Breakup Table by employee's company
+    ├── Create SSA via HRMS create_salary_structure_assignment
+    ├── Tag SSA: custom_import_reference = import doc name
+    └── Write breakup fields via db.set_value (bypasses submit lock):
+            custom_total_salary, base, custom_hra_amount,
+            custom_transport_amount, custom_other_allowance_amount
+    │
+    ▼
+Result dialog (per row): Employee | Salary Structure | Total Salary | Band Applied | Status | SSA link
+Dashboard headline: Assigned: N · Skipped: N · Failed: N
+
+Status options: Draft → Queued → Completed | Completed with Errors
+                                 Cancelled  | Cancelled with Errors
+```
+
+#### Connections
+
+The Connections tab on the import doc lists all `Salary Structure Assignment` records where `custom_import_reference = this doc name` — enabling drill-through from import to created assignments.
+
+#### Retry Failed Rows
+
+**Button:** "Retry Failed Rows (N)" — visible when `status = Completed with Errors` and `failed_count > 0`
+
+```
+retry_failed_rows(doc_name)
+    ├── Reads import_log JSON, collects row numbers with status = "Failed"
+    ├── Re-reads original workbook, processes only those row numbers
+    ├── Merges new results into existing log (Assigned / Skipped rows untouched)
+    └── Recalculates totals from merged result set
+```
+
+Use case: a row failed because a Salary Structure was in Draft; after submitting it, retry without re-running the whole import.
+
+#### Cancel Assignments (Undo Import)
+
+**Button:** "Cancel Assignments" — visible when `status = Completed | Completed with Errors` and `success_count > 0`
+
+```
+cancel_import(doc_name)
+    ├── Queries all SSAs with custom_import_reference = doc_name AND docstatus = 1
+    ├── Cancels each SSA (fails gracefully if a salary slip already exists)
+    ├── Lists errors in a dialog if any
+    └── Sets status → Cancelled | Cancelled with Errors
+```
+
+> **Note:** Cancellation is blocked for any SSA that already has a submitted Salary Slip. Those names are listed in the error dialog so HR can decide individually.
+
+---
+
 ## Compliance & Governance Workflows
 
 ### 1. Termination Notice → Final Settlement
@@ -774,6 +929,17 @@ All alerts run daily at midnight unless noted.
 - [ ] Create **Work Permit Iqama** records for all expat employees
 - [ ] Set up **Salary Structure Assignments** in ERPNext (required for penalty deduction calculations)
 
+### Phase 2a — Salary Breakup Table Setup (per company)
+
+- [ ] HR Suite Workspace → Payroll → **Salary Breakup Table** → New
+- [ ] Select **Company** (record name = company name; one record per company)
+- [ ] Attach the company's salary breakup Excel file → **Import Breakup Table**
+- [ ] When prompted, confirm creation of `{Company} Common Structure` Salary Structure
+- [ ] Review the auto-created Salary Structure (4 earnings: Basic / HRA / Transport / Other) → Submit it
+- [ ] For bulk assignment: HR Suite Workspace → Payroll → **Bulk Salary Structure Assignment** → New
+  - Download Template (prefilled with active employees)
+  - Fill in `Total Salary` column → attach workbook → **Import Workbook**
+
 ### Phase 3 — Compliance Setup
 
 - [ ] Create **Work Regulation** document (upload company's registered labor regulation)
@@ -868,11 +1034,25 @@ Configure in **Hr Suite Settings** under each portal's section (all optional —
 | Saudi Monthly Payroll Employee | Per-employee row in payroll |
 | Payroll Adjustment Item | Manual addition/deduction to payroll |
 | Salary Adjustment | Salary change with approval workflow |
+| Salary Component Override | Audit log for individual SSA field changes (pen/clock buttons) |
+| Salary Breakup Table | Per-company band lookup: Total Salary → Basic / HRA / Transport / Other |
+| Salary Breakup Row | Child table row: one salary band with 4 component splits |
+| Salary Structure Assignment Import | Bulk creation of Salary Structure Assignments from Excel |
 | GOSI Contribution | Social security monthly contribution |
 | Employee Loan | Loan agreement and disbursement |
 | Employee Loan Installment | Monthly installment schedule |
 | Overtime Request | Overtime approval and payroll linking |
 | End of Service Benefit | EOSB calculation on termination |
+
+#### Custom Fields on Salary Structure Assignment
+
+| Fieldname | Type | Purpose |
+|-----------|------|---------|
+| `custom_total_salary` | Currency | Total salary used for breakup lookup |
+| `custom_hra_amount` | Currency | HRA split applied by breakup |
+| `custom_transport_amount` | Currency | Transport allowance split |
+| `custom_other_allowance_amount` | Currency | Other allowance split |
+| `custom_import_reference` | Link → SSAI | Traces which bulk import created this SSA; hidden, read-only |
 
 ### HR Letters & Documents
 | Doctype | Purpose |
