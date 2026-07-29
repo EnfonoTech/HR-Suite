@@ -31,15 +31,15 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-CPE-.YYYY.-.####",
+   "options": "CPE-.YYYY.-.####\nSAU-CPE-.YYYY.-.####",
    "reqd": 1
   },
   {
    "fieldname": "contract",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Saudi Employment Contract",
-   "options": "Saudi Employment Contract",
+   "label": "Country Employment Contract",
+   "options": "Country Employment Contract",
    "reqd": 1
   },
   {

@@ -31,7 +31,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-DOC-CUS-.YYYY.-.####",
+   "options": "DOC-CUS-.YYYY.-.####\nSAU-DOC-CUS-.YYYY.-.####",
    "reqd": 1
   },
   {
@@ -83,7 +83,7 @@
    "label": "Custody & Return"
   },
   {
-   "default": "0",
+   "default": 0,
    "fieldname": "original_document_held",
    "fieldtype": "Check",
    "label": "Original Document Held"

@@ -33,7 +33,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-DIS-.YYYY.-.####",
+   "options": "DIS-.YYYY.-.####\nSAU-DIS-.YYYY.-.####",
    "reqd": 1
   },
   {
@@ -66,7 +66,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft"
+   "options": "Draft\nCompliant\nBelow Required Ratio\nNot Applicable"
   },
   {
    "fieldname": "ratio_section",
@@ -86,7 +86,7 @@
    "reqd": 1
   },
   {
-   "default": "4",
+   "default": 4,
    "fieldname": "required_ratio",
    "fieldtype": "Percent",
    "label": "Required Ratio"

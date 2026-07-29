@@ -5,7 +5,7 @@
  "creation": "2026-03-17 00:00:00.000000",
  "days_in_advance": 60,
  "doctype": "Notification",
- "document_type": "Saudi Employment Contract",
+ "document_type": "Country Employment Contract",
  "enabled": 1,
  "event": "Days Before",
  "message": "<p>Dear HR Manager,</p>\n<p>Alert: Employee <b>{{ doc.employee_name }}</b> fixed-term contract expires within 60 days.</p>\n<p>Contract No: {{ doc.name }}<br>\nContract End Date: {{ doc.end_date }}</p>\n<p>Please review the contract and take appropriate action (renew or terminate) per Saudi Labor Law.</p>",
@@ -19,5 +19,6 @@
   }
  ],
  "send_system_notification": 1,
- "subject": "Alert: Employee Contract Expiring Soon — {{ doc.employee_name }}"
+ "subject": "Alert: Employee Contract Expiring Soon — {{ doc.employee_name }}",
+ "date_changed": "end_date"
 }

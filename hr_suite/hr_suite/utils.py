@@ -14,6 +14,23 @@ def assert_doctype_permissions(doctype: str, permission_types, doc=None):
 		frappe.has_permission(doctype, permission_type, doc=doc, throw=True)
 
 
+def assert_employee_access(employee: str = None, ptype: str = "read"):
+	"""Guard whitelisted endpoints that expose one employee's data.
+
+	Every mobile/self-service endpoint takes the employee as an argument, so without this a
+	self-service user could read any colleague's salary, permit or leave data by changing it.
+
+	Some government-portal endpoints accept a permit number with no employee attached (a
+	pre-hire lookup); those are restricted to HR instead, because they still spend a request
+	against the client's portal quota.
+	"""
+	if employee:
+		frappe.has_permission("Employee", ptype, doc=employee, throw=True)
+		return
+
+	frappe.only_for(("HR User", "HR Manager", "System Manager"))
+
+
 def text_matches_tokens(value, *tokens: str) -> bool:
 	normalized = cstr(value or "").strip().lower()
 	if not normalized:
@@ -68,7 +85,7 @@ def get_active_contract(employee: str, fields=None, as_dict=True):
 		"total_salary",
 	]
 	return frappe.db.get_value(
-		"Saudi Employment Contract",
+		"Country Employment Contract",
 		{"employee": employee, "contract_status": "Active"},
 		field_list,
 		as_dict=as_dict,
@@ -357,7 +374,7 @@ def get_employee_is_saudi(employee: str) -> bool:
 	Resolution order:
 	  1. hr_suite_employee_type Select field on Employee ("Saudi National" / "Expatriate")
 	  2. nationality text field on Employee (ERPNext standard field)
-	  3. nationality on the active Saudi Employment Contract
+	  3. nationality on the active Country Employment Contract
 	"""
 	if not employee:
 		return False
@@ -442,7 +459,7 @@ def get_contract_nationality_lookup(employees: list[str]) -> dict[str, str]:
 
 	lookup = {}
 	for row in frappe.get_all(
-		"Saudi Employment Contract",
+		"Country Employment Contract",
 		filters={"employee": ["in", employees], "docstatus": ["<", 2]},
 		fields=["employee", "nationality"],
 		order_by="start_date desc, modified desc",
@@ -492,7 +509,6 @@ def country_name_to_code(country_name: str) -> str:
     return _COUNTRY_NAME_TO_CODE.get(key.lower(), "")
 
 
-@frappe.whitelist()
 def get_employee_work_country(employee: str) -> str:
     """
     Return the ISO-2 work country code for an employee.
@@ -550,10 +566,7 @@ def get_active_country_contract(employee: str, fields=None, as_dict=True):
         as_dict=as_dict,
         order_by="start_date desc",
     )
-    if row:
-        return row
-    # Fall back to Saudi Employment Contract for backward compatibility
-    return get_active_contract(employee, fields=fields, as_dict=as_dict)
+    return row
 
 
 def get_employee_basic_salary_global(employee: str) -> float:
@@ -772,9 +785,8 @@ def _calculate_om_indemnity(years: float, basic: float, reason: str, deductions:
     }
 
 
-@frappe.whitelist()
 def get_settlement_estimate(employee: str, termination_reason: str, termination_date: str = None) -> dict:
-    """Whitelisted: return settlement estimate for any country — called from front-end."""
+    """Return the settlement estimate for any country. Exposed via api.get_settlement_estimate."""
     return calculate_settlement(employee, termination_reason, termination_date)
 
 

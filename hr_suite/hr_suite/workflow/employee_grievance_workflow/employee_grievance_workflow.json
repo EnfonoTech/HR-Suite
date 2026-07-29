@@ -17,7 +17,9 @@
    "is_optional_state": 0,
    "message": "",
    "state": "Open",
-   "style": "Warning"
+   "style": "Warning",
+   "update_field": "status",
+   "update_value": "Open"
   },
   {
    "allow_edit": "HR User",
@@ -25,7 +27,9 @@
    "is_optional_state": 0,
    "message": "Grievance is under review and pending response",
    "state": "Under Review",
-   "style": "Primary"
+   "style": "Primary",
+   "update_field": "status",
+   "update_value": "Investigated"
   },
   {
    "allow_edit": "HR Manager",
@@ -33,7 +37,9 @@
    "is_optional_state": 0,
    "message": "Grievance processed and closed",
    "state": "Resolved",
-   "style": "Success"
+   "style": "Success",
+   "update_field": "status",
+   "update_value": "Resolved"
   }
  ],
  "transitions": [

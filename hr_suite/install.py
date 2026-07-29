@@ -31,6 +31,7 @@ def after_install():
 	ensure_employee_custom_fields()
 	seed_country_configs()
 	seed_employee_document_types()
+	seed_grievance_types()
 	frappe.db.commit()
 
 
@@ -47,12 +48,12 @@ def after_migrate():
 	sync_dashboard_chart_configs()
 	sync_notification_configs()
 	create_default_shift_type()
-	migrate_legacy_shift_data()
 	migrate_legacy_annual_leave()
 	migrate_legacy_employee_loans()
 	ensure_employee_custom_fields()
 	seed_country_configs()
 	seed_employee_document_types()
+	seed_grievance_types()
 	remove_obsolete_reports()
 
 
@@ -302,16 +303,16 @@ def rename_saudi_doctypes():
 
 
 def create_default_shift_type():
-	"""Create a local Hr Suite shift so attendance works without an external HR app."""
-	if not frappe.db.exists("DocType", "HR Shift Type"):
+	"""Create a default HRMS Shift Type so mobile attendance works out of the box."""
+	if not frappe.db.exists("DocType", "Shift Type"):
 		return
-	if frappe.db.exists("HR Shift Type", "Day Shift"):
+	if frappe.db.exists("Shift Type", "Day Shift"):
 		return
 
 	frappe.get_doc(
 		{
-			"doctype": "HR Shift Type",
-			"shift_name": "Day Shift",
+			"doctype": "Shift Type",
+			"__newname": "Day Shift",
 			"start_time": "08:00:00",
 			"end_time": "17:00:00",
 			"begin_check_in_before_shift_start_time": 60,
@@ -323,86 +324,6 @@ def create_default_shift_type():
 		}
 	).insert(ignore_permissions=True)
 
-
-def migrate_legacy_shift_data():
-	"""Copy legacy shift records into Hr Suite-owned doctypes before removing the old app."""
-	if not frappe.db.exists("DocType", "HR Shift Type"):
-		return
-
-	if frappe.db.exists("DocType", "Shift Type"):
-		shift_type_fields = [
-			"name",
-			"start_time",
-			"end_time",
-			"begin_check_in_before_shift_start_time",
-			"allow_check_out_after_shift_end_time",
-			"enable_late_entry_marking",
-			"late_entry_grace_period",
-			"enable_early_exit_marking",
-			"early_exit_grace_period",
-		]
-		if frappe.db.has_column("Shift Type", "disabled"):
-			shift_type_fields.append("disabled")
-
-		for row in frappe.get_all(
-			"Shift Type",
-			fields=shift_type_fields,
-		):
-			if frappe.db.exists("HR Shift Type", row.name):
-				continue
-			frappe.get_doc(
-				{
-					"doctype": "HR Shift Type",
-					"shift_name": row.name,
-					"start_time": row.start_time,
-					"end_time": row.end_time,
-					"begin_check_in_before_shift_start_time": row.begin_check_in_before_shift_start_time,
-					"allow_check_out_after_shift_end_time": row.allow_check_out_after_shift_end_time,
-					"enable_late_entry_marking": row.enable_late_entry_marking,
-					"late_entry_grace_period": row.late_entry_grace_period,
-					"enable_early_exit_marking": row.enable_early_exit_marking,
-					"early_exit_grace_period": row.early_exit_grace_period,
-					"disabled": row.get("disabled", 0),
-				}
-			).insert(ignore_permissions=True)
-
-	if not frappe.db.exists("DocType", "HR Shift Assignment") or not frappe.db.exists("DocType", "Shift Assignment"):
-		return
-
-	for row in frappe.get_all(
-		"Shift Assignment",
-		fields=["name", "employee", "shift_type", "start_date", "end_date", "status", "docstatus"],
-	):
-		if not frappe.db.exists("HR Shift Type", row.shift_type):
-			continue
-		if frappe.db.exists(
-			"HR Shift Assignment",
-			{
-				"employee": row.employee,
-				"shift_type": row.shift_type,
-				"start_date": row.start_date,
-				"end_date": row.end_date,
-			},
-		):
-			continue
-
-		doc = frappe.get_doc(
-			{
-				"doctype": "HR Shift Assignment",
-				"employee": row.employee,
-				"shift_type": row.shift_type,
-				"start_date": row.start_date,
-				"end_date": row.end_date,
-				"status": row.status or "Active",
-				"notes": f"Migrated from legacy Shift Assignment {row.name}",
-			}
-		)
-		doc.insert(ignore_permissions=True)
-		if row.docstatus == 1:
-			doc.submit()
-
-
-# ─── Leave Types ───────────────────────────────────────────────────────────────
 
 def migrate_legacy_annual_leave():
 	"""Copy legacy annual leave requests into Annual Leave before removing the old app."""
@@ -824,6 +745,29 @@ def seed_country_configs():
 
 
 # ─── Employee Document Types ────────────────────────────────────────────────────
+
+def seed_grievance_types():
+	"""HRMS keys Employee Grievance off Grievance Type records — seed the HR Suite set."""
+	if not frappe.db.exists("DocType", "Grievance Type"):
+		return
+
+	for name in (
+		"Pay",
+		"Leave",
+		"Attendance",
+		"Manager Conduct",
+		"Disciplinary Action",
+		"Termination",
+		"Harassment",
+		"Other",
+	):
+		if frappe.db.exists("Grievance Type", name):
+			continue
+		try:
+			frappe.get_doc({"doctype": "Grievance Type", "name": name}).insert(ignore_permissions=True)
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), f"HR Suite: failed to seed Grievance Type {name}")
+
 
 def seed_employee_document_types():
 	defaults = [

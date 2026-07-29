@@ -33,10 +33,10 @@ class TestEmployeeLifecycleSmoke(FrappeTestCase):
 	def test_employee_lifecycle_contract_warning_leave_and_payroll(self):
 		contract = frappe.get_doc(
 			{
-				"doctype": "Saudi Employment Contract",
+				"doctype": "Country Employment Contract",
 				"employee": self.employee,
 				"company": self.company,
-				"contract_type": "Fixed Term",
+				"contract_type": "Limited",
 				"contract_status": "Active",
 				"start_date": "2026-01-01",
 				"end_date": "2026-12-31",

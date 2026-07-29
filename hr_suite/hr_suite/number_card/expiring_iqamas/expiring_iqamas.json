@@ -2,7 +2,7 @@
  "creation": "2026-03-17 00:00:00.000000",
  "doctype": "Number Card",
  "document_type": "Work Permit Iqama",
- "filters_json": "[[\"Work Permit Iqama\",\"iqama_status\",\"in\",\"Expiring Soon",
+ "filters_json": "[[\"Work Permit Iqama\", \"iqama_status\", \"in\", [\"Expiring Soon\", \"Expired\"]]]",
  "function": "Count",
  "is_public": 1,
  "is_standard": 1,

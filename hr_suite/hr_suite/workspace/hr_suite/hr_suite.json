@@ -104,9 +104,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Saudi Employment Contract",
+   "label": "Country Employment Contract",
    "link_count": 0,
-   "link_to": "Saudi Employment Contract",
+   "link_to": "Country Employment Contract",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -702,9 +702,9 @@
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "Saudi Compliance Obligation Backlog",
+   "label": "Compliance Obligation Backlog",
    "link_count": 0,
-   "link_to": "Saudi Compliance Obligation Backlog",
+   "link_to": "Compliance Obligation Backlog",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -712,9 +712,9 @@
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "Saudi Legal Review Queue",
+   "label": "Legal Review Queue",
    "link_count": 0,
-   "link_to": "Saudi Legal Review Queue",
+   "link_to": "Legal Review Queue",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"

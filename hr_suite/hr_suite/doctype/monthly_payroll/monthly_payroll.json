@@ -47,7 +47,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-PAY-.YYYY.-.####",
+   "options": "PAY-.YYYY.-.####\nSAU-PAY-.YYYY.-.####",
    "reqd": 1
   },
   {

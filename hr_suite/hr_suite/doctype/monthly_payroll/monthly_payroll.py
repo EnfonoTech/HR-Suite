@@ -12,7 +12,7 @@ from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.styles import Alignment, Font, PatternFill
 
 from hr_suite.hr_suite.doctype.employee_loan.employee_loan import apply_payroll_loan_deductions, get_due_loan_deduction, revert_payroll_loan_deductions
-from hr_suite.hr_suite.utils import assert_doctype_permissions, assert_positive_basic_salary, calculate_prorated_sick_leave_deduction, get_employee_salary_components, get_gosi_rates, text_matches_tokens
+from hr_suite.hr_suite.utils import assert_employee_access, assert_doctype_permissions, assert_positive_basic_salary, calculate_prorated_sick_leave_deduction, get_employee_salary_components, get_gosi_rates, text_matches_tokens
 
 GOSI_MAX_BASE = 45000.0
 PREFERRED_SOURCE_WORKBOOK_SHEETS = ("Payroll Print", "Payroll", "Source Sheet")
@@ -219,7 +219,7 @@ def fetch_employees(doc_name: str):
 
 	contract_rows = frappe.db.sql(
 		"""SELECT employee, basic_salary, housing_allowance, transport_allowance, other_allowances, total_salary
-		   FROM `tabSaudi Employment Contract`
+		   FROM `tabCountry Employment Contract`
 		   WHERE employee IN %(names)s
 		     AND contract_status = 'Active'
 		     AND docstatus = 1
@@ -359,6 +359,7 @@ def calculate_employee_row(employee: str, month: str, year: int):
 	"""
 	Calculate the monthly salary for a single employee and return a dict for UI update.
 	"""
+	assert_employee_access(employee)
 	emp_doc = frappe.get_all(
 		"Employee",
 		filters={"name": employee},
@@ -2416,15 +2417,15 @@ def _get_company_employee_lookup(company: str) -> dict[str, dict]:
 			_merge_employee_lookup(lookup, employee, source, matched_by)
 
 	contract_rows = frappe.get_all(
-		"Saudi Employment Contract",
+		"Country Employment Contract",
 		filters={"company": company},
-		fields=["employee", "iqama_number", "passport_number"],
+		fields=["employee", "permit_number", "passport_number"],
 	)
 	for row in contract_rows:
 		employee = next((item for item in employees if item["name"] == row.get("employee")), None)
 		if not employee:
 			continue
-		_merge_employee_lookup(lookup, employee, row.get("iqama_number"), "contract_iqama_number")
+		_merge_employee_lookup(lookup, employee, row.get("permit_number"), "contract_permit_number")
 		_merge_employee_lookup(lookup, employee, row.get("passport_number"), "contract_passport_number")
 
 	if frappe.db.exists("DocType", "Work Permit Iqama"):
@@ -2618,7 +2619,7 @@ def _get_employee_fetch_fields() -> list[str]:
 
 def _get_zero_basic_salary_skip_warning(employee_label: str) -> str:
 	return _(
-		"Skipped employee {0} because basic salary is zero. Update the active Saudi Employment Contract or Employee CTC, then recalculate payroll."
+		"Skipped employee {0} because basic salary is zero. Update the active Country Employment Contract or Employee CTC, then recalculate payroll."
 	).format(employee_label)
 
 
@@ -2634,11 +2635,11 @@ def _get_payable_account(company: str) -> str:
 
 def auto_create_employment_contracts(
 	payroll_docname: str = "SAU-PAY-2026-0004",
-	contract_type: str = "Open Ended",
+	contract_type: str = "Unlimited",
 	start_date: str = "2025-01-01",
 ) -> dict:
 	"""
-	Auto-create Saudi Employment Contracts for employees that appear in the
+	Auto-create Country Employment Contracts for employees that appear in the
 	payroll workbook but do not yet have an active contract.
 
 	Run via:
@@ -2679,7 +2680,7 @@ def auto_create_employment_contracts(
 
 		# Skip if already has an active contract
 		existing = frappe.db.get_value(
-			"Saudi Employment Contract",
+			"Country Employment Contract",
 			{"employee": emp_name, "contract_status": "Active", "docstatus": 1},
 			"name",
 		)
@@ -2694,8 +2695,8 @@ def auto_create_employment_contracts(
 
 		try:
 			contract = frappe.get_doc({
-				"doctype": "Saudi Employment Contract",
-				"naming_series": "SAU-EMP-CONT-.YYYY.-.####",
+				"doctype": "Country Employment Contract",
+				"naming_series": "EMP-CON-.YYYY.-.####",
 				"employee": emp_name,
 				"company": company,
 				"contract_type": contract_type,

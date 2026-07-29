@@ -42,7 +42,7 @@ frappe.ui.form.on('Termination Notice', {
                 frappe.call({
                     method: 'frappe.client.get_list',
                     args: {
-                        doctype: 'Saudi Employment Contract',
+                        doctype: 'Country Employment Contract',
                         filters: { employee: frm.doc.employee, contract_status: 'Active' },
                         fields: ['name'],
                         limit: 1

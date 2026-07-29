@@ -43,7 +43,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-RSP-.YYYY.-.####",
+   "options": "RSP-.YYYY.-.####\nSAU-RSP-.YYYY.-.####",
    "reqd": 1
   },
   {
@@ -69,7 +69,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Provider Type",
-   "options": "\nSaudi Recruitment Mediation",
+   "options": "\nRecruitment Mediation",
    "reqd": 1
   },
   {
@@ -78,7 +78,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft"
+   "options": "Draft\nActive\nRenewal Due\nExpired\nSuspended\nClosed"
   },
   {
    "fieldname": "license_section",
@@ -145,7 +145,7 @@
    "label": "Bank Account Documented"
   },
   {
-   "default": "1",
+   "default": 1,
    "fieldname": "complaint_channel_available",
    "fieldtype": "Check",
    "label": "Complaint Channel Available"

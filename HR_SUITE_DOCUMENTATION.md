@@ -302,9 +302,9 @@ On submit:
 - Deactivates prior active contracts for the same employee
 - Syncs `work_country` to the Employee record (triggers country-aware rules everywhere)
 
-### 8.2 Saudi Employment Contract (SA legacy)
+### 8.2 Country Employment Contract (SA legacy)
 
-**DocType:** `Saudi Employment Contract`
+**DocType:** `Country Employment Contract`
 
 Saudi-specific contract with Iqama/visa fields. Existing records remain valid. New contracts should use `Country Employment Contract`.
 
@@ -359,11 +359,11 @@ Job Opening → Job Applicant → Job Offer
 
 | DocType | Purpose |
 |---|---|
-| Employee Onboarding | Checklist-driven onboarding per department |
+| Employee Onboarding | HRMS DocType — onboarding activities per template; auto-created from Candidate Profile |
 | Promotion & Transfer | Promotion/transfer with salary adjustment |
 | Performance Review | Periodic performance evaluation |
 | Staff Rating | Rating record; synced from HRMS Appraisal |
-| Employee Grievance | Formal grievance with resolution workflow |
+| Employee Grievance | HRMS DocType — HR Suite adds the grievance-handling fields and approval workflow |
 | Exit Interview | Structured exit questionnaire |
 | Exit Clearance | Department-by-department clearance checklist |
 | Termination Notice | Notice with reason; triggers settlement calculation |
@@ -460,7 +460,7 @@ These modules are **Saudi Arabia only** — they represent genuinely Saudi conce
 - **Nitaqat Record** — Saudization quota band classification (Platinum/Green/Yellow/Red) with live Qiwa sync
 - **Work Permit / Iqama** — Iqama number, issue/expiry dates, renewal cost, status; daily expiry alerts; Muqeem verification
 - **WPS via Mudad** — SAMA SIF salary file auto-generated from Salary Slips; submitted directly to Mudad portal
-- **Saudi Employment Contract** — SA contract with Iqama/visa section (legacy; use Country Employment Contract for new records)
+- **Country Employment Contract** — SA contract with Iqama/visa section (legacy; use Country Employment Contract for new records)
 - **Arabic Print Formats** — Employment contracts (standard/part-time/seasonal/temporary), EOSB letter, termination notice — all in Arabic with RTL layout
 
 ---

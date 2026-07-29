@@ -163,7 +163,7 @@
 {%- set now_str   = frappe.utils.now_datetime().strftime('%Y-%m-%d %H:%M') -%}
 
 {%- set contract = frappe.db.get_value(
-    "Saudi Employment Contract",
+    "Country Employment Contract",
     {"employee": emp.name, "contract_status": "Active"},
     ["name","contract_type","start_date","end_date","basic_salary",
      "housing_allowance","transport_allowance","other_allowances",

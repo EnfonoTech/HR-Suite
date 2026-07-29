@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Number Card",
  "document_type": "Disciplinary Appeal",
- "filters_json": "[[\"Disciplinary Appeal\",\"status\",\"=\",\"Under Review / \u0642\u064a\u062f \u0627\u0644\u0645\u0631\u0627\u062c\u0639\u0629\"]]",
+ "filters_json": "[[\"Disciplinary Appeal\", \"status\", \"=\", \"Under Review\"]]",
  "function": "Count",
  "idx": 0,
  "is_public": 1,

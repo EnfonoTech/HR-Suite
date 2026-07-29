@@ -49,7 +49,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-DIS-.YYYY.-.####",
+   "options": "DIS-.YYYY.-.####\nSAU-DIS-.YYYY.-.####",
    "reqd": 1
   },
   {
@@ -135,7 +135,8 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft\nUnder Investigation\nPending Decision\nDecision Made\nDecision Issued\nAppealed\nClosed"
+   "options": "Draft\nUnder Investigation\nPending Decision\nDecision Made\nDecision Issued\nAppealed\nClosed",
+   "allow_on_submit": 1
   },
   {
    "fieldname": "incident_description",

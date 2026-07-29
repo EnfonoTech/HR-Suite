@@ -139,7 +139,7 @@ def _branch_permission(doc, user=None):
 
 
 def get_hr_employee_checkin_query(user=None):
-	return _employee_query("HR Employee Checkin", user)
+	return _employee_query("Employee Checkin", user)
 
 
 def has_hr_employee_checkin_permission(doc, user=None, permission_type=None):
@@ -147,18 +147,10 @@ def has_hr_employee_checkin_permission(doc, user=None, permission_type=None):
 
 
 def get_hr_daily_attendance_query(user=None):
-	return _employee_query("HR Daily Attendance", user)
+	return _employee_query("Attendance", user)
 
 
 def has_hr_daily_attendance_permission(doc, user=None, permission_type=None):
-	return _employee_permission(doc, user)
-
-
-def get_monthly_attendance_record_query(user=None):
-	return _employee_query("Monthly Attendance Record", user)
-
-
-def has_monthly_attendance_record_permission(doc, user=None, permission_type=None):
 	return _employee_permission(doc, user)
 
 
@@ -236,7 +228,7 @@ def has_special_leave_permission(doc, user=None, permission_type=None):
 
 
 def get_attendance_location_query(user=None):
-	return _branch_query("Attendance Location", user)
+	return _branch_query("Shift Location", user)
 
 
 def has_attendance_location_permission(doc, user=None, permission_type=None):

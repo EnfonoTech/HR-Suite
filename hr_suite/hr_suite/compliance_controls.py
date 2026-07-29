@@ -142,7 +142,7 @@ COMPLIANCE_DOCTYPES = [
 			field("legal_reference", "Data", "Legal Reference", default="Art.17 / Reg. Art.5"),
 			column("column_break_1"),
 			field("required", "Check", "Required", default=1),
-			field("status", "Select", "Status", in_list_view=1, options="Missing", default="Missing"),
+			field("status", "Select", "Status", in_list_view=1, options="Missing\nAvailable\nNot Applicable", default="Missing"),
 			section("ownership_section", "Ownership & Evidence"),
 			field("owner_user", "Link", "Owner", options="User"),
 			field("last_verified_on", "Date", "Last Verified On"),
@@ -174,7 +174,7 @@ COMPLIANCE_DOCTYPES = [
 		"Safety Risk Control Item",
 		[
 			field("hazard", "Data", "Hazard", reqd=1, in_list_view=1),
-			field("severity", "Select", "Severity", in_list_view=1, options="\nLow", reqd=1),
+			field("severity", "Select", "Severity", in_list_view=1, options="\nLow\nMedium\nHigh", reqd=1),
 			column("column_break_1"),
 			field("required_control", "Small Text", "Required Control"),
 			field("status", "Select", "Status", in_list_view=1, options="Open", default="Open"),
@@ -186,7 +186,7 @@ COMPLIANCE_DOCTYPES = [
 	make_doctype(
 		"Work Regulation",
 		[
-			field("naming_series", "Select", "Naming Series", options="SAU-WR-.YYYY.-.####", reqd=1),
+			field("naming_series", "Select", "Naming Series", options="WR-.YYYY.-.####\nSAU-WR-.YYYY.-.####", reqd=1),
 			field("regulation_title", "Data", "Regulation Title", reqd=1, in_list_view=1),
 			field("company", "Link", "Company", options="Company", reqd=1, in_list_view=1),
 			column("column_break_1"),
@@ -221,11 +221,11 @@ COMPLIANCE_DOCTYPES = [
 	make_doctype(
 		"Statutory HR Records Register",
 		[
-			field("naming_series", "Select", "Naming Series", options="SAU-SHRR-.YYYY.-.####", reqd=1),
+			field("naming_series", "Select", "Naming Series", options="SHRR-.YYYY.-.####\nSAU-SHRR-.YYYY.-.####", reqd=1),
 			field("register_title", "Data", "Register Title", reqd=1, in_list_view=1),
 			field("company", "Link", "Company", options="Company", reqd=1, in_list_view=1),
 			column("column_break_1"),
-			field("status", "Select", "Status", options="Draft", default="Draft", in_list_view=1),
+			field("status", "Select", "Status", options="Draft\nGaps Found\nCompliant", default="Draft", in_list_view=1),
 			field("responsible_user", "Link", "Responsible User", options="User"),
 			section("period_section", "Audit Period"),
 			field("period_start", "Date", "Period Start", reqd=1),
@@ -248,12 +248,12 @@ COMPLIANCE_DOCTYPES = [
 	make_doctype(
 		"Ministry Filing Tracker",
 		[
-			field("naming_series", "Select", "Naming Series", options="SAU-MFT-.YYYY.-.####", reqd=1),
+			field("naming_series", "Select", "Naming Series", options="MFT-.YYYY.-.####\nSAU-MFT-.YYYY.-.####", reqd=1),
 			field("filing_title", "Data", "Filing Title", reqd=1, in_list_view=1),
 			field("filing_type", "Select", "Filing Type", reqd=1, in_list_view=1, options="\nEstablishment Data Update"),
 			field("company", "Link", "Company", options="Company", reqd=1, in_list_view=1),
 			column("column_break_1"),
-			field("status", "Select", "Status", options="Pending Submission", default="Pending Submission", in_list_view=1),
+			field("status", "Select", "Status", options="Pending Submission\nSubmitted\nAccepted\nOverdue\nCancelled", default="Pending Submission", in_list_view=1),
 			field("priority", "Select", "Priority", options="\nP0", default="P0"),
 			section("deadline_section", "Deadlines"),
 			field("trigger_date", "Date", "Trigger Date", reqd=1),
@@ -278,7 +278,7 @@ COMPLIANCE_DOCTYPES = [
 	make_doctype(
 		"Employee Document Custody Log",
 		[
-			field("naming_series", "Select", "Naming Series", options="SAU-DOC-CUS-.YYYY.-.####", reqd=1),
+			field("naming_series", "Select", "Naming Series", options="DOC-CUS-.YYYY.-.####\nSAU-DOC-CUS-.YYYY.-.####", reqd=1),
 			field("employee", "Link", "Employee", options="Employee", reqd=1, in_list_view=1),
 			field("employee_name", "Data", "Employee Name", fetch_from="employee.employee_name", read_only=1),
 			column("column_break_1"),
@@ -304,12 +304,12 @@ COMPLIANCE_DOCTYPES = [
 	make_doctype(
 		"Disability Employment Compliance",
 		[
-			field("naming_series", "Select", "Naming Series", options="SAU-DIS-.YYYY.-.####", reqd=1),
+			field("naming_series", "Select", "Naming Series", options="DIS-.YYYY.-.####\nSAU-DIS-.YYYY.-.####", reqd=1),
 			field("company", "Link", "Company", options="Company", reqd=1, in_list_view=1),
 			field("period_start", "Date", "Period Start", reqd=1),
 			column("column_break_1"),
 			field("period_end", "Date", "Period End", reqd=1),
-			field("status", "Select", "Status", options="Draft", default="Draft", in_list_view=1),
+			field("status", "Select", "Status", options="Draft\nCompliant\nBelow Required Ratio\nNot Applicable", default="Draft", in_list_view=1),
 			section("ratio_section", "Ratio"),
 			field("total_employees", "Int", "Total Employees", reqd=1),
 			field("disabled_employees", "Int", "Qualified Disabled Employees", reqd=1),
@@ -332,13 +332,13 @@ COMPLIANCE_DOCTYPES = [
 	make_doctype(
 		"Final Settlement SLA",
 		[
-			field("naming_series", "Select", "Naming Series", options="SAU-FSLA-.YYYY.-.####", reqd=1),
+			field("naming_series", "Select", "Naming Series", options="FSLA-.YYYY.-.####\nSAU-FSLA-.YYYY.-.####", reqd=1),
 			field("termination_notice", "Link", "Termination Notice", options="Termination Notice", in_list_view=1),
 			field("employee", "Link", "Employee", options="Employee", reqd=1, in_list_view=1),
 			field("employee_name", "Data", "Employee Name", fetch_from="employee.employee_name", read_only=1),
 			column("column_break_1"),
 			field("company", "Link", "Company", options="Company", fetch_from="employee.company", in_list_view=1),
-			field("status", "Select", "Status", options="Open", default="Open", in_list_view=1),
+			field("status", "Select", "Status", options="Open\nOverdue\nSettled\nCancelled", default="Open", in_list_view=1),
 			section("sla_section", "Settlement Deadlines"),
 			field("last_working_day", "Date", "Last Working Day", reqd=1),
 			field("settlement_due_date", "Date", "Settlement Due Date", reqd=1, in_list_view=1),
@@ -365,14 +365,14 @@ COMPLIANCE_DOCTYPES = [
 	make_doctype(
 		"Work Arrangement Control",
 		[
-			field("naming_series", "Select", "Naming Series", options="SAU-WAC-.YYYY.-.####", reqd=1),
+			field("naming_series", "Select", "Naming Series", options="WAC-.YYYY.-.####\nSAU-WAC-.YYYY.-.####", reqd=1),
 			field("employee", "Link", "Employee", options="Employee", reqd=1, in_list_view=1),
 			field("employee_name", "Data", "Employee Name", fetch_from="employee.employee_name", read_only=1),
 			column("column_break_1"),
 			field("company", "Link", "Company", options="Company", fetch_from="employee.company", in_list_view=1),
-			field("contract", "Link", "Saudi Employment Contract", options="Saudi Employment Contract"),
+			field("contract", "Link", "Country Employment Contract", options="Country Employment Contract"),
 			field("arrangement_type", "Select", "Arrangement Type", reqd=1, in_list_view=1, options="\nFlexible Work"),
-			field("status", "Select", "Status", options="Draft", default="Draft", in_list_view=1),
+			field("status", "Select", "Status", options="Draft\nNeeds Conversion\nClosed\nCancelled", default="Draft", in_list_view=1),
 			section("period_section", "Period & Limits"),
 			field("start_date", "Date", "Start Date", reqd=1),
 			field("end_date", "Date", "End Date"),
@@ -383,7 +383,7 @@ COMPLIANCE_DOCTYPES = [
 			field("daily_hours_limit", "Float", "Daily Hours Limit"),
 			field("weekly_hours_limit", "Float", "Weekly Hours Limit"),
 			section("portal_section", "Portal Evidence"),
-			field("saudi_only_applicable", "Check", "Saudi-only Rule Applies", default=0),
+			field("country_rule_applicable", "Check", "Country-specific Rule Applies", default=0),
 			field("platform_reference", "Data", "Platform Reference"),
 			field("compensatory_leave_allowed", "Check", "Compensatory Leave Allowed", default=0),
 			field("legal_reference", "Data", "Legal Reference"),
@@ -398,7 +398,7 @@ COMPLIANCE_DOCTYPES = [
 	make_doctype(
 		"Working Time Compliance Check",
 		[
-			field("naming_series", "Select", "Naming Series", options="SAU-WTC-.YYYY.-.####", reqd=1),
+			field("naming_series", "Select", "Naming Series", options="WTC-.YYYY.-.####\nSAU-WTC-.YYYY.-.####", reqd=1),
 			field("employee", "Link", "Employee", options="Employee", reqd=1, in_list_view=1),
 			field("employee_name", "Data", "Employee Name", fetch_from="employee.employee_name", read_only=1),
 			column("column_break_1"),
@@ -410,7 +410,7 @@ COMPLIANCE_DOCTYPES = [
 			field("actual_weekly_hours", "Float", "Actual Weekly Hours"),
 			column("column_break_2"),
 			field("overtime_hours", "Float", "Overtime Hours"),
-			field("status", "Select", "Status", options="Needs Review\nCompliant\nNon-Compliant", default="Needs Review", in_list_view=1),
+			field("status", "Select", "Status", options="Needs Review\nCompliant\nNon-Compliant\nDaily Limit Exceeded\nWeekly Limit Exceeded", default="Needs Review", in_list_view=1),
 			field("approval_reference", "Link", "Approval Reference", options="Overtime Request"),
 			field("exception_reason", "Small Text", "Exception Reason"),
 			field("legal_reference", "Data", "Legal Reference", default="Executive Regulations working-hours controls"),
@@ -424,7 +424,7 @@ COMPLIANCE_DOCTYPES = [
 	make_doctype(
 		"Safety Inspection and Risk Control",
 		[
-			field("naming_series", "Select", "Naming Series", options="SAU-SAFE-.YYYY.-.####", reqd=1),
+			field("naming_series", "Select", "Naming Series", options="SAFE-.YYYY.-.####\nSAU-SAFE-.YYYY.-.####", reqd=1),
 			field("inspection_title", "Data", "Inspection Title", reqd=1, in_list_view=1),
 			field("company", "Link", "Company", options="Company", reqd=1, in_list_view=1),
 			column("column_break_1"),
@@ -453,13 +453,13 @@ COMPLIANCE_DOCTYPES = [
 	make_doctype(
 		"Inspection Fine SLA",
 		[
-			field("naming_series", "Select", "Naming Series", options="SAU-FINE-.YYYY.-.####", reqd=1),
+			field("naming_series", "Select", "Naming Series", options="FINE-.YYYY.-.####\nSAU-FINE-.YYYY.-.####", reqd=1),
 			field("labor_inspection", "Link", "Labor Inspection", options="Labor Inspection", in_list_view=1),
 			field("company", "Link", "Company", options="Company", reqd=1, in_list_view=1),
 			column("column_break_1"),
 			field("fine_reference", "Data", "Fine Reference", in_list_view=1),
 			field("fine_amount", "Currency", "Fine Amount"),
-			field("status", "Select", "Status", options="Open", default="Open", in_list_view=1),
+			field("status", "Select", "Status", options="Open\nOverdue\nPaid\nWaived\nClosed", default="Open", in_list_view=1),
 			section("deadline_section", "Deadlines"),
 			field("notification_date", "Date", "Notification Date", reqd=1),
 			field("payment_due_date", "Date", "Payment Due Date", reqd=1, in_list_view=1),
@@ -483,8 +483,8 @@ COMPLIANCE_DOCTYPES = [
 	make_doctype(
 		"Contract Portal Evidence",
 		[
-			field("naming_series", "Select", "Naming Series", options="SAU-CPE-.YYYY.-.####", reqd=1),
-			field("contract", "Link", "Saudi Employment Contract", options="Saudi Employment Contract", reqd=1, in_list_view=1),
+			field("naming_series", "Select", "Naming Series", options="CPE-.YYYY.-.####\nSAU-CPE-.YYYY.-.####", reqd=1),
+			field("contract", "Link", "Country Employment Contract", options="Country Employment Contract", reqd=1, in_list_view=1),
 			field("employee", "Link", "Employee", options="Employee", reqd=1, in_list_view=1),
 			field("employee_name", "Data", "Employee Name", fetch_from="employee.employee_name", read_only=1),
 			column("column_break_1"),
@@ -514,12 +514,12 @@ COMPLIANCE_DOCTYPES.extend(
 		make_doctype(
 			"Disciplinary Violation Catalog",
 			[
-				field("naming_series", "Select", "Naming Series", options="SAU-DVC-.YYYY.-.####", reqd=1),
+				field("naming_series", "Select", "Naming Series", options="DVC-.YYYY.-.####\nSAU-DVC-.YYYY.-.####", reqd=1),
 				field("violation_code", "Data", "Violation Code", reqd=1, unique=1, in_list_view=1),
 				field("violation_name", "Data", "Violation Name", reqd=1, in_list_view=1),
 				column("column_break_1"),
 				field("category", "Select", "Category", reqd=1, in_list_view=1, options="\nAttendance\nWork Organization\nConduct\nIntegrity\nSafety"),
-				field("status", "Select", "Status", in_list_view=1, options="Active", default="Active"),
+				field("status", "Select", "Status", in_list_view=1, options="Active\nNeeds Legal Review\nRetired", default="Active"),
 				section("penalty_section", "Progressive Penalties"),
 				field("penalty_first", "Small Text", "First Time", reqd=1),
 				field("penalty_second", "Small Text", "Second Time"),
@@ -542,7 +542,7 @@ COMPLIANCE_DOCTYPES.extend(
 		make_doctype(
 			"Disability Accommodation Catalog",
 			[
-				field("naming_series", "Select", "Naming Series", options="SAU-DAC-.YYYY.-.####", reqd=1),
+				field("naming_series", "Select", "Naming Series", options="DAC-.YYYY.-.####\nSAU-DAC-.YYYY.-.####", reqd=1),
 				field("accommodation_code", "Data", "Accommodation Code", reqd=1, unique=1, in_list_view=1),
 				field("disability_type", "Select", "Disability Type", reqd=1, in_list_view=1, options="\nPhysical\nVisual\nHearing\nPsychological\nMedical Condition\nGeneral"),
 				field("job_family", "Select", "Job Family", reqd=1, in_list_view=1, options="\nOffice\nTechnical\nTeaching\nManual\nAll Jobs"),
@@ -590,12 +590,12 @@ COMPLIANCE_DOCTYPES.extend(
 		make_doctype(
 			"Recruitment Service Provider Compliance",
 			[
-				field("naming_series", "Select", "Naming Series", options="SAU-RSP-.YYYY.-.####", reqd=1),
+				field("naming_series", "Select", "Naming Series", options="RSP-.YYYY.-.####\nSAU-RSP-.YYYY.-.####", reqd=1),
 				field("provider_name", "Data", "Provider Name", reqd=1, in_list_view=1),
 				field("company", "Link", "Internal Company", options="Company", in_list_view=1),
 				column("column_break_1"),
-				field("provider_type", "Select", "Provider Type", reqd=1, in_list_view=1, options="\nSaudi Recruitment Mediation"),
-				field("status", "Select", "Status", options="Draft", default="Draft", in_list_view=1),
+				field("provider_type", "Select", "Provider Type", reqd=1, in_list_view=1, options="\nRecruitment Mediation"),
+				field("status", "Select", "Status", options="Draft\nActive\nRenewal Due\nExpired\nSuspended\nClosed", default="Draft", in_list_view=1),
 				section("license_section", "License"),
 				field("license_number", "Data", "License Number", reqd=1, in_list_view=1),
 				field("license_issue_date", "Date", "License Issue Date"),
@@ -628,14 +628,14 @@ COMPLIANCE_DOCTYPES.extend(
 		make_doctype(
 			"Recruitment Provider Complaint",
 			[
-				field("naming_series", "Select", "Naming Series", options="SAU-RPC-.YYYY.-.####", reqd=1),
+				field("naming_series", "Select", "Naming Series", options="RPC-.YYYY.-.####\nSAU-RPC-.YYYY.-.####", reqd=1),
 				field("provider_compliance", "Link", "Provider Compliance", options="Recruitment Service Provider Compliance", in_list_view=1),
 				field("complainant_type", "Select", "Complainant Type", options="\nWorker", reqd=1),
 				field("complaint_subject", "Data", "Complaint Subject", reqd=1, in_list_view=1),
 				column("column_break_1"),
 				field("received_on", "Date", "Received On", reqd=1, in_list_view=1),
 				field("response_due_date", "Date", "Response Due Date"),
-				field("status", "Select", "Status", options="Open", default="Open", in_list_view=1),
+				field("status", "Select", "Status", options="Open\nOverdue\nResolved\nClosed", default="Open", in_list_view=1),
 				section("resolution_section", "Resolution"),
 				field("complaint_details", "Text Editor", "Complaint Details"),
 				field("resolution_summary", "Text Editor", "Resolution Summary"),
@@ -651,13 +651,13 @@ COMPLIANCE_DOCTYPES.extend(
 		make_doctype(
 			"Training Agreement",
 			[
-				field("naming_series", "Select", "Naming Series", options="SAU-TRAGR-.YYYY.-.####", reqd=1),
+				field("naming_series", "Select", "Naming Series", options="TRAGR-.YYYY.-.####\nSAU-TRAGR-.YYYY.-.####", reqd=1),
 				field("employee", "Link", "Employee", options="Employee", reqd=1, in_list_view=1),
 				field("employee_name", "Data", "Employee Name", fetch_from="employee.employee_name", read_only=1),
 				column("column_break_1"),
 				field("company", "Link", "Company", options="Company", fetch_from="employee.company", in_list_view=1),
 				field("training_record", "Link", "Training Record", options="Training Record"),
-				field("status", "Select", "Status", options="Draft", default="Draft", in_list_view=1),
+				field("status", "Select", "Status", options="Draft\nActive\nRecovery Due\nCompleted\nWaived\nCancelled", default="Draft", in_list_view=1),
 				section("agreement_section", "Agreement Terms"),
 				field("program_name", "Data", "Program Name", reqd=1, in_list_view=1),
 				field("agreement_date", "Date", "Agreement Date", reqd=1),
@@ -686,7 +686,7 @@ COMPLIANCE_DOCTYPES.extend(
 		make_doctype(
 			"Special Employment Category Control",
 			[
-				field("naming_series", "Select", "Naming Series", options="SAU-SECC-.YYYY.-.####", reqd=1),
+				field("naming_series", "Select", "Naming Series", options="SECC-.YYYY.-.####\nSAU-SECC-.YYYY.-.####", reqd=1),
 				field("employee", "Link", "Employee", options="Employee", reqd=1, in_list_view=1),
 				field("employee_name", "Data", "Employee Name", fetch_from="employee.employee_name", read_only=1),
 				column("column_break_1"),
@@ -713,7 +713,7 @@ COMPLIANCE_DOCTYPES.extend(
 		make_doctype(
 			"Holiday Leave Overlap Rule",
 			[
-				field("naming_series", "Select", "Naming Series", options="SAU-HOL-.YYYY.-.####", reqd=1),
+				field("naming_series", "Select", "Naming Series", options="HOL-.YYYY.-.####\nSAU-HOL-.YYYY.-.####", reqd=1),
 				field("company", "Link", "Company", options="Company", reqd=1, in_list_view=1),
 				field("employee", "Link", "Employee", options="Employee", in_list_view=1),
 				field("employee_name", "Data", "Employee Name", fetch_from="employee.employee_name", read_only=1),
@@ -739,7 +739,7 @@ COMPLIANCE_DOCTYPES.extend(
 		make_doctype(
 			"Expat Work Authorization Control",
 			[
-				field("naming_series", "Select", "Naming Series", options="SAU-EWAC-.YYYY.-.####", reqd=1),
+				field("naming_series", "Select", "Naming Series", options="EWAC-.YYYY.-.####\nSAU-EWAC-.YYYY.-.####", reqd=1),
 				field("employee", "Link", "Employee", options="Employee", reqd=1, in_list_view=1),
 				field("employee_name", "Data", "Employee Name", fetch_from="employee.employee_name", read_only=1),
 				column("column_break_1"),
@@ -765,7 +765,7 @@ COMPLIANCE_DOCTYPES.extend(
 		make_doctype(
 			"Training Disclosure Register",
 			[
-				field("naming_series", "Select", "Naming Series", options="SAU-TDR-.YYYY.-.####", reqd=1),
+				field("naming_series", "Select", "Naming Series", options="TDR-.YYYY.-.####\nSAU-TDR-.YYYY.-.####", reqd=1),
 				field("company", "Link", "Company", options="Company", reqd=1, in_list_view=1),
 				field("disclosure_year", "Int", "Disclosure Year", reqd=1, in_list_view=1),
 				column("column_break_1"),
@@ -815,7 +815,7 @@ CUSTOM_FIELDS = {
 			"fieldtype": "Currency",
 			"label": "Last Total Wage",
 			"insert_after": "eosb_wage_basis",
-			"description": "Auto-filled from Saudi Employment Contract total salary when available.",
+			"description": "Auto-filled from the active Country Employment Contract total salary when available.",
 		},
 		{
 			"fieldname": "legal_review_required",
@@ -848,7 +848,7 @@ CUSTOM_FIELDS = {
 			"default": "Not Applicable",
 		},
 	],
-	"Saudi Employment Contract": [
+	"Country Employment Contract": [
 		{
 			"fieldname": "contract_variant_section",
 			"fieldtype": "Section Break",
@@ -1006,6 +1006,144 @@ CUSTOM_FIELDS = {
 			"options": "Salary Adjustment",
 		},
 	],
+	"Shift Location": [
+		{
+			"fieldname": "hrsuite_section",
+			"fieldtype": "Section Break",
+			"label": "HR Suite Mobile Attendance",
+			"insert_after": "checkin_radius",
+		},
+		{
+			"fieldname": "hrsuite_branch",
+			"fieldtype": "Link",
+			"label": "Branch",
+			"insert_after": "hrsuite_section",
+			"options": "Branch",
+			"description": "Employees of this branch may check in at this location.",
+		},
+		{
+			"fieldname": "hrsuite_is_active",
+			"fieldtype": "Check",
+			"label": "Active",
+			"insert_after": "hrsuite_branch",
+			"default": 1,
+		},
+		{
+			"fieldname": "hrsuite_plus_code",
+			"fieldtype": "Data",
+			"label": "Plus Code",
+			"insert_after": "hrsuite_is_active",
+		},
+		{
+			"fieldname": "hrsuite_location_source",
+			"fieldtype": "Data",
+			"label": "Location Source",
+			"insert_after": "hrsuite_plus_code",
+			"read_only": 1,
+		},
+		{
+			"fieldname": "hrsuite_address_reference",
+			"fieldtype": "Small Text",
+			"label": "Address Reference",
+			"insert_after": "hrsuite_location_source",
+		},
+		{
+			"fieldname": "hrsuite_schedule_section",
+			"fieldtype": "Section Break",
+			"label": "Schedule & Voice Verification",
+			"insert_after": "hrsuite_address_reference",
+		},
+		{
+			"fieldname": "hrsuite_default_shift_type",
+			"fieldtype": "Link",
+			"label": "Default Shift Type",
+			"insert_after": "hrsuite_schedule_section",
+			"options": "Shift Type",
+			"description": "Used when the employee has no Shift Assignment for the day.",
+		},
+		{
+			"fieldname": "hrsuite_enforce_schedule",
+			"fieldtype": "Check",
+			"label": "Enforce Schedule Window",
+			"insert_after": "hrsuite_default_shift_type",
+			"default": 0,
+		},
+		{
+			"fieldname": "hrsuite_voice_verification_policy",
+			"fieldtype": "Select",
+			"label": "Voice Verification Policy",
+			"insert_after": "hrsuite_enforce_schedule",
+			"options": "Disabled\nOptional\nRequired",
+			"default": "Disabled",
+		},
+		{
+			"fieldname": "hrsuite_voice_challenge_ttl_seconds",
+			"fieldtype": "Int",
+			"label": "Voice Challenge TTL (Seconds)",
+			"insert_after": "hrsuite_voice_verification_policy",
+			"default": 300,
+		},
+		{
+			"fieldname": "hrsuite_voice_max_duration_seconds",
+			"fieldtype": "Int",
+			"label": "Voice Max Duration (Seconds)",
+			"insert_after": "hrsuite_voice_challenge_ttl_seconds",
+			"default": 15,
+		},
+	],
+	"Employee Grievance": [
+		{
+			"fieldname": "hrsuite_section",
+			"fieldtype": "Section Break",
+			"label": "HR Suite Grievance Handling",
+			"insert_after": "status",
+		},
+		{
+			"fieldname": "hrsuite_grievance_channel",
+			"fieldtype": "Select",
+			"label": "Grievance Channel",
+			"insert_after": "hrsuite_section",
+			"options": "\nPortal\nEmail\nMeeting\nWritten Letter\nOther",
+		},
+		{
+			"fieldname": "hrsuite_severity",
+			"fieldtype": "Select",
+			"label": "Severity",
+			"insert_after": "hrsuite_grievance_channel",
+			"options": "\nLow\nMedium\nHigh\nCritical",
+		},
+		{
+			"fieldname": "hrsuite_assigned_to",
+			"fieldtype": "Link",
+			"label": "Assigned To",
+			"insert_after": "hrsuite_severity",
+			"options": "User",
+		},
+		{
+			"fieldname": "hrsuite_response_due_date",
+			"fieldtype": "Date",
+			"label": "Response Due Date",
+			"insert_after": "hrsuite_assigned_to",
+		},
+		{
+			"fieldname": "hrsuite_first_response_date",
+			"fieldtype": "Date",
+			"label": "First Response Date",
+			"insert_after": "hrsuite_response_due_date",
+		},
+		{
+			"fieldname": "hrsuite_requested_remedy",
+			"fieldtype": "Text Editor",
+			"label": "Employee Requested Remedy",
+			"insert_after": "hrsuite_first_response_date",
+		},
+		{
+			"fieldname": "hrsuite_investigation_notes",
+			"fieldtype": "Text Editor",
+			"label": "Investigation Notes",
+			"insert_after": "hrsuite_requested_remedy",
+		},
+	],
 	"Exit Interview": [
 		{
 			"fieldname": "hrsuite_section",
@@ -1158,13 +1296,13 @@ WORKSPACE_COMPLIANCE_GROUPS = [
 
 WORKSPACE_REPORT_LINKS = [
 	(
-		"Saudi Compliance Obligation Backlog",
-		"Saudi Compliance Obligation Backlog",
+		"Compliance Obligation Backlog",
+		"Compliance Obligation Backlog",
 		"Report",
 	),
 	(
-		"Saudi Legal Review Queue",
-		"Saudi Legal Review Queue",
+		"Legal Review Queue",
+		"Legal Review Queue",
 		"Report",
 	),
 ]
@@ -1337,7 +1475,7 @@ def _sync_workspace_links(workspace):
 			new_links.append(_workspace_link(*WORKSPACE_EXIT_LINK))
 			inserted_exit = True
 
-		if not inserted_reports and cleaned.get("type") == "Link" and cleaned.get("link_to") == "Saudi Labor Coverage Matrix":
+		if not inserted_reports and cleaned.get("type") == "Link" and cleaned.get("link_to") == "Labor Coverage Matrix":
 			new_links.extend(_workspace_link(*report_link) for report_link in WORKSPACE_REPORT_LINKS)
 			inserted_reports = True
 
@@ -1480,7 +1618,8 @@ def sync_custom_fields():
 			fieldname = field_def["fieldname"]
 			custom_field_name = f"{doctype}-{fieldname}"
 			values = dict(field_def)
-			values.update({"doctype": "Custom Field", "dt": doctype})
+			# module is what hooks.py filters fixtures on — without it these fields never export
+			values.update({"doctype": "Custom Field", "dt": doctype, "module": "Hr Suite"})
 			if frappe.db.exists("Custom Field", custom_field_name):
 				continue
 			else:
@@ -1503,7 +1642,7 @@ def ensure_disciplinary_violation_catalog():
 		frappe.get_doc(
 			{
 				"doctype": "Disciplinary Violation Catalog",
-				"naming_series": "SAU-DVC-.YYYY.-.####",
+				"naming_series": "DVC-.YYYY.-.####",
 				"violation_code": code,
 				"violation_name": name,
 				"category": category,
@@ -1529,7 +1668,7 @@ def ensure_disability_accommodation_catalog():
 		frappe.get_doc(
 			{
 				"doctype": "Disability Accommodation Catalog",
-				"naming_series": "SAU-DAC-.YYYY.-.####",
+				"naming_series": "DAC-.YYYY.-.####",
 				"accommodation_code": code,
 				"disability_type": disability_type,
 				"job_family": job_family,

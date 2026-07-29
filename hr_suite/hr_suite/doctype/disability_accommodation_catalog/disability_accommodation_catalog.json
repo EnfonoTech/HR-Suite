@@ -28,7 +28,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-DAC-.YYYY.-.####",
+   "options": "DAC-.YYYY.-.####\nSAU-DAC-.YYYY.-.####",
    "reqd": 1
   },
   {
@@ -44,7 +44,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Disability Type",
-   "options": "\nPhysical",
+   "options": "\nPhysical\nVisual\nHearing\nPsychological\nMedical Condition\nGeneral",
    "reqd": 1
   },
   {
@@ -52,7 +52,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Job Family",
-   "options": "\nOffice",
+   "options": "\nOffice\nTechnical\nTeaching\nManual\nAll Jobs",
    "reqd": 1
   },
   {
@@ -71,7 +71,7 @@
    "fieldname": "priority",
    "fieldtype": "Select",
    "label": "Priority",
-   "options": "Mandatory Review"
+   "options": "Recommended\nMandatory Review"
   },
   {
    "fieldname": "requirement_section",
@@ -105,7 +105,7 @@
    "label": "PDF Page"
   },
   {
-   "default": "1",
+   "default": 1,
    "fieldname": "active",
    "fieldtype": "Check",
    "label": "Active"

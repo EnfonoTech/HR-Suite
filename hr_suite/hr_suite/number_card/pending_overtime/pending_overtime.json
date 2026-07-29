@@ -2,7 +2,7 @@
  "creation": "2026-03-17 00:00:00.000000",
  "doctype": "Number Card",
  "document_type": "Overtime Request",
- "filters_json": "Pending HR\"]]",
+ "filters_json": "[[\"Overtime Request\", \"approval_status\", \"=\", \"Pending\"]]",
  "function": "Count",
  "is_public": 1,
  "is_standard": 1,

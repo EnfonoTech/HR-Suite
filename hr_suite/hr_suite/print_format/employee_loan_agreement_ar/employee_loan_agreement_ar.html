@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: 'Arial', 'Tahoma', 'DejaVu Sans', sans-serif; direction: rtl;
+         font-size: 13px; color: #1a1a1a; padding: 30px 40px; }
+  .header { text-align: center; border-bottom: 3px double #1a5276; padding-bottom: 16px; margin-bottom: 22px; }
+  .header h1 { font-size: 22px; color: #1a5276; margin: 4px 0; }
+  .header h2 { font-size: 14px; color: #555; font-weight: normal; margin: 0; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+  td { padding: 6px 8px; border-bottom: 1px solid #e5e5e5; }
+  td:first-child { color: #555; width: 45%; }
+  .section-title { font-weight: bold; color: #1a5276; margin: 18px 0 8px 0; }
+  .amount { font-size: 16px; font-weight: bold; color: #1a5276; }
+  .terms { background: #f7f9fb; border: 1px solid #dde5ec; padding: 12px; line-height: 1.7; }
+  .signature-section { display: flex; justify-content: space-between; margin-top: 40px; }
+  .sig-box { width: 45%; text-align: center; }
+  .sig-line { border-top: 1px solid #333; padding-top: 6px; margin-top: 40px; }
+  .footer { margin-top: 30px; text-align: center; color: #888; font-size: 11px; }
+</style>
+</head>
+<body>
+
+{%- set currency = frappe.db.get_value("Company", doc.company, "default_currency") -%}
+
+<div class="header">
+  <h1>{{ _("Employee Loan Agreement") }} / عقد سلفة موظف</h1>
+  <h2>{{ doc.company }}</h2>
+</div>
+
+<table>
+  <tr><td>{{ _("Agreement No") }} / رقم العقد</td><td><strong>{{ doc.name }}</strong></td></tr>
+  <tr><td>{{ _("Employee") }} / الموظف</td><td>{{ doc.employee_name }} ({{ doc.employee }})</td></tr>
+  <tr><td>{{ _("Department") }} / الإدارة</td><td>{{ doc.department or "—" }}</td></tr>
+  <tr><td>{{ _("Loan Date") }} / تاريخ السلفة</td><td>{{ frappe.utils.formatdate(doc.loan_date) }}</td></tr>
+</table>
+
+<div class="section-title">{{ _("Loan Terms") }} / شروط السلفة</div>
+<table>
+  <tr><td>{{ _("Loan Amount") }} / مبلغ السلفة</td>
+      <td class="amount">{{ frappe.utils.fmt_money(doc.loan_amount, currency=currency) }}</td></tr>
+  <tr><td>{{ _("Repayment Method") }} / طريقة السداد</td><td>{{ doc.repayment_method or "—" }}</td></tr>
+  <tr><td>{{ _("Number of Installments") }} / عدد الأقساط</td><td>{{ doc.installment_count or "—" }}</td></tr>
+  <tr><td>{{ _("Monthly Installment") }} / القسط الشهري</td>
+      <td>{{ frappe.utils.fmt_money(doc.monthly_installment_amount, currency=currency) }}</td></tr>
+  <tr><td>{{ _("Repayment Starts") }} / بداية السداد</td>
+      <td>{{ frappe.utils.formatdate(doc.repayment_start_date) if doc.repayment_start_date else "—" }}</td></tr>
+</table>
+
+<div class="terms">
+  {{ _("The employee authorises the employer to deduct the monthly installment shown above from their salary until the loan is repaid in full.") }}<br>
+  يُصرّح الموظف لصاحب العمل بخصم القسط الشهري المذكور أعلاه من راتبه حتى سداد كامل مبلغ السلفة.<br><br>
+  {{ _("Any outstanding balance becomes payable in full on the employee's final settlement.") }}<br>
+  يصبح أي رصيد متبقٍ مستحقًا بالكامل عند التسوية النهائية للموظف.
+</div>
+
+{% if doc.notes %}<div class="section-title">{{ _("Notes") }} / ملاحظات</div><div>{{ doc.notes }}</div>{% endif %}
+
+<div class="signature-section">
+  <div class="sig-box"><div class="sig-line">{{ _("Employee") }} / الموظف<br>{{ doc.employee_name }}</div></div>
+  <div class="sig-box"><div class="sig-line">{{ _("Finance Authorization") }} / تفويض الإدارة المالية</div></div>
+</div>
+
+<div class="footer">{{ doc.company }} &mdash; {{ frappe.utils.formatdate(frappe.utils.today()) }}</div>
+
+</body>
+</html>

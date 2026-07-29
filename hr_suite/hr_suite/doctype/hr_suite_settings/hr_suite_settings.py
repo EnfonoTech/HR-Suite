@@ -91,7 +91,7 @@ def _build_attendance_api_settings_reference(settings):
 				"resources": [
 					_resource_endpoint(base_url, "Employee Checkin"),
 					_resource_endpoint(base_url, "Attendance"),
-					_resource_endpoint(base_url, "Attendance Location"),
+					_resource_endpoint(base_url, "Shift Location"),
 				],
 				"absence_filter_example": f"{base_url}/api/resource/Attendance?filters=[[\"Attendance\",\"status\",\"=\",\"Absent\"]]",
 			},
@@ -114,7 +114,7 @@ def _build_attendance_api_settings_reference(settings):
 			"contracts_and_discipline": {
 				"description": "Read employment contracts, warnings, investigations, and disciplinary procedures for HR self-service surfaces.",
 				"resources": [
-					_resource_endpoint(base_url, "Saudi Employment Contract"),
+					_resource_endpoint(base_url, "Country Employment Contract"),
 					_resource_endpoint(base_url, "Employee Warning Notice"),
 					_resource_endpoint(base_url, "Investigation Record"),
 					_resource_endpoint(base_url, "Disciplinary Procedure"),

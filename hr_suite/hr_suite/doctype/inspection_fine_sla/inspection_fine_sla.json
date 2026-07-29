@@ -35,7 +35,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-FINE-.YYYY.-.####",
+   "options": "FINE-.YYYY.-.####\nSAU-FINE-.YYYY.-.####",
    "reqd": 1
   },
   {
@@ -74,7 +74,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Open"
+   "options": "Open\nOverdue\nPaid\nWaived\nClosed"
   },
   {
    "fieldname": "deadline_section",

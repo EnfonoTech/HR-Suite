@@ -3,7 +3,7 @@ attendance_policy.py
 Schedule window and attendance variance utilities for Hr Suite.
 
 Used by:
-- hr_daily_attendance.py (validate hook)
+- the HRMS Attendance validate hook
 - team_attendance_review.py (report)
 """
 import frappe
@@ -18,9 +18,9 @@ VOICE_POLICY_REQUIRED = "Required"
 # ─── Private Helpers ───────────────────────────────────────────────────────────
 
 def _get_shift_assignment(employee, attendance_date):
-	"""Return the active HR Shift Assignment for an employee on a given date."""
+	"""Return the active HRMS Shift Assignment for an employee on a given date."""
 	assignment = frappe.db.get_value(
-		"HR Shift Assignment",
+		"Shift Assignment",
 		{
 			"employee": employee,
 			"status": "Active",
@@ -34,13 +34,13 @@ def _get_shift_assignment(employee, attendance_date):
 	if assignment:
 		return assignment
 
-	if not frappe.db.exists("DocType", "HR Shift Assignment"):
+	if not frappe.db.exists("DocType", "Shift Assignment"):
 		return assignment
 
 	rows = frappe.db.sql(
 		"""
 		SELECT name, shift_type, start_date, end_date
-		FROM `tabHR Shift Assignment`
+		FROM `tabShift Assignment`
 		WHERE employee = %s
 		  AND status = 'Active'
 		  AND docstatus = 1
@@ -56,11 +56,11 @@ def _get_shift_assignment(employee, attendance_date):
 
 
 def _get_shift_type(shift_type):
-	"""Return the HR Shift Type document fields for schedule calculation."""
+	"""Return the HRMS Shift Type document fields for schedule calculation."""
 	if not shift_type:
 		return None
 	return frappe.db.get_value(
-		"HR Shift Type",
+		"Shift Type",
 		shift_type,
 		[
 			"name",
@@ -144,7 +144,7 @@ def resolve_mobile_attendance_policy(employee, attendance_date, location):
 	Args:
 		employee (str): Employee name
 		attendance_date (str|date): Attendance date
-		location (dict|None): Attendance Location record (or None)
+		location (dict|None): Shift Location record (or None)
 
 	Returns:
 		dict: Full attendance policy including schedule window, voice policy,
@@ -153,11 +153,11 @@ def resolve_mobile_attendance_policy(employee, attendance_date, location):
 	attendance_date = getdate(attendance_date)
 	assignment = _get_shift_assignment(employee, attendance_date)
 	shift_type_name = assignment.shift_type if assignment else None
-	policy_source = "HR Shift Assignment"
+	policy_source = "Shift Assignment"
 
 	if not shift_type_name and location:
 		shift_type_name = (location or {}).get("default_shift_type")
-		policy_source = "Attendance Location"
+		policy_source = "Shift Location"
 
 	shift_type_doc = _get_shift_type(shift_type_name)
 	window = _build_schedule_window(attendance_date, shift_type_doc)

@@ -3,7 +3,7 @@ from frappe.model.document import Document
 from frappe import _
 from frappe.utils import date_diff, getdate, flt
 
-from hr_suite.hr_suite.utils import get_annual_leave_days_taken, get_annual_leave_entitlement, get_employee_salary_components
+from hr_suite.hr_suite.utils import assert_employee_access, get_annual_leave_days_taken, get_annual_leave_entitlement, get_employee_salary_components
 
 
 class AnnualLeaveDisbursement(Document):
@@ -90,6 +90,7 @@ class AnnualLeaveDisbursement(Document):
 @frappe.whitelist()
 def get_leave_balance(employee, leave_year):
     """Return leave entitlement, taken and balance for UI"""
+    assert_employee_access(employee)
     join_date = frappe.db.get_value("Employee", employee, "date_of_joining")
     if not join_date:
         return {}

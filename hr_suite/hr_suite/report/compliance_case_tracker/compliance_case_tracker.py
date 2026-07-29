@@ -61,7 +61,7 @@ def get_data(filters):
 		LEFT JOIN `tabInvestigation Record` ir
 			ON ir.reference_doctype = 'Absence Case' AND ir.reference_name = ac.name
 		LEFT JOIN `tabEmployee Grievance` eg
-			ON eg.employee = ac.employee AND eg.grievance_type = 'Attendance'
+			ON eg.raised_by = ac.employee AND eg.grievance_type = 'Attendance'
 		LEFT JOIN `tabHR Compliance Action Log` cal
 			ON cal.reference_doctype = 'Absence Case' AND cal.reference_name = ac.name
 		{where}

@@ -38,7 +38,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-SL-.YYYY.-.####",
+   "options": "SL-.YYYY.-.####\nSAU-SL-.YYYY.-.####",
    "reqd": 1
   },
   {
@@ -240,11 +240,11 @@
    "report": 1
   },
   {
-    "role": "Employee",
-    "read": 1,
-    "write": 1,
-    "create": 1,
-    "print": 1
+   "role": "Employee",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1
   },
   {
    "role": "Employee Self Service",

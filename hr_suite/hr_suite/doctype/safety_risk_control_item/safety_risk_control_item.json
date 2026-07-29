@@ -28,7 +28,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Severity",
-   "options": "\nLow",
+   "options": "\nLow\nMedium\nHigh",
    "reqd": 1
   },
   {

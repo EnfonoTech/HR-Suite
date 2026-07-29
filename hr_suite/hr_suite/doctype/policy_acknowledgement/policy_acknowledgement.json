@@ -36,7 +36,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-PACK-.YYYY.-.####",
+   "options": "PACK-.YYYY.-.####\nSAU-PACK-.YYYY.-.####",
    "reqd": 1
   },
   {

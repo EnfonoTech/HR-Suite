@@ -18,7 +18,7 @@ class TestSaudiHRTasks(FrappeTestCase):
 			recipients = tasks_module._get_pending_alert_recipients(
 				["hr@example.com", "manager@example.com"],
 				"Contract alert",
-				"Saudi Employment Contract",
+				"Country Employment Contract",
 				"CONT-0001",
 			)
 

@@ -3,7 +3,7 @@ from frappe.model.document import Document
 from frappe import _
 from frappe.utils import date_diff, getdate
 
-from hr_suite.hr_suite.utils import get_employee_basic_salary
+from hr_suite.hr_suite.utils import assert_employee_access, get_employee_basic_salary
 
 
 
@@ -137,6 +137,7 @@ class SpecialLeave(Document):
 @frappe.whitelist()
 def check_hajj_eligibility(employee):
     """Return True if employee has not previously taken Hajj leave"""
+    assert_employee_access(employee)
     joining_date = frappe.db.get_value("Employee", employee, "date_of_joining")
     minimum_service_met = True
     years_service = 0.0

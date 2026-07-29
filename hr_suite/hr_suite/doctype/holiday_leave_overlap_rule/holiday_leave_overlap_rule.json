@@ -31,7 +31,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-HOL-.YYYY.-.####",
+   "options": "HOL-.YYYY.-.####\nSAU-HOL-.YYYY.-.####",
    "reqd": 1
   },
   {
@@ -91,7 +91,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Required Action",
-   "options": "Extend Leave"
+   "options": "Extend Leave\nLegal Review\nCompensation\nNo Action"
   },
   {
    "default": "Open",

@@ -32,7 +32,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-SHRR-.YYYY.-.####",
+   "options": "SHRR-.YYYY.-.####\nSAU-SHRR-.YYYY.-.####",
    "reqd": 1
   },
   {
@@ -60,7 +60,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft"
+   "options": "Draft\nGaps Found\nCompliant"
   },
   {
    "fieldname": "responsible_user",

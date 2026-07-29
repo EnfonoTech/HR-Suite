@@ -2,7 +2,7 @@
  "creation": "2026-03-17 00:00:00.000000",
  "doctype": "Number Card",
  "document_type": "GOSI Contribution",
- "filters_json": "Pending\"]]",
+ "filters_json": "[[\"GOSI Contribution\", \"payment_status\", \"=\", \"Pending\"]]",
  "function": "Sum",
  "aggregate_function_based_on": "total_contribution",
  "is_public": 1,

@@ -35,7 +35,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-MFT-.YYYY.-.####",
+   "options": "MFT-.YYYY.-.####\nSAU-MFT-.YYYY.-.####",
    "reqd": 1
   },
   {
@@ -71,7 +71,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Pending Submission"
+   "options": "Pending Submission\nSubmitted\nAccepted\nOverdue\nCancelled"
   },
   {
    "default": "P0",

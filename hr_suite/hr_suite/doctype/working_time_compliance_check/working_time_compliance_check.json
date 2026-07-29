@@ -31,7 +31,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-WTC-.YYYY.-.####",
+   "options": "WTC-.YYYY.-.####\nSAU-WTC-.YYYY.-.####",
    "reqd": 1
   },
   {
@@ -103,7 +103,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Compliant"
+   "options": "Needs Review\nCompliant\nNon-Compliant\nDaily Limit Exceeded\nWeekly Limit Exceeded"
   },
   {
    "fieldname": "approval_reference",

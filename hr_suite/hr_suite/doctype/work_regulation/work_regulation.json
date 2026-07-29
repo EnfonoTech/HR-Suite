@@ -40,7 +40,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-WR-.YYYY.-.####",
+   "options": "WR-.YYYY.-.####\nSAU-WR-.YYYY.-.####",
    "reqd": 1
   },
   {
@@ -145,13 +145,13 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "1",
+   "default": 1,
    "fieldname": "acknowledgement_required",
    "fieldtype": "Check",
    "label": "Acknowledgement Required"
   },
   {
-   "default": "7",
+   "default": 7,
    "fieldname": "acknowledgement_due_days",
    "fieldtype": "Int",
    "label": "Acknowledgement Due Days"

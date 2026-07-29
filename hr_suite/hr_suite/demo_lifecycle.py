@@ -69,13 +69,13 @@ def _ensure_employee(data: dict) -> str:
 
 def _ensure_contract(data: dict) -> str:
     existing = frappe.db.get_value(
-        "Saudi Employment Contract",
+        "Country Employment Contract",
         {"employee": data["employee"], "start_date": data["start_date"], "docstatus": ["<", 2]},
         "name",
     )
     if existing:
         return existing
-    doc = frappe.get_doc({"doctype": "Saudi Employment Contract", **data})
+    doc = frappe.get_doc({"doctype": "Country Employment Contract", **data})
     doc.insert(ignore_permissions=True)
     try:
         doc.submit()
@@ -87,7 +87,7 @@ def _ensure_contract(data: dict) -> str:
 def _ensure_iqama(data: dict) -> str:
     existing = frappe.db.get_value(
         "Work Permit Iqama",
-        {"employee": data["employee"], "document_type": data.get("document_type", "Iqama")},
+        {"employee": data["employee"], "iqama_number": data.get("iqama_number")},
         "name",
     )
     if existing:
@@ -171,8 +171,11 @@ def seed_employee_lifecycle_demo():
     """
     Seed 4 demo employees covering the full HR Suite lifecycle.
     Safe to call multiple times — skips existing records.
+
+    Restricted to System Manager: this writes employees, contracts and payroll, and it used
+    to switch the session to Administrator, which let any logged-in user seed a live site.
     """
-    frappe.set_user("Administrator")
+    frappe.only_for("System Manager")
     company = _company()
     male = _gender("Male")
     female = _gender("Female")
@@ -200,7 +203,7 @@ def seed_employee_lifecycle_demo():
     _ensure_contract({
         "employee": ahmed,
         "company": company,
-        "contract_type": "Open Ended",
+        "contract_type": "Unlimited",
         "nationality": "Saudi Arabia",
         "start_date": add_days(today, -1095),
         "basic_salary": 10000,
@@ -251,7 +254,7 @@ def seed_employee_lifecycle_demo():
     _ensure_contract({
         "employee": john,
         "company": company,
-        "contract_type": "Fixed Term",
+        "contract_type": "Limited",
         "nationality": "British",
         "start_date": add_days(today, -75),
         "end_date": add_days(today, 290),  # 1-year contract
@@ -265,12 +268,11 @@ def seed_employee_lifecycle_demo():
     _ensure_iqama({
         "employee": john,
         "company": company,
-        "document_type": "Iqama",
         "iqama_number": "2345678901",
         "nationality": "British",
-        "issue_date": add_days(today, -75),
-        "expiry_date": add_days(today, 290),
-        "status": "Active",
+        "iqama_issue_date": add_days(today, -75),
+        "iqama_expiry_date": add_days(today, 290),
+        "iqama_status": "Active",
     })
     result["employee_2_expat_probation"] = john
 
@@ -294,7 +296,7 @@ def seed_employee_lifecycle_demo():
     _ensure_contract({
         "employee": sara,
         "company": company,
-        "contract_type": "Open Ended",
+        "contract_type": "Unlimited",
         "nationality": "Saudi Arabia",
         "start_date": add_days(today, -540),
         "basic_salary": 6500,
@@ -341,7 +343,7 @@ def seed_employee_lifecycle_demo():
     _ensure_contract({
         "employee": tariq,
         "company": company,
-        "contract_type": "Open Ended",
+        "contract_type": "Unlimited",
         "nationality": "Saudi Arabia",
         "start_date": add_days(today, -2555),
         "basic_salary": 14000,
@@ -359,11 +361,15 @@ def seed_employee_lifecycle_demo():
             "doctype": "Annual Leave Disbursement",
             "employee": tariq,
             "company": company,
-            "leave_days": 22,
-            "daily_wage": round(14000 / 30, 2),
-            "disbursement_amount": round(22 * 14000 / 30, 2),
-            "disbursement_date": add_days(today, 5),
-            "notes": "22 unused annual leave days at time of resignation",
+            "leave_year": getdate(today).year,
+            "leave_from_date": add_days(today, -365),
+            "leave_to_date": today,
+            "leave_days_entitled": 22,
+            "leave_days_to_pay": 22,
+            "disbursement_type": "Basic Salary Only",
+            "monthly_basic_salary": 14000,
+            "daily_basic_rate": round(14000 / 30, 2),
+            "status": "Draft",
         }).insert(ignore_permissions=True)
 
     # Termination notice (resignation)

@@ -44,7 +44,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-LOAN-.YYYY.-.####",
+   "options": "LOAN-.YYYY.-.####\nSAU-LOAN-.YYYY.-.####",
    "reqd": 1
   },
   {

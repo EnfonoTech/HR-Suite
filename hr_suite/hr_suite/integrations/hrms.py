@@ -25,14 +25,13 @@ def on_job_offer_submit(doc, method=None):
         if doc.job_applicant
         else None
     )
+    # `branch` and `custom_work_country` are site customisations — HRMS's own Job Opening
+    # ships neither, and querying a column that does not exist is a hard SQL error.
+    opening_meta = frappe.get_meta("Job Opening")
+    opening_fields = [f for f in ("branch", "custom_work_country", "location") if opening_meta.has_field(f)]
     job_opening = (
-        frappe.db.get_value(
-            "Job Opening",
-            job_opening_name,
-            ["branch", "custom_work_country"],
-            as_dict=True,
-        )
-        if job_opening_name
+        frappe.db.get_value("Job Opening", job_opening_name, opening_fields, as_dict=True)
+        if job_opening_name and opening_fields
         else {}
     ) or {}
 
@@ -43,7 +42,7 @@ def on_job_offer_submit(doc, method=None):
 
     work_country = (
         job_opening.get("custom_work_country")
-        or _country_from_branch(job_opening.get("branch"))
+        or _country_from_branch(job_opening.get("branch") or job_opening.get("location"))
         or country_name_to_code(company_country)
         or ""
     )
@@ -58,6 +57,11 @@ def on_job_offer_submit(doc, method=None):
         "gender": "Male",  # placeholder — HR updates during onboarding
     })
     emp.insert(ignore_permissions=True)
+
+    # The derived work country is only storable where the site added the field — same
+    # guard Country Employment Contract uses when it syncs the country back.
+    if work_country and frappe.db.has_column("Employee", "work_country"):
+        frappe.db.set_value("Employee", emp.name, "work_country", work_country)
 
     frappe.msgprint(
         f"Employee record <b>{emp.name}</b> created from Job Offer. "
@@ -203,22 +207,39 @@ def on_appraisal_submit(doc, method=None):
     if not score:
         return
 
+    # Staff Rating.rating is a Rating field — Frappe stores those as a 0..1 fraction,
+    # while an Appraisal total score is out of 5.
+    rating = min(max(score / 5.0, 0.0), 1.0)
+    # Staff Rating enforces a YYYY-MM rating period and a Downward rating must come from
+    # the appraisee's direct manager, so both are derived rather than guessed.
+    rating_period = getdate(doc.get("end_date") or getdate()).strftime("%Y-%m")
+    manager = frappe.db.get_value("Employee", doc.employee, "reports_to")
+    if not manager:
+        return
+
     existing = frappe.db.get_value(
         "Staff Rating",
-        {"employee": doc.employee, "appraisal_cycle": doc.appraisal_cycle or doc.name},
+        {
+            "employee": doc.employee,
+            "rated_by_employee": manager,
+            "rating_period": rating_period,
+            "rating_direction": "Downward",
+            "docstatus": ["!=", 2],
+        },
         "name",
     )
     if existing:
-        frappe.db.set_value("Staff Rating", existing, "rating_score", score)
+        frappe.db.set_value("Staff Rating", existing, "rating", rating)
         return
 
     sr = frappe.get_doc({
         "doctype": "Staff Rating",
         "employee": doc.employee,
-        "rating_date": doc.end_date or getdate(),
-        "rating_score": score,
-        "appraisal_cycle": doc.appraisal_cycle or "",
-        "notes": f"Auto-created from Appraisal {doc.name}",
+        "rated_by_employee": manager,
+        "rating_direction": "Downward",
+        "rating_period": rating_period,
+        "rating": rating,
+        "review": f"Auto-created from Appraisal {doc.name}",
     })
     try:
         sr.insert(ignore_permissions=True)
@@ -280,12 +301,14 @@ def _ensure_final_settlement_sla(emp_doc):
         return
     if frappe.db.exists("Final Settlement SLA", {"employee": emp_doc.name}):
         return
-    from frappe.utils import add_days
     try:
+        # Final Settlement SLA derives settlement_due_date / document_return_due_date from
+        # last_working_day in validate_compliance_doc — feed it that, not a due_date field
+        # the DocType does not have.
         sla = frappe.get_doc({
             "doctype": "Final Settlement SLA",
             "employee": emp_doc.name,
-            "due_date": add_days(getdate(), 30),
+            "last_working_day": emp_doc.relieving_date or getdate(),
         })
         sla.insert(ignore_permissions=True)
     except Exception:

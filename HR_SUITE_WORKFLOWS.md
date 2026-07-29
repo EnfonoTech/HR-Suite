@@ -341,7 +341,7 @@ Open → Under Review → Hearing Scheduled → Decided → Closed
 
 ### 4. Employee Grievance
 
-**Doctype:** `Employee Grievance`
+**Doctype:** `Employee Grievance` (HRMS; statuses Open / Investigated / Resolved / Invalid)
 **Frappe Workflow:** `employee_grievance_workflow`
 
 ```
@@ -801,10 +801,10 @@ Hiring Requisition (approved by department head)
 Candidate Profile (screening → interview → offer → accepted)
     │
     ▼
-Employee Onboarding (checklist-based, In Progress → Completed)
+Employee Onboarding (HRMS, Pending → In Process → Completed)
     │
     ▼
-Saudi Employment Contract (Draft → Active, expiry alert 60 days before)
+Country Employment Contract (Draft → Active, expiry alert 60 days before)
     │
     ▼
 Work Permit / Iqama (tracked, expiry alert 90 days before)
@@ -871,10 +871,10 @@ All alerts run daily at midnight unless noted.
 | Alert | Doctype | Trigger Condition |
 |-------|---------|------------------|
 | Iqama Expiry | Work Permit Iqama | 90, 60, 30, 7 days before expiry |
-| Contract Expiry | Saudi Employment Contract | 60, 30, 7 days before expiry |
+| Contract Expiry | Country Employment Contract | 60, 30, 7 days before expiry |
 | Work Permit Expiry | Work Permit Iqama | 60, 30, 7 days before expiry |
 | Sick Leave Threshold | Saudi Sick Leave | Cumulative days cross threshold |
-| Probation End | Saudi Employment Contract | 7 days before probation ends |
+| Probation End | Country Employment Contract | 7 days before probation ends |
 | Ministry Filing Due | Ministry Filing Tracker | Per filing type lead time |
 | Final Settlement SLA | Final Settlement SLA | Overdue SLA |
 | Document Custody | Employee Document Custody Log | Return date passed |
@@ -925,7 +925,7 @@ All alerts run daily at midnight unless noted.
 
 - [ ] For each employee, set **PM Approval Chain** in the PM Approval section (Level 1 = direct manager, Level 2 = dept head, Level 3 = HR)
 - [ ] Assign **Department Approver** role to all line managers
-- [ ] Create **Saudi Employment Contracts** for all active employees
+- [ ] Create **Country Employment Contracts** for all active employees
 - [ ] Create **Work Permit Iqama** records for all expat employees
 - [ ] Set up **Salary Structure Assignments** in ERPNext (required for penalty deduction calculations)
 
@@ -1061,7 +1061,7 @@ Configure in **Hr Suite Settings** under each portal's section (all optional —
 | HR Letter | Individual letter issuance (Experience, NOC, etc.) |
 | HR Policy Document | Company policy with acknowledgement tracking |
 | Policy Acknowledgement | Employee acknowledgement of a policy |
-| Saudi Employment Contract | Employment contract with terms |
+| Country Employment Contract | Employment contract with terms |
 | Contract Portal Evidence | Uploaded contract evidence documents |
 
 ### Approval Engine (permission_manager app)
@@ -1084,7 +1084,7 @@ Configure in **Hr Suite Settings** under each portal's section (all optional —
 |---------|---------|
 | Hiring Requisition | Position request with approval |
 | Candidate Profile | Applicant tracking |
-| Employee Onboarding | Onboarding checklist |
+| Employee Onboarding | HRMS onboarding activities (not shipped by HR Suite) |
 | Performance Review | Probation/quarterly/annual review |
 | Promotion Transfer | Role/salary/department change |
 | Training Record | Individual training history |
@@ -1133,7 +1133,7 @@ Configure in **Hr Suite Settings** under each portal's section (all optional —
 ### Reports
 | Report | Type | Purpose |
 |--------|------|---------|
-| Saudi Leave Balance Report | Query | Leave entitlement & balance |
+| Leave Balance Report | Query | Leave entitlement & balance |
 | Team Attendance Review | Script | Manager attendance dashboard |
 | Contract Expiry Report | Query | Contract renewal alerts |
 | EOSB Calculation Report | Query | End-of-service benefit details |
@@ -1146,11 +1146,11 @@ Configure in **Hr Suite Settings** under each portal's section (all optional —
 | WPS Submission Tracker | Script | WPS submission audit |
 | Compliance Case Tracker | Script | Absence case audit |
 | Labor Inspection Tracker | Script | Ministry inspection tracking |
-| Saudi Compliance Obligation Backlog | Script | Overdue regulatory tasks |
-| Saudi Legal Review Queue | Script | Legal reference audit |
+| Compliance Obligation Backlog | Script | Overdue regulatory tasks |
+| Legal Review Queue | Script | Legal reference audit |
 | Policy Compliance Register | Script | Policy acknowledgement status |
 | NITAQAT Compliance Report | Script | Saudization quota compliance |
-| Saudi Labor Coverage Matrix | Script | Labor law coverage mapping |
+| Labor Coverage Matrix | Script | Labor law coverage mapping |
 
 ---
 

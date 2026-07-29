@@ -5,7 +5,7 @@ frappe.ui.form.on("Employee", {
 
 		// Resolve the employee's work country first, then build the full UI
 		frappe.call({
-			method: "hr_suite.hr_suite.utils.get_employee_work_country",
+			method: "hr_suite.hr_suite.api.get_employee_work_country",
 			args: { employee: frm.doc.name },
 			callback: function (r) {
 				const country = (r.message || "").toUpperCase();
@@ -72,7 +72,7 @@ function _hr_suite_common_buttons(frm, country) {
 			],
 			function (values) {
 				frappe.call({
-					method: "hr_suite.hr_suite.utils.get_settlement_estimate",
+					method: "hr_suite.hr_suite.api.get_settlement_estimate",
 					args: {
 						employee: frm.doc.name,
 						termination_reason: values.termination_reason,
@@ -393,7 +393,12 @@ function _hr_suite_gosi_estimate(frm) {
 		}),
 	]).then(function ([rates, contracts]) {
 		rates = rates || {};
-		const isNational = (frm.doc.nationality || "").toLowerCase().includes("saudi");
+		// Employee ships no `nationality` field — HR Suite classifies via Employee Type,
+		// falling back to a site-added nationality field when one exists.
+		const isNational =
+			frm.doc.hr_suite_employee_type === "National" ||
+			(frm.doc.hr_suite_employee_type !== "Expatriate" &&
+				(frm.doc.nationality || "").toLowerCase().includes("saudi"));
 		const empRate  = isNational ? (flt(rates.gosi_saudi_employee_rate) || 9.75)
 		                            : (flt(rates.gosi_non_saudi_employee_rate) || 0);
 		const emplRate = isNational ? (flt(rates.gosi_saudi_employer_rate) || 12.5)
@@ -558,7 +563,7 @@ function _open_settlement_dialog(frm, country) {
 		],
 		function (values) {
 			frappe.call({
-				method: "hr_suite.hr_suite.utils.get_settlement_estimate",
+				method: "hr_suite.hr_suite.api.get_settlement_estimate",
 				args: {
 					employee: frm.doc.name,
 					termination_reason: values.termination_reason,
@@ -637,7 +642,7 @@ function _hr_suite_document_alerts(frm) {
 
 function _hr_suite_contract_banner(frm) {
 	// Try Country Employment Contract first (multi-country).
-	// If the doctype doesn't exist on this instance, fall back to Saudi Employment Contract.
+	// If the doctype doesn't exist on this instance, fall back to Country Employment Contract.
 	frappe.db
 		.get_list("Country Employment Contract", {
 			filters: { employee: frm.doc.name, contract_status: "Active" },
@@ -666,7 +671,7 @@ function _hr_suite_contract_banner(frm) {
 				);
 				return;
 			}
-			// Fallback: Saudi Employment Contract (legacy / existing SA deployments)
+			// Fallback: Country Employment Contract (legacy / existing SA deployments)
 			_hr_suite_sa_contract_banner(frm);
 		})
 		.catch(function () {
@@ -677,7 +682,7 @@ function _hr_suite_contract_banner(frm) {
 
 function _hr_suite_sa_contract_banner(frm) {
 	frappe.db
-		.get_list("Saudi Employment Contract", {
+		.get_list("Country Employment Contract", {
 			filters: { employee: frm.doc.name, contract_status: "Active" },
 			fields: [
 				"name", "basic_salary", "housing_allowance", "transport_allowance",
@@ -722,5 +727,8 @@ function _hr_suite_onboarding_banner(frm) {
 				 — <a href="/app/employee-onboarding/${r.name}">${r.name}</a>`,
 				"orange", true
 			);
-		});
+		})
+		// Onboarding is an HRMS DocType — a banner is never worth an error dialog on
+		// the Employee form if it is unavailable on this site.
+		.catch(function () {});
 }

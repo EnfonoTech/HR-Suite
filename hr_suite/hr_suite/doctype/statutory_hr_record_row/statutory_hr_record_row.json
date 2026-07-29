@@ -42,7 +42,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "1",
+   "default": 1,
    "fieldname": "required",
    "fieldtype": "Check",
    "label": "Required"
@@ -53,7 +53,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Missing"
+   "options": "Missing\nAvailable\nNot Applicable"
   },
   {
    "fieldname": "ownership_section",

@@ -17,6 +17,7 @@ Every request is recorded in Government Portal Sync Log.
 import frappe
 import requests
 from frappe.utils import now_datetime, getdate
+from hr_suite.hr_suite.utils import assert_employee_access
 
 _TIMEOUT = 30
 _TOKEN_CACHE_KEY = "qiwa_oauth_token"
@@ -120,6 +121,7 @@ def get_labor_contracts(iqama_number: str = None, employee: str = None):
     List all Wathiqa labor contracts for the establishment,
     optionally filtered by an employee's Iqama number.
     """
+    assert_employee_access(employee)
     _assert_enabled()
     params = {"establishment_id": _establishment_id()}
     if iqama_number:
@@ -152,6 +154,7 @@ def verify_contract(iqama_number: str, contract_id: str = None, employee: str = 
     Verify a Wathiqa labor contract. Confirms it is active and matches
     the establishment's records.
     """
+    assert_employee_access(employee)
     _assert_enabled()
     params = {
         "iqama_no": iqama_number,
@@ -197,6 +200,7 @@ def get_employee_status(iqama_number: str, employee: str = None):
     Get an employee's current status on the Qiwa platform
     (registered, contract active, violations, etc.).
     """
+    assert_employee_access(employee)
     _assert_enabled()
     resp = requests.get(
         f"{_base()}/api/employees/{iqama_number}/status",
@@ -231,6 +235,8 @@ def submit_contract(
     Submit or register a new Wathiqa labor contract on Qiwa.
     Typically done when a new employee joins or a contract is renewed.
     """
+    frappe.only_for(("HR User", "HR Manager", "System Manager"))
+    assert_employee_access(employee)
     _assert_enabled()
     payload = {
         "establishment_id": _establishment_id(),
@@ -263,6 +269,7 @@ def submit_contract(
 @frappe.whitelist()
 def get_labor_notices(employee: str = None, iqama_number: str = None):
     """Fetch indharat (labor notices / warnings) for an employee or establishment."""
+    assert_employee_access(employee)
     _assert_enabled()
     params = {"establishment_id": _establishment_id()}
     if iqama_number:

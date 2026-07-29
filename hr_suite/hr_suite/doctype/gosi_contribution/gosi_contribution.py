@@ -5,6 +5,7 @@ from frappe.utils import flt
 
 from hr_suite.hr_suite.utils import (
 	assert_doctype_permissions,
+	assert_employee_access,
 	get_contract_nationality_lookup,
 	get_employee_basic_salary as get_current_basic_salary,
 	get_employee_is_saudi,
@@ -195,6 +196,7 @@ def create_payroll_entries(doc, method=None):
 @frappe.whitelist()
 def get_employee_basic_salary(employee):
 	"""Return the employee's current basic salary for JS auto-fill."""
+	assert_employee_access(employee)
 	return get_current_basic_salary(employee)
 
 

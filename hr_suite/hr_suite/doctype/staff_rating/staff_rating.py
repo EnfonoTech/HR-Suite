@@ -2,6 +2,7 @@ import re
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from hr_suite.hr_suite.utils import assert_employee_access
 
 
 class StaffRating(Document):
@@ -65,6 +66,8 @@ class StaffRating(Document):
 
 @frappe.whitelist()
 def submit_rating(employee, rating_direction, rating_period, rating, review=""):
+	assert_employee_access(employee)
+	frappe.has_permission("Staff Rating", "create", throw=True)
 	rater_emp = _get_employee_for_user(frappe.session.user)
 	if not rater_emp:
 		frappe.throw(_("No Employee record found for your user account."))
@@ -103,6 +106,7 @@ def get_rating_summary(employee):
 
 @frappe.whitelist()
 def get_rateable_relationship(employee):
+	assert_employee_access(employee)
 	me = _get_employee_for_user(frappe.session.user)
 	if not me or me == employee:
 		return {"can_rate": False, "directions": []}

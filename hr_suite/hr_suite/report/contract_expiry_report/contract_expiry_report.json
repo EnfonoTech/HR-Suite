@@ -6,7 +6,7 @@
  "is_standard": "Yes",
  "module": "Hr Suite",
  "name": "Contract Expiry Report",
- "ref_doctype": "Saudi Employment Contract",
+ "ref_doctype": "Country Employment Contract",
  "report_name": "Contract Expiry Report",
  "report_type": "Script Report",
  "roles": [
