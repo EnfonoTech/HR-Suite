@@ -3,7 +3,7 @@
  "docstatus": 0,
  "doctype": "Number Card",
  "document_type": "Employee Grievance",
- "filters_json": "[[\"Employee Grievance\", \"status\", \"=\", \"In Review\"]]",
+ "filters_json": "[[\"Employee Grievance\", \"status\", \"=\", \"Investigated\"]]",
  "function": "Count",
  "idx": 0,
  "is_public": 1,

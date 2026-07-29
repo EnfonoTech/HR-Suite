@@ -31,13 +31,19 @@
  ],
  "is_standard": "Yes",
  "module": "Hr Suite",
- "name": "Saudi Leave Balance Report",
+ "name": "Leave Balance Report",
  "ref_doctype": "Employee",
- "report_name": "Saudi Leave Balance Report",
+ "report_name": "Leave Balance Report",
  "report_type": "Script Report",
  "roles": [
-  {"role": "HR Manager"},
-  {"role": "HR User"},
-  {"role": "System Manager"}
+  {
+   "role": "HR Manager"
+  },
+  {
+   "role": "HR User"
+  },
+  {
+   "role": "System Manager"
+  }
  ]
 }

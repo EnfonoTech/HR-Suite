@@ -326,14 +326,18 @@ def _get_identity_lookup(employee_rows):
             lookup[row.employee] = str(identity).strip()
 
     for doctype, employee_field, candidate_fields in (
-        ("Saudi Employment Contract", "employee", ["employee", "iqama_number", "passport_number"]),
+        ("Country Employment Contract", "employee", ["employee", "permit_number", "passport_number"]),
         ("Work Permit Iqama", "employee", ["employee", "iqama_number"]),
         ("Employee", "name", ["name", "national_id", "iqama_number", "passport_number"]),
     ):
         fields = _get_existing_fields(doctype, candidate_fields)
         if employee_field not in fields:
             continue
-        identity_fields = [field for field in ("national_id", "iqama_number", "passport_number") if field in fields]
+        identity_fields = [
+            field
+            for field in ("national_id", "iqama_number", "permit_number", "passport_number")
+            if field in fields
+        ]
         if not identity_fields:
             continue
 
@@ -348,7 +352,12 @@ def _get_identity_lookup(employee_rows):
             employee = row.get("employee") or row.get("name")
             if employee in lookup:
                 continue
-            identity = row.get("national_id") or row.get("iqama_number") or row.get("passport_number")
+            identity = (
+                row.get("national_id")
+                or row.get("iqama_number")
+                or row.get("permit_number")
+                or row.get("passport_number")
+            )
             if identity:
                 lookup[employee] = str(identity).strip()
 
@@ -369,14 +378,14 @@ def _get_existing_fields(doctype, candidate_fields):
 
 def _merge_contract_identity_details(details, employees):
     fields = _get_existing_fields(
-        "Saudi Employment Contract",
-        ["employee", "iqama_number", "passport_number", "nationality"],
+        "Country Employment Contract",
+        ["employee", "permit_number", "passport_number", "nationality"],
     )
     if "employee" not in fields:
         return
 
     for row in frappe.get_all(
-        "Saudi Employment Contract",
+        "Country Employment Contract",
         filters={"employee": ["in", employees], "docstatus": ["<", 2]},
         fields=fields,
         order_by="start_date desc, modified desc",
@@ -386,7 +395,7 @@ def _merge_contract_identity_details(details, employees):
         employee = row.get("employee")
         if employee not in details:
             continue
-        for fieldname in ("iqama_number", "passport_number", "nationality"):
+        for fieldname in ("permit_number", "passport_number", "nationality"):
             if fieldname in fields and row.get(fieldname) and not details[employee].get(fieldname):
                 details[employee][fieldname] = row.get(fieldname)
 

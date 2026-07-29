@@ -28,7 +28,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-RPC-.YYYY.-.####",
+   "options": "RPC-.YYYY.-.####\nSAU-RPC-.YYYY.-.####",
    "reqd": 1
   },
   {

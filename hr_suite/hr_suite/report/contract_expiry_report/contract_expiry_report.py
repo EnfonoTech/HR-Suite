@@ -15,7 +15,7 @@ def execute(filters=None):
 
 def get_columns():
 	return [
-		{"fieldname": "name", "label": _("Contract"), "fieldtype": "Link", "options": "Saudi Employment Contract", "width": 180},
+		{"fieldname": "name", "label": _("Contract"), "fieldtype": "Link", "options": "Country Employment Contract", "width": 180},
 		{"fieldname": "employee", "label": _("Employee"), "fieldtype": "Link", "options": "Employee", "width": 130},
 		{"fieldname": "employee_name", "label": _("Name"), "fieldtype": "Data", "width": 180},
 		{"fieldname": "contract_type", "label": _("Type"), "fieldtype": "Data", "width": 160},
@@ -32,9 +32,9 @@ def get_data(filters):
 	cutoff = add_days(today(), days)
 
 	conditions = [
-		"Fixed Term'",
+		"contract_type = 'Limited'",
 		"end_date <= %(cutoff)s",
-		"contract_status = 'Active",
+		"contract_status = 'Active'",
 	]
 	values = {"cutoff": cutoff, "today": today()}
 
@@ -49,7 +49,7 @@ def get_data(filters):
 		SELECT
 			name, employee, employee_name, contract_type,
 			start_date, end_date, contract_status, basic_salary
-		FROM `tabSaudi Employment Contract`
+		FROM `tabCountry Employment Contract`
 		{where}
 		ORDER BY end_date ASC
 		""",

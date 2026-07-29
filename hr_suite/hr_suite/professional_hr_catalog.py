@@ -130,7 +130,7 @@ FEATURES = [
 	{"id": "statutory-hr-record-row", "category": "components", "title": "Statutory HR Records Row", "summary": "Record detail row used inside Statutory HR Records Register.", "target_type": "DocType", "target": "Statutory HR Records Register", "allow_entry": False, "route_target_type": "DocType", "route_target": "Statutory HR Records Register", "action_label": "Open Parent Records"},
 
 	# ── Reports and Analytics ────────────────────────────────────────────────
-	{"id": "labor-coverage-matrix", "category": "reports", "title": "Labor Coverage Matrix", "summary": "Report coverage of labor law requirements across HR controls for each country.", "target_type": "Report", "target": "Saudi Labor Coverage Matrix"},
+	{"id": "labor-coverage-matrix", "category": "reports", "title": "Labor Coverage Matrix", "summary": "Report coverage of labor law requirements across HR controls for each country.", "target_type": "Report", "target": "Labor Coverage Matrix"},
 	{"id": "policy-compliance-register", "category": "reports", "title": "Policy Compliance Register", "summary": "Review policy compliance status and gaps.", "target_type": "Report", "target": "Policy Compliance Register"},
 	{"id": "compliance-case-tracker", "category": "reports", "title": "Compliance Case Tracker", "summary": "Track compliance cases across ownership and status.", "target_type": "Report", "target": "Compliance Case Tracker"},
 	{"id": "labor-inspection-tracker", "category": "reports", "title": "Labor Inspection Tracker", "summary": "Monitor inspection findings and corrective actions.", "target_type": "Report", "target": "Labor Inspection Tracker"},
@@ -139,7 +139,7 @@ FEATURES = [
 	{"id": "contract-expiry-report", "category": "reports", "title": "Contract Expiry Report", "summary": "Monitor contract expiry dates and renewal pipeline.", "target_type": "Report", "target": "Contract Expiry Report"},
 	{"id": "work-permit-expiry-report", "category": "reports", "title": "Work Permit Expiry Report", "summary": "Monitor work permit and residency expiry risks.", "target_type": "Report", "target": "Work Permit Expiry Report"},
 	{"id": "nitaqat-compliance-report", "category": "reports", "title": "Nitaqat Compliance Report", "summary": "Review Nitaqat compliance and Saudization band position.", "target_type": "Report", "target": "Nitaqat Compliance Report"},
-	{"id": "leave-balance-report", "category": "reports", "title": "Leave Balance Report", "summary": "Review leave balances and accrued liabilities across all countries.", "target_type": "Report", "target": "Saudi Leave Balance Report"},
+	{"id": "leave-balance-report", "category": "reports", "title": "Leave Balance Report", "summary": "Review leave balances and accrued liabilities across all countries.", "target_type": "Report", "target": "Leave Balance Report"},
 	{"id": "outstanding-employee-loans", "category": "reports", "title": "Outstanding Employee Loans", "summary": "Report outstanding employee loan balances.", "target_type": "Report", "target": "Outstanding Employee Loans"},
 	{"id": "loan-deduction-register", "category": "reports", "title": "Loan Deduction Register", "summary": "Review payroll loan deductions.", "target_type": "Report", "target": "Loan Deduction Register"},
 	{"id": "monthly-loan-recovery-summary", "category": "reports", "title": "Monthly Loan Recovery Summary", "summary": "Summarize monthly employee loan recovery.", "target_type": "Report", "target": "Monthly Loan Recovery Summary"},

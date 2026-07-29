@@ -24,7 +24,7 @@
 | 3 | Open the auto-created `Employee Onboarding` | Linked to the Job Applicant, Employee and Candidate Profile |
 | 4 | Add an Onboarding Template or activities, Save | Activities listed on the form |
 | 5 | Submit the Employee Onboarding | HRMS creates the boarding Project and Tasks |
-| 6 | Open `Saudi Employment Contract` → New for Ahmed | Fill basic_salary = 10000, nationality = "Saudi Arabia" |
+| 6 | Open `Country Employment Contract` → New for Ahmed | Fill basic_salary = 10000, nationality = "Saudi Arabia" |
 | 7 | Submit the contract | Employee's `GOSI Contribution Base` = 10,000; `Employee Type` = "Saudi National" auto-set |
 | 8 | Open Ahmed's Employee form | GOSI Contribution Base visible in Overview, Employee Type = Saudi National, Active Contract banner visible |
 | 9 | Click "HR Suite → EOSB Estimate" button | Shows EOSB estimate: ~2 years × 2/3 month = ~SAR 6,667 |
@@ -400,7 +400,7 @@ Candidate Profile (status=Accepted)
 Employee Onboarding (submitted)
     └─► Boarding Project + Tasks  [auto, HRMS]
 
-Saudi Employment Contract (submitted)
+Country Employment Contract (submitted)
     └─► Employee: GOSI salary, Employee Type, Designation synced  [auto]
 
 Leave Application (validate)

@@ -1,6 +1,6 @@
 from frappe.tests.utils import FrappeTestCase
 
-from hr_suite.hr_suite.report.saudi_leave_balance_report.saudi_leave_balance_report import execute
+from hr_suite.hr_suite.report.leave_balance_report.leave_balance_report import execute
 
 
 class TestSaudiLeaveBalanceReport(FrappeTestCase):

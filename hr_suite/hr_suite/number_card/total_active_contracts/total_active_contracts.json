@@ -1,8 +1,8 @@
 {
  "creation": "2026-03-17 00:00:00.000000",
  "doctype": "Number Card",
- "document_type": "Saudi Employment Contract",
- "filters_json": "[[\"Saudi Employment Contract\", \"contract_status\", \"=\", \"Active\"]]",
+ "document_type": "Country Employment Contract",
+ "filters_json": "[[\"Country Employment Contract\", \"contract_status\", \"=\", \"Active\"]]",
  "function": "Count",
  "is_public": 1,
  "is_standard": 1,

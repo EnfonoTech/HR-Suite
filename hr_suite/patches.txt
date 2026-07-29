@@ -6,3 +6,6 @@
 # Patches added in this section will be executed after doctypes are migrated
 hr_suite.patches.reload_annual_leave_workflow
 hr_suite.patches.restore_core_employee_onboarding
+hr_suite.patches.restore_core_employee_grievance
+hr_suite.patches.migrate_saudi_employment_contract
+hr_suite.patches.rename_country_neutral_fields

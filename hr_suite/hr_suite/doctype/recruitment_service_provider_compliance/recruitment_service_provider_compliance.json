@@ -43,7 +43,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-RSP-.YYYY.-.####",
+   "options": "RSP-.YYYY.-.####\nSAU-RSP-.YYYY.-.####",
    "reqd": 1
   },
   {
@@ -69,7 +69,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Provider Type",
-   "options": "\nSaudi Recruitment Mediation",
+   "options": "\nRecruitment Mediation",
    "reqd": 1
   },
   {

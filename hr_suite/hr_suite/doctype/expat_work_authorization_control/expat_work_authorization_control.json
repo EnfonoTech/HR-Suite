@@ -31,7 +31,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-EWAC-.YYYY.-.####",
+   "options": "EWAC-.YYYY.-.####\nSAU-EWAC-.YYYY.-.####",
    "reqd": 1
   },
   {

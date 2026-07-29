@@ -642,7 +642,7 @@ function _hr_suite_document_alerts(frm) {
 
 function _hr_suite_contract_banner(frm) {
 	// Try Country Employment Contract first (multi-country).
-	// If the doctype doesn't exist on this instance, fall back to Saudi Employment Contract.
+	// If the doctype doesn't exist on this instance, fall back to Country Employment Contract.
 	frappe.db
 		.get_list("Country Employment Contract", {
 			filters: { employee: frm.doc.name, contract_status: "Active" },
@@ -671,7 +671,7 @@ function _hr_suite_contract_banner(frm) {
 				);
 				return;
 			}
-			// Fallback: Saudi Employment Contract (legacy / existing SA deployments)
+			// Fallback: Country Employment Contract (legacy / existing SA deployments)
 			_hr_suite_sa_contract_banner(frm);
 		})
 		.catch(function () {
@@ -682,7 +682,7 @@ function _hr_suite_contract_banner(frm) {
 
 function _hr_suite_sa_contract_banner(frm) {
 	frappe.db
-		.get_list("Saudi Employment Contract", {
+		.get_list("Country Employment Contract", {
 			filters: { employee: frm.doc.name, contract_status: "Active" },
 			fields: [
 				"name", "basic_salary", "housing_allowance", "transport_allowance",

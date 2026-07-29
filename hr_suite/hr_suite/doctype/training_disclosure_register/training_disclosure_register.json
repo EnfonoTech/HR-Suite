@@ -31,7 +31,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-TDR-.YYYY.-.####",
+   "options": "TDR-.YYYY.-.####\nSAU-TDR-.YYYY.-.####",
    "reqd": 1
   },
   {

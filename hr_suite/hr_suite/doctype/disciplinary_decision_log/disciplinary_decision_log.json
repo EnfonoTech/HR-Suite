@@ -39,7 +39,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-DDL-.YYYY.-.####",
+   "options": "DDL-.YYYY.-.####\nSAU-DDL-.YYYY.-.####",
    "reqd": 1
   },
   {

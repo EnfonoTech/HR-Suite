@@ -13,10 +13,9 @@ from frappe.tests.utils import FrappeTestCase
 APP_ROOT = Path(__file__).resolve().parents[2]
 DOCTYPE_ROOT = APP_ROOT / "hr_suite" / "hr_suite" / "doctype"
 
-# `Employee Grievance` still shadows the HRMS DocType of the same name. It is wired into
-# HR Suite's own workflow, number cards, dashboard chart and Compliance Case Tracker report,
-# so renaming it needs its own patch — tracked separately.
-KNOWN_SHADOWED_DOCTYPES = {"employee_grievance"}
+# No DocType may shadow another app's. Employee Onboarding and Employee Grievance were both
+# removed in favour of the HRMS originals; keep this empty.
+KNOWN_SHADOWED_DOCTYPES = set()
 
 
 class TestCoreDocTypeShadowing(FrappeTestCase):
@@ -34,12 +33,26 @@ class TestCoreDocTypeShadowing(FrappeTestCase):
 
 		self.assertEqual(shadowed - KNOWN_SHADOWED_DOCTYPES, set())
 
-	def test_employee_onboarding_is_the_hrms_doctype(self):
+	def test_hrms_doctypes_kept_their_own_definitions(self):
 		if "hrms" not in frappe.get_installed_apps():
 			self.skipTest("hrms is not installed")
 
-		self.assertEqual(frappe.db.get_value("DocType", "Employee Onboarding", "module"), "HR")
+		expected = {
+			"Employee Onboarding": (
+				"boarding_status",
+				"date_of_joining",
+				"boarding_begins_on",
+				"job_applicant",
+			),
+			"Employee Grievance": ("raised_by", "subject", "grievance_against", "status"),
+		}
+		for doctype, fieldnames in expected.items():
+			self.assertEqual(frappe.db.get_value("DocType", doctype, "module"), "HR", doctype)
+			meta = frappe.get_meta(doctype)
+			for fieldname in fieldnames:
+				self.assertTrue(meta.has_field(fieldname), f"{doctype}.{fieldname}")
 
-		meta = frappe.get_meta("Employee Onboarding")
-		for fieldname in ("boarding_status", "date_of_joining", "boarding_begins_on", "job_applicant"):
-			self.assertTrue(meta.has_field(fieldname), fieldname)
+	def test_no_saudi_specific_doctypes_ship(self):
+		"""HR Suite is multi-country — a DocType must not be named for one country."""
+		shipped = {path.parent.name for path in DOCTYPE_ROOT.glob("*/*.json")}
+		self.assertEqual({name for name in shipped if "saudi" in name}, set())

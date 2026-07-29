@@ -37,7 +37,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-EXIT-.YYYY.-.####",
+   "options": "EXIT-.YYYY.-.####\nSAU-EXIT-.YYYY.-.####",
    "reqd": 1
   },
   {

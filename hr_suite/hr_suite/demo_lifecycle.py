@@ -69,13 +69,13 @@ def _ensure_employee(data: dict) -> str:
 
 def _ensure_contract(data: dict) -> str:
     existing = frappe.db.get_value(
-        "Saudi Employment Contract",
+        "Country Employment Contract",
         {"employee": data["employee"], "start_date": data["start_date"], "docstatus": ["<", 2]},
         "name",
     )
     if existing:
         return existing
-    doc = frappe.get_doc({"doctype": "Saudi Employment Contract", **data})
+    doc = frappe.get_doc({"doctype": "Country Employment Contract", **data})
     doc.insert(ignore_permissions=True)
     try:
         doc.submit()
@@ -200,7 +200,7 @@ def seed_employee_lifecycle_demo():
     _ensure_contract({
         "employee": ahmed,
         "company": company,
-        "contract_type": "Open Ended",
+        "contract_type": "Unlimited",
         "nationality": "Saudi Arabia",
         "start_date": add_days(today, -1095),
         "basic_salary": 10000,
@@ -251,7 +251,7 @@ def seed_employee_lifecycle_demo():
     _ensure_contract({
         "employee": john,
         "company": company,
-        "contract_type": "Fixed Term",
+        "contract_type": "Limited",
         "nationality": "British",
         "start_date": add_days(today, -75),
         "end_date": add_days(today, 290),  # 1-year contract
@@ -293,7 +293,7 @@ def seed_employee_lifecycle_demo():
     _ensure_contract({
         "employee": sara,
         "company": company,
-        "contract_type": "Open Ended",
+        "contract_type": "Unlimited",
         "nationality": "Saudi Arabia",
         "start_date": add_days(today, -540),
         "basic_salary": 6500,
@@ -340,7 +340,7 @@ def seed_employee_lifecycle_demo():
     _ensure_contract({
         "employee": tariq,
         "company": company,
-        "contract_type": "Open Ended",
+        "contract_type": "Unlimited",
         "nationality": "Saudi Arabia",
         "start_date": add_days(today, -2555),
         "basic_salary": 14000,

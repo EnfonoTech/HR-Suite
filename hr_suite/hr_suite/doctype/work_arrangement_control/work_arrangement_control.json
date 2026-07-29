@@ -26,7 +26,7 @@
   "daily_hours_limit",
   "weekly_hours_limit",
   "portal_section",
-  "saudi_only_applicable",
+  "country_rule_applicable",
   "platform_reference",
   "compensatory_leave_allowed",
   "legal_reference",
@@ -38,7 +38,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "SAU-WAC-.YYYY.-.####",
+   "options": "WAC-.YYYY.-.####\nSAU-WAC-.YYYY.-.####",
    "reqd": 1
   },
   {
@@ -71,8 +71,8 @@
   {
    "fieldname": "contract",
    "fieldtype": "Link",
-   "label": "Saudi Employment Contract",
-   "options": "Saudi Employment Contract"
+   "label": "Country Employment Contract",
+   "options": "Country Employment Contract"
   },
   {
    "fieldname": "arrangement_type",
@@ -145,9 +145,9 @@
   },
   {
    "default": 0,
-   "fieldname": "saudi_only_applicable",
+   "fieldname": "country_rule_applicable",
    "fieldtype": "Check",
-   "label": "Saudi-only Rule Applies"
+   "label": "Country-specific Rule Applies"
   },
   {
    "fieldname": "platform_reference",

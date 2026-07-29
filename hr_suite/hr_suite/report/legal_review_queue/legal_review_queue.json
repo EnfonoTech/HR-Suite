@@ -7,15 +7,21 @@
  "filters": [],
  "is_standard": "Yes",
  "module": "Hr Suite",
- "name": "Saudi Legal Review Queue",
+ "name": "Legal Review Queue",
  "prepared_report": 0,
  "ref_doctype": "Final Settlement SLA",
- "report_name": "Saudi Legal Review Queue",
+ "report_name": "Legal Review Queue",
  "report_type": "Script Report",
  "roles": [
-  {"role": "HR Manager"},
-  {"role": "HR User"},
-  {"role": "System Manager"}
+  {
+   "role": "HR Manager"
+  },
+  {
+   "role": "HR User"
+  },
+  {
+   "role": "System Manager"
+  }
  ],
  "timeout": 0
 }

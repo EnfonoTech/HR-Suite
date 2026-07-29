@@ -444,7 +444,7 @@ def get_workflow_route_audit(workflow_key=None):
 
 def _get_contract_hours_per_day(employee):
 	working_hours = frappe.db.get_value(
-		"Saudi Employment Contract",
+		"Country Employment Contract",
 		{"employee": employee, "contract_status": "Active"},
 		"working_hours_per_day",
 		order_by="start_date desc",

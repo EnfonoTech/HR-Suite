@@ -1,5 +1,5 @@
 """
-Saudi Leave Balance Report
+Leave Balance Report
 """
 import frappe
 from frappe import _

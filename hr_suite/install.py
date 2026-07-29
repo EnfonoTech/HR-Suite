@@ -31,6 +31,7 @@ def after_install():
 	ensure_employee_custom_fields()
 	seed_country_configs()
 	seed_employee_document_types()
+	seed_grievance_types()
 	frappe.db.commit()
 
 
@@ -53,6 +54,7 @@ def after_migrate():
 	ensure_employee_custom_fields()
 	seed_country_configs()
 	seed_employee_document_types()
+	seed_grievance_types()
 	remove_obsolete_reports()
 
 
@@ -824,6 +826,29 @@ def seed_country_configs():
 
 
 # ─── Employee Document Types ────────────────────────────────────────────────────
+
+def seed_grievance_types():
+	"""HRMS keys Employee Grievance off Grievance Type records — seed the HR Suite set."""
+	if not frappe.db.exists("DocType", "Grievance Type"):
+		return
+
+	for name in (
+		"Pay",
+		"Leave",
+		"Attendance",
+		"Manager Conduct",
+		"Disciplinary Action",
+		"Termination",
+		"Harassment",
+		"Other",
+	):
+		if frappe.db.exists("Grievance Type", name):
+			continue
+		try:
+			frappe.get_doc({"doctype": "Grievance Type", "name": name}).insert(ignore_permissions=True)
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), f"HR Suite: failed to seed Grievance Type {name}")
+
 
 def seed_employee_document_types():
 	defaults = [

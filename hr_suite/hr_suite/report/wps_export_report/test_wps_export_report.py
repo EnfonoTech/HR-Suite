@@ -35,12 +35,12 @@ class TestWpsExportReport(FrappeTestCase):
 	@contextmanager
 	def _patch_sparse_employee_meta(self):
 		def exists(doctype, name=None, *args, **kwargs):
-			return doctype == "DocType" and name in {"Employee", "Saudi Employment Contract"}
+			return doctype == "DocType" and name in {"Employee", "Country Employment Contract"}
 
 		def get_meta(doctype):
 			field_map = {
 				"Employee": {"employee_name"},
-				"Saudi Employment Contract": {"employee", "iqama_number", "nationality"},
+				"Country Employment Contract": {"employee", "iqama_number", "nationality"},
 			}
 			return frappe._dict(has_field=lambda fieldname: fieldname in field_map.get(doctype, set()))
 
@@ -48,7 +48,7 @@ class TestWpsExportReport(FrappeTestCase):
 			if doctype == "Employee":
 				self.assertEqual(kwargs["fields"], ["name", "employee_name"])
 				return [frappe._dict(name="EMP-001", employee_name="Demo Employee")]
-			if doctype == "Saudi Employment Contract":
+			if doctype == "Country Employment Contract":
 				return [
 					frappe._dict(
 						employee="EMP-001",

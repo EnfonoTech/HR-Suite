@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from frappe.tests.utils import FrappeTestCase
 
-from hr_suite.hr_suite.report.saudi_labor_coverage_matrix import saudi_labor_coverage_matrix as coverage_module
+from hr_suite.hr_suite.report.labor_coverage_matrix import labor_coverage_matrix as coverage_module
 
 
 class TestSaudiLaborCoverageMatrix(FrappeTestCase):

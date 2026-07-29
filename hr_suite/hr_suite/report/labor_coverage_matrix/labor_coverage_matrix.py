@@ -618,15 +618,18 @@ def get_coverage_items():
 			"legal_reference": _("Annex 5 unified contract models"),
 			"requirement": _("Official print formats for standard, part-time, temporary/casual, and seasonal contracts"),
 			"component_type": "Print Formats",
-			"component_name": "Saudi Standard/Part Time/Temporary/Seasonal Contract Official",
+			"component_name": "Standard/Part Time/Temporary/Seasonal Contract Official",
 			"checks": [
-				{"kind": "print_format", "name": "Saudi Standard Contract Official"},
-				{"kind": "print_format", "name": "Saudi Part Time Contract Official"},
-				{"kind": "print_format", "name": "Saudi Temporary Casual Contract Official"},
-				{"kind": "print_format", "name": "Saudi Seasonal Contract Official"},
+				{"kind": "print_format", "name": "Standard Contract Official"},
+				{"kind": "print_format", "name": "Part Time Contract Official"},
+				{"kind": "print_format", "name": "Temporary Casual Contract Official"},
+				{"kind": "print_format", "name": "Seasonal Contract Official"},
 			],
-			"evidence": _("Four Jinja print formats render the contract models as usable ERPNext print outputs."),
-			"notes": _("Completes the contract-model gap by turning the annex into printable operational documents."),
+			"evidence": _("Print formats for the per-country official contract models."),
+			"notes": _(
+				"Open gap: the country-specific contract-model print formats are not shipped yet — "
+				"the previous ones were empty placeholders and were removed."
+			),
 		},
 		{
 			"coverage_area": _("Recruitment Providers"),

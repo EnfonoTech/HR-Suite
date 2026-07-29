@@ -79,9 +79,9 @@ def send_contract_expiry_alerts():
 	alert_days = settings.contract_expiry_alert_days or 60
 
 	records = frappe.get_all(
-		"Saudi Employment Contract",
+		"Country Employment Contract",
 		filters={
-			"contract_type": "Fixed Term",
+			"contract_type": "Limited",
 			"end_date": ["between", [today(), add_days(today(), alert_days)]],
 			"contract_status": "Active",
 		},
@@ -95,7 +95,7 @@ def send_contract_expiry_alerts():
 		_send_alert(
 			subject=f"Alert: Contract expiry for {rec.employee_name} in {days_left} days",
 			message=f"Employee {rec.employee_name} ({rec.employee}) contract expires on {rec.end_date}.",
-			doctype="Saudi Employment Contract",
+			doctype="Country Employment Contract",
 			docname=rec.name,
 		)
 
@@ -273,7 +273,7 @@ def send_probation_end_alerts():
 	"""
 	two_weeks_ahead = add_days(today(), 14)
 	records = frappe.get_all(
-		"Saudi Employment Contract",
+		"Country Employment Contract",
 		filters={
 			"probation_end_date": ["between", [today(), two_weeks_ahead]],
 			"contract_status": "Active",
@@ -295,7 +295,7 @@ def send_probation_end_alerts():
 				"Please decide whether to confirm or terminate employment before the probation period ends "
 				"in accordance with Saudi Labor Law Article 53."
 			),
-			doctype="Saudi Employment Contract",
+			doctype="Country Employment Contract",
 			docname=rec.name,
 		)
 

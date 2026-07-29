@@ -7,15 +7,21 @@
  "filters": [],
  "is_standard": "Yes",
  "module": "Hr Suite",
- "name": "Saudi Compliance Obligation Backlog",
+ "name": "Compliance Obligation Backlog",
  "prepared_report": 0,
  "ref_doctype": "HR Compliance Action Log",
- "report_name": "Saudi Compliance Obligation Backlog",
+ "report_name": "Compliance Obligation Backlog",
  "report_type": "Script Report",
  "roles": [
-  {"role": "HR Manager"},
-  {"role": "HR User"},
-  {"role": "System Manager"}
+  {
+   "role": "HR Manager"
+  },
+  {
+   "role": "HR User"
+  },
+  {
+   "role": "System Manager"
+  }
  ],
  "timeout": 0
 }

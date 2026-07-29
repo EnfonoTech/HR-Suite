@@ -123,7 +123,7 @@ class TerminationNotice(Document):
 			emp = frappe.get_doc("Employee", self.employee)
 			basic = (
 				frappe.db.get_value(
-					"Saudi Employment Contract",
+					"Country Employment Contract",
 					{"employee": self.employee, "contract_status": "Active"},
 					"basic_salary",
 				)

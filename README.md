@@ -107,7 +107,7 @@ HRMS handles standard HR. HR Suite wraps every action with country-resolution lo
 
 **Employee Relations**
 - `Employee Penalty` — penalty issuance with automatic payroll deduction on next run
-- `Employee Grievance` — grievance case tracking with resolution log
+- `Employee Grievance` (HRMS DocType, extended by HR Suite with channel, severity, SLA dates and investigation notes)
 - `Investigation Record` — internal investigation documentation
 - `Employee Warning Notice` — formal warning issuance and acknowledgement
 - `Absence Case` — unexcused absence tracking with case resolution

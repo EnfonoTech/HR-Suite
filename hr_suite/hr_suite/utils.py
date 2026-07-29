@@ -68,7 +68,7 @@ def get_active_contract(employee: str, fields=None, as_dict=True):
 		"total_salary",
 	]
 	return frappe.db.get_value(
-		"Saudi Employment Contract",
+		"Country Employment Contract",
 		{"employee": employee, "contract_status": "Active"},
 		field_list,
 		as_dict=as_dict,
@@ -357,7 +357,7 @@ def get_employee_is_saudi(employee: str) -> bool:
 	Resolution order:
 	  1. hr_suite_employee_type Select field on Employee ("Saudi National" / "Expatriate")
 	  2. nationality text field on Employee (ERPNext standard field)
-	  3. nationality on the active Saudi Employment Contract
+	  3. nationality on the active Country Employment Contract
 	"""
 	if not employee:
 		return False
@@ -442,7 +442,7 @@ def get_contract_nationality_lookup(employees: list[str]) -> dict[str, str]:
 
 	lookup = {}
 	for row in frappe.get_all(
-		"Saudi Employment Contract",
+		"Country Employment Contract",
 		filters={"employee": ["in", employees], "docstatus": ["<", 2]},
 		fields=["employee", "nationality"],
 		order_by="start_date desc, modified desc",
@@ -550,10 +550,7 @@ def get_active_country_contract(employee: str, fields=None, as_dict=True):
         as_dict=as_dict,
         order_by="start_date desc",
     )
-    if row:
-        return row
-    # Fall back to Saudi Employment Contract for backward compatibility
-    return get_active_contract(employee, fields=fields, as_dict=as_dict)
+    return row
 
 
 def get_employee_basic_salary_global(employee: str) -> float:
