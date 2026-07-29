@@ -145,13 +145,13 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "1",
+   "default": 1,
    "fieldname": "acknowledgement_required",
    "fieldtype": "Check",
    "label": "Acknowledgement Required"
   },
   {
-   "default": "7",
+   "default": 7,
    "fieldname": "acknowledgement_due_days",
    "fieldtype": "Int",
    "label": "Acknowledgement Due Days"

@@ -88,7 +88,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft"
+   "options": "Draft\nNeeds Conversion\nClosed\nCancelled"
   },
   {
    "fieldname": "period_section",
@@ -144,7 +144,7 @@
    "label": "Portal Evidence"
   },
   {
-   "default": "0",
+   "default": 0,
    "fieldname": "saudi_only_applicable",
    "fieldtype": "Check",
    "label": "Saudi-only Rule Applies"
@@ -155,7 +155,7 @@
    "label": "Platform Reference"
   },
   {
-   "default": "0",
+   "default": 0,
    "fieldname": "compensatory_leave_allowed",
    "fieldtype": "Check",
    "label": "Compensatory Leave Allowed"

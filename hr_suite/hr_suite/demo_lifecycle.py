@@ -87,7 +87,7 @@ def _ensure_contract(data: dict) -> str:
 def _ensure_iqama(data: dict) -> str:
     existing = frappe.db.get_value(
         "Work Permit Iqama",
-        {"employee": data["employee"], "document_type": data.get("document_type", "Iqama")},
+        {"employee": data["employee"], "iqama_number": data.get("iqama_number")},
         "name",
     )
     if existing:
@@ -265,12 +265,11 @@ def seed_employee_lifecycle_demo():
     _ensure_iqama({
         "employee": john,
         "company": company,
-        "document_type": "Iqama",
         "iqama_number": "2345678901",
         "nationality": "British",
-        "issue_date": add_days(today, -75),
-        "expiry_date": add_days(today, 290),
-        "status": "Active",
+        "iqama_issue_date": add_days(today, -75),
+        "iqama_expiry_date": add_days(today, 290),
+        "iqama_status": "Active",
     })
     result["employee_2_expat_probation"] = john
 
@@ -359,11 +358,15 @@ def seed_employee_lifecycle_demo():
             "doctype": "Annual Leave Disbursement",
             "employee": tariq,
             "company": company,
-            "leave_days": 22,
-            "daily_wage": round(14000 / 30, 2),
-            "disbursement_amount": round(22 * 14000 / 30, 2),
-            "disbursement_date": add_days(today, 5),
-            "notes": "22 unused annual leave days at time of resignation",
+            "leave_year": getdate(today).year,
+            "leave_from_date": add_days(today, -365),
+            "leave_to_date": today,
+            "leave_days_entitled": 22,
+            "leave_days_to_pay": 22,
+            "disbursement_type": "Basic Salary Only",
+            "monthly_basic_salary": 14000,
+            "daily_basic_rate": round(14000 / 30, 2),
+            "status": "Draft",
         }).insert(ignore_permissions=True)
 
     # Termination notice (resignation)

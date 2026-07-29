@@ -71,7 +71,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Pending Submission"
+   "options": "Pending Submission\nSubmitted\nAccepted\nOverdue\nCancelled"
   },
   {
    "default": "P0",

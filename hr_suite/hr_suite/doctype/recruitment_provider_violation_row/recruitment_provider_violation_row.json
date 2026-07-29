@@ -41,7 +41,7 @@
    "fieldname": "severity",
    "fieldtype": "Select",
    "label": "Severity",
-   "options": "Low"
+   "options": "Low\nMedium\nHigh"
   },
   {
    "default": "Open",

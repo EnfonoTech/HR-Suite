@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Number Card",
  "document_type": "Employee Grievance",
- "filters_json": "[[\"Employee Grievance\",\"status\",\"=\",\"Resolved / \u0645\u062d\u0644\u0648\u0644\u0629\"]]",
+ "filters_json": "[[\"Employee Grievance\", \"status\", \"=\", \"Resolved\"]]",
  "function": "Count",
  "idx": 0,
  "is_public": 1,

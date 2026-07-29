@@ -82,7 +82,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft"
+   "options": "Draft\nActive\nRecovery Due\nCompleted\nWaived\nCancelled"
   },
   {
    "fieldname": "agreement_section",

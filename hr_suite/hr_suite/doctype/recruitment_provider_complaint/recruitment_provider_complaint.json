@@ -74,7 +74,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Open"
+   "options": "Open\nOverdue\nResolved\nClosed"
   },
   {
    "fieldname": "resolution_section",

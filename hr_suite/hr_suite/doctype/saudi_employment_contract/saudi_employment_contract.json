@@ -132,7 +132,7 @@
    "reqd": 1
   },
   {
-   "depends_on": "Fixed Term'",
+   "depends_on": "eval:doc.contract_type==\"Fixed Term\"",
    "fieldname": "end_date",
    "fieldtype": "Date",
    "in_list_view": 1,

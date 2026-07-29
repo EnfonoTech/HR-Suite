@@ -60,7 +60,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Category",
-   "options": "\nAttendance",
+   "options": "\nAttendance\nWork Organization\nConduct\nIntegrity\nSafety",
    "reqd": 1
   },
   {
@@ -69,7 +69,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Active"
+   "options": "Active\nNeeds Legal Review\nRetired"
   },
   {
    "fieldname": "penalty_section",

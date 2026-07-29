@@ -81,7 +81,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Open"
+   "options": "Open\nOverdue\nSettled\nCancelled"
   },
   {
    "fieldname": "sla_section",
@@ -155,7 +155,7 @@
    "label": "Documents Returned On"
   },
   {
-   "default": "1",
+   "default": 1,
    "fieldname": "legal_review_required",
    "fieldtype": "Check",
    "label": "Legal Review Required"
@@ -165,7 +165,7 @@
    "fieldname": "risk_level",
    "fieldtype": "Select",
    "label": "Risk Level",
-   "options": "\nLow"
+   "options": "\nLow\nMedium\nHigh"
   },
   {
    "fieldname": "evidence_attachment",

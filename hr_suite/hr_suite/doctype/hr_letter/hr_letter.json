@@ -90,7 +90,6 @@
    "read_only": 1
   },
   {
-   "fetch_from": "employee.custom_nationality",
    "fieldname": "nationality",
    "fieldtype": "Data",
    "label": "Nationality",

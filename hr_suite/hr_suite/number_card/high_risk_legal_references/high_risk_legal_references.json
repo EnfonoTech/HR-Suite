@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Number Card",
  "document_type": "Legal Reference Matrix",
- "filters_json": "[[\"Legal Reference Matrix\",\"status\",\"=\",\"Active / \u0633\u0627\u0631\u064a\"],[\"Legal Reference Matrix\",\"risk_level\",\"=\",\"High / \u0645\u0631\u062a\u0641\u0639\"]]",
+ "filters_json": "[[\"Legal Reference Matrix\", \"status\", \"=\", \"Active\"], [\"Legal Reference Matrix\", \"risk_level\", \"=\", \"High\"]]",
  "function": "Count",
  "idx": 0,
  "is_public": 1,

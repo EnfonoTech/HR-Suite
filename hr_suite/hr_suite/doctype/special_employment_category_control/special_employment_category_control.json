@@ -76,7 +76,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft"
+   "options": "Draft\nNeeds Review\nApproved\nClosed"
   },
   {
    "fieldname": "controls_section",
@@ -84,7 +84,7 @@
    "label": "Controls"
   },
   {
-   "default": "1",
+   "default": 1,
    "fieldname": "job_risk_review_required",
    "fieldtype": "Check",
    "label": "Job Risk Review Required"
@@ -109,7 +109,7 @@
    "label": "Daily Hours Limit"
   },
   {
-   "default": "0",
+   "default": 0,
    "fieldname": "night_work_restriction",
    "fieldtype": "Check",
    "label": "Night Work Restriction"

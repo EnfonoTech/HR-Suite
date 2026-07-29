@@ -393,7 +393,12 @@ function _hr_suite_gosi_estimate(frm) {
 		}),
 	]).then(function ([rates, contracts]) {
 		rates = rates || {};
-		const isNational = (frm.doc.nationality || "").toLowerCase().includes("saudi");
+		// Employee ships no `nationality` field — HR Suite classifies via Employee Type,
+		// falling back to a site-added nationality field when one exists.
+		const isNational =
+			frm.doc.hr_suite_employee_type === "National" ||
+			(frm.doc.hr_suite_employee_type !== "Expatriate" &&
+				(frm.doc.nationality || "").toLowerCase().includes("saudi"));
 		const empRate  = isNational ? (flt(rates.gosi_saudi_employee_rate) || 9.75)
 		                            : (flt(rates.gosi_non_saudi_employee_rate) || 0);
 		const emplRate = isNational ? (flt(rates.gosi_saudi_employer_rate) || 12.5)

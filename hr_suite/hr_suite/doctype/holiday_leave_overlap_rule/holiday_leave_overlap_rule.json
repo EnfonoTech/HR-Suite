@@ -91,7 +91,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Required Action",
-   "options": "Extend Leave"
+   "options": "Extend Leave\nLegal Review\nCompensation\nNo Action"
   },
   {
    "default": "Open",

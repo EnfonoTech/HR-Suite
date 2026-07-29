@@ -60,7 +60,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft"
+   "options": "Draft\nGaps Found\nCompliant"
   },
   {
    "fieldname": "responsible_user",

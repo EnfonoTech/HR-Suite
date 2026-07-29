@@ -28,6 +28,7 @@
   "lost_time_days",
   "column_break_3",
   "medical_report_attached",
+  "medical_examination_done",
   "witnesses_section",
   "witness_name",
   "witness_contact",
@@ -175,6 +176,15 @@
    "fieldname": "medical_report_attached",
    "fieldtype": "Check",
    "label": "Medical Report Attached"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "medical_examination_done",
+   "fieldtype": "Check",
+   "label": "Medical Examination Done",
+   "read_only": 1,
+   "description": "Set automatically when a Medical Examination referencing this injury is submitted."
   },
   {
    "fieldname": "witnesses_section",

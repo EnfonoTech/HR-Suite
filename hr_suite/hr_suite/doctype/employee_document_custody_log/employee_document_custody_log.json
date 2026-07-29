@@ -83,7 +83,7 @@
    "label": "Custody & Return"
   },
   {
-   "default": "0",
+   "default": 0,
    "fieldname": "original_document_held",
    "fieldtype": "Check",
    "label": "Original Document Held"

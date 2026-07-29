@@ -6,7 +6,7 @@
  "custom_options": "",
  "doctype": "Dashboard Chart",
  "document_type": "Saudi Employment Contract",
- "filters_json": "[[\"Saudi Employment Contract\",\"contract_status\",\"=\",\"Active",
+ "filters_json": "[[\"Saudi Employment Contract\", \"contract_status\", \"=\", \"Active\"]]",
  "group_by_based_on": "nationality",
  "group_by_type": "Count",
  "is_public": 1,
