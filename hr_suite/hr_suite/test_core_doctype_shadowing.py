@@ -52,6 +52,24 @@ class TestCoreDocTypeShadowing(FrappeTestCase):
 			for fieldname in fieldnames:
 				self.assertTrue(meta.has_field(fieldname), f"{doctype}.{fieldname}")
 
+	def test_attendance_features_use_the_hrms_doctypes(self):
+		"""HR Suite must not invent its own copies of DocTypes HRMS already ships."""
+		if "hrms" not in frappe.get_installed_apps():
+			self.skipTest("hrms is not installed")
+
+		for doctype in ("Shift Type", "Shift Assignment", "Attendance", "Shift Location", "Employee Checkin"):
+			self.assertTrue(frappe.db.exists("DocType", doctype), doctype)
+
+		for doctype in (
+			"HR Shift Type",
+			"HR Shift Assignment",
+			"HR Daily Attendance",
+			"HR Employee Checkin",
+			"Attendance Location",
+			"Monthly Attendance Record",
+		):
+			self.assertFalse(frappe.db.exists("DocType", doctype), f"{doctype} should not exist")
+
 	def test_no_saudi_specific_doctypes_ship(self):
 		"""HR Suite is multi-country — a DocType must not be named for one country."""
 		shipped = {path.parent.name for path in DOCTYPE_ROOT.glob("*/*.json")}

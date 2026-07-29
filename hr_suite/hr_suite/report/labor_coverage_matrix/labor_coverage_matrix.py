@@ -316,13 +316,16 @@ def get_coverage_items():
 			"legal_reference": "Art. 90-102",
 			"requirement": _("Payroll, attendance, and official records"),
 			"component_type": "DocType",
-			"component_name": "Monthly Payroll + Monthly Attendance Record",
+			"component_name": "Monthly Payroll + Attendance",
 			"checks": [
 				{"kind": "doctype", "name": "Monthly Payroll"},
-				{"kind": "doctype", "name": "Monthly Attendance Record"},
+				{"kind": "doctype", "name": "Attendance"},
 			],
-			"evidence": _("Monthly payroll batch plus official attendance register with daily details."),
-			"notes": _("Core wage and attendance registers are present in the app."),
+			"evidence": _("Monthly payroll batch plus the HRMS attendance register with daily details."),
+			"notes": _(
+				"Monthly attendance totals are derived from HRMS Attendance rather than stored in a "
+				"separate register."
+			),
 		},
 		{
 			"coverage_area": _("Payroll & Benefits"),

@@ -1,6 +1,6 @@
 """
 location_utils.py
-Geo-reference utilities for Attendance Location management.
+Geo-reference utilities for Shift Location management.
 Mobile-specific APIs have been removed. These functions support the
 AttendanceLocation doctype validate/save hooks.
 """

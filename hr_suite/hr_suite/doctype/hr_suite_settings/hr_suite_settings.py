@@ -91,7 +91,7 @@ def _build_attendance_api_settings_reference(settings):
 				"resources": [
 					_resource_endpoint(base_url, "Employee Checkin"),
 					_resource_endpoint(base_url, "Attendance"),
-					_resource_endpoint(base_url, "Attendance Location"),
+					_resource_endpoint(base_url, "Shift Location"),
 				],
 				"absence_filter_example": f"{base_url}/api/resource/Attendance?filters=[[\"Attendance\",\"status\",\"=\",\"Absent\"]]",
 			},

@@ -9,7 +9,16 @@ from pathlib import Path
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt, get_first_day, get_last_day, getdate, now_datetime, nowdate
+from frappe.utils import (
+	cint,
+	flt,
+	get_first_day,
+	get_last_day,
+	getdate,
+	now_datetime,
+	nowdate,
+	time_diff_in_seconds,
+)
 
 
 ELEVATED_ROLES = {"HR Manager", "HR User", "System Manager"}
@@ -76,23 +85,23 @@ def _get_location_for_branch(branch):
 	if not branch:
 		return None
 	return frappe.db.get_value(
-		"Attendance Location",
-		{"branch": branch, "is_active": 1},
+		"Shift Location",
+		{"hrsuite_branch": branch, "hrsuite_is_active": 1},
 		[
 			"name",
 			"location_name",
-			"branch",
+			"hrsuite_branch as branch",
 			"latitude",
 			"longitude",
-			"allowed_radius_meters",
-			"plus_code",
-			"location_source",
-			"address_reference",
-			"default_shift_type",
-			"enforce_schedule",
-			"voice_verification_policy",
-			"voice_challenge_ttl_seconds",
-			"voice_max_duration_seconds",
+			"checkin_radius as allowed_radius_meters",
+			"hrsuite_plus_code as plus_code",
+			"hrsuite_location_source as location_source",
+			"hrsuite_address_reference as address_reference",
+			"hrsuite_default_shift_type as default_shift_type",
+			"hrsuite_enforce_schedule as enforce_schedule",
+			"hrsuite_voice_verification_policy as voice_verification_policy",
+			"hrsuite_voice_challenge_ttl_seconds as voice_challenge_ttl_seconds",
+			"hrsuite_voice_max_duration_seconds as voice_max_duration_seconds",
 		],
 		as_dict=True,
 	)
@@ -502,56 +511,113 @@ def _get_attendance_insights(employee, month=None, year=None):
 	from_date, to_date, month_number, year_number = _get_period_bounds(month, year)
 	working_hours_target = _get_contract_hours_per_day(employee)
 
-	record = frappe.db.get_value(
-		"Monthly Attendance Record",
-		{"employee": employee, "year": year_number, "month": ["like", f"{calendar.month_name[month_number]}%"]},
-		[
-			"actual_present_days",
-			"absent_days",
-			"late_days",
-			"late_minutes_total",
-			"overtime_hours_total",
-			"annual_leave_days",
-			"sick_leave_days",
-			"special_leave_days",
-			"other_leave_days",
-		],
-		as_dict=True,
-	)
-
+	# Derived from HRMS Attendance rather than a cached monthly summary DocType, so the
+	# numbers always match what the Attendance records actually say.
 	attendance_rows = frappe.get_all(
-		"HR Daily Attendance",
+		"Attendance",
 		filters={"employee": employee, "attendance_date": ["between", [from_date, to_date]], "docstatus": 1},
-		fields=["status", "working_hours", "late_entry", "early_exit"],
+		fields=["status", "working_hours", "late_entry", "early_exit", "leave_type"],
 	)
 
 	total_hours = round(sum(flt(row.working_hours) for row in attendance_rows), 2)
 	recorded_days = len(attendance_rows)
-	shortfall_days = sum(1 for row in attendance_rows if flt(row.working_hours) and flt(row.working_hours) < working_hours_target)
+	shortfall_days = sum(
+		1 for row in attendance_rows if flt(row.working_hours) and flt(row.working_hours) < working_hours_target
+	)
 	early_exit_days = sum(1 for row in attendance_rows if row.early_exit)
 	late_entry_days = sum(1 for row in attendance_rows if row.late_entry)
+	present_days = sum(
+		1 for row in attendance_rows if row.status in ("Present", "Work From Home")
+	) + 0.5 * sum(1 for row in attendance_rows if row.status == "Half Day")
+	absent_days = sum(1 for row in attendance_rows if row.status == "Absent")
 
 	return {
 		"period_label": f"{calendar.month_name[month_number]} {year_number}",
-		"present_days": int((record or {}).get("actual_present_days") or recorded_days),
-		"absent_days": int((record or {}).get("absent_days") or 0),
-		"late_days": int((record or {}).get("late_days") or late_entry_days),
-		"late_minutes_total": int((record or {}).get("late_minutes_total") or 0),
-		"overtime_hours_total": round(flt((record or {}).get("overtime_hours_total") or 0), 2),
+		"present_days": present_days,
+		"absent_days": absent_days,
+		"late_days": late_entry_days,
+		"late_minutes_total": _get_late_minutes(employee, from_date, to_date),
+		"overtime_hours_total": _get_overtime_hours(employee, from_date, to_date),
 		"recorded_days": recorded_days,
 		"total_hours": total_hours,
 		"average_hours": round(total_hours / recorded_days, 2) if recorded_days else 0,
 		"shortfall_days": shortfall_days,
 		"early_exit_days": early_exit_days,
 		"target_hours_per_day": working_hours_target,
-		"leave_days": {
-			"annual": flt((record or {}).get("annual_leave_days") or 0),
-			"sick": flt((record or {}).get("sick_leave_days") or 0),
-			"special": flt((record or {}).get("special_leave_days") or 0),
-			"other": flt((record or {}).get("other_leave_days") or 0),
-		},
+		"leave_days": _get_leave_day_split(attendance_rows),
 		"payroll": _get_payroll_snapshot(employee),
 	}
+
+
+LEAVE_BUCKET_KEYWORDS = {
+	"annual": ("annual", "earned", "privilege"),
+	"sick": ("sick",),
+	"special": ("maternity", "paternity", "marriage", "bereavement", "compassionate", "hajj", "exam", "study"),
+}
+
+
+def _get_leave_day_split(attendance_rows):
+	"""Split On Leave days by leave type, using the same buckets the mobile app expects."""
+	split = {"annual": 0.0, "sick": 0.0, "special": 0.0, "other": 0.0}
+	for row in attendance_rows:
+		if row.status != "On Leave":
+			continue
+		leave_type = (row.leave_type or "").lower()
+		bucket = next(
+			(
+				name
+				for name, words in LEAVE_BUCKET_KEYWORDS.items()
+				if any(word in leave_type for word in words)
+			),
+			"other",
+		)
+		split[bucket] += 1
+	return split
+
+
+def _get_late_minutes(employee, from_date, to_date):
+	"""Minutes late per day = first check-in after the shift's expected start."""
+	from hr_suite.hr_suite.attendance_policy import resolve_mobile_attendance_policy
+
+	total = 0
+	for row in frappe.get_all(
+		"Attendance",
+		filters={
+			"employee": employee,
+			"attendance_date": ["between", [from_date, to_date]],
+			"docstatus": 1,
+			"late_entry": 1,
+		},
+		fields=["attendance_date", "in_time"],
+	):
+		if not row.in_time:
+			continue
+		policy = resolve_mobile_attendance_policy(employee, row.attendance_date, None)
+		expected_start = policy.get("expected_start")
+		if not expected_start:
+			continue
+		minutes = time_diff_in_seconds(row.in_time, expected_start) / 60
+		if minutes > 0:
+			total += minutes
+	return int(round(total))
+
+
+def _get_overtime_hours(employee, from_date, to_date):
+	"""Approved overtime for the period, from HR Suite's own Overtime Request."""
+	if not frappe.db.exists("DocType", "Overtime Request"):
+		return 0.0
+
+	rows = frappe.get_all(
+		"Overtime Request",
+		filters={
+			"employee": employee,
+			"date": ["between", [from_date, to_date]],
+			"approval_status": "Approved",
+			"docstatus": 1,
+		},
+		fields=["overtime_hours"],
+	)
+	return round(sum(flt(row.overtime_hours) for row in rows), 2)
 
 
 @frappe.whitelist()
@@ -625,22 +691,22 @@ def get_attendance_insights(month=None, year=None):
 def get_available_locations():
 	employee, profile = _require_employee_context()
 	branch = profile.branch
-	filters = {"is_active": 1}
+	filters = {"hrsuite_is_active": 1}
 	if not ELEVATED_ROLES.intersection(set(frappe.get_roles())):
-		filters["branch"] = branch
+		filters["hrsuite_branch"] = branch
 
 	return frappe.get_all(
-		"Attendance Location",
+		"Shift Location",
 		filters=filters,
 		fields=[
 			"name",
 			"location_name",
-			"branch",
+			"hrsuite_branch as branch",
 			"latitude",
 			"longitude",
-			"allowed_radius_meters",
-			"plus_code",
-			"location_source",
+			"checkin_radius as allowed_radius_meters",
+			"hrsuite_plus_code as plus_code",
+			"hrsuite_location_source as location_source",
 		],
 		order_by="location_name asc",
 	)
