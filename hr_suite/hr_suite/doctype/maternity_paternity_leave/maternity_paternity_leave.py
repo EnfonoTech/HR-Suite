@@ -3,7 +3,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import add_days, flt
 
-from hr_suite.hr_suite.utils import get_employee_basic_salary
+from hr_suite.hr_suite.utils import assert_employee_access, get_employee_basic_salary
 
 
 LEAVE_DAYS = {
@@ -56,5 +56,6 @@ class MaternityPaternityLeave(Document):
 @frappe.whitelist()
 def get_daily_salary(employee):
 	"""Return daily salary (monthly_basic / 30) for JS auto-fill."""
+	assert_employee_access(employee)
 	monthly = get_employee_basic_salary(employee)
 	return round(monthly / 30, 2)

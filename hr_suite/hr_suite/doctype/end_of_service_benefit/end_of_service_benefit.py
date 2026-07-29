@@ -3,7 +3,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import date_diff, flt, getdate, nowdate
 
-from hr_suite.hr_suite.utils import calculate_eosb_components, get_employee_basic_salary, get_employee_salary_components
+from hr_suite.hr_suite.utils import assert_employee_access, calculate_eosb_components, get_employee_basic_salary, get_employee_salary_components
 
 
 class EndofServiceBenefit(Document):
@@ -110,12 +110,14 @@ class EndofServiceBenefit(Document):
 @frappe.whitelist()
 def get_last_basic_salary(employee):
 	"""Return the employee's latest basic salary for JS auto-fill."""
+	assert_employee_access(employee)
 	return get_employee_basic_salary(employee)
 
 
 @frappe.whitelist()
 def get_last_salary_components(employee):
 	"""Return latest Saudi contract salary components for EOSB review."""
+	assert_employee_access(employee)
 	return get_employee_salary_components(employee)
 
 

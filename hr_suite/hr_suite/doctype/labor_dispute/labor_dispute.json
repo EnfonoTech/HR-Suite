@@ -135,7 +135,8 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Open\nInternal Mediation\nReferred to MLSD\nMLSD Mediation\nLabour Court\nResolved\nClosed"
+   "options": "Open\nInternal Mediation\nReferred to MLSD\nMLSD Mediation\nLabour Court\nResolved\nClosed",
+   "allow_on_submit": 1
   },
   {
    "fieldname": "internal_resolution_section",

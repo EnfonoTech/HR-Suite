@@ -20,6 +20,8 @@ from frappe.utils import (
 	time_diff_in_seconds,
 )
 
+from hr_suite.hr_suite.utils import assert_employee_access
+
 
 ELEVATED_ROLES = {"HR Manager", "HR User", "System Manager"}
 ORG_TREE_GLOBAL_ROLES = {"HR Manager", "HR User", "System Manager"}
@@ -579,8 +581,7 @@ def _get_late_minutes(employee, from_date, to_date):
 	"""Minutes late per day = first check-in after the shift's expected start."""
 	from hr_suite.hr_suite.attendance_policy import resolve_mobile_attendance_policy
 
-	total = 0
-	for row in frappe.get_all(
+	rows = frappe.get_all(
 		"Attendance",
 		filters={
 			"employee": employee,
@@ -589,11 +590,21 @@ def _get_late_minutes(employee, from_date, to_date):
 			"late_entry": 1,
 		},
 		fields=["attendance_date", "in_time"],
-	):
+	)
+	if not rows:
+		return 0
+
+	# One policy lookup per distinct date, not per row — resolving it hits Shift Assignment
+	# and Shift Type each time.
+	expected_starts = {}
+	total = 0
+	for row in rows:
 		if not row.in_time:
 			continue
-		policy = resolve_mobile_attendance_policy(employee, row.attendance_date, None)
-		expected_start = policy.get("expected_start")
+		day = getdate(row.attendance_date)
+		if day not in expected_starts:
+			expected_starts[day] = resolve_mobile_attendance_policy(employee, day, None).get("expected_start")
+		expected_start = expected_starts[day]
 		if not expected_start:
 			continue
 		minutes = time_diff_in_seconds(row.in_time, expected_start) / 60
@@ -847,3 +858,22 @@ def add_payroll_adjustment_item(payroll_name, employee, item_type, description, 
 	doc.save()
 
 	return {"status": "ok"}
+
+@frappe.whitelist()
+def get_employee_work_country(employee: str) -> str:
+	"""Guarded HTTP wrapper — the helper itself is called internally without a session check."""
+	assert_employee_access(employee)
+
+	from hr_suite.hr_suite.utils import get_employee_work_country as _work_country
+
+	return _work_country(employee)
+
+
+@frappe.whitelist()
+def get_settlement_estimate(employee: str, termination_reason: str, termination_date: str = None) -> dict:
+	"""Guarded HTTP wrapper — end-of-service money must not be readable for any employee."""
+	assert_employee_access(employee)
+
+	from hr_suite.hr_suite.utils import get_settlement_estimate as _settlement
+
+	return _settlement(employee, termination_reason, termination_date)

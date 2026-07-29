@@ -3,9 +3,9 @@
 {%- set validity_date = frappe.utils.add_months(issue_date, 3) -%}
 
 {%- set contract_salary = frappe.db.get_value(
-  "Saudi Employment Contract",
+  "Country Employment Contract",
   {"employee": doc.name, "contract_status": "Active"},
-  ["basic_salary", "from_date"],
+  ["basic_salary", "start_date"],
   as_dict=True,
   order_by="start_date desc"
 ) or {} -%}
@@ -14,9 +14,9 @@
 {%- set daily_rate = basic / 30 -%}
 
 {%- set contract = frappe.db.get_value(
-    "Saudi Employment Contract",
+    "Country Employment Contract",
     {"employee": doc.name, "contract_status": "Active"},
-    ["housing_allowance", "transport_allowance", "other_allowances", "job_title"],
+    ["housing_allowance", "transport_allowance", "other_allowances", "designation"],
     as_dict=True,
     order_by="start_date desc"
 ) or {} -%}
@@ -25,7 +25,20 @@
 {%- set transport = contract.get("transport_allowance") or 0 -%}
 {%- set other = contract.get("other_allowances") or 0 -%}
 {%- set gross = basic + housing + transport + other -%}
-{%- set job_title = contract.get("job_title") or doc.designation or "" -%}
+{%- set job_title = contract.get("designation") or doc.designation or "" -%}
+
+{%- set identity = frappe.db.get_value(
+    "Country Employment Contract",
+    {"employee": doc.name, "contract_status": "Active"},
+    ["nationality", "permit_number", "passport_number"],
+    as_dict=True,
+    order_by="start_date desc"
+) or frappe.db.get_value(
+    "Work Permit Iqama",
+    {"employee": doc.name},
+    ["nationality", "iqama_number as permit_number", "passport_number"],
+    as_dict=True
+) or {} -%}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -183,11 +196,11 @@
   </tr>
   <tr>
     <td>Nationality</td>
-    <td>{{ doc.nationality or "—" }}</td>
+    <td>{{ identity.get("nationality") or "—" }}</td>
   </tr>
   <tr>
     <td>ID / Iqama Number</td>
-    <td>{{ doc.iqama_number or doc.passport_number or "—" }}</td>
+    <td>{{ identity.get("permit_number") or identity.get("passport_number") or "—" }}</td>
   </tr>
 </table>
 

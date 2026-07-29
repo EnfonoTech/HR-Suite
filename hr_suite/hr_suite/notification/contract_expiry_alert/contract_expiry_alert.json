@@ -19,5 +19,6 @@
   }
  ],
  "send_system_notification": 1,
- "subject": "Alert: Employee Contract Expiring Soon — {{ doc.employee_name }}"
+ "subject": "Alert: Employee Contract Expiring Soon — {{ doc.employee_name }}",
+ "date_changed": "end_date"
 }

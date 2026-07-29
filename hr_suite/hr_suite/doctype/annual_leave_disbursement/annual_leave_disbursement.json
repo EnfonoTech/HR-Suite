@@ -140,7 +140,8 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft\nApproved\nPaid\nCancelled"
+   "options": "Draft\nApproved\nPaid\nCancelled",
+   "allow_on_submit": 1
   },
   {
    "fieldname": "salary_section",

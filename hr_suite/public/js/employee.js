@@ -5,7 +5,7 @@ frappe.ui.form.on("Employee", {
 
 		// Resolve the employee's work country first, then build the full UI
 		frappe.call({
-			method: "hr_suite.hr_suite.utils.get_employee_work_country",
+			method: "hr_suite.hr_suite.api.get_employee_work_country",
 			args: { employee: frm.doc.name },
 			callback: function (r) {
 				const country = (r.message || "").toUpperCase();
@@ -72,7 +72,7 @@ function _hr_suite_common_buttons(frm, country) {
 			],
 			function (values) {
 				frappe.call({
-					method: "hr_suite.hr_suite.utils.get_settlement_estimate",
+					method: "hr_suite.hr_suite.api.get_settlement_estimate",
 					args: {
 						employee: frm.doc.name,
 						termination_reason: values.termination_reason,
@@ -563,7 +563,7 @@ function _open_settlement_dialog(frm, country) {
 		],
 		function (values) {
 			frappe.call({
-				method: "hr_suite.hr_suite.utils.get_settlement_estimate",
+				method: "hr_suite.hr_suite.api.get_settlement_estimate",
 				args: {
 					employee: frm.doc.name,
 					termination_reason: values.termination_reason,

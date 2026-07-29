@@ -14,6 +14,23 @@ def assert_doctype_permissions(doctype: str, permission_types, doc=None):
 		frappe.has_permission(doctype, permission_type, doc=doc, throw=True)
 
 
+def assert_employee_access(employee: str = None, ptype: str = "read"):
+	"""Guard whitelisted endpoints that expose one employee's data.
+
+	Every mobile/self-service endpoint takes the employee as an argument, so without this a
+	self-service user could read any colleague's salary, permit or leave data by changing it.
+
+	Some government-portal endpoints accept a permit number with no employee attached (a
+	pre-hire lookup); those are restricted to HR instead, because they still spend a request
+	against the client's portal quota.
+	"""
+	if employee:
+		frappe.has_permission("Employee", ptype, doc=employee, throw=True)
+		return
+
+	frappe.only_for(("HR User", "HR Manager", "System Manager"))
+
+
 def text_matches_tokens(value, *tokens: str) -> bool:
 	normalized = cstr(value or "").strip().lower()
 	if not normalized:
@@ -492,7 +509,6 @@ def country_name_to_code(country_name: str) -> str:
     return _COUNTRY_NAME_TO_CODE.get(key.lower(), "")
 
 
-@frappe.whitelist()
 def get_employee_work_country(employee: str) -> str:
     """
     Return the ISO-2 work country code for an employee.
@@ -769,9 +785,8 @@ def _calculate_om_indemnity(years: float, basic: float, reason: str, deductions:
     }
 
 
-@frappe.whitelist()
 def get_settlement_estimate(employee: str, termination_reason: str, termination_date: str = None) -> dict:
-    """Whitelisted: return settlement estimate for any country — called from front-end."""
+    """Return the settlement estimate for any country. Exposed via api.get_settlement_estimate."""
     return calculate_settlement(employee, termination_reason, termination_date)
 
 

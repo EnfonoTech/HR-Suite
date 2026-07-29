@@ -18,6 +18,7 @@ Every API call is logged to Government Portal Sync Log (portal = "GOSI").
 import frappe
 import requests
 from frappe.utils import now_datetime, getdate, add_months, format_date
+from hr_suite.hr_suite.utils import assert_employee_access
 
 _TIMEOUT = 30
 
@@ -81,6 +82,7 @@ def _base():
 @frappe.whitelist()
 def register_employee(employee: str):
     """Register a new employee with GOSI. Pulls details from the Employee DocType."""
+    assert_employee_access(employee)
     s = _settings()
     if not s.gosi_api_enabled:
         frappe.throw("GOSI API integration is not enabled.")
@@ -122,6 +124,7 @@ def register_employee(employee: str):
 @frappe.whitelist()
 def deregister_employee(employee: str, exit_date: str, reason: str = "Resignation"):
     """Deregister / exit an employee from GOSI."""
+    assert_employee_access(employee)
     s = _settings()
     if not s.gosi_api_enabled:
         frappe.throw("GOSI API integration is not enabled.")
@@ -148,6 +151,7 @@ def deregister_employee(employee: str, exit_date: str, reason: str = "Resignatio
 @frappe.whitelist()
 def get_employee_status(employee: str):
     """Check GOSI membership status for an employee."""
+    assert_employee_access(employee)
     s = _settings()
     if not s.gosi_api_enabled:
         frappe.throw("GOSI API integration is not enabled.")
@@ -181,6 +185,7 @@ def submit_contribution(gosi_contribution: str):
     Submit a single submitted GOSI Contribution record to the GOSI portal.
     Updates reference_number and payment_status on the doc when successful.
     """
+    frappe.only_for(("HR Manager", "System Manager"))
     s = _settings()
     if not s.gosi_api_enabled:
         frappe.throw("GOSI API integration is not enabled.")
@@ -228,6 +233,7 @@ def submit_monthly_batch(company: str, month: str, year: str):
     Submit all submitted-but-unpaid GOSI Contributions for a company/period
     as a batch to the GOSI portal. Returns list of results.
     """
+    frappe.only_for(("HR Manager", "System Manager"))
     s = _settings()
     if not s.gosi_api_enabled:
         frappe.throw("GOSI API integration is not enabled.")

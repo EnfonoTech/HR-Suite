@@ -7,11 +7,13 @@ and the scheduled task that applies pending future-dated overrides.
 import frappe
 from frappe import _
 from frappe.utils import flt, getdate, now_datetime
+from hr_suite.hr_suite.utils import assert_employee_access
 
 
 @frappe.whitelist()
 def get_component_history(employee: str, component_name: str, year: str = None):
     """Return override history for one employee + component, newest first."""
+    assert_employee_access(employee)
     filters = {
         "employee": employee,
         "component_name": component_name,
@@ -163,6 +165,7 @@ def apply_salary_breakup(
 @frappe.whitelist()
 def get_available_years(employee: str, component_name: str):
     """Return distinct years that have history records for the given employee + component."""
+    assert_employee_access(employee)
     rows = frappe.db.sql(
         """
         SELECT DISTINCT YEAR(start_date) AS yr

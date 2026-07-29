@@ -171,8 +171,11 @@ def seed_employee_lifecycle_demo():
     """
     Seed 4 demo employees covering the full HR Suite lifecycle.
     Safe to call multiple times — skips existing records.
+
+    Restricted to System Manager: this writes employees, contracts and payroll, and it used
+    to switch the session to Administrator, which let any logged-in user seed a live site.
     """
-    frappe.set_user("Administrator")
+    frappe.only_for("System Manager")
     company = _company()
     male = _gender("Male")
     female = _gender("Female")

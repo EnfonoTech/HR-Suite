@@ -12,7 +12,7 @@ from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.styles import Alignment, Font, PatternFill
 
 from hr_suite.hr_suite.doctype.employee_loan.employee_loan import apply_payroll_loan_deductions, get_due_loan_deduction, revert_payroll_loan_deductions
-from hr_suite.hr_suite.utils import assert_doctype_permissions, assert_positive_basic_salary, calculate_prorated_sick_leave_deduction, get_employee_salary_components, get_gosi_rates, text_matches_tokens
+from hr_suite.hr_suite.utils import assert_employee_access, assert_doctype_permissions, assert_positive_basic_salary, calculate_prorated_sick_leave_deduction, get_employee_salary_components, get_gosi_rates, text_matches_tokens
 
 GOSI_MAX_BASE = 45000.0
 PREFERRED_SOURCE_WORKBOOK_SHEETS = ("Payroll Print", "Payroll", "Source Sheet")
@@ -359,6 +359,7 @@ def calculate_employee_row(employee: str, month: str, year: int):
 	"""
 	Calculate the monthly salary for a single employee and return a dict for UI update.
 	"""
+	assert_employee_access(employee)
 	emp_doc = frappe.get_all(
 		"Employee",
 		filters={"name": employee},

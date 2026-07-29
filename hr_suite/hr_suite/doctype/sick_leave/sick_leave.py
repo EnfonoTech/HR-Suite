@@ -3,7 +3,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import date_diff, getdate, flt, get_first_day_of_week
 
-from hr_suite.hr_suite.utils import get_employee_basic_salary
+from hr_suite.hr_suite.utils import assert_employee_access, get_employee_basic_salary
 
 
 class SickLeave(Document):
@@ -118,6 +118,7 @@ def get_sick_days_this_year(employee, exclude_doc=""):
 	Return the total approved sick days for *employee* in the current year,
 	optionally excluding a specific document (used during editing).
 	"""
+	assert_employee_access(employee)
 	from frappe.utils import getdate, nowdate
 
 	current_year = getdate(nowdate()).year
@@ -137,5 +138,6 @@ def get_sick_days_this_year(employee, exclude_doc=""):
 @frappe.whitelist()
 def get_daily_salary(employee):
 	"""Return daily salary (monthly_basic / 30) for the employee."""
+	assert_employee_access(employee)
 	monthly = get_employee_basic_salary(employee)
 	return round(monthly / 30, 2)

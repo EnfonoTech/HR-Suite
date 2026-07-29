@@ -125,7 +125,8 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft\nApproved\nRejected\nCancelled"
+   "options": "Draft\nApproved\nRejected\nCancelled",
+   "allow_on_submit": 1
   },
   {
    "fieldname": "eligibility_section",

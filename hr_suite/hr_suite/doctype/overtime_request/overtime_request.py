@@ -3,7 +3,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, nowdate
 
-from hr_suite.hr_suite.utils import assert_doctype_permissions, assert_positive_basic_salary, get_employee_basic_salary as get_current_basic_salary, text_matches_tokens
+from hr_suite.hr_suite.utils import assert_employee_access, assert_doctype_permissions, assert_positive_basic_salary, get_employee_basic_salary as get_current_basic_salary, text_matches_tokens
 
 
 class OvertimeRequest(Document):
@@ -159,4 +159,5 @@ def create_overtime_journal_entry(doc, method=None):
 @frappe.whitelist()
 def get_employee_basic_salary(employee):
 	"""Return the employee's current basic salary for JS auto-fill."""
+	assert_employee_access(employee)
 	return get_current_basic_salary(employee)

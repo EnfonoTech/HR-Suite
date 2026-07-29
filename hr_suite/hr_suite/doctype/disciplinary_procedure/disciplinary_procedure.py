@@ -3,7 +3,7 @@ from frappe.model.document import Document
 from frappe import _
 from frappe.utils import today
 
-from hr_suite.hr_suite.utils import assert_doctype_permissions
+from hr_suite.hr_suite.utils import assert_employee_access, assert_doctype_permissions
 
 
 class DisciplinaryProcedure(Document):
@@ -129,6 +129,7 @@ def create_decision_log(doc_name):
 @frappe.whitelist()
 def get_prior_warnings(employee):
     """Return count and list of prior disciplinary records for an employee"""
+    assert_employee_access(employee)
     records = frappe.get_all(
         "Disciplinary Procedure",
         filters={"employee": employee, "docstatus": 1},

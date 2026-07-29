@@ -334,6 +334,7 @@ def create_disbursement_journal_entry(doc_name: str):
 @frappe.whitelist()
 def request_loan_approval(doc_name: str):
 	doc = frappe.get_doc("Employee Loan", doc_name)
+	doc.check_permission("write")
 	if doc.docstatus != 0:
 		frappe.throw(_("Only draft loans can be submitted for approval"))
 	doc.db_set("approval_status", "Pending Approval")

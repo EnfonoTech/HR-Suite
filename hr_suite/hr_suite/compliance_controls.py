@@ -1618,7 +1618,8 @@ def sync_custom_fields():
 			fieldname = field_def["fieldname"]
 			custom_field_name = f"{doctype}-{fieldname}"
 			values = dict(field_def)
-			values.update({"doctype": "Custom Field", "dt": doctype})
+			# module is what hooks.py filters fixtures on — without it these fields never export
+			values.update({"doctype": "Custom Field", "dt": doctype, "module": "Hr Suite"})
 			if frappe.db.exists("Custom Field", custom_field_name):
 				continue
 			else:

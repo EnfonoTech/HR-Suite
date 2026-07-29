@@ -16,6 +16,7 @@ Every request is recorded in Government Portal Sync Log.
 import frappe
 import requests
 from frappe.utils import now_datetime, getdate, add_days
+from hr_suite.hr_suite.utils import assert_employee_access
 
 
 _TIMEOUT = 30  # seconds per request
@@ -66,6 +67,7 @@ def verify_iqama(iqama_number: str, employee: str = None):
     Returns live status, profession, expiry date and nationality.
     Saves a sync log and updates the Work Permit Iqama record if one exists.
     """
+    assert_employee_access(employee)
     _assert_enabled()
     token = _get_token()
     base = _base()
@@ -109,6 +111,7 @@ def verify_iqama(iqama_number: str, employee: str = None):
 @frappe.whitelist()
 def get_employee_info(iqama_number: str, employee: str = None):
     """Full expatriate profile from MOI — name, profession, sponsor, visa details."""
+    assert_employee_access(employee)
     _assert_enabled()
     token = _get_token()
     resp = requests.get(
@@ -132,6 +135,7 @@ def get_employee_info(iqama_number: str, employee: str = None):
 @frappe.whitelist()
 def check_visa_status(visa_number: str, employee: str = None):
     """Check exit/re-entry or entry visa validity."""
+    assert_employee_access(employee)
     _assert_enabled()
     token = _get_token()
     resp = requests.get(
@@ -155,6 +159,7 @@ def check_visa_status(visa_number: str, employee: str = None):
 @frappe.whitelist()
 def get_exit_reentry(iqama_number: str, employee: str = None):
     """Retrieve active exit/re-entry visa details from Muqeem."""
+    assert_employee_access(employee)
     _assert_enabled()
     token = _get_token()
     resp = requests.get(
@@ -179,6 +184,7 @@ def get_exit_reentry(iqama_number: str, employee: str = None):
 @frappe.whitelist()
 def initiate_final_exit(iqama_number: str, exit_date: str, employee: str = None):
     """Trigger a final exit request in Muqeem for an expatriate leaving permanently."""
+    assert_employee_access(employee)
     _assert_enabled()
     token = _get_token()
     payload = {
