@@ -722,5 +722,8 @@ function _hr_suite_onboarding_banner(frm) {
 				 — <a href="/app/employee-onboarding/${r.name}">${r.name}</a>`,
 				"orange", true
 			);
-		});
+		})
+		// Onboarding is an HRMS DocType — a banner is never worth an error dialog on
+		// the Employee form if it is unavailable on this site.
+		.catch(function () {});
 }

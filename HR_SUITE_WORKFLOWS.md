@@ -801,7 +801,7 @@ Hiring Requisition (approved by department head)
 Candidate Profile (screening → interview → offer → accepted)
     │
     ▼
-Employee Onboarding (checklist-based, In Progress → Completed)
+Employee Onboarding (HRMS, Pending → In Process → Completed)
     │
     ▼
 Saudi Employment Contract (Draft → Active, expiry alert 60 days before)
@@ -1084,7 +1084,7 @@ Configure in **Hr Suite Settings** under each portal's section (all optional —
 |---------|---------|
 | Hiring Requisition | Position request with approval |
 | Candidate Profile | Applicant tracking |
-| Employee Onboarding | Onboarding checklist |
+| Employee Onboarding | HRMS onboarding activities (not shipped by HR Suite) |
 | Performance Review | Probation/quarterly/annual review |
 | Promotion Transfer | Role/salary/department change |
 | Training Record | Individual training history |

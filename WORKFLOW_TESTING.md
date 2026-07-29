@@ -20,10 +20,10 @@
 | Step | Action | Expected Result |
 |---|---|---|
 | 1 | Open `Candidate Profile` → New | Form opens |
-| 2 | Set Status = "Accepted", set Expected Joining Date | On save: Employee record auto-created, Employee Onboarding draft auto-created |
-| 3 | Open the auto-created `Employee Onboarding` | All 6 checklist items visible |
-| 4 | Check all 6 checklist items, Save | Completion % = 100%, Status = "Completed" |
-| 5 | Submit the Employee Onboarding | Employee status set to "Active" |
+| 2 | Set Status = "Accepted", set Expected Joining Date, set Email Address | On save: Employee record auto-created; Job Applicant + HRMS Employee Onboarding draft auto-created (Boarding Status = "Pending") |
+| 3 | Open the auto-created `Employee Onboarding` | Linked to the Job Applicant, Employee and Candidate Profile |
+| 4 | Add an Onboarding Template or activities, Save | Activities listed on the form |
+| 5 | Submit the Employee Onboarding | HRMS creates the boarding Project and Tasks |
 | 6 | Open `Saudi Employment Contract` → New for Ahmed | Fill basic_salary = 10000, nationality = "Saudi Arabia" |
 | 7 | Submit the contract | Employee's `GOSI Contribution Base` = 10,000; `Employee Type` = "Saudi National" auto-set |
 | 8 | Open Ahmed's Employee form | GOSI Contribution Base visible in Overview, Employee Type = Saudi National, Active Contract banner visible |
@@ -395,10 +395,10 @@ bench --site ksa execute hr_suite.hr_suite.integrations.mudad.sync_wps_monthly
 
 ```
 Candidate Profile (status=Accepted)
-    └─► Employee (draft) + Employee Onboarding (draft)  [auto]
+    └─► Employee (draft) + Job Applicant + Employee Onboarding (draft, HRMS)  [auto]
 
-Employee Onboarding (all tasks checked, submitted)
-    └─► Employee status = "Active"  [auto]
+Employee Onboarding (submitted)
+    └─► Boarding Project + Tasks  [auto, HRMS]
 
 Saudi Employment Contract (submitted)
     └─► Employee: GOSI salary, Employee Type, Designation synced  [auto]

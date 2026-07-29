@@ -359,7 +359,7 @@ Job Opening → Job Applicant → Job Offer
 
 | DocType | Purpose |
 |---|---|
-| Employee Onboarding | Checklist-driven onboarding per department |
+| Employee Onboarding | HRMS DocType — onboarding activities per template; auto-created from Candidate Profile |
 | Promotion & Transfer | Promotion/transfer with salary adjustment |
 | Performance Review | Periodic performance evaluation |
 | Staff Rating | Rating record; synced from HRMS Appraisal |
