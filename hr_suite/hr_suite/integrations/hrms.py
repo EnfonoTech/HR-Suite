@@ -405,7 +405,7 @@ def on_payroll_entry_submit(doc, method=None):
     year = getdate(payroll_date).year  # Int — matches DocType field type
 
     default_country = country_name_to_code(frappe.db.get_value("Company", company, "country") or "") or \
-        (frappe.db.get_single_value("Hr Suite Settings", "default_work_country") or "")
+        country_name_to_code(frappe.db.get_single_value("Hr Suite Settings", "default_work_country") or "")
 
     for row in doc.employees:
         country = get_employee_work_country(row.employee) or default_country

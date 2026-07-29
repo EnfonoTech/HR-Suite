@@ -523,9 +523,9 @@ def get_employee_work_country(employee: str) -> str:
         if code:
             return code
 
-    # 3. Global default in Hr Suite Settings
+    # 3. Global default in Hr Suite Settings (stored as a Country Link — resolve to ISO-2)
     default = frappe.db.get_single_value("Hr Suite Settings", "default_work_country") or ""
-    return default.strip().upper()
+    return country_name_to_code(default)
 
 
 def get_country_config(country_code: str):

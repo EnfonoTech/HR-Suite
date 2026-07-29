@@ -4,6 +4,18 @@ frappe.pages["professional-hr-hub"].on_page_load = function (wrapper) {
 	new hr_suite.ProfessionalHrHub(wrapper);
 };
 
+// on_page_show fires every time this page is shown, including the first time
+// right after on_page_load. Only force a hard reload on a *revisit* (SPA nav
+// back to an already-built page instance) — reloading on the first show too
+// would loop forever, since the fresh reload's first show would reload again.
+frappe.pages["professional-hr-hub"].on_page_show = function (wrapper) {
+	if (wrapper.__hr_hub_shown_once) {
+		window.location.reload();
+		return;
+	}
+	wrapper.__hr_hub_shown_once = true;
+};
+
 hr_suite.ProfessionalHrHub = class ProfessionalHrHub {
 	constructor(wrapper) {
 		this.wrapper = wrapper;
@@ -381,32 +393,15 @@ hr_suite.ProfessionalHrHub = class ProfessionalHrHub {
 				</div>
 				<p class="professional-hr-hub__feature-note">${frappe.utils.escape_html(__(feature.summary))}</p>
 				<div class="professional-hr-hub__feature-actions">
-					<button class="professional-hr-hub__link" data-feature-id="${frappe.utils.escape_html(feature.id)}">${__("Open Feature Page")}</button>
 					<button class="professional-hr-hub__link" data-route="${frappe.utils.escape_html(feature.route)}">${frappe.utils.escape_html(__(feature.action_label || "ERPNext View"))}</button>
 				</div>
 			</article>
 		`).join(""));
 
-		this.page.body.find("[data-feature-id]").on("click", (event) => this.openFeature(event.currentTarget.dataset.featureId));
 		this.page.body.find("[data-route]").on("click", (event) => this.open(event.currentTarget.dataset.route));
 	}
 
-	openFeature(featureId) {
-		const feature = this.catalog.features.find((item) => item.id === featureId);
-		if (feature) {
-			try {
-				localStorage.setItem("professional_hr_selected_feature_id", featureId);
-			} catch (error) {
-			}
-			this.open(feature.detail_route);
-		}
-	}
-
 	open(route) {
-		if (route.startsWith("/app/")) {
-			frappe.set_route(route.slice(5).split("/"));
-			return;
-		}
 		if (route.startsWith("/")) {
 			window.location.href = route;
 			return;
