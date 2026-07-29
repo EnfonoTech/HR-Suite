@@ -19,8 +19,13 @@ def _get_existing_employee_approver_fields():
 
 def after_install():
 	create_workflow_states()
-	sync_workflow_configs()
+	# compliance controls first: they create the Appraisal fields that Promotion Transfer and
+	# Salary Adjustment point at through their Document Links. Creating a workflow adds a
+	# workflow_state Custom Field to its target DocType, and saving that field re-validates the
+	# DocType's links table — which throws InvalidFieldNameError while the Appraisal fields are
+	# still missing, and the workflow is then never created.
 	sync_compliance_controls()
+	sync_workflow_configs()
 	ensure_department_approver_role()
 	sync_department_approver_role_assignments()
 	sync_department_approver_company_permissions()
@@ -40,8 +45,9 @@ def after_migrate():
 	rename_saudi_doctypes()
 	_cleanup_deprecated_doctypes()
 	create_workflow_states()
-	sync_workflow_configs()
+	# same ordering requirement as after_install(), see the note there
 	sync_compliance_controls()
+	sync_workflow_configs()
 	ensure_department_approver_role()
 	sync_department_approver_role_assignments()
 	sync_department_approver_company_permissions()
