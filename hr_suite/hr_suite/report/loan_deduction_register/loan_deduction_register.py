@@ -21,8 +21,8 @@ def get_columns():
 
 
 def get_data(filters):
-	conditions = ["child.deduction_status = 'Deducted"]
-	values = {}
+	conditions = ["child.deduction_status = %(deduction_status)s"]
+	values = {"deduction_status": "Deducted"}
 	if filters.get("employee"):
 		conditions.append("loan.employee = %(employee)s")
 		values["employee"] = filters["employee"]

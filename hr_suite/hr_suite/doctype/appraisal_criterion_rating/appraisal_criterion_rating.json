@@ -1,0 +1,76 @@
+{
+ "actions": [],
+ "creation": "2026-09-05 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "criterion",
+  "appraiser_rating",
+  "appraiser_comments",
+  "reviewer_rating",
+  "reviewer_comments",
+  "variance"
+ ],
+ "fields": [
+  {
+   "columns": 3,
+   "fieldname": "criterion",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Criterion",
+   "options": "Employee Feedback Criteria",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "description": "Score 1-5 (5 Excellent, 4 Very Good, 3 Good, 2 Average, 1 Poor)",
+   "fieldname": "appraiser_rating",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Appraiser",
+   "non_negative": 1
+  },
+  {
+   "columns": 3,
+   "fieldname": "appraiser_comments",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Appraiser Comments"
+  },
+  {
+   "columns": 1,
+   "description": "Score 1-5. Replicate the Appraiser score when in agreement, otherwise comment.",
+   "fieldname": "reviewer_rating",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Reviewer",
+   "non_negative": 1
+  },
+  {
+   "columns": 3,
+   "fieldname": "reviewer_comments",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Reviewer Comments"
+  },
+  {
+   "columns": 1,
+   "fieldname": "variance",
+   "fieldtype": "Int",
+   "label": "Variance",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-05 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Appraisal Criterion Rating",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,182 @@
+{
+ "actions": [],
+ "creation": "2026-09-05 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "employee_name",
+  "has_issues",
+  "column_break_org",
+  "department",
+  "designation",
+  "branch",
+  "amounts_section",
+  "base",
+  "earnings",
+  "column_break_amounts",
+  "deductions",
+  "net_estimate",
+  "attendance_section",
+  "lwp_days",
+  "absent_days",
+  "column_break_attendance",
+  "unmarked_days",
+  "issues_section",
+  "blocking_issues"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "has_issues",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Has Issues",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_org",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amounts_section",
+   "fieldtype": "Section Break",
+   "label": "Amounts"
+  },
+  {
+   "columns": 1,
+   "description": "Base from the latest submitted Salary Structure Assignment on or before the period end.",
+   "fieldname": "base",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Base",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "description": "Sum of booked Earning allocations. Excludes anything the salary structure formula derives from base.",
+   "fieldname": "earnings",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Earnings",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_amounts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "deductions",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Deductions",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "description": "Base + Earnings - Deductions. Review estimate only.",
+   "fieldname": "net_estimate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Net Estimate",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attendance_section",
+   "fieldtype": "Section Break",
+   "label": "Attendance"
+  },
+  {
+   "fieldname": "lwp_days",
+   "fieldtype": "Float",
+   "label": "LWP Days",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "absent_days",
+   "fieldtype": "Float",
+   "label": "Absent Days",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_attendance",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "unmarked_days",
+   "fieldtype": "Float",
+   "label": "Unmarked Days",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issues_section",
+   "fieldtype": "Section Break",
+   "label": "Blocking Issues"
+  },
+  {
+   "fieldname": "blocking_issues",
+   "fieldtype": "Small Text",
+   "label": "Blocking Issues",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-05 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Payroll Preview Employee",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -8,6 +8,10 @@ All functions here are registered in hooks.py under doc_events.
 import frappe
 from frappe.utils import flt, getdate
 
+# Error Log title used by every statutory-deduction diagnostic, so a site can filter
+# `Error Log` by method to see exactly which payroll runs skipped a deduction.
+_ERROR_TITLE_STATUTORY = "HR Suite: statutory deduction not injected"
+
 
 # ── Job Offer → Employee creation ────────────────────────────────────────────
 
@@ -105,10 +109,44 @@ def _seed_leave_allocations(emp_doc):
 
 def before_salary_slip_submit(doc, method=None):
     """
-    Inject country-specific statutory deductions into the Salary Slip
-    as Additional Salary component lines before submission.
-    Uses HR Suite Country Config rates.
+    Inject country-specific statutory deductions into the Salary Slip as extra
+    deduction rows before submission, using HR Suite Country Config rates.
+
+    CONSTRAINT — THIS HOOK MUST NEVER RAISE. Read before changing it.
+
+    `PayrollEntry.submit_salary_slips_for_employees`
+    (hrms/payroll/doctype/payroll_entry/payroll_entry.py:1570-1608) submits every slip
+    first and only afterwards builds the accrual Journal Entry. That whole block sits
+    inside one `try: ... except Exception: frappe.db.rollback()`, so ANYTHING that
+    throws after the slips are submitted rolls the entire payroll run back and leaves
+    only a Payroll Failure Log behind.
+
+    Two consequences:
+
+    1. A deduction component we inject here is read back by
+       `PayrollEntry.get_salary_component_account` (payroll_entry.py:334-349), which
+       throws `Please set account in Salary Component {0}` when the component has no
+       `Salary Component Account` row for the payroll company. A component created
+       without accounts therefore kills every payroll run — and the message names the
+       Salary Component, not HR Suite, so nobody traces it back here. That is why
+       `_upsert_deduction_component` resolves an account BEFORE it touches the slip and
+       skips the injection outright when it cannot.
+
+    2. Any other unexpected error here would do the same. A statutory-deduction
+       convenience must not be able to roll back payroll, so the body is wrapped and
+       failures are logged, not propagated. Validation that SHOULD stop the user
+       belongs on the Salary Structure / Salary Component, not in this hook.
     """
+    try:
+        _inject_statutory_deductions(doc)
+    except Exception:
+        frappe.log_error(
+            title=_ERROR_TITLE_STATUTORY,
+            message=frappe.get_traceback(),
+        )
+
+
+def _inject_statutory_deductions(doc):
     from hr_suite.hr_suite.utils import (
         get_employee_work_country,
         get_country_config,
@@ -171,16 +209,18 @@ def _inject_india_deductions(doc, basic):
 
 
 def _upsert_deduction_component(doc, component_name: str, amount: float):
+    """Set the statutory deduction row on the slip, but only if it is safe to post.
+
+    A deduction row whose Salary Component has no `Salary Component Account` for
+    `doc.company` makes the payroll accrual JE throw and rolls the whole run back
+    (see `before_salary_slip_submit`). So the component's accounting is settled up
+    front; when it cannot be, nothing is injected and the reason is logged.
+    """
     if not amount:
         return
-    if not frappe.db.exists("Salary Component", component_name):
-        frappe.get_doc({
-            "doctype": "Salary Component",
-            "salary_component": component_name,
-            "salary_component_abbr": component_name[:4].upper(),
-            "type": "Deduction",
-            "is_tax_applicable": 0,
-        }).insert(ignore_permissions=True)
+
+    if not _ensure_salary_component_account(component_name, doc.company):
+        return
 
     for row in doc.get("deductions") or []:
         if row.salary_component == component_name:
@@ -193,79 +233,102 @@ def _upsert_deduction_component(doc, component_name: str, amount: float):
     })
 
 
-# ── Appraisal → push rating to Staff Rating ──────────────────────────────────
+def _ensure_salary_component_account(component_name: str, company: str) -> bool:
+    """Guarantee `Salary Component Account` exists for (component, company).
 
-def on_appraisal_submit(doc, method=None):
+    Returns True when the component may be posted for this company.
+
+    Resolution order:
+      1. an existing `Salary Component Account` row for this component + company;
+      2. the per-company account mapped on `Hr Suite Settings`
+         → `statutory_deduction_accounts`;
+      3. nothing — log and refuse, so payroll still runs without the deduction.
     """
-    When a Frappe HRMS Appraisal is submitted, create / update a Staff Rating
-    in HR Suite so the rating feeds into EOSB / gratuity multiplier.
-    """
-    if not frappe.db.exists("DocType", "Staff Rating"):
-        return
+    if not company:
+        frappe.log_error(
+            title=_ERROR_TITLE_STATUTORY,
+            message=(
+                "Salary Slip has no company, so the statutory component "
+                f"{component_name} could not be account-mapped. Deduction skipped."
+            ),
+        )
+        return False
 
-    score = flt(doc.get("total_score") or doc.get("score"))
-    if not score:
-        return
+    component_exists = bool(frappe.db.exists("Salary Component", component_name))
 
-    # Staff Rating.rating is a Rating field — Frappe stores those as a 0..1 fraction,
-    # while an Appraisal total score is out of 5.
-    rating = min(max(score / 5.0, 0.0), 1.0)
-    # Staff Rating enforces a YYYY-MM rating period and a Downward rating must come from
-    # the appraisee's direct manager, so both are derived rather than guessed.
-    rating_period = getdate(doc.get("end_date") or getdate()).strftime("%Y-%m")
-    manager = frappe.db.get_value("Employee", doc.employee, "reports_to")
-    if not manager:
-        return
+    if component_exists and frappe.db.get_value(
+        "Salary Component Account",
+        {"parent": component_name, "parenttype": "Salary Component", "company": company},
+        "account",
+    ):
+        return True
 
-    existing = frappe.db.get_value(
-        "Staff Rating",
-        {
-            "employee": doc.employee,
-            "rated_by_employee": manager,
-            "rating_period": rating_period,
-            "rating_direction": "Downward",
-            "docstatus": ["!=", 2],
-        },
-        "name",
-    )
-    if existing:
-        frappe.db.set_value("Staff Rating", existing, "rating", rating)
-        return
+    account = _get_configured_statutory_account(company)
+    if not account:
+        frappe.log_error(
+            title=_ERROR_TITLE_STATUTORY,
+            message=(
+                f"No account is configured for statutory component {component_name} "
+                f"in company {company}. Map one under Hr Suite Settings → Statutory "
+                "Deduction Accounts, or add a Salary Component Account row on the "
+                "component itself. The deduction was skipped so that the payroll run "
+                "is not rolled back by the accrual Journal Entry."
+            ),
+        )
+        return False
 
-    sr = frappe.get_doc({
-        "doctype": "Staff Rating",
-        "employee": doc.employee,
-        "rated_by_employee": manager,
-        "rating_direction": "Downward",
-        "rating_period": rating_period,
-        "rating": rating,
-        "review": f"Auto-created from Appraisal {doc.name}",
-    })
-    try:
-        sr.insert(ignore_permissions=True)
-    except Exception:
-        frappe.log_error(frappe.get_traceback(), f"HR Suite: Staff Rating sync failed for {doc.employee}")
+    if component_exists:
+        component = frappe.get_doc("Salary Component", component_name)
+    else:
+        component = frappe.get_doc({
+            "doctype": "Salary Component",
+            "salary_component": component_name,
+            "salary_component_abbr": component_name[:4].upper(),
+            "type": "Deduction",
+            "is_tax_applicable": 0,
+        })
 
-    # Sync HR Suite custom fields on Appraisal → linked documents
-    if doc.get("hrsuite_promotion_transfer"):
-        if frappe.db.exists("Promotion Transfer", doc.hrsuite_promotion_transfer):
-            frappe.db.set_value(
-                "Promotion Transfer",
-                doc.hrsuite_promotion_transfer,
-                "appraisal",
-                doc.name,
-                update_modified=False,
-            )
-    if doc.get("hrsuite_salary_adjustment"):
-        if frappe.db.exists("Salary Adjustment", doc.hrsuite_salary_adjustment):
-            frappe.db.set_value(
-                "Salary Adjustment",
-                doc.hrsuite_salary_adjustment,
-                "appraisal",
-                doc.name,
-                update_modified=False,
-            )
+    component.append("accounts", {"company": company, "account": account})
+    if component_exists:
+        component.save(ignore_permissions=True)
+    else:
+        component.insert(ignore_permissions=True)
+    return True
 
+
+def _get_configured_statutory_account(company: str) -> str:
+    """Per-company statutory deduction account from Hr Suite Settings, or ''."""
+    settings = frappe.get_cached_doc("Hr Suite Settings")
+    for row in settings.get("statutory_deduction_accounts") or []:
+        if row.company == company and row.account:
+            # A mapping left pointing at another company's tree would produce a GL entry
+            # the accrual JE cannot post, so it is treated as unconfigured.
+            if frappe.db.get_value("Account", row.account, "company") != company:
+                continue
+            return row.account
+    return ""
+
+
+# ── Appraisal ────────────────────────────────────────────────────────────────
+#
+# `on_appraisal_submit` was REMOVED here, together with its `Appraisal: on_submit`
+# registration in hooks.py. It had two defects that made it unsafe to keep:
+#
+#   * it wrote `rating` onto an already-SUBMITTED `Staff Rating` with
+#     `frappe.db.set_value` although that field is not `allow_on_submit` — a silent
+#     write around the submit contract, invisible to the version history;
+#   * it attributed the rating to `Employee.reports_to`, and bailed out entirely when
+#     that was empty. On sft-uat all 17 employees have `reports_to` NULL, so the hook
+#     was a no-op there anyway.
+#
+# It also carried a dead branch that synced `hrsuite_promotion_transfer` /
+# `hrsuite_salary_adjustment` from the Appraisal onto Promotion Transfer / Salary
+# Adjustment. Neither Custom Field is shipped by hr_suite (`fixtures/custom_field.json`
+# has no Appraisal row), so `doc.get(...)` was always None and nothing was ever synced.
+#
+# The Appraisal surface — scoring, appraiser/reviewer and any downstream sync — is
+# owned by the HR Suite Performance Management module. Register that module's own
+# handler on `Appraisal: on_submit`; do not reinstate this one.
 
 # ── Employee status "Left" → trigger exit checklist ──────────────────────────
 

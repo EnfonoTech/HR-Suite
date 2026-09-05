@@ -11,6 +11,7 @@
   "arabic_name",
   "column_break_1",
   "job_requisition",
+  "designation",
   "status",
   "personal_details_section",
   "first_name",
@@ -64,6 +65,15 @@
    "fieldtype": "Link",
    "label": "Job Requisition",
    "options": "Job Requisition"
+  },
+  {
+   "description": "Used for the Job Offer that the HRMS Employee Onboarding requires. Defaults from the Job Requisition.",
+   "fetch_from": "job_requisition.designation",
+   "fetch_if_empty": 1,
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation"
   },
   {
    "fieldname": "status",

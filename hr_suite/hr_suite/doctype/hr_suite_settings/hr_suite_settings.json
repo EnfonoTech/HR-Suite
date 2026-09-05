@@ -34,6 +34,9 @@
   "notice_period_non_monthly_days",
   "penalty_section",
   "penalty_salary_component",
+  "statutory_accounts_section",
+  "statutory_accounts_help",
+  "statutory_deduction_accounts",
    "voice_section",
    "enable_voice_verification",
   "voice_verification_mode",
@@ -263,6 +266,22 @@
     "label": "Penalty Salary Component",
     "options": "Salary Component",
     "description": "Deduction component used for Employee Penalty payroll integration. Defaults to \"Penalty Deduction\" if left blank (auto-created on first use)."
+   },
+   {
+    "fieldname": "statutory_accounts_section",
+    "fieldtype": "Section Break",
+    "label": "Statutory Deduction Accounts"
+   },
+   {
+    "fieldname": "statutory_accounts_help",
+    "fieldtype": "HTML",
+    "options": "<p class=\"text-muted\" style=\"font-size:0.85rem;\">HR Suite injects the country's statutory deduction (GOSI / GPSSA / SIO / PASI / EPF / ESI) into the Salary Slip before submission. A Salary Component that has no <b>Salary Component Account</b> for the company makes Payroll Entry's accrual Journal Entry fail, which rolls the whole payroll run back. Map one liability account per company here; without a mapping HR Suite skips the injection instead of breaking payroll.</p>"
+   },
+   {
+    "fieldname": "statutory_deduction_accounts",
+    "fieldtype": "Table",
+    "label": "Statutory Deduction Account (per Company)",
+    "options": "Statutory Deduction Account Row"
    },
    {
     "fieldname": "voice_section",

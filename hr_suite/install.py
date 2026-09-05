@@ -8,6 +8,8 @@ from pathlib import Path
 
 import frappe
 
+from hr_suite.hr_suite.performance_setup import setup_performance_management
+
 
 def _get_existing_employee_approver_fields():
 	return [
@@ -34,6 +36,9 @@ def after_install():
 	create_default_shift_type()
 	create_default_settings()
 	ensure_employee_custom_fields()
+	# Performance Management (Steel Force Performance Appraisal Form 2025):
+	# Appraisal custom fields + the seeded criteria / appraisal template.
+	setup_performance_management()
 	seed_country_configs()
 	seed_employee_document_types()
 	seed_grievance_types()
@@ -57,6 +62,9 @@ def after_migrate():
 	migrate_legacy_annual_leave()
 	migrate_legacy_employee_loans()
 	ensure_employee_custom_fields()
+	# Performance Management (Steel Force Performance Appraisal Form 2025):
+	# Appraisal custom fields + the seeded criteria / appraisal template.
+	setup_performance_management()
 	seed_country_configs()
 	seed_employee_document_types()
 	seed_grievance_types()

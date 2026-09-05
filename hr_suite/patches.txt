@@ -9,3 +9,4 @@ hr_suite.patches.restore_core_employee_onboarding
 hr_suite.patches.restore_core_employee_grievance
 hr_suite.patches.migrate_saudi_employment_contract
 hr_suite.patches.rename_country_neutral_fields
+hr_suite.patches.remove_employee_onboarding_reqd_property_setters

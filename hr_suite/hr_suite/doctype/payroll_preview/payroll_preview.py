@@ -1,0 +1,1065 @@
+# Copyright (c) 2026, Enfono Technologies and contributors
+# For license information, please see license.txt
+
+"""Payroll Preview - the pre-payroll allocation review screen.
+
+READ-ONLY BY DESIGN.  This DocType never creates, posts or stores a salary figure of
+its own.  Every amount on it is a read of an underlying document (Salary Structure
+Assignment, Additional Salary, Employee Advance, Salary Withholding, Attendance and the
+hr_suite sources).  The moment it computes and stores its own payroll amounts it becomes
+a third payroll engine alongside Payroll Entry and hr_suite's Monthly Payroll, which is
+exactly the defect this screen exists to expose.  Keep it a mirror.
+"""
+
+import frappe
+from frappe import _
+from frappe.model.document import Document
+from frappe.model.mapper import get_mapped_doc
+from frappe.query_builder import Criterion
+from frappe.query_builder.functions import Count
+from frappe.utils import cint, cstr, date_diff, escape_html, flt, getdate, now_datetime
+
+# Entry types on Payroll Preview Allocation.
+# Earning / Deduction  -> the item reaches the Salary Slip produced by Payroll Entry.
+# Information          -> the item is booked but is settled outside Payroll Entry
+#                         (Monthly Payroll, a Journal Entry, a Salary Structure change)
+#                         or is not yet booked into payroll at all.
+EARNING = "Earning"
+DEDUCTION = "Deduction"
+INFORMATION = "Information"
+
+# Attendance statuses that carry LWP / absence, mirroring
+# hrms/payroll/doctype/salary_slip/salary_slip.py :: get_employee_attendance
+UNPAID_ATTENDANCE_STATUSES = ("Absent", "Half Day", "On Leave")
+
+# The Employee identity number is a per-country custom field; hr_suite ships none.
+# Probe the Employee meta for the first of these that exists and only then check it,
+# so a bench without any of them does not raise a false blocking issue.
+IDENTITY_FIELD_CANDIDATES = (
+	"custom_cpr_number",
+	"custom_cpr_no",
+	"custom_cpr",
+	"cpr_number",
+	"custom_national_id",
+	"national_id",
+	"custom_personal_id",
+	"custom_id_number",
+)
+
+
+class PayrollPreview(Document):
+	# -- document lifecycle ----------------------------------------------------
+
+	def validate(self):
+		self.validate_period()
+		self.set_currency()
+		self.recalculate_totals()
+
+	def validate_period(self):
+		if not (self.start_date and self.end_date):
+			return
+
+		if getdate(self.start_date) > getdate(self.end_date):
+			frappe.throw(_("Start Date cannot be after End Date."), title=_("Invalid Period"))
+
+	def set_currency(self):
+		if not self.company:
+			return
+
+		self.currency = frappe.db.get_value("Company", self.company, "default_currency")
+
+	def recalculate_totals(self):
+		"""Aggregate the child rows. Pure summation of values already read from source."""
+		precision = self.precision("total_earnings")
+
+		self.number_of_employees = len(self.employees)
+		self.employees_with_issues = sum(1 for row in self.employees if cint(row.has_issues))
+		self.total_earnings = flt(sum(flt(row.earnings) for row in self.employees), precision)
+		self.total_deductions = flt(sum(flt(row.deductions) for row in self.employees), precision)
+		self.net_estimate = flt(sum(flt(row.net_estimate) for row in self.employees), precision)
+
+	# -- refresh ---------------------------------------------------------------
+
+	@frappe.whitelist()
+	def refresh_allocations(self):
+		"""Rebuild the employee and allocation tables from the source documents.
+
+		One query per source; never a query per employee.
+		"""
+		self.check_permission("write")
+		self.validate_period()
+
+		if not (self.company and self.start_date and self.end_date):
+			frappe.throw(_("Set Company, Start Date and End Date before refreshing."))
+
+		self.set("employees", [])
+		self.set("allocations", [])
+		self.set_currency()
+
+		employees = self._get_employees()
+		if not employees:
+			self.recalculate_totals()
+			self.last_refreshed_on = now_datetime()
+			self.save()
+			frappe.msgprint(
+				_("No active employees match Company {0} and the selected filters for this period.").format(
+					frappe.bold(self.company)
+				),
+				title=_("Nothing to Preview"),
+				indicator="orange",
+			)
+			return
+
+		employee_ids = list(employees.keys())
+
+		assignments = self._get_salary_structure_assignments(employee_ids)
+		additional_salaries = self._get_additional_salaries(employee_ids)
+		advances = self._get_employee_advances(employee_ids, additional_salaries)
+		withholdings = self._get_salary_withholdings(employee_ids)
+		attendance = self._get_attendance_summary(employees)
+		loan_installments = self._get_loan_installments(employee_ids)
+		penalties = self._get_employee_penalties(employee_ids, additional_salaries)
+		overtime = self._get_overtime_requests(employee_ids)
+		adjustments = self._get_salary_adjustments(employee_ids)
+
+		self._add_additional_salary_rows(employees, additional_salaries)
+		self._add_advance_rows(employees, advances)
+		self._add_withholding_rows(employees, withholdings)
+		self._add_loan_installment_rows(employees, loan_installments)
+		self._add_penalty_rows(employees, penalties)
+		self._add_overtime_rows(employees, overtime)
+		self._add_salary_adjustment_rows(employees, adjustments)
+
+		unmapped_components = self._get_components_without_account()
+
+		self._build_employee_rows(employees, assignments, attendance, withholdings, unmapped_components)
+
+		self.recalculate_totals()
+		self.last_refreshed_on = now_datetime()
+		self.save()
+
+		self._warn_about_lending_app()
+		self._warn_if_payroll_not_attendance_based()
+
+	# -- sources ---------------------------------------------------------------
+
+	def _get_employees(self) -> dict:
+		"""Active employees for the company + filters.
+
+		Deliberately NOT joined to Salary Structure Assignment, unlike hrms
+		`get_filtered_employees` (payroll_entry.py:1274). An employee with no assignment
+		must be VISIBLE here as a blocking issue instead of being silently dropped.
+		"""
+		Employee = frappe.qb.DocType("Employee")
+
+		query = (
+			frappe.qb.from_(Employee)
+			.select(
+				Employee.name,
+				Employee.employee_name,
+				Employee.department,
+				Employee.designation,
+				Employee.branch,
+				Employee.date_of_joining,
+				Employee.relieving_date,
+				Employee.holiday_list,
+				Employee.iban,
+				Employee.bank_ac_no,
+			)
+			.where(
+				(Employee.status != "Inactive")
+				& (Employee.company == self.company)
+				& ((Employee.date_of_joining <= self.end_date) | (Employee.date_of_joining.isnull()))
+				& ((Employee.relieving_date >= self.start_date) | (Employee.relieving_date.isnull()))
+			)
+			.orderby(Employee.employee_name)
+		)
+
+		employee_meta = frappe.get_meta("Employee")
+		for fieldname, value in (
+			("branch", self.branch),
+			("department", self.department),
+			("designation", self.designation),
+			# `grade` is an hrms Custom Field on Employee (hrms/setup.py:197), not core.
+			("grade", self.employee_grade),
+		):
+			if value and employee_meta.has_field(fieldname):
+				query = query.where(Employee[fieldname] == value)
+
+		rows = query.run(as_dict=True)
+		employees = {row.name: row for row in rows}
+
+		for row in employees.values():
+			row.identity_number = None
+			row.has_identity_field = False
+			row.earnings = 0.0
+			row.deductions = 0.0
+
+		self._attach_identity_numbers(employees, employee_meta)
+		return employees
+
+	def _attach_identity_numbers(self, employees: dict, employee_meta) -> None:
+		identity_field = next(
+			(f for f in IDENTITY_FIELD_CANDIDATES if employee_meta.has_field(f)),
+			None,
+		)
+		if not identity_field:
+			return
+
+		rows = frappe.get_all(
+			"Employee",
+			filters={"name": ("in", list(employees.keys()))},
+			fields=["name", identity_field],
+		)
+		for row in rows:
+			employees[row.name].identity_number = row.get(identity_field)
+			employees[row.name].has_identity_field = True
+
+	def _get_salary_structure_assignments(self, employee_ids: list) -> dict:
+		"""Latest submitted assignment per employee on or before the period end."""
+		SSA = frappe.qb.DocType("Salary Structure Assignment")
+
+		rows = (
+			frappe.qb.from_(SSA)
+			.select(
+				SSA.name,
+				SSA.employee,
+				SSA.base,
+				SSA.salary_structure,
+				SSA.from_date,
+				SSA.currency,
+			)
+			.where(
+				(SSA.docstatus == 1)
+				& (SSA.employee.isin(employee_ids))
+				& (SSA.company == self.company)
+				& (SSA.from_date <= self.end_date)
+			)
+			.orderby(SSA.employee)
+			.orderby(SSA.from_date)
+			.orderby(SSA.creation)
+		).run(as_dict=True)
+
+		# ordered ascending, so the last row seen per employee is the latest one
+		return {row.employee: row for row in rows}
+
+	def _get_additional_salaries(self, employee_ids: list) -> list:
+		"""Mirrors the period criteria of hrms `get_additional_salaries`
+		(hrms/payroll/doctype/additional_salary/additional_salary.py:252) exactly, but for
+		every employee at once and for both component types.
+		"""
+		AdditionalSalary = frappe.qb.DocType("Additional Salary")
+
+		return (
+			frappe.qb.from_(AdditionalSalary)
+			.select(
+				AdditionalSalary.name,
+				AdditionalSalary.employee,
+				AdditionalSalary.employee_name,
+				AdditionalSalary.salary_component,
+				AdditionalSalary.amount,
+				AdditionalSalary.type,
+				AdditionalSalary.payroll_date,
+				AdditionalSalary.from_date,
+				AdditionalSalary.to_date,
+				AdditionalSalary.is_recurring,
+				AdditionalSalary.overwrite_salary_structure_amount,
+				AdditionalSalary.ref_doctype,
+				AdditionalSalary.ref_docname,
+			)
+			.where(
+				(AdditionalSalary.docstatus == 1)
+				& (AdditionalSalary.disabled == 0)
+				& (AdditionalSalary.employee.isin(employee_ids))
+				& (AdditionalSalary.company == self.company)
+			)
+			.where(
+				Criterion.any(
+					[
+						Criterion.all(
+							[
+								AdditionalSalary.is_recurring == 1,
+								AdditionalSalary.from_date <= self.end_date,
+								AdditionalSalary.to_date >= self.end_date,
+							]
+						),
+						Criterion.all(
+							[
+								AdditionalSalary.is_recurring == 0,
+								AdditionalSalary.payroll_date[self.start_date : self.end_date],
+							]
+						),
+					]
+				)
+			)
+			.orderby(AdditionalSalary.employee)
+			.orderby(AdditionalSalary.payroll_date)
+		).run(as_dict=True)
+
+	def _get_employee_advances(self, employee_ids: list, additional_salaries: list) -> list:
+		"""Advances flagged for salary recovery that still carry a pending amount.
+
+		An advance is recovered by creating an Additional Salary from it (hrms
+		`create_return_through_additional_salary`), so any advance that already has one for
+		this period is dropped here rather than being counted twice.
+		"""
+		already_booked = {
+			row.ref_docname
+			for row in additional_salaries
+			if row.ref_doctype == "Employee Advance" and row.ref_docname
+		}
+
+		rows = frappe.get_all(
+			"Employee Advance",
+			filters={
+				"docstatus": 1,
+				"employee": ("in", employee_ids),
+				"company": self.company,
+				"repay_unclaimed_amount_from_salary": 1,
+				"pending_amount": (">", 0),
+			},
+			fields=[
+				"name",
+				"employee",
+				"employee_name",
+				"posting_date",
+				"advance_amount",
+				"pending_amount",
+				"purpose",
+			],
+			order_by="employee asc, posting_date asc",
+		)
+
+		return [row for row in rows if row.name not in already_booked]
+
+	def _get_salary_withholdings(self, employee_ids: list) -> list:
+		"""Withholding cycles overlapping the period and not yet released.
+
+		hrms `get_salary_withholdings` (payroll_entry.py:1689) matches the cycle dates
+		EXACTLY against the payroll period; an overlap test is used here so a preview built
+		over a slightly different window still surfaces the withholding.
+		"""
+		Withholding = frappe.qb.DocType("Salary Withholding")
+		Cycle = frappe.qb.DocType("Salary Withholding Cycle")
+
+		return (
+			frappe.qb.from_(Withholding)
+			.join(Cycle)
+			.on(Cycle.parent == Withholding.name)
+			.select(
+				Withholding.name,
+				Withholding.employee,
+				Withholding.employee_name,
+				Withholding.reason_for_withholding_salary,
+				Cycle.from_date,
+				Cycle.to_date,
+			)
+			.where(
+				(Withholding.docstatus == 1)
+				& (Cycle.docstatus == 1)
+				& (Cycle.is_salary_released != 1)
+				& (Withholding.employee.isin(employee_ids))
+				& (Withholding.company == self.company)
+				& (Cycle.from_date <= self.end_date)
+				& (Cycle.to_date >= self.start_date)
+			)
+			.orderby(Withholding.employee)
+		).run(as_dict=True)
+
+	def _get_attendance_summary(self, employees: dict) -> dict:
+		"""LWP / absent / unmarked day counts per employee.
+
+		Mirrors hrms `calculate_lwp_ppl_and_absent_days_based_on_attendance`
+		(salary_slip.py:727) and `get_employees_with_unmarked_attendance`
+		(payroll_entry.py:1149). Both of those are PayrollEntry / SalarySlip INSTANCE
+		methods that read `self.employees` and `self.validate_attendance`, so neither can
+		be called from here; the logic is reproduced against the same fieldnames.
+		Three queries in total, not three per employee.
+		"""
+		employee_ids = list(employees.keys())
+		Attendance = frappe.qb.DocType("Attendance")
+
+		unpaid_rows = (
+			frappe.qb.from_(Attendance)
+			.select(
+				Attendance.employee,
+				Attendance.attendance_date,
+				Attendance.status,
+				Attendance.leave_type,
+				Attendance.half_day_status,
+			)
+			.where(
+				(Attendance.docstatus == 1)
+				& (Attendance.employee.isin(employee_ids))
+				& (Attendance.attendance_date[self.start_date : self.end_date])
+				& (Attendance.status.isin(list(UNPAID_ATTENDANCE_STATUSES)))
+			)
+		).run(as_dict=True)
+
+		marked_counts = dict(
+			(
+				frappe.qb.from_(Attendance)
+				.select(Attendance.employee, Count(Attendance.name))
+				.where(
+					(Attendance.docstatus == 1)
+					& (Attendance.employee.isin(employee_ids))
+					& (Attendance.attendance_date[self.start_date : self.end_date])
+				)
+				.groupby(Attendance.employee)
+			).run()
+		)
+
+		leave_type_map = self._get_leave_type_map()
+		settings = frappe.get_cached_doc("Payroll Settings")
+		half_day_fraction = flt(settings.daily_wages_fraction_for_half_day) or 0.5
+		count_on_holidays = cint(settings.consider_marked_attendance_on_holidays)
+
+		holidays_by_list = self._get_holidays_by_list(employees)
+		default_holiday_list = frappe.db.get_value(
+			"Company", self.company, "default_holiday_list", cache=True
+		)
+
+		periods = {}
+		summary = {}
+		for employee_id, employee in employees.items():
+			start_date, end_date = self._get_period_for_employee(employee)
+			periods[employee_id] = (start_date, end_date)
+
+			holiday_list = employee.holiday_list or default_holiday_list
+			holidays = {
+				holiday_date
+				for holiday_date in holidays_by_list.get(holiday_list, set())
+				if start_date <= holiday_date <= end_date
+			}
+
+			payroll_days = date_diff(end_date, start_date) + 1
+			unmarked_days = payroll_days - (len(holidays) + cint(marked_counts.get(employee_id)))
+
+			summary[employee_id] = frappe._dict(
+				{"lwp_days": 0.0, "absent_days": 0.0, "unmarked_days": max(unmarked_days, 0)}
+			)
+
+		for row in unpaid_rows:
+			bucket = summary.get(row.employee)
+			if not bucket:
+				continue
+
+			employee = employees[row.employee]
+			start_date, end_date = periods[row.employee]
+			attendance_date = getdate(row.attendance_date)
+			if not (start_date <= attendance_date <= end_date):
+				continue
+
+			leave_type = leave_type_map.get(row.leave_type) if row.leave_type else None
+			if row.status in ("Half Day", "On Leave") and row.leave_type and not leave_type:
+				# a fully paid leave type: no LWP impact
+				continue
+
+			holiday_list = employee.holiday_list or default_holiday_list
+			on_holiday = attendance_date in holidays_by_list.get(holiday_list, set())
+			if not count_on_holidays and on_holiday:
+				if row.status in ("Absent", "Half Day") or (
+					leave_type and not cint(leave_type.include_holiday)
+				):
+					continue
+
+			fraction = flt(leave_type.fraction_of_daily_salary_per_leave) if leave_type else 0.0
+
+			if row.status == "Half Day" and leave_type:
+				equivalent_lwp = 1 - half_day_fraction
+				if cint(leave_type.is_ppl):
+					equivalent_lwp *= fraction or 1
+				bucket.lwp_days += equivalent_lwp
+			elif row.status == "On Leave" and leave_type:
+				equivalent_lwp = 1.0
+				if cint(leave_type.is_ppl):
+					equivalent_lwp *= fraction or 1
+				bucket.lwp_days += equivalent_lwp
+			elif row.status == "Absent":
+				bucket.absent_days += 1
+
+		return summary
+
+	def _get_leave_type_map(self) -> dict:
+		leave_types = frappe.get_all(
+			"Leave Type",
+			or_filters={"is_ppl": 1, "is_lwp": 1},
+			fields=["name", "is_lwp", "is_ppl", "fraction_of_daily_salary_per_leave", "include_holiday"],
+		)
+		return {leave_type.name: leave_type for leave_type in leave_types}
+
+	def _get_holidays_by_list(self, employees: dict) -> dict:
+		"""All holiday dates for every holiday list in play, in ONE query."""
+		default_holiday_list = frappe.db.get_value(
+			"Company", self.company, "default_holiday_list", cache=True
+		)
+		holiday_lists = {employee.holiday_list or default_holiday_list for employee in employees.values()}
+		holiday_lists.discard(None)
+		holiday_lists.discard("")
+
+		if not holiday_lists:
+			return {}
+
+		rows = frappe.get_all(
+			"Holiday",
+			filters={
+				"parent": ("in", list(holiday_lists)),
+				"parenttype": "Holiday List",
+				"holiday_date": ("between", [self.start_date, self.end_date]),
+			},
+			fields=["parent", "holiday_date"],
+		)
+
+		holidays_by_list = {}
+		for row in rows:
+			holidays_by_list.setdefault(row.parent, set()).add(getdate(row.holiday_date))
+
+		return holidays_by_list
+
+	def _get_period_for_employee(self, employee) -> tuple:
+		"""Clamp the payroll period to joining / relieving, as hrms
+		`get_payroll_dates_for_employee` does (payroll_entry.py:1219).
+		"""
+		start_date = getdate(self.start_date)
+		if employee.date_of_joining and getdate(employee.date_of_joining) > start_date:
+			start_date = getdate(employee.date_of_joining)
+
+		end_date = getdate(self.end_date)
+		if employee.relieving_date and getdate(employee.relieving_date) < end_date:
+			end_date = getdate(employee.relieving_date)
+
+		if start_date > end_date:
+			start_date = end_date
+
+		return start_date, end_date
+
+	# -- hr_suite sources (each guarded: hr_suite may be partially installed) ---
+
+	def _get_loan_installments(self, employee_ids: list) -> list:
+		if not (
+			frappe.db.exists("DocType", "Employee Loan")
+			and frappe.db.exists("DocType", "Employee Loan Installment")
+		):
+			return []
+
+		Loan = frappe.qb.DocType("Employee Loan")
+		Installment = frappe.qb.DocType("Employee Loan Installment")
+
+		return (
+			frappe.qb.from_(Installment)
+			.join(Loan)
+			.on(Loan.name == Installment.parent)
+			.select(
+				Loan.name.as_("loan"),
+				Loan.employee,
+				Loan.employee_name,
+				Installment.installment_number,
+				Installment.due_date,
+				Installment.installment_amount,
+				Installment.outstanding_amount,
+			)
+			.where(
+				(Loan.docstatus == 1)
+				& (Loan.employee.isin(employee_ids))
+				& (Loan.company == self.company)
+				& (Installment.parenttype == "Employee Loan")
+				& (Installment.deduction_status == "Pending")
+				& (Installment.due_date[self.start_date : self.end_date])
+			)
+			.orderby(Loan.employee)
+			.orderby(Installment.due_date)
+		).run(as_dict=True)
+
+	def _get_employee_penalties(self, employee_ids: list, additional_salaries: list) -> list:
+		"""Penalties in the period that are NOT already represented.
+
+		A submitted Employee Penalty creates and submits its own Additional Salary
+		(hr_suite employee_penalty.py:54-81) carrying ref_doctype / ref_docname, so those
+		are already listed among the Additional Salary rows. Only penalties without one are
+		listed here, as information that they will not reach this payroll run.
+		"""
+		if not frappe.db.exists("DocType", "Employee Penalty"):
+			return []
+
+		booked = {
+			row.ref_docname
+			for row in additional_salaries
+			if row.ref_doctype == "Employee Penalty" and row.ref_docname
+		}
+
+		rows = frappe.get_all(
+			"Employee Penalty",
+			filters={
+				"docstatus": 1,
+				"employee": ("in", employee_ids),
+				"company": self.company,
+				"posting_date": ("between", [self.start_date, self.end_date]),
+			},
+			fields=[
+				"name",
+				"employee",
+				"employee_name",
+				"penalty_type",
+				"penalty_value",
+				"posting_date",
+				"additional_salary",
+				"subject",
+			],
+			order_by="employee asc, posting_date asc",
+		)
+
+		return [row for row in rows if row.name not in booked and not row.additional_salary]
+
+	def _get_overtime_requests(self, employee_ids: list) -> list:
+		if not frappe.db.exists("DocType", "Overtime Request"):
+			return []
+
+		return frappe.get_all(
+			"Overtime Request",
+			filters={
+				"docstatus": 1,
+				"employee": ("in", employee_ids),
+				"company": self.company,
+				"approval_status": "Approved",
+				"date": ("between", [self.start_date, self.end_date]),
+			},
+			fields=[
+				"name",
+				"employee",
+				"employee_name",
+				"date",
+				"overtime_hours",
+				"overtime_amount",
+				"overtime_journal_entry",
+			],
+			order_by="employee asc, date asc",
+		)
+
+	def _get_salary_adjustments(self, employee_ids: list) -> list:
+		if not frappe.db.exists("DocType", "Salary Adjustment"):
+			return []
+
+		return frappe.get_all(
+			"Salary Adjustment",
+			filters={
+				"docstatus": 1,
+				"employee": ("in", employee_ids),
+				"company": self.company,
+				"effective_date": ("between", [self.start_date, self.end_date]),
+			},
+			fields=[
+				"name",
+				"employee",
+				"employee_name",
+				"adjustment_type",
+				"adjustment_amount",
+				"proposed_basic_salary",
+				"effective_date",
+				"status",
+			],
+			order_by="employee asc, effective_date asc",
+		)
+
+	# -- allocation rows -------------------------------------------------------
+
+	def _append_allocation(self, employees: dict, employee_id: str, **kwargs) -> None:
+		employee = employees.get(employee_id)
+		if not employee:
+			return
+
+		row = self.append("allocations", {"employee": employee_id, "employee_name": employee.employee_name})
+		row.update(kwargs)
+
+		amount = flt(row.amount)
+		if row.entry_type == EARNING:
+			employee.earnings += amount
+		elif row.entry_type == DEDUCTION:
+			employee.deductions += amount
+
+	def _add_additional_salary_rows(self, employees: dict, additional_salaries: list) -> None:
+		for entry in additional_salaries:
+			if cint(entry.is_recurring):
+				description = _("Recurring {0} to {1}").format(entry.from_date, entry.to_date)
+			else:
+				description = _("Payroll Date {0}").format(entry.payroll_date)
+
+			if cint(entry.overwrite_salary_structure_amount):
+				description += ". " + _("Overwrites the salary structure amount for this component.")
+
+			self._append_allocation(
+				employees,
+				entry.employee,
+				source_doctype="Additional Salary",
+				source_name=entry.name,
+				# `type` is a Data field on Additional Salary carrying "Earning"/"Deduction"
+				entry_type=EARNING if entry.type == EARNING else DEDUCTION,
+				salary_component=entry.salary_component,
+				amount=flt(entry.amount),
+				posting_date=entry.payroll_date or entry.from_date,
+				origin_doctype=entry.ref_doctype,
+				origin_name=entry.ref_docname,
+				description=description,
+			)
+
+	def _add_advance_rows(self, employees: dict, advances: list) -> None:
+		note = _(
+			"Pending advance flagged for salary recovery. It will not be deducted until an "
+			"Additional Salary is raised from it."
+		)
+		for advance in advances:
+			self._append_allocation(
+				employees,
+				advance.employee,
+				source_doctype="Employee Advance",
+				source_name=advance.name,
+				entry_type=INFORMATION,
+				amount=flt(advance.pending_amount),
+				posting_date=advance.posting_date,
+				description=note,
+			)
+
+	def _add_withholding_rows(self, employees: dict, withholdings: list) -> None:
+		for withholding in withholdings:
+			description = _("Salary withheld for the cycle {0} to {1}.").format(
+				withholding.from_date, withholding.to_date
+			)
+			reason = cstr(withholding.reason_for_withholding_salary).strip()
+			if reason:
+				description += " " + reason
+
+			self._append_allocation(
+				employees,
+				withholding.employee,
+				source_doctype="Salary Withholding",
+				source_name=withholding.name,
+				entry_type=INFORMATION,
+				posting_date=withholding.from_date,
+				description=description,
+			)
+
+	def _add_loan_installment_rows(self, employees: dict, installments: list) -> None:
+		template = _(
+			"Loan installment {0} due {1}. hr_suite recovers loan installments through Monthly "
+			"Payroll, so this is not deducted by Payroll Entry."
+		)
+		for installment in installments:
+			self._append_allocation(
+				employees,
+				installment.employee,
+				source_doctype="Employee Loan",
+				source_name=installment.loan,
+				entry_type=INFORMATION,
+				amount=flt(installment.installment_amount),
+				posting_date=installment.due_date,
+				description=template.format(cint(installment.installment_number), installment.due_date),
+			)
+
+	def _add_penalty_rows(self, employees: dict, penalties: list) -> None:
+		template = _(
+			"Penalty {0} ({1} day(s)) has no Additional Salary, so it will not be deducted by this "
+			"payroll run."
+		)
+		for penalty in penalties:
+			description = template.format(cstr(penalty.penalty_type), flt(penalty.penalty_value))
+			subject = cstr(penalty.subject).strip()
+			if subject:
+				description += " " + subject
+
+			self._append_allocation(
+				employees,
+				penalty.employee,
+				source_doctype="Employee Penalty",
+				source_name=penalty.name,
+				entry_type=INFORMATION,
+				posting_date=penalty.posting_date,
+				description=description,
+			)
+
+	def _add_overtime_rows(self, employees: dict, overtime_requests: list) -> None:
+		template = _(
+			"{0} approved overtime hour(s), paid by Journal Entry rather than through the Salary Slip."
+		)
+		for request in overtime_requests:
+			self._append_allocation(
+				employees,
+				request.employee,
+				source_doctype="Overtime Request",
+				source_name=request.name,
+				entry_type=INFORMATION,
+				amount=flt(request.overtime_amount),
+				posting_date=request.date,
+				origin_doctype="Journal Entry" if request.overtime_journal_entry else None,
+				origin_name=request.overtime_journal_entry,
+				description=template.format(flt(request.overtime_hours)),
+			)
+
+	def _add_salary_adjustment_rows(self, employees: dict, adjustments: list) -> None:
+		template = _(
+			"{0} effective {1} (status {2}). It changes the Salary Structure Assignment, not this "
+			"payroll run directly."
+		)
+		for adjustment in adjustments:
+			self._append_allocation(
+				employees,
+				adjustment.employee,
+				source_doctype="Salary Adjustment",
+				source_name=adjustment.name,
+				entry_type=INFORMATION,
+				amount=flt(adjustment.adjustment_amount),
+				posting_date=adjustment.effective_date,
+				description=template.format(
+					cstr(adjustment.adjustment_type),
+					adjustment.effective_date,
+					cstr(adjustment.status),
+				),
+			)
+
+	# -- blocking issues -------------------------------------------------------
+
+	def _get_components_without_account(self) -> set:
+		"""Salary Components used in the allocations that have no Salary Component Account
+		row for this company.
+
+		This is the exact failure that rolls a whole Payroll Entry run back at accrual
+		time, so it is surfaced here before a single Salary Slip is created.
+		"""
+		components = {row.salary_component for row in self.allocations if row.salary_component}
+		if not components:
+			return set()
+
+		mapped = frappe.get_all(
+			"Salary Component Account",
+			filters={
+				"parent": ("in", list(components)),
+				"parenttype": "Salary Component",
+				"company": self.company,
+			},
+			pluck="parent",
+		)
+
+		return components - set(mapped)
+
+	def _build_employee_rows(
+		self,
+		employees: dict,
+		assignments: dict,
+		attendance: dict,
+		withholdings: list,
+		unmapped_components: set,
+	) -> None:
+		precision = self.precision("total_earnings")
+		withheld_employees = {row.employee for row in withholdings}
+
+		components_by_employee = {}
+		for row in self.allocations:
+			if row.salary_component:
+				components_by_employee.setdefault(row.employee, set()).add(row.salary_component)
+
+		for employee_id, employee in employees.items():
+			assignment = assignments.get(employee_id)
+			counts = attendance.get(employee_id) or frappe._dict(
+				{"lwp_days": 0.0, "absent_days": 0.0, "unmarked_days": 0.0}
+			)
+
+			base = flt(assignment.base) if assignment else 0.0
+			earnings = flt(employee.earnings, precision)
+			deductions = flt(employee.deductions, precision)
+			net_estimate = flt(base + earnings - deductions, precision)
+
+			issues = self._collect_blocking_issues(
+				employee=employee,
+				assignment=assignment,
+				counts=counts,
+				net_estimate=net_estimate,
+				is_withheld=employee_id in withheld_employees,
+				unmapped=components_by_employee.get(employee_id, set()) & unmapped_components,
+			)
+
+			self.append(
+				"employees",
+				{
+					"employee": employee_id,
+					"employee_name": employee.employee_name,
+					"department": employee.department,
+					"designation": employee.designation,
+					"branch": employee.branch,
+					"base": base,
+					"earnings": earnings,
+					"deductions": deductions,
+					"lwp_days": flt(counts.lwp_days, 2),
+					"absent_days": flt(counts.absent_days, 2),
+					"unmarked_days": flt(counts.unmarked_days, 2),
+					"net_estimate": net_estimate,
+					"has_issues": 1 if issues else 0,
+					"blocking_issues": "\n".join(issues),
+				},
+			)
+
+	def _collect_blocking_issues(
+		self, employee, assignment, counts, net_estimate, is_withheld, unmapped
+	) -> list:
+		issues = []
+
+		if not assignment:
+			issues.append(
+				_("No submitted Salary Structure Assignment on or before {0}.").format(self.end_date)
+			)
+
+		if not (employee.iban or employee.bank_ac_no):
+			issues.append(_("No IBAN or bank account number on the Employee record."))
+
+		if employee.has_identity_field and not cstr(employee.identity_number).strip():
+			issues.append(_("No identity number (CPR / national ID) on the Employee record."))
+
+		if flt(counts.unmarked_days) > 0:
+			issues.append(
+				_("{0} unmarked attendance day(s) in the period.").format(flt(counts.unmarked_days, 2))
+			)
+
+		for component in sorted(unmapped):
+			issues.append(
+				_("Salary Component {0} has no account mapped for {1}.").format(component, self.company)
+			)
+
+		if net_estimate < 0:
+			issues.append(_("Net estimate is negative."))
+
+		if is_withheld:
+			issues.append(_("Salary is withheld for this period."))
+
+		return issues
+
+	def _warn_about_lending_app(self) -> None:
+		"""The lending app is not installed on this bench, so hrms's `salary_slip_loan`
+		table is inert. If someone installs it later, say plainly that its repayments are
+		outside this preview rather than silently under-reporting deductions.
+		"""
+		if not frappe.db.exists("DocType", "Loan"):
+			return
+
+		frappe.msgprint(
+			_(
+				"The Loan (lending) app is installed. Loan repayments booked through it are not "
+				"read by this preview; review them on the Salary Slip."
+			),
+			title=_("Lending App Detected"),
+			indicator="orange",
+		)
+
+	def _warn_if_payroll_not_attendance_based(self) -> None:
+		payroll_based_on = frappe.db.get_single_value("Payroll Settings", "payroll_based_on")
+		if payroll_based_on == "Attendance":
+			return
+
+		frappe.msgprint(
+			_(
+				"Payroll Settings computes payment days on {0}, not Attendance. The LWP, absent and "
+				"unmarked day counts shown here will not drive the Salary Slip until that is changed."
+			).format(frappe.bold(cstr(payroll_based_on) or _("Leave"))),
+			title=_("Payroll Not Attendance Based"),
+			indicator="orange",
+		)
+
+
+# -- creating the Payroll Entry -----------------------------------------------
+
+
+@frappe.whitelist()
+def make_payroll_entry(source_name: str, target_doc=None):
+	"""Map a Payroll Preview onto a NEW DRAFT Payroll Entry.
+
+	Refuses while any employee still carries a blocking issue. Never submits and never
+	inserts: the mapped document is returned for the client to open and save.
+	"""
+	if not isinstance(source_name, str) or not source_name.strip():
+		frappe.throw(_("Invalid Payroll Preview reference."))
+
+	frappe.has_permission("Payroll Preview", ptype="read", doc=source_name, throw=True)
+	frappe.has_permission("Payroll Entry", ptype="create", throw=True)
+
+	preview = frappe.get_doc("Payroll Preview", source_name)
+
+	if not preview.employees:
+		frappe.throw(
+			_("This preview has no employees. Refresh the allocations first."),
+			title=_("Nothing to Process"),
+		)
+
+	blocked = [row for row in preview.employees if cint(row.has_issues)]
+	if blocked:
+		lines = []
+		for row in blocked[:20]:
+			lines.append(
+				"<li><b>{0}</b> ({1}): {2}</li>".format(
+					escape_html(cstr(row.employee_name)),
+					escape_html(cstr(row.employee)),
+					escape_html(cstr(row.blocking_issues).replace("\n", "; ")),
+				)
+			)
+
+		message = _("{0} employee(s) still have blocking issues:").format(len(blocked))
+		message += "<br><br><ul>" + "".join(lines) + "</ul>"
+		if len(blocked) > 20:
+			message += _("...and {0} more.").format(len(blocked) - 20)
+
+		frappe.throw(message, title=_("Blocking Issues"))
+
+	def set_missing_values(source, target):
+		company_defaults = (
+			frappe.db.get_value(
+				"Company",
+				source.company,
+				["default_currency", "default_payroll_payable_account", "cost_center"],
+				as_dict=True,
+			)
+			or frappe._dict()
+		)
+
+		target.posting_date = source.end_date
+		target.currency = source.currency or company_defaults.default_currency
+		target.exchange_rate = 1
+		target.payroll_payable_account = company_defaults.default_payroll_payable_account
+		target.cost_center = company_defaults.cost_center
+		target.number_of_employees = len(target.employees)
+
+	return get_mapped_doc(
+		"Payroll Preview",
+		source_name,
+		{
+			"Payroll Preview": {
+				"doctype": "Payroll Entry",
+				"field_map": {"employee_grade": "grade"},
+				"field_no_map": [
+					"naming_series",
+					"total_earnings",
+					"total_deductions",
+					"net_estimate",
+					"employees_with_issues",
+					"last_refreshed_on",
+				],
+			},
+			"Payroll Preview Employee": {
+				"doctype": "Payroll Employee Detail",
+				"field_map": {
+					"employee": "employee",
+					"employee_name": "employee_name",
+					"department": "department",
+					"designation": "designation",
+				},
+				"field_no_map": [
+					"base",
+					"earnings",
+					"deductions",
+					"net_estimate",
+					"lwp_days",
+					"absent_days",
+					"unmarked_days",
+					"has_issues",
+					"blocking_issues",
+					"branch",
+				],
+			},
+		},
+		target_doc,
+		set_missing_values,
+	)

@@ -16,8 +16,8 @@ def get_columns():
 
 
 def get_data(filters):
-	conditions = ["child.deduction_status = 'Deducted"]
-	values = {}
+	conditions = ["child.deduction_status = %(deduction_status)s"]
+	values = {"deduction_status": "Deducted"}
 	if filters.get("from_date"):
 		conditions.append("child.deduction_date >= %(from_date)s")
 		values["from_date"] = filters["from_date"]

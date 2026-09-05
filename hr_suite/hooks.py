@@ -129,7 +129,7 @@ doc_events = {
 		"on_update":    "hr_suite.hr_suite.integrations.hrms.on_employee_update",
 	},
 	"Appraisal": {
-		"on_submit": "hr_suite.hr_suite.integrations.hrms.on_appraisal_submit",
+		"validate": "hr_suite.hr_suite.performance.validate_appraisal",
 	},
 	"Leave Application": {
 		"validate": "hr_suite.hr_suite.integrations.hrms.on_leave_application_validate",
@@ -157,6 +157,8 @@ doctype_js = {
 	"Salary Structure Assignment": "public/js/salary_structure_assignment.js",
 	"Nitaqat Record": "public/js/nitaqat_record.js",
 	"Payroll Entry": "public/js/wps_payroll.js",
+	"Appraisal": "public/js/appraisal.js",
+	"Payroll Preview": "public/js/payroll_preview.js",
 }
 
 # ─── Jinja ──────────────────────────────────────────────────────────────────────
