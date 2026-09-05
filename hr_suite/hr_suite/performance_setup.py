@@ -138,9 +138,16 @@ APPRAISAL_CUSTOM_FIELDS = [
 		"fieldtype": "Link",
 		"label": "Appraiser",
 		"options": "Employee",
-		"reqd": 1,
+		# NOT reqd at field level. AppraisalCycle.create_appraisals_for_cycle()
+		# (appraisal_cycle.py:163-195) inserts Appraisals programmatically with only
+		# company / template / employee / cycle, and its except clause catches ONLY
+		# frappe.DuplicateEntryError — so a MandatoryError here escapes and aborts the
+		# whole "Create Appraisals" run, leaving the remaining appraisees with nothing.
+		# hr_suite.hr_suite.performance.validate_appraisal enforces it at submit instead.
+		"reqd": 0,
 		"insert_after": "custom_years_in_current_role",
 		"module": "Hr Suite",
+		"description": "Required before submitting.",
 	},
 	{
 		"fieldname": "custom_appraiser_designation",
@@ -232,7 +239,7 @@ APPRAISAL_CUSTOM_FIELDS = [
 		"read_only": 1,
 		"insert_after": "custom_reviewer_total",
 		"module": "Hr Suite",
-		"description": "The official grade. Follows the Reviewer total when a reviewer has scored, otherwise the Appraiser total.",
+		"description": "The official grade. Follows the Reviewer total once the Reviewer has scored every criterion the Appraiser scored, otherwise the Appraiser total.",
 	},
 	{
 		"fieldname": "custom_totals_col_break_2",

@@ -55,14 +55,17 @@ frappe.ui.form.on("Appraisal", {
 	custom_period_to: function (frm) {
 		hr_suite_render_history(frm);
 	},
+});
 
-	// Grid row removal fires on the PARENT doctype handler, not the child one.
+// Grid row removal is triggered with the CHILD doctype as the handler key —
+// grid_row.js:110-114 calls script_manager.trigger(fieldname + "_remove", this.doc.doctype, ...)
+// and script_manager.get_handlers() looks the event up under that doctype. Registering
+// "<fieldname>_remove" on the parent "Appraisal" handler never fires.
+frappe.ui.form.on("Appraisal Criterion Rating", {
 	custom_criterion_ratings_remove: function (frm) {
 		hr_suite_recalculate_totals(frm);
 	},
-});
 
-frappe.ui.form.on("Appraisal Criterion Rating", {
 	appraiser_rating: function (frm, cdt, cdn) {
 		hr_suite_set_variance(frm, cdt, cdn);
 		hr_suite_recalculate_totals(frm);
@@ -160,15 +163,20 @@ function hr_suite_recalculate_totals(frm) {
 	const rows = frm.doc[HR_SUITE_RATINGS_FIELD] || [];
 	let appraiserTotal = 0;
 	let reviewerTotal = 0;
-	let reviewerScored = false;
+	let appraiserScoredRows = 0;
+	let reviewerScoredRows = 0;
 
 	rows.forEach(function (row) {
 		appraiserTotal += cint(row.appraiser_rating);
 		reviewerTotal += cint(row.reviewer_rating);
-		if (cint(row.reviewer_rating)) reviewerScored = true;
+		if (cint(row.appraiser_rating)) appraiserScoredRows++;
+		if (cint(row.reviewer_rating)) reviewerScoredRows++;
 	});
 
 	const maxTotal = rows.length * HR_SUITE_MAX_PER_CRITERION;
+	// Mirrors validate_appraisal(): the official grade follows the Reviewer only once
+	// the Reviewer column is complete, otherwise a half-filled column understates it.
+	const reviewerComplete = reviewerScoredRows > 0 && reviewerScoredRows >= appraiserScoredRows;
 
 	hr_suite_set_display(frm, "custom_appraiser_total", appraiserTotal);
 	hr_suite_set_display(frm, "custom_reviewer_total", reviewerTotal);
@@ -177,7 +185,7 @@ function hr_suite_recalculate_totals(frm) {
 	hr_suite_set_display(
 		frm,
 		"custom_performance_grade",
-		hr_suite_grade(reviewerScored ? reviewerTotal : appraiserTotal, maxTotal)
+		hr_suite_grade(reviewerComplete ? reviewerTotal : appraiserTotal, maxTotal)
 	);
 }
 

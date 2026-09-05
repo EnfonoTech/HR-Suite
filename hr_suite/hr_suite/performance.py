@@ -90,13 +90,16 @@ def validate_appraisal(doc, method=None):
 		# Custom fields not provisioned yet (fresh install, mid-migrate).
 		return
 
+	_clear_acknowledgement_on_amend(doc)
 	_set_period_defaults(doc)
 	_set_years_in_current_role(doc)
+	_validate_mandatory_on_submit(doc)
 
 	rows = doc.get(RATINGS_FIELD) or []
 	appraiser_total = 0
 	reviewer_total = 0
-	reviewer_scored = False
+	appraiser_scored_rows = 0
+	reviewer_scored_rows = 0
 
 	for row in rows:
 		validate_criterion_row(row)
@@ -105,9 +108,11 @@ def validate_appraisal(doc, method=None):
 		reviewer = cint(row.reviewer_rating)
 		appraiser_total += appraiser
 		reviewer_total += reviewer
+		if appraiser:
+			appraiser_scored_rows += 1
 
 		if reviewer:
-			reviewer_scored = True
+			reviewer_scored_rows += 1
 			# Reviewer instruction on the form: replicate the appraiser's score when
 			# agreeing, otherwise comment on the criteria disagreed with.
 			if reviewer != appraiser and not cstr(row.reviewer_comments).strip():
@@ -121,14 +126,69 @@ def validate_appraisal(doc, method=None):
 
 	max_total = len(rows) * MAX_SCORE_PER_CRITERION
 
+	# The official grade follows the Reviewer ONLY once the Reviewer column is complete,
+	# i.e. every criterion the Appraiser scored has been scored by the Reviewer too (which
+	# is what "replicate the appraiser's score if agreeing" means on the paper form).
+	# Banding a half-filled Reviewer column against the full maximum understates it
+	# badly: one reviewer keystroke on a 15-criterion form would otherwise drop the
+	# official grade from Excellent straight to Poor.
+	reviewer_complete = reviewer_scored_rows > 0 and reviewer_scored_rows >= appraiser_scored_rows
+
 	doc.custom_appraiser_total = appraiser_total
 	doc.custom_reviewer_total = reviewer_total
 	doc.custom_max_total = max_total
 	doc.custom_appraiser_grade = get_grade(appraiser_total, max_total)
-	# The official grade is the reviewer's whenever a reviewer has scored.
 	doc.custom_performance_grade = get_grade(
-		reviewer_total if reviewer_scored else appraiser_total, max_total
+		reviewer_total if reviewer_complete else appraiser_total, max_total
 	)
+
+
+# The employee acknowledgement block attests to the scores that were actually
+# submitted ("this review was explained to me and I accept its contents"). An
+# amendment exists to change those scores, so the attestation must be re-collected.
+# frappe.copy_doc(ignore_no_copy=True) and the desk's amend path
+# (create_new.js:291 — `!from_amend && df.no_copy`) BOTH ignore no_copy on an
+# amendment, so marking the fields no_copy would not work; they have to be cleared here.
+ACKNOWLEDGEMENT_FIELDS = (
+	"custom_employee_acknowledged",
+	"custom_acknowledged_on",
+	"custom_employee_signature",
+	"custom_employee_comments",
+)
+
+
+def _clear_acknowledgement_on_amend(doc) -> None:
+	if not doc.get("amended_from") or not doc.is_new():
+		return
+
+	for fieldname in ACKNOWLEDGEMENT_FIELDS:
+		if doc.meta.has_field(fieldname):
+			doc.set(fieldname, None)
+
+
+def _validate_mandatory_on_submit(doc) -> None:
+	"""Fields the paper form requires, enforced at submit rather than at field level.
+
+	``custom_appraiser`` deliberately carries ``reqd = 0``: ``create_appraisals_for_cycle``
+	(hrms appraisal_cycle.py:163-195) inserts Appraisals with only company / template /
+	employee / cycle and catches ONLY ``frappe.DuplicateEntryError``, so a field-level
+	MandatoryError would abort the entire "Create Appraisals" run and leave the remaining
+	appraisees with no Appraisal at all. Submit is the point at which the form must be complete.
+	"""
+	if cint(doc.docstatus) != 1:
+		return
+
+	for fieldname, label in (
+		("custom_appraiser", _("Appraiser")),
+		("custom_report_type", _("Type of Report")),
+	):
+		if not doc.meta.has_field(fieldname):
+			continue
+		if not doc.get(fieldname):
+			frappe.throw(
+				_("{0} is mandatory before an Appraisal can be submitted.").format(label),
+				title=_("Missing Value"),
+			)
 
 
 def _set_period_defaults(doc) -> None:
@@ -280,13 +340,23 @@ def _get_template_criteria(template: str | None) -> list:
 
 
 def _get_seeded_criteria() -> list:
-	"""All Employee Feedback Criteria, Steel Force ones first in printed order."""
+	"""The seeded Steel Force criteria that exist on this site, in printed order.
+
+	Deliberately restricted to STEEL_FORCE_CRITERIA. Employee Feedback Criteria is a
+	shared master — HRMS demo data and Employee Performance Feedback both add rows to it
+	— so returning every criterion on the site would pad the grid with foreign criteria
+	and silently move the maximum off the form's 75 points.
+	"""
 	if not frappe.db.exists("DocType", "Employee Feedback Criteria"):
 		return []
-	available = set(frappe.get_all("Employee Feedback Criteria", pluck="name"))
-	ordered = [c for c in STEEL_FORCE_CRITERIA if c in available]
-	ordered += sorted(available - set(ordered))
-	return ordered
+	available = set(
+		frappe.get_all(
+			"Employee Feedback Criteria",
+			filters={"name": ["in", STEEL_FORCE_CRITERIA]},
+			pluck="name",
+		)
+	)
+	return [c for c in STEEL_FORCE_CRITERIA if c in available]
 
 
 @frappe.whitelist()

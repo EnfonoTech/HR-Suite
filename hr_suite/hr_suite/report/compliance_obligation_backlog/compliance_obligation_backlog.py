@@ -1,11 +1,29 @@
+"""
+Compliance Obligation Backlog
+
+Static obligation catalogue scored against what is actually installed on the site.
+
+Status values are the raw English constants below, never translated strings: the
+UI filter sends the raw value back to the server, so translating the data would
+make the filter match nothing on a non-English desk.
+"""
+
 import frappe
 from frappe import _
-from frappe.utils import getdate, today
+
+
+IMPLEMENTED = "Implemented"
+PARTIALLY_IMPLEMENTED = "Partially Implemented"
+GAP = "Gap"
+NEEDS_LEGAL_SCOPE = "Needs Legal Scope"
 
 
 def execute(filters=None):
 	filters = filters or {}
-	return get_columns(), get_data(filters), None, get_chart(filters), get_report_summary(filters)
+	# Evaluate once — get_data() re-runs every DocType/Report/Workflow existence
+	# check, so calling it again for the chart and the summary tripled the query count.
+	data = get_data(filters)
+	return get_columns(), data, None, get_chart(data), get_report_summary(data)
 
 
 def get_columns():
@@ -48,12 +66,14 @@ def get_data(filters):
 def get_component_status(item):
 	checks = item.get("checks") or []
 	if not checks:
-		return _("Needs Legal Scope")
-	if all(run_check(check) for check in checks):
-		return _("Implemented")
-	if any(run_check(check) for check in checks):
-		return _("Partially Implemented")
-	return _("Gap")
+		return NEEDS_LEGAL_SCOPE
+
+	results = [run_check(check) for check in checks]
+	if all(results):
+		return IMPLEMENTED
+	if any(results):
+		return PARTIALLY_IMPLEMENTED
+	return GAP
 
 
 def run_check(check):
@@ -200,8 +220,7 @@ def get_backlog_items():
 	]
 
 
-def get_chart(filters):
-	data = get_data(filters)
+def get_chart(data):
 	counts = {}
 	for row in data:
 		counts[row["status"]] = counts.get(row["status"], 0) + 1
@@ -214,11 +233,10 @@ def get_chart(filters):
 	}
 
 
-def get_report_summary(filters):
-	data = get_data(filters)
-	implemented = sum(1 for row in data if row["status"] == _("Implemented"))
-	gaps = sum(1 for row in data if row["status"] == _("Gap"))
-	partials = sum(1 for row in data if row["status"] == _("Partially Implemented"))
+def get_report_summary(data):
+	implemented = sum(1 for row in data if row["status"] == IMPLEMENTED)
+	gaps = sum(1 for row in data if row["status"] == GAP)
+	partials = sum(1 for row in data if row["status"] == PARTIALLY_IMPLEMENTED)
 	return [
 		{"label": _("Implemented"), "value": implemented, "indicator": "Green", "datatype": "Int"},
 		{"label": _("Partial"), "value": partials, "indicator": "Orange", "datatype": "Int"},

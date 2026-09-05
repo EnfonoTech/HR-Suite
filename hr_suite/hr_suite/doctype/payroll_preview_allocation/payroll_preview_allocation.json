@@ -10,6 +10,7 @@
   "entry_type",
   "salary_component",
   "amount",
+  "payable_amount",
   "column_break_source",
   "source_doctype",
   "source_name",
@@ -59,10 +60,21 @@
   },
   {
    "columns": 1,
+   "description": "Amount as booked on the source document, before any payment-day proration.",
    "fieldname": "amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Amount",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "description": "Amount after the Salary Slip scales it by Payment Days / Total Working Days. Equal to Amount for components that do not depend on payment days, for overwriting Additional Salary, and for Information rows.",
+   "fieldname": "payable_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Payable Amount",
    "options": "currency",
    "read_only": 1
   },
@@ -101,14 +113,16 @@
   },
   {
    "fieldname": "origin_doctype",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Origin DocType",
+   "options": "DocType",
    "read_only": 1
   },
   {
    "fieldname": "origin_name",
-   "fieldtype": "Data",
+   "fieldtype": "Dynamic Link",
    "label": "Origin Document",
+   "options": "origin_doctype",
    "read_only": 1
   },
   {

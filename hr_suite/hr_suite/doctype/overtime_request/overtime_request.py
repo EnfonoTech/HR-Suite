@@ -106,6 +106,15 @@ class OvertimeRequest(Document):
 			)
 			return
 
+		# Currency must follow the company — this app runs in BH/AE/OM/IN as well as SA.
+		currency = frappe.get_cached_value("Company", company, "default_currency")
+
+		# NOTE: do NOT set reference_type/reference_name on the accounts. `Journal Entry
+		# Account.reference_type` is a Select with a fixed option list that does not include
+		# "Overtime Request", so setting it makes the Journal Entry unsubmittable:
+		#   "Row #1: Reference Type cannot be 'Overtime Request'."
+		# The link back to this document is kept on `overtime_journal_entry` below, and the
+		# document name is written into user_remark for the audit trail.
 		je = frappe.get_doc({
 			"doctype": "Journal Entry",
 			"voucher_type": "Journal Entry",
@@ -113,7 +122,8 @@ class OvertimeRequest(Document):
 			"posting_date": self.date or nowdate(),
 			"user_remark": (
 				f"Overtime Pay — {self.employee_name} — {self.date} — "
-				f"{self.overtime_hours}h × {self.overtime_rate} = {flt(self.overtime_amount):.2f} SAR"
+				f"{self.overtime_hours}h × {self.overtime_rate} = "
+				f"{flt(self.overtime_amount):.2f} {currency} ({self.name})"
 			),
 			"accounts": [
 				{
@@ -121,14 +131,10 @@ class OvertimeRequest(Document):
 					"debit_in_account_currency": flt(self.overtime_amount),
 					"party_type": "Employee",
 					"party": self.employee,
-					"reference_type": "Overtime Request",
-					"reference_name": self.name,
 				},
 				{
 					"account": payable_account,
 					"credit_in_account_currency": flt(self.overtime_amount),
-					"reference_type": "Overtime Request",
-					"reference_name": self.name,
 				},
 			],
 		})
@@ -138,8 +144,8 @@ class OvertimeRequest(Document):
 
 		self.db_set("overtime_journal_entry", je.name)
 		frappe.msgprint(
-			_("Journal Entry <b>{0}</b> created for overtime of {1} SAR.").format(
-				je.name, flt(self.overtime_amount)
+			_("Journal Entry <b>{0}</b> created for overtime of {1} {2}.").format(
+				je.name, flt(self.overtime_amount), currency
 			),
 			title=_("Journal Entry Created"),
 			indicator="green",

@@ -131,6 +131,7 @@ class TestPayrollPreviewLogic(FrappeTestCase):
 		self.assertEqual(preview.employees_with_issues, 1)
 		self.assertEqual(preview.total_earnings, 150)
 		self.assertEqual(preview.total_deductions, 35)
+		self.assertEqual(preview.total_deductions, 35)
 		self.assertEqual(preview.net_estimate, 915)
 
 	def test_allocation_row_updates_only_its_own_entry_type_bucket(self):
@@ -146,35 +147,45 @@ class TestPayrollPreviewLogic(FrappeTestCase):
 		self.assertEqual(employees["EMP-A"].deductions, 30)
 		self.assertEqual(len(preview.allocations), 3)
 
-	def test_blocking_issues_cover_every_documented_case(self):
+	def test_only_conditions_that_break_payroll_are_blocking(self):
+		"""Missing bank details, a missing ID and a withheld salary are shown, not blocking.
+
+		hrms creates a Salary Slip perfectly well in all three cases, so holding the run on
+		them would only teach people to work around the gate.
+		"""
 		preview = self.make_preview()
 		employee = frappe._dict(
 			{"iban": None, "bank_ac_no": None, "identity_number": "", "has_identity_field": True}
 		)
 		counts = frappe._dict({"lwp_days": 0, "absent_days": 0, "unmarked_days": 3})
 
-		issues = preview._collect_blocking_issues(
+		blocking, advisory = preview._collect_issues(
 			employee=employee,
 			assignment=None,
 			counts=counts,
 			net_estimate=-5,
 			is_withheld=True,
 			unmapped={"Basic"},
+			is_timesheet_based=True,
+			attendance_driven=False,
 		)
 
-		self.assertEqual(len(issues), 6)
-		joined = " ".join(issues)
-		for fragment in ("Salary Structure Assignment", "IBAN", "identity", "unmarked", "Basic", "negative"):
-			self.assertIn(fragment, joined)
+		joined_blocking = " ".join(blocking)
+		for fragment in ("Salary Structure Assignment", "Basic", "negative"):
+			self.assertIn(fragment, joined_blocking)
+		self.assertEqual(len(blocking), 3)
 
-	def test_clean_employee_has_no_blocking_issues(self):
+		joined_advisory = " ".join(advisory)
+		for fragment in ("IBAN", "identity", "unmarked", "withheld", "Timesheet"):
+			self.assertIn(fragment, joined_advisory)
+
+	def test_unmarked_attendance_blocks_only_when_payroll_is_attendance_based(self):
 		preview = self.make_preview()
 		employee = frappe._dict(
 			{"iban": "BH00X", "bank_ac_no": None, "identity_number": None, "has_identity_field": False}
 		)
-		counts = frappe._dict({"lwp_days": 0, "absent_days": 0, "unmarked_days": 0})
-
-		issues = preview._collect_blocking_issues(
+		counts = frappe._dict({"lwp_days": 0, "absent_days": 0, "unmarked_days": 3})
+		args = dict(
 			employee=employee,
 			assignment=frappe._dict({"base": 500}),
 			counts=counts,
@@ -183,7 +194,34 @@ class TestPayrollPreviewLogic(FrappeTestCase):
 			unmapped=set(),
 		)
 
-		self.assertEqual(issues, [])
+		blocking, advisory = preview._collect_issues(attendance_driven=True, **args)
+		self.assertEqual(len(blocking), 1)
+		self.assertIn("unmarked", blocking[0])
+		self.assertEqual(advisory, [])
+
+		blocking, advisory = preview._collect_issues(attendance_driven=False, **args)
+		self.assertEqual(blocking, [])
+		self.assertEqual(len(advisory), 1)
+		self.assertIn("unmarked", advisory[0])
+
+	def test_clean_employee_has_no_issues_at_all(self):
+		preview = self.make_preview()
+		employee = frappe._dict(
+			{"iban": "BH00X", "bank_ac_no": None, "identity_number": None, "has_identity_field": False}
+		)
+		counts = frappe._dict({"lwp_days": 0, "absent_days": 0, "unmarked_days": 0})
+
+		blocking, advisory = preview._collect_issues(
+			employee=employee,
+			assignment=frappe._dict({"base": 500}),
+			counts=counts,
+			net_estimate=500,
+			is_withheld=False,
+			unmapped=set(),
+		)
+
+		self.assertEqual(blocking, [])
+		self.assertEqual(advisory, [])
 
 	def test_hr_suite_sources_are_guarded_by_doctype_existence(self):
 		preview = self.make_preview()
@@ -201,6 +239,7 @@ class TestMakePayrollEntry(FrappeTestCase):
 		preview.payroll_frequency = "Monthly"
 		preview.start_date = "2026-01-01"
 		preview.end_date = "2026-01-31"
+		preview.last_refreshed_on = "2026-02-01 00:00:00"
 		preview.append(
 			"employees",
 			{
@@ -219,6 +258,26 @@ class TestMakePayrollEntry(FrappeTestCase):
 
 		self.assertIn("blocking issues", str(ctx.exception))
 
+	def test_refuses_a_preview_that_was_never_refreshed(self):
+		"""An unrefreshed preview has employee rows only if someone put them there.
+
+		`validate` clears the mirror whenever the scope changes, so `last_refreshed_on`
+		being empty means nothing on this document was ever read from the sources.
+		"""
+		preview = frappe.new_doc("Payroll Preview")
+		preview.company = frappe.defaults.get_defaults().get("company") or "_Test Company"
+		preview.start_date = "2026-01-01"
+		preview.end_date = "2026-01-31"
+		preview.append("employees", {"employee": "EMP-A", "employee_name": "A", "has_issues": 0})
+
+		with patch.object(preview_module.frappe, "get_doc", return_value=preview), patch.object(
+			preview_module.frappe, "has_permission", return_value=True
+		):
+			with self.assertRaises(frappe.ValidationError) as ctx:
+				preview_module.make_payroll_entry("PPRV-TEST")
+
+		self.assertIn("not been refreshed", str(ctx.exception))
+
 	def test_refuses_an_empty_preview(self):
 		preview = frappe.new_doc("Payroll Preview")
 		preview.company = frappe.defaults.get_defaults().get("company") or "_Test Company"
@@ -229,4 +288,13 @@ class TestMakePayrollEntry(FrappeTestCase):
 			self.assertRaises(frappe.ValidationError, preview_module.make_payroll_entry, "PPRV-TEST")
 
 	def test_rejects_a_non_string_reference(self):
-		self.assertRaises(frappe.ValidationError, preview_module.make_payroll_entry, {"evil": 1})
+		# `@frappe.whitelist()` runs `transform_parameter_types` over the annotated
+		# signature first, so a dict never reaches the isinstance guard: frappe rejects it
+		# with FrappeTypeError, which is NOT a subclass of ValidationError. Both are
+		# accepted here; what the test defends is that the call is refused, not which of
+		# the two layers refuses it.
+		self.assertRaises(
+			(frappe.ValidationError, frappe.exceptions.FrappeTypeError),
+			preview_module.make_payroll_entry,
+			{"evil": 1},
+		)

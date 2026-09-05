@@ -25,7 +25,9 @@
   "summary_section",
   "number_of_employees",
   "employees_with_issues",
+  "employees_with_notes",
   "column_break_summary",
+  "total_base",
   "total_earnings",
   "total_deductions",
   "column_break_summary_2",
@@ -149,8 +151,23 @@
    "read_only": 1
   },
   {
+   "description": "Employees carrying advisory notes only. These do not hold the Payroll Entry.",
+   "fieldname": "employees_with_notes",
+   "fieldtype": "Int",
+   "label": "Employees with Advisory Notes",
+   "read_only": 1
+  },
+  {
    "fieldname": "column_break_summary",
    "fieldtype": "Column Break"
+  },
+  {
+   "description": "Sum of the Base on each employee row, read from the Salary Structure Assignment.",
+   "fieldname": "total_base",
+   "fieldtype": "Currency",
+   "label": "Total Base",
+   "options": "currency",
+   "read_only": 1
   },
   {
    "fieldname": "total_earnings",

@@ -4,7 +4,10 @@ frappe.query_reports["WPS Export Report"] = {
             fieldname: "payroll_document",
             label: __("Monthly Payroll"),
             fieldtype: "Link",
-            options: "Monthly Payroll"
+            options: "Monthly Payroll",
+            // Without a payroll document the report returns nothing at all, which
+            // reads as "no employees" rather than "nothing selected".
+            reqd: 1
         }
     ],
 

@@ -1,3 +1,12 @@
+"""
+Compliance Case Tracker
+
+One row per Absence Case, widened with the investigation, grievance and compliance
+action that are actually linked to that case. The grievance is matched on the
+grievance's own document link (associated_document_type / associated_document) —
+matching on employee alone attached every grievance that employee ever raised to
+every absence case, multiplying the row count.
+"""
 import frappe
 from frappe import _
 
@@ -38,6 +47,15 @@ def get_data(filters):
 	if filters.get("status"):
 		conditions.append("ac.status = %(status)s")
 		values["status"] = filters["status"]
+	if filters.get("absence_type"):
+		conditions.append("ac.absence_type = %(absence_type)s")
+		values["absence_type"] = filters["absence_type"]
+	if filters.get("from_date"):
+		conditions.append("ac.absence_start_date >= %(from_date)s")
+		values["from_date"] = filters["from_date"]
+	if filters.get("to_date"):
+		conditions.append("ac.absence_start_date <= %(to_date)s")
+		values["to_date"] = filters["to_date"]
 
 	where = "WHERE " + " AND ".join(conditions) if conditions else ""
 
@@ -61,7 +79,9 @@ def get_data(filters):
 		LEFT JOIN `tabInvestigation Record` ir
 			ON ir.reference_doctype = 'Absence Case' AND ir.reference_name = ac.name
 		LEFT JOIN `tabEmployee Grievance` eg
-			ON eg.raised_by = ac.employee AND eg.grievance_type = 'Attendance'
+			ON eg.associated_document_type = 'Absence Case'
+			AND eg.associated_document = ac.name
+			AND eg.docstatus < 2
 		LEFT JOIN `tabHR Compliance Action Log` cal
 			ON cal.reference_doctype = 'Absence Case' AND cal.reference_name = ac.name
 		{where}

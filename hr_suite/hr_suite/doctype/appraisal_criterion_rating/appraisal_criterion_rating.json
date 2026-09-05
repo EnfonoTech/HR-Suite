@@ -32,7 +32,7 @@
    "non_negative": 1
   },
   {
-   "columns": 3,
+   "columns": 2,
    "fieldname": "appraiser_comments",
    "fieldtype": "Small Text",
    "in_list_view": 1,
@@ -48,7 +48,7 @@
    "non_negative": 1
   },
   {
-   "columns": 3,
+   "columns": 2,
    "fieldname": "reviewer_comments",
    "fieldtype": "Small Text",
    "in_list_view": 1,

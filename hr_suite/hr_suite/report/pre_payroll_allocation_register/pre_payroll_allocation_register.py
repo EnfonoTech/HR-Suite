@@ -10,7 +10,7 @@ what the previews found, it never recomputes payroll.
 
 import frappe
 from frappe import _
-from frappe.utils import getdate
+from frappe.utils import cstr, getdate
 
 
 def execute(filters=None):
@@ -146,6 +146,9 @@ def get_data(filters):
 			Allocation.description,
 			Preview.name.as_("payroll_preview"),
 			Preview.currency,
+			Preview.last_refreshed_on,
+			Preview.start_date.as_("preview_start_date"),
+			Preview.end_date.as_("preview_end_date"),
 		)
 		.where(
 			(Allocation.parenttype == "Payroll Preview")
@@ -168,4 +171,59 @@ def get_data(filters):
 	if filters.payroll_preview:
 		query = query.where(Preview.name == filters.payroll_preview)
 
-	return query.run(as_dict=True)
+	return deduplicate_by_source(query.run(as_dict=True))
+
+
+def deduplicate_by_source(rows: list) -> list:
+	"""Keep one row per source document PER PAYROLL PERIOD.
+
+	Several Payroll Previews may cover the same period - a second one is exactly what a
+	user makes after fixing something - and each of them mirrors the SAME underlying
+	Additional Salary, advance or penalty. Reporting all of them would list every item
+	once per preview and, with the total row on, add the same money up twice. The row
+	from the most recently refreshed preview wins.
+
+	The preview period is part of the key, and must stay part of it. The same source
+	document legitimately recurs period after period - a recurring Additional Salary pays
+	every month of its window, and one Employee Loan carries a separate installment in
+	each month - and every one of those rows carries the SAME `source_name`. Keying on the
+	source alone therefore collapses a twelve-month register down to a single occurrence
+	and under-reports the commitment, which is the opposite of the defect this function
+	exists to fix.
+	"""
+	newest = {}
+	for row in rows:
+		key = (
+			cstr(row.get("preview_start_date")),
+			cstr(row.get("preview_end_date")),
+			row.get("employee"),
+			row.get("source_doctype"),
+			row.get("source_name"),
+			row.get("entry_type"),
+			row.get("salary_component"),
+		)
+		current = newest.get(key)
+		if current is None or _refresh_order(row) > _refresh_order(current):
+			newest[key] = row
+
+	ordered = sorted(
+		newest.values(),
+		key=lambda row: (
+			cstr(row.get("employee_name")),
+			cstr(row.get("employee")),
+			cstr(row.get("entry_type")),
+			cstr(row.get("posting_date")),
+			cstr(row.get("preview_start_date")),
+		),
+	)
+
+	for row in ordered:
+		row.pop("last_refreshed_on", None)
+		row.pop("preview_start_date", None)
+		row.pop("preview_end_date", None)
+
+	return ordered
+
+
+def _refresh_order(row) -> tuple:
+	return (cstr(row.get("last_refreshed_on")), cstr(row.get("payroll_preview")))

@@ -19,12 +19,16 @@
   "deductions",
   "net_estimate",
   "attendance_section",
+  "total_working_days",
   "lwp_days",
   "absent_days",
   "column_break_attendance",
+  "payment_days",
   "unmarked_days",
   "issues_section",
-  "blocking_issues"
+  "blocking_issues",
+  "column_break_issues",
+  "advisory_notes"
  ],
  "fields": [
   {
@@ -117,7 +121,7 @@
   },
   {
    "columns": 2,
-   "description": "Base + Earnings - Deductions. Review estimate only.",
+   "description": "Base prorated by Payment Days / Total Working Days, plus Earnings, less Deductions. Review estimate only: components the salary structure does not scale by payment days are not modelled here.",
    "fieldname": "net_estimate",
    "fieldtype": "Currency",
    "in_list_view": 1,
@@ -131,6 +135,15 @@
    "label": "Attendance"
   },
   {
+   "description": "Days the Salary Slip will divide by, computed exactly as hrms get_working_days_details does for the configured Payroll Settings.",
+   "fieldname": "total_working_days",
+   "fieldtype": "Float",
+   "label": "Total Working Days",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "description": "Leave Without Pay / partially paid leave days, read from the source Payroll Settings actually uses: Leave Applications when Payroll Based On is Leave, Attendance when it is Attendance.",
    "fieldname": "lwp_days",
    "fieldtype": "Float",
    "label": "LWP Days",
@@ -138,6 +151,7 @@
    "read_only": 1
   },
   {
+   "description": "Absent days from Attendance. Always zero unless Payroll Settings is Attendance based, because on a Leave based payroll an absent day does not reduce pay.",
    "fieldname": "absent_days",
    "fieldtype": "Float",
    "label": "Absent Days",
@@ -147,6 +161,14 @@
   {
    "fieldname": "column_break_attendance",
    "fieldtype": "Column Break"
+  },
+  {
+   "description": "Days that will actually be paid: working days clamped to joining / relieving, less LWP and (on an attendance based payroll) absent days.",
+   "fieldname": "payment_days",
+   "fieldtype": "Float",
+   "label": "Payment Days",
+   "precision": "2",
+   "read_only": 1
   },
   {
    "fieldname": "unmarked_days",
@@ -164,6 +186,18 @@
    "fieldname": "blocking_issues",
    "fieldtype": "Small Text",
    "label": "Blocking Issues",
+   "read_only": 1,
+   "description": "Conditions under which the Payroll Entry would fail or produce a wrong Salary Slip. These hold the run."
+  },
+  {
+   "fieldname": "column_break_issues",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Things to look at that do not stop payroll: missing bank details, salary withheld, unmarked attendance on a non-attendance payroll.",
+   "fieldname": "advisory_notes",
+   "fieldtype": "Small Text",
+   "label": "Advisory Notes",
    "read_only": 1
   }
  ],

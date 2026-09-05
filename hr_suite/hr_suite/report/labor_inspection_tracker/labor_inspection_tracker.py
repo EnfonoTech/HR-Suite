@@ -25,13 +25,16 @@ def get_columns():
 		{"fieldname": "severity", "label": _("Severity"), "fieldtype": "Data", "width": 110},
 		{"fieldname": "violation_status", "label": _("Violation Status"), "fieldtype": "Data", "width": 160},
 		{"fieldname": "correction_due_date", "label": _("Correction Due Date"), "fieldtype": "Date", "width": 115},
-		{"fieldname": "fine_amount", "label": _("Fine Amount"), "fieldtype": "Currency", "width": 120},
+		{"fieldname": "fine_amount", "label": _("Fine Amount"), "fieldtype": "Currency", "options": "currency", "width": 120},
 		{"fieldname": "action_log", "label": _("Compliance Action"), "fieldtype": "Link", "options": "HR Compliance Action Log", "width": 180},
+		{"fieldname": "document_status", "label": _("Doc Status"), "fieldtype": "Data", "width": 110},
+		{"fieldname": "currency", "label": _("Currency"), "fieldtype": "Link", "options": "Currency", "width": 90, "hidden": 1},
 	]
 
 
 def get_data(filters):
-	conditions = []
+	# Labor Inspection is submittable: a cancelled inspection is not a live finding.
+	conditions = ["li.docstatus < 2"]
 	values = {}
 
 	if filters.get("company"):
@@ -46,6 +49,9 @@ def get_data(filters):
 	if filters.get("violation_status"):
 		conditions.append("liv.status = %(violation_status)s")
 		values["violation_status"] = filters["violation_status"]
+	if filters.get("severity"):
+		conditions.append("liv.severity = %(severity)s")
+		values["severity"] = filters["severity"]
 	if filters.get("from_date"):
 		conditions.append("li.inspection_date >= %(from_date)s")
 		values["from_date"] = filters["from_date"]
@@ -53,11 +59,12 @@ def get_data(filters):
 		conditions.append("li.inspection_date <= %(to_date)s")
 		values["to_date"] = filters["to_date"]
 
-	where = "WHERE " + " AND ".join(conditions) if conditions else ""
+	where = "WHERE " + " AND ".join(conditions)
 
-	return frappe.db.sql(
+	rows = frappe.db.sql(
 		f"""
 		SELECT
+			li.docstatus,
 			li.name AS labor_inspection,
 			li.inspection_date,
 			li.inspection_authority,
@@ -68,8 +75,10 @@ def get_data(filters):
 			liv.status AS violation_status,
 			liv.correction_due_date,
 			liv.fine_amount,
-			liv.action_log
+			liv.action_log,
+			comp.default_currency AS currency
 		FROM `tabLabor Inspection` li
+		LEFT JOIN `tabCompany` comp ON comp.name = li.company
 		LEFT JOIN `tabLabor Inspection Violation` liv
 			ON liv.parent = li.name AND liv.parenttype = 'Labor Inspection' AND liv.parentfield = 'violations'
 		{where}
@@ -78,6 +87,14 @@ def get_data(filters):
 		values,
 		as_dict=True,
 	)
+
+	for row in rows:
+		# Drafts are kept on purpose, but a draft inspection carries fine amounts and
+		# reads exactly like a submitted one without this column. Raw English values,
+		# not translated: a UI filter would compare them server-side.
+		row["document_status"] = "Draft" if not row.pop("docstatus", 0) else "Submitted"
+
+	return rows
 
 
 def get_chart(data):

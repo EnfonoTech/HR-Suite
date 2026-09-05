@@ -3,7 +3,10 @@ from frappe import _
 from frappe.utils import getdate, today
 
 
-LEGAL_STATUS_TOKENS = ("Legal Review", "Legal Review")
+# One token only. The duplicate that used to sit here emitted the identical LIKE
+# clause twice in every or_filters list. "%Legal Review%" already matches
+# "Under Legal Review", "Pending Legal Review", and so on.
+LEGAL_STATUS_TOKENS = ("Legal Review",)
 
 
 def execute(filters=None):

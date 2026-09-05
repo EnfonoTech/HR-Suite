@@ -86,6 +86,7 @@ function render_payroll_preview_status(frm) {
 	}
 
 	const issues = cint(frm.doc.employees_with_issues);
+	const notes = cint(frm.doc.employees_with_notes);
 	const employees = cint(frm.doc.number_of_employees);
 
 	if (issues > 0) {
@@ -95,6 +96,15 @@ function render_payroll_preview_status(frm) {
 				employees,
 			]),
 			"red"
+		);
+	} else if (notes > 0) {
+		frm.dashboard.set_headline(
+			__("{0} employee(s) ready as of {1}. {2} carry advisory notes, which do not hold the run.", [
+				employees,
+				frappe.datetime.str_to_user(frm.doc.last_refreshed_on),
+				notes,
+			]),
+			"orange"
 		);
 	} else {
 		frm.dashboard.set_headline(
@@ -114,7 +124,9 @@ function set_payroll_preview_indicators() {
 	if (employee_row && employee_row.employee) {
 		employee_row.employee.formatter = function (value, df, options, doc) {
 			if (!value) return value;
-			const indicator = doc && cint(doc.has_issues) ? "red" : "green";
+			let indicator = "green";
+			if (doc && cint(doc.has_issues)) indicator = "red";
+			else if (doc && doc.advisory_notes) indicator = "orange";
 			return `<a class="indicator ${indicator}">${frappe.utils.escape_html(value)}</a>`;
 		};
 	}
