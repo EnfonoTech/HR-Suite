@@ -182,7 +182,9 @@ class PayrollPreview(Document):
 		self._add_advance_rows(employees, advances)
 		self._add_withholding_rows(employees, withholdings)
 		self._add_timesheet_rows(employees, timesheets)
-		self._add_loan_installment_rows(employees, loan_installments)
+		unbooked_loans = self._add_loan_installment_rows(
+			employees, loan_installments, additional_salaries
+		)
 		self._add_penalty_rows(employees, penalties)
 		self._add_overtime_rows(employees, overtime)
 		self._add_salary_adjustment_rows(employees, adjustments)
@@ -198,6 +200,7 @@ class PayrollPreview(Document):
 			unmapped_components,
 			timesheet_based,
 			structure_components,
+			unbooked_loans,
 		)
 
 		self.recalculate_totals()
@@ -967,6 +970,15 @@ class PayrollPreview(Document):
 		Loan = frappe.qb.DocType("Employee Loan")
 		Installment = frappe.qb.DocType("Employee Loan Installment")
 
+		# Deliberately `due_date <= end_date`, not "inside the period": an instalment that
+		# fell due in an earlier period and was never deducted is still owed, and hiding it
+		# is exactly how a loan silently stops being recovered.
+		#
+		# `Deducted` and `Cancelled` are excluded because they are settled. `Scheduled` IS
+		# included even though it is already booked, so that `_add_loan_installment_rows`
+		# can tell a booking that lands in THIS period (already counted as an Additional
+		# Salary, and dropped there) from one that lands in another period or has been
+		# cancelled behind the loan's back.
 		return (
 			frappe.qb.from_(Installment)
 			.join(Loan)
@@ -975,18 +987,21 @@ class PayrollPreview(Document):
 				Loan.name.as_("loan"),
 				Loan.employee,
 				Loan.employee_name,
+				Installment.name.as_("installment"),
 				Installment.installment_number,
 				Installment.due_date,
 				Installment.installment_amount,
 				Installment.outstanding_amount,
+				Installment.deduction_status,
+				Installment.additional_salary,
 			)
 			.where(
 				(Loan.docstatus == 1)
 				& (Loan.employee.isin(employee_ids))
 				& (Loan.company == self.company)
 				& (Installment.parenttype == "Employee Loan")
-				& (Installment.deduction_status == "Pending")
-				& (Installment.due_date[self.start_date : self.end_date])
+				& (Installment.deduction_status.isin(["Pending", "Scheduled", "Deferred"]))
+				& (Installment.due_date <= self.end_date)
 			)
 			.orderby(Loan.employee)
 			.orderby(Installment.due_date)
@@ -1230,22 +1245,109 @@ class PayrollPreview(Document):
 				description=description,
 			)
 
-	def _add_loan_installment_rows(self, employees: dict, installments: list) -> None:
-		template = _(
-			"Loan installment {0} due {1}. hr_suite recovers loan installments through Monthly "
-			"Payroll, so this is not deducted by Payroll Entry."
-		)
+	def _add_loan_installment_rows(self, employees: dict, installments: list, additional_salaries: list) -> dict:
+		"""List only the loan instalments this payroll run will NOT deduct.
+
+		THE DOUBLE-COUNT TRAP. A submitted Employee Loan now books each instalment as an
+		`Additional Salary` of type Deduction (employee_loan.py
+		`ensure_installment_additional_salaries`), exactly as `Employee Penalty` and hrms's
+		own Employee Incentive / Retention Bonus / Gratuity do. Those rows are already
+		listed — and already added to the employee's deductions — by
+		`_add_additional_salary_rows`. Listing the instalment here as well would show the
+		loan twice on a screen whose whole purpose is to state the figure the payslip will
+		carry. So an instalment whose booking falls in THIS period is dropped here; what
+		remains is the arrears and the unbooked, which really are missing from the run.
+
+		Returns ``{employee: [reason, ...]}`` for the instalments that are owed but not
+		booked, so `_collect_issues` can raise them as blocking.
+		"""
+		booked_here = {cstr(row.name) for row in additional_salaries}
+
+		# Bookings an instalment points at that this period does not carry: either they
+		# belong to another period, or they have been cancelled behind the loan's back.
+		elsewhere = {
+			cstr(row.additional_salary)
+			for row in installments
+			if cstr(row.additional_salary) and cstr(row.additional_salary) not in booked_here
+		}
+		bookings_elsewhere = {}
+		if elsewhere:
+			bookings_elsewhere = {
+				row.name: row
+				for row in frappe.get_all(
+					"Additional Salary",
+					filters={"name": ("in", sorted(elsewhere))},
+					fields=["name", "docstatus", "payroll_date", "amount"],
+				)
+			}
+
+		setup_gap = self._get_loan_component_setup_gap() if installments else ""
+
+		unbooked = {}
 		for installment in installments:
+			booking_name = cstr(installment.additional_salary)
+			if booking_name and booking_name in booked_here:
+				continue
+
+			number = cint(installment.installment_number)
+			booking = bookings_elsewhere.get(booking_name)
+
+			if booking and cint(booking.docstatus) == 1:
+				description = _(
+					"Loan instalment {0} due {1} is booked into the payroll period containing {2}, "
+					"not this one."
+				).format(number, installment.due_date, booking.payroll_date)
+				if booking.payroll_date and getdate(booking.payroll_date) < getdate(self.start_date):
+					# The booking sits in a period that has already gone by, so no future
+					# Salary Slip will ever look for it and the instalment can never be
+					# recovered until someone moves it. Advisory would hide a loan that
+					# has quietly stopped being repaid.
+					description += " " + _(
+						"That period has already passed, so nothing will collect it. Cancel the "
+						"Additional Salary and book it again for this period."
+					)
+					unbooked.setdefault(installment.employee, []).append(description)
+			else:
+				description = _(
+					"Loan instalment {0} due {1} is not booked into payroll, so Payroll Entry will "
+					"not deduct it."
+				).format(number, installment.due_date)
+				description += " " + (
+					setup_gap
+					or _("Use {0} on this screen, or {1} on the loan itself.").format(
+						frappe.bold(_("Book Loan Deductions")), frappe.bold(_("Book Payroll Deductions"))
+					)
+				)
+				unbooked.setdefault(installment.employee, []).append(description)
+
+			# INFORMATION, and deliberately with no `salary_component`: this row states a
+			# gap, so it must not move the employee's deduction total and must not be
+			# treated as a component in play by `_get_components_without_account`.
 			self._append_allocation(
 				employees,
 				installment.employee,
 				source_doctype="Employee Loan",
 				source_name=installment.loan,
 				entry_type=INFORMATION,
-				amount=flt(installment.installment_amount),
+				amount=flt(installment.outstanding_amount or installment.installment_amount),
 				posting_date=installment.due_date,
-				description=template.format(cint(installment.installment_number), installment.due_date),
+				origin_doctype="Additional Salary" if booking else None,
+				origin_name=booking.name if booking else None,
+				description=description,
 			)
+
+		return unbooked
+
+	def _get_loan_component_setup_gap(self) -> str:
+		"""Read-only: why a loan instalment could not be posted for this company, or ""."""
+		if not frappe.db.exists("DocType", "Employee Loan"):
+			return ""
+
+		from hr_suite.hr_suite.doctype.employee_loan.employee_loan import (
+			get_loan_component_setup_gap,
+		)
+
+		return get_loan_component_setup_gap(self.company)
 
 	def _add_penalty_rows(self, employees: dict, penalties: list) -> None:
 		template = _(
@@ -1378,6 +1480,7 @@ class PayrollPreview(Document):
 		unmapped_components: set,
 		timesheet_based: dict,
 		structure_components: dict | None = None,
+		unbooked_loans: dict | None = None,
 	) -> None:
 		precision = self.precision("total_earnings")
 		withheld_employees = {row.employee for row in withholdings}
@@ -1433,6 +1536,7 @@ class PayrollPreview(Document):
 				is_timesheet_based=employee_id in timesheet_based,
 				attendance_driven=attendance_driven,
 				has_holiday_list=bool(employee.holiday_list or default_holiday_list),
+				unbooked_loans=(unbooked_loans or {}).get(employee_id) or [],
 			)
 
 			self.append(
@@ -1469,6 +1573,7 @@ class PayrollPreview(Document):
 		is_timesheet_based=False,
 		attendance_driven=False,
 		has_holiday_list=True,
+		unbooked_loans=(),
 	) -> tuple:
 		"""Split what stops payroll from what merely needs a human to look.
 
@@ -1500,6 +1605,12 @@ class PayrollPreview(Document):
 			blocking.append(
 				_("Salary Component {0} has no account mapped for {1}.").format(component, self.company)
 			)
+
+		for reason in unbooked_loans:
+			# The loan instalment is owed in (or before) this period but nothing on the
+			# Salary Slip will take it, so the net pay this run produces is too high by
+			# that amount. That is a wrong slip, not a warning.
+			blocking.append(reason)
 
 		if net_estimate < 0:
 			blocking.append(_("Net estimate is negative."))

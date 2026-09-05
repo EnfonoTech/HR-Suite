@@ -234,25 +234,49 @@ def _upsert_deduction_component(doc, component_name: str, amount: float):
 
 
 def _ensure_salary_component_account(component_name: str, company: str) -> bool:
-    """Guarantee `Salary Component Account` exists for (component, company).
+    """Statutory-injection wrapper. True when the component is safe to post."""
+    ok, _reason = ensure_salary_component_account(component_name, company)
+    return ok
 
-    Returns True when the component may be posted for this company.
+
+def ensure_salary_component_account(
+    component_name: str,
+    company: str,
+    component_type: str = "Deduction",
+    fallback_account: str = "",
+    depends_on_payment_days: int = 1,
+    error_title: str = _ERROR_TITLE_STATUTORY,
+) -> tuple:
+    """Guarantee a `Salary Component Account` exists for (component, company).
+
+    Returns ``(True, "")`` when the component may be posted for this company, and
+    ``(False, reason)`` otherwise — `reason` being a finished sentence fit to show a
+    user, so a caller can refuse to create its deduction and say why instead of
+    letting `PayrollEntry.get_salary_component_account` (payroll_entry.py:334-349)
+    throw mid-run and roll every Salary Slip back.
 
     Resolution order:
       1. an existing `Salary Component Account` row for this component + company;
-      2. the per-company account mapped on `Hr Suite Settings`
-         → `statutory_deduction_accounts`;
-      3. nothing — log and refuse, so payroll still runs without the deduction.
+      2. an `Hr Suite Settings` → Deduction Accounts row naming THIS component
+         for this company;
+      3. an `Hr Suite Settings` → Deduction Accounts row for this company with no
+         component named (the generic statutory mapping);
+      4. `fallback_account`, when the caller can derive one from the Chart of
+         Accounts itself (Employee Loan uses the same receivable its disbursement
+         Journal Entry debits, so recovery and disbursement net off);
+      5. nothing — the caller is told why and posts nothing.
+
+    The component is CREATED when it does not exist, but only once an account has
+    been resolved, so this never leaves an unpostable component behind.
     """
+    from frappe import _
+
     if not company:
-        frappe.log_error(
-            title=_ERROR_TITLE_STATUTORY,
-            message=(
-                "Salary Slip has no company, so the statutory component "
-                f"{component_name} could not be account-mapped. Deduction skipped."
-            ),
+        reason = _("The document has no Company, so Salary Component {0} cannot be account-mapped.").format(
+            component_name
         )
-        return False
+        frappe.log_error(title=error_title, message=reason)
+        return False, reason
 
     component_exists = bool(frappe.db.exists("Salary Component", component_name))
 
@@ -261,21 +285,20 @@ def _ensure_salary_component_account(component_name: str, company: str) -> bool:
         {"parent": component_name, "parenttype": "Salary Component", "company": company},
         "account",
     ):
-        return True
+        return True, ""
 
-    account = _get_configured_statutory_account(company)
+    account = _get_configured_deduction_account(company, component_name) or _validated_account(
+        fallback_account, company
+    )
     if not account:
-        frappe.log_error(
-            title=_ERROR_TITLE_STATUTORY,
-            message=(
-                f"No account is configured for statutory component {component_name} "
-                f"in company {company}. Map one under Hr Suite Settings → Statutory "
-                "Deduction Accounts, or add a Salary Component Account row on the "
-                "component itself. The deduction was skipped so that the payroll run "
-                "is not rolled back by the accrual Journal Entry."
-            ),
-        )
-        return False
+        reason = _(
+            "Salary Component {0} has no account for {1}. Map one under HR Suite Settings "
+            "\u2192 Deduction Accounts, or add a Salary Component Account row on the component "
+            "itself. Nothing was posted, so the payroll run is not rolled back by the accrual "
+            "Journal Entry."
+        ).format(component_name, company)
+        frappe.log_error(title=error_title, message=reason)
+        return False, reason
 
     if component_exists:
         component = frappe.get_doc("Salary Component", component_name)
@@ -284,8 +307,12 @@ def _ensure_salary_component_account(component_name: str, company: str) -> bool:
             "doctype": "Salary Component",
             "salary_component": component_name,
             "salary_component_abbr": component_name[:4].upper(),
-            "type": "Deduction",
+            "type": component_type,
             "is_tax_applicable": 0,
+            # A recovery of a fixed sum (a loan instalment, a penalty) is NOT scaled by
+            # payment days; only pay-rate components are. Salary Component defaults this
+            # to 1, so it has to be said explicitly.
+            "depends_on_payment_days": depends_on_payment_days,
         })
 
     component.append("accounts", {"company": company, "account": account})
@@ -293,20 +320,129 @@ def _ensure_salary_component_account(component_name: str, company: str) -> bool:
         component.save(ignore_permissions=True)
     else:
         component.insert(ignore_permissions=True)
-    return True
+    return True, ""
+
+
+def _validated_account(account: str, company: str) -> str:
+    """`account` if it is a real postable account of `company`, else ""."""
+    if not account:
+        return ""
+    row = frappe.db.get_value("Account", account, ["company", "is_group"], as_dict=True)
+    if not row or row.company != company or row.is_group:
+        return ""
+    return account
+
+
+def _get_configured_deduction_account(company: str, component_name: str = "") -> str:
+    """Deduction account mapped on Hr Suite Settings for this company, or "".
+
+    A row naming the component wins over the generic company row, so a site can send
+    loan recovery to the employee-loan receivable while GOSI still lands on its own
+    liability.
+    """
+    settings = frappe.get_cached_doc("Hr Suite Settings")
+    generic = ""
+    for row in settings.get("statutory_deduction_accounts") or []:
+        if row.company != company or not row.account:
+            continue
+        # A mapping left pointing at another company's tree would produce a GL entry
+        # the accrual JE cannot post, so it is treated as unconfigured.
+        if frappe.db.get_value("Account", row.account, "company") != company:
+            continue
+        row_component = (row.get("salary_component") or "").strip()
+        if row_component and row_component == component_name:
+            return row.account
+        if not row_component and not generic:
+            generic = row.account
+    return generic
 
 
 def _get_configured_statutory_account(company: str) -> str:
-    """Per-company statutory deduction account from Hr Suite Settings, or ''."""
-    settings = frappe.get_cached_doc("Hr Suite Settings")
-    for row in settings.get("statutory_deduction_accounts") or []:
-        if row.company == company and row.account:
-            # A mapping left pointing at another company's tree would produce a GL entry
-            # the accrual JE cannot post, so it is treated as unconfigured.
-            if frappe.db.get_value("Account", row.account, "company") != company:
-                continue
-            return row.account
+    """Kept for callers that only want the generic per-company statutory mapping."""
+    return _get_configured_deduction_account(company)
+
+
+def get_employee_payroll_currency(employee: str, on_date=None, company: str = "") -> str:
+    """The currency an `Additional Salary` for this employee must carry.
+
+    `Additional Salary.currency` is mandatory and read-only, so a server-side creator
+    has to set it: hrms's own creators all do (employee_incentive.py:30,
+    employee_advance.py:318). It is the currency of the Salary Structure Assignment in
+    force — the same value `get_employee_currency`
+    (salary_structure_assignment.py:196-204) returns — falling back to the company
+    default. Returns "" when neither is known, which is the caller's signal to refuse.
+    """
+    filters = {"employee": employee, "docstatus": 1}
+    if on_date:
+        filters["from_date"] = ["<=", on_date]
+
+    currency = frappe.db.get_value(
+        "Salary Structure Assignment", filters, "currency", order_by="from_date desc"
+    )
+    if currency:
+        return currency
+
+    if company:
+        return frappe.db.get_value("Company", company, "default_currency") or ""
     return ""
+
+
+# ── Salary Slip / Additional Salary → Employee Loan write-back ───────────────
+#
+# These three hooks NEVER touch the Salary Slip's earnings or deductions. They only
+# record, on the Employee Loan, what the payroll documents did — which instalment a
+# submitted slip actually took, and which instalment a cancelled slip or a cancelled
+# booking gave back. That write-back is what makes re-running a payroll period
+# idempotent instead of double-deducting.
+#
+# Like `before_salary_slip_submit`, they must never raise: a failure after the slips are
+# submitted sits inside `PayrollEntry.submit_salary_slips_for_employees`'s single
+# try/except (payroll_entry.py:1570-1608) and would roll the entire run back. A loan
+# ledger that is briefly out of step is recoverable; a rolled-back payroll is not.
+
+_ERROR_TITLE_LOAN_WRITEBACK = "HR Suite: loan instalment write-back failed"
+
+
+def on_salary_slip_submit(doc, method=None):
+    try:
+        from hr_suite.hr_suite.doctype.employee_loan.employee_loan import (
+            mark_installments_deducted_from_salary_slip,
+        )
+
+        mark_installments_deducted_from_salary_slip(doc)
+    except Exception:
+        frappe.log_error(title=_ERROR_TITLE_LOAN_WRITEBACK, message=frappe.get_traceback())
+
+
+def on_salary_slip_cancel(doc, method=None):
+    try:
+        from hr_suite.hr_suite.doctype.employee_loan.employee_loan import (
+            release_installments_from_salary_slip,
+        )
+
+        release_installments_from_salary_slip(doc)
+    except Exception:
+        frappe.log_error(title=_ERROR_TITLE_LOAN_WRITEBACK, message=frappe.get_traceback())
+
+
+def on_additional_salary_cancel(doc, method=None):
+    """Free the loan instalment a cancelled/deleted Additional Salary was booking.
+
+    Frappe refuses to cancel an Additional Salary that a SUBMITTED Salary Slip links to
+    (`Salary Detail.additional_salary` is a Link field on a submitted document), so
+    reaching here means no payslip has taken the money and the instalment is genuinely
+    free to be deducted in a later period.
+    """
+    if doc.get("ref_doctype") != "Employee Loan":
+        return
+    try:
+        from hr_suite.hr_suite.doctype.employee_loan.employee_loan import (
+            release_installment_for_additional_salary,
+        )
+
+        release_installment_for_additional_salary(doc.name)
+    except Exception:
+        frappe.log_error(title=_ERROR_TITLE_LOAN_WRITEBACK, message=frappe.get_traceback())
 
 
 # ── Appraisal ────────────────────────────────────────────────────────────────

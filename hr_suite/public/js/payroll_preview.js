@@ -58,6 +58,45 @@ function add_payroll_preview_buttons(frm) {
 
 	if (!frm.doc.employees || !frm.doc.employees.length) return;
 
+	// The preview itself never books anything — refresh_allocations is a pure read. This
+	// button is the one place a person can ASK for the unbooked loan instalments to be
+	// turned into Additional Salary rows, which is what makes them reach the payslip.
+	if (has_unbooked_loan_instalments(frm)) {
+		frm.add_custom_button(__("Book Loan Deductions"), async () => {
+			frappe.dom.freeze(__("Booking loan instalments into payroll..."));
+			let response;
+			try {
+				response = await frappe.call({
+					method: "hr_suite.hr_suite.doctype.employee_loan.employee_loan.book_loan_deductions_for_period",
+					args: {
+						company: frm.doc.company,
+						start_date: frm.doc.start_date,
+						end_date: frm.doc.end_date,
+					},
+				});
+			} finally {
+				frappe.dom.unfreeze();
+			}
+
+			const message = response && response.message ? response.message : {};
+			const created = (message.created || []).length;
+			if ((message.skipped || []).length) {
+				frappe.msgprint({
+					title: __("Some Instalments Were Not Booked"),
+					indicator: "orange",
+					message: `<ul>${message.skipped.map((reason) => `<li>${reason}</li>`).join("")}</ul>`,
+				});
+			}
+			frappe.show_alert({
+				message: __("{0} loan instalment(s) booked", [created]),
+				indicator: created ? "green" : "orange",
+			});
+
+			await frm.call("refresh_allocations");
+			await frm.reload_doc();
+		});
+	}
+
 	// Hidden while anything is still blocking — make_payroll_entry refuses anyway,
 	// but the button should not invite a call that cannot succeed.
 	if (cint(frm.doc.employees_with_issues) > 0) return;
@@ -68,6 +107,12 @@ function add_payroll_preview_buttons(frm) {
 			frm: frm,
 		});
 	});
+}
+
+function has_unbooked_loan_instalments(frm) {
+	return (frm.doc.allocations || []).some(
+		(row) => row.source_doctype === "Employee Loan" && !row.origin_name
+	);
 }
 
 // ── presentation ─────────────────────────────────────────────────────────────

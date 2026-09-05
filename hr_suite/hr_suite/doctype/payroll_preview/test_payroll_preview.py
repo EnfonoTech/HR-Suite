@@ -298,3 +298,140 @@ class TestMakePayrollEntry(FrappeTestCase):
 			preview_module.make_payroll_entry,
 			{"evil": 1},
 		)
+
+
+class TestPayrollPreviewLoanInstalments(FrappeTestCase):
+	"""The double-count trap.
+
+	A submitted Employee Loan now books each instalment as an `Additional Salary`, which
+	`_add_additional_salary_rows` already lists AND already adds to the employee's
+	deductions. If `_add_loan_installment_rows` listed the same instalment again the
+	screen would show the loan twice while the payslip deducts it once - on a screen
+	whose entire purpose is to state the figure the payslip will carry.
+	"""
+
+	def make_preview(self):
+		preview = frappe.new_doc("Payroll Preview")
+		preview.company = frappe.defaults.get_defaults().get("company") or "_Test Company"
+		preview.payroll_frequency = "Monthly"
+		preview.start_date = "2026-09-01"
+		preview.end_date = "2026-09-30"
+		return preview
+
+	def employees(self):
+		return {"EMP-A": frappe._dict({"employee_name": "A", "earnings": 0.0, "deductions": 0.0})}
+
+	def instalment(self, **overrides):
+		row = {
+			"loan": "LOAN-1",
+			"employee": "EMP-A",
+			"employee_name": "A",
+			"installment": "INST-1",
+			"installment_number": 1,
+			"due_date": getdate("2026-09-05"),
+			"installment_amount": 100,
+			"outstanding_amount": 100,
+			"deduction_status": "Scheduled",
+			"additional_salary": "HR-ADS-1",
+		}
+		row.update(overrides)
+		return frappe._dict(row)
+
+	def test_an_instalment_booked_into_this_period_is_not_counted_twice(self):
+		preview = self.make_preview()
+		employees = self.employees()
+		additional_salaries = [frappe._dict({"name": "HR-ADS-1"})]
+
+		with patch.object(preview, "_get_loan_component_setup_gap", return_value=""):
+			unbooked = preview._add_loan_installment_rows(
+				employees, [self.instalment()], additional_salaries
+			)
+
+		# The Additional Salary row carries it; nothing is added here, and no blocker.
+		self.assertEqual(len(preview.get("allocations")), 0)
+		self.assertEqual(unbooked, {})
+		self.assertEqual(employees["EMP-A"].deductions, 0.0)
+
+	def test_an_unbooked_instalment_is_listed_and_blocks(self):
+		preview = self.make_preview()
+		employees = self.employees()
+
+		with patch.object(preview, "_get_loan_component_setup_gap", return_value=""):
+			unbooked = preview._add_loan_installment_rows(
+				employees,
+				[self.instalment(deduction_status="Pending", additional_salary=None)],
+				[],
+			)
+
+		rows = preview.get("allocations")
+		self.assertEqual(len(rows), 1)
+		self.assertEqual(rows[0].entry_type, preview_module.INFORMATION)
+		# Information only: it states a gap, so it must not move the deduction total, and
+		# it must carry no salary_component or `_get_components_without_account` would
+		# raise a second, duplicate blocking issue about the same thing.
+		self.assertEqual(employees["EMP-A"].deductions, 0.0)
+		self.assertIsNone(rows[0].salary_component)
+		self.assertIn("EMP-A", unbooked)
+		self.assertIn("not booked into payroll", unbooked["EMP-A"][0])
+
+	def test_the_reason_a_booking_is_impossible_is_carried_into_the_blocker(self):
+		preview = self.make_preview()
+
+		with patch.object(preview, "_get_loan_component_setup_gap", return_value="No account for X."):
+			unbooked = preview._add_loan_installment_rows(
+				self.employees(),
+				[self.instalment(deduction_status="Pending", additional_salary=None)],
+				[],
+			)
+
+		self.assertIn("No account for X.", unbooked["EMP-A"][0])
+
+	def test_a_booking_in_a_future_period_is_information_only(self):
+		preview = self.make_preview()
+		employees = self.employees()
+		booking = frappe._dict({"name": "HR-ADS-2", "docstatus": 1, "payroll_date": getdate("2026-10-05"), "amount": 100})
+
+		with patch.object(preview, "_get_loan_component_setup_gap", return_value=""), patch.object(
+			preview_module.frappe, "get_all", return_value=[booking]
+		):
+			unbooked = preview._add_loan_installment_rows(
+				employees,
+				[self.instalment(installment_number=2, due_date=getdate("2026-10-05"), additional_salary="HR-ADS-2")],
+				[],
+			)
+
+		self.assertEqual(unbooked, {})
+		self.assertEqual(len(preview.get("allocations")), 1)
+		self.assertEqual(employees["EMP-A"].deductions, 0.0)
+
+	def test_a_booking_in_a_period_that_has_already_run_blocks(self):
+		preview = self.make_preview()
+		booking = frappe._dict({"name": "HR-ADS-3", "docstatus": 1, "payroll_date": getdate("2026-04-01"), "amount": 300})
+
+		with patch.object(preview, "_get_loan_component_setup_gap", return_value=""), patch.object(
+			preview_module.frappe, "get_all", return_value=[booking]
+		):
+			unbooked = preview._add_loan_installment_rows(
+				self.employees(),
+				[self.instalment(installment_number=3, due_date=getdate("2026-04-01"), additional_salary="HR-ADS-3")],
+				[],
+			)
+
+		self.assertIn("EMP-A", unbooked)
+		self.assertIn("already passed", unbooked["EMP-A"][0])
+
+	def test_unbooked_loans_reach_collect_issues_as_blocking(self):
+		preview = self.make_preview()
+
+		blocking, advisory = preview._collect_issues(
+			employee=frappe._dict({"iban": "BH00X", "has_identity_field": False, "identity_number": None}),
+			assignment=frappe._dict({"base": 500}),
+			counts=frappe._dict({"lwp_days": 0, "absent_days": 0, "unmarked_days": 0}),
+			net_estimate=500,
+			is_withheld=False,
+			unmapped=set(),
+			unbooked_loans=["Loan instalment 1 due 2026-09-05 is not booked into payroll."],
+		)
+
+		self.assertEqual(len(blocking), 1)
+		self.assertEqual(advisory, [])

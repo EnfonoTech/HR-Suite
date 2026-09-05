@@ -79,6 +79,31 @@ function apply_employee_loan_ui(frm) {
 		});
 	}
 
+	// Instalments are booked into payroll automatically when the loan is submitted. This
+	// re-offers any the booking could not take then — most often because the employee had
+	// no Salary Structure Assignment yet, or the company had no deduction account mapped.
+	if (frm.doc.docstatus === 1 && (frm.doc.installments || []).some((row) => row.deduction_status === "Pending")) {
+		frm.add_custom_button(__("Book Payroll Deductions"), async function () {
+			const response = await frappe.call({
+				method: "hr_suite.hr_suite.doctype.employee_loan.employee_loan.book_payroll_deductions",
+				args: { doc_name: frm.doc.name },
+			});
+			const message = response && response.message ? response.message : {};
+			if ((message.skipped || []).length) {
+				frappe.msgprint({
+					title: __("Some Instalments Were Not Booked"),
+					indicator: "orange",
+					message: `<ul>${message.skipped.map((reason) => `<li>${reason}</li>`).join("")}</ul>`,
+				});
+			}
+			frappe.show_alert({
+				message: __("{0} instalment(s) booked into payroll", [(message.created || []).length]),
+				indicator: (message.created || []).length ? "green" : "orange",
+			});
+			await frm.reload_doc();
+		});
+	}
+
 	if (frm.doc.disbursement_journal_entry) {
 		frm.add_custom_button(__("View Disbursement Entry"), function () {
 			frappe.set_route("Form", "Journal Entry", frm.doc.disbursement_journal_entry);
@@ -86,9 +111,14 @@ function apply_employee_loan_ui(frm) {
 	}
 
 	if (frm.doc.installments?.length) {
-		const pending = (frm.doc.installments || []).filter((row) => row.deduction_status === "Pending").length;
-		const deducted = (frm.doc.installments || []).filter((row) => row.deduction_status === "Deducted").length;
-		frm.dashboard.add_indicator(__('{0} deducted / {1} pending', [deducted, pending]), pending ? 'orange' : 'green');
+		const rows = frm.doc.installments || [];
+		const pending = rows.filter((row) => row.deduction_status === "Pending").length;
+		const scheduled = rows.filter((row) => row.deduction_status === "Scheduled").length;
+		const deducted = rows.filter((row) => row.deduction_status === "Deducted").length;
+		frm.dashboard.add_indicator(
+			__('{0} deducted / {1} booked / {2} pending', [deducted, scheduled, pending]),
+			pending ? 'orange' : 'green'
+		);
 	}
 
 	if (frm.doc.repayment_method === "Equal Installments" && frm.doc.installment_count && frm.doc.loan_amount) {

@@ -6,6 +6,7 @@
  "engine": "InnoDB",
  "field_order": [
   "company",
+  "salary_component",
   "account"
  ],
  "fields": [
@@ -18,19 +19,27 @@
    "reqd": 1
   },
   {
+   "fieldname": "salary_component",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Salary Component",
+   "options": "Salary Component",
+   "description": "Leave blank to use this account for every HR Suite deduction of this company (the statutory injection). Name a component to override it for that component only - for example send Loan Repayment to the employee loan receivable."
+  },
+  {
    "fieldname": "account",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Statutory Deduction Account",
+   "label": "Deduction Account",
    "options": "Account",
    "reqd": 1,
-   "description": "Liability account credited when HR Suite injects the statutory deduction component (GOSI / GPSSA / SIO / PASI / EPF / ESI) into a Salary Slip for this company."
+   "description": "Account credited when HR Suite posts this deduction onto a Salary Slip. A Salary Component with no Salary Component Account makes Payroll Entry's accrual Journal Entry fail, which rolls the whole payroll run back."
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-09-05 00:00:00.000000",
+ "modified": "2026-09-06 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hr Suite",
  "name": "Statutory Deduction Account Row",

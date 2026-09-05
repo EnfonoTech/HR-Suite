@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 import frappe
+from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 from hr_suite.hr_suite.performance_setup import setup_performance_management
 
@@ -36,6 +37,7 @@ def after_install():
 	create_default_shift_type()
 	create_default_settings()
 	ensure_employee_custom_fields()
+	ensure_employee_master_fields()
 	# Performance Management (Steel Force Performance Appraisal Form 2025):
 	# Appraisal custom fields + the seeded criteria / appraisal template.
 	setup_performance_management()
@@ -62,6 +64,7 @@ def after_migrate():
 	migrate_legacy_annual_leave()
 	migrate_legacy_employee_loans()
 	ensure_employee_custom_fields()
+	ensure_employee_master_fields()
 	# Performance Management (Steel Force Performance Appraisal Form 2025):
 	# Appraisal custom fields + the seeded criteria / appraisal template.
 	setup_performance_management()
@@ -494,6 +497,112 @@ def ensure_employee_custom_fields():
 			frappe.get_doc({"doctype": "Custom Field", **cf}).insert(ignore_permissions=True)
 		except Exception:
 			frappe.log_error(frappe.get_traceback(), f"HR Suite: failed to create custom field {cf['fieldname']}")
+
+
+# ─── Employee Master completion (client ticket 2.2 / 6.1) ─────────────────────
+#
+# Three data fields only. Every one of them has a NAMED consumer that reads it today and
+# gets nothing, so each is a defect being closed rather than a column the client has to
+# populate for its own sake:
+#
+#   national_id   Probed by wps_export_report._get_employee_details_lookup() and
+#                 _get_identity_lookup() (report/wps_export_report/wps_export_report.py
+#                 :294, :342) and by Payroll Preview's IDENTITY_FIELD_CANDIDATES
+#                 (doctype/payroll_preview/payroll_preview.py:48-56). Neither field
+#                 exists on Employee today, so the WPS SIF falls back to writing the
+#                 ERPNext Employee ID into the bank's identity column and Payroll
+#                 Preview's identity check can never fire. The fieldname is DICTATED by
+#                 those two consumers — do not rename or prefix it.
+#   nationality   Also probed by wps_export_report._get_employee_details_lookup(); the
+#                 report's "Nationality" column is therefore blank on every row today.
+#                 Link to Country rather than the free Data used on Work Permit Iqama /
+#                 Country Employment Contract, because this one is master data the
+#                 client uploads once and Bahrainisation ratios are counted from.
+#   work_country  utils.get_employee_work_country() resolves Country Employment Contract
+#                 -> Company -> Hr Suite Settings and NEVER consults the Employee, so
+#                 multi-country payroll (ticket 3.2) can only ever be decided per
+#                 company. Same name and same ISO-2 Select options as
+#                 Country Employment Contract.work_country so one name reads through the
+#                 whole resolution chain.
+#
+# Deliberately NOT added here:
+#   * LMRA work permit number / expiry / occupation (ticket 3.1). `Work Permit Iqama`
+#     already carries work_permit_number, work_permit_issue_date, work_permit_expiry_date,
+#     work_permit_status, days_to_permit_expiry and profession, and tasks.py
+#     send_work_permit_expiry_alerts already runs off them. Only its naming series and
+#     labels are Saudi-shaped. Duplicating permit number and expiry onto Employee would
+#     create two places for the same date to disagree — relabel that doctype instead.
+#   * IBAN / bank account / cost centre / employment type / grade / holiday list — all
+#     already exist as core or hrms fields (verified against frappe.get_meta("Employee"),
+#     142 fields). Nothing is re-added.
+EMPLOYEE_MASTER_FIELDS = [
+	{
+		"fieldname": "hr_suite_identity_section",
+		"label": "Identity & Work Country",
+		"fieldtype": "Section Break",
+		"insert_after": "hr_suite_employee_type",
+		"module": "Hr Suite",
+	},
+	{
+		"fieldname": "national_id",
+		"label": "National ID / CPR",
+		"fieldtype": "Data",
+		"insert_after": "hr_suite_identity_section",
+		"module": "Hr Suite",
+		"search_index": 1,
+		"description": (
+			"Statutory identity number used on the WPS file and government filings "
+			"(CPR in Bahrain, National ID / Iqama in Saudi Arabia, Emirates ID in the UAE). "
+			"Not made unique: a blank Data field stores an empty string, and a unique "
+			"index would reject the second employee whose number is not yet known."
+		),
+	},
+	{
+		"fieldname": "nationality",
+		"label": "Nationality",
+		"fieldtype": "Link",
+		"options": "Country",
+		"insert_after": "national_id",
+		"module": "Hr Suite",
+		"in_standard_filter": 1,
+		"description": "Reported on the WPS export and used for nationalization quota counts.",
+	},
+	{
+		"fieldname": "hr_suite_identity_column",
+		"fieldtype": "Column Break",
+		"insert_after": "nationality",
+		"module": "Hr Suite",
+	},
+	{
+		"fieldname": "work_country",
+		"label": "Work Country",
+		"fieldtype": "Select",
+		# Same options as Country Employment Contract.work_country, and the same ISO-2
+		# codes Country Config is keyed on.
+		"options": "\nSA\nAE\nBH\nIN\nOM",
+		"insert_after": "hr_suite_identity_column",
+		"module": "Hr Suite",
+		"description": (
+			"Country whose labour law and statutory scheme apply to this employee. "
+			"Leave blank to inherit the Company's country."
+		),
+	},
+]
+
+
+def ensure_employee_master_fields():
+	"""Complete the Employee master for payroll, leave, statutory filing and Finance.
+
+	Separate from ensure_employee_custom_fields() on purpose: that function only inserts
+	a field when it is absent and never touches one that exists, which is the right
+	behaviour for the Saudi visa/GOSI set already in the field. These use
+	create_custom_fields(), so a label or description corrected here reaches every site
+	on the next migrate.
+	"""
+	try:
+		create_custom_fields({"Employee": EMPLOYEE_MASTER_FIELDS})
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "HR Suite: failed to create Employee master fields")
 
 
 # ─── Country Configuration Seed Data ──────────────────────────────────────────

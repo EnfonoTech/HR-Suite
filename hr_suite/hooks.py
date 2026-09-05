@@ -123,6 +123,17 @@ doc_events = {
 	},
 	"Salary Slip": {
 		"before_submit": "hr_suite.hr_suite.integrations.hrms.before_salary_slip_submit",
+		# Write-back only. Neither of these touches the slip's earnings or deductions —
+		# they record on the Employee Loan that a payslip has taken (or given back) an
+		# instalment, which is what makes a re-run of the period idempotent.
+		"on_submit": "hr_suite.hr_suite.integrations.hrms.on_salary_slip_submit",
+		"on_cancel": "hr_suite.hr_suite.integrations.hrms.on_salary_slip_cancel",
+	},
+	"Additional Salary": {
+		# Cancelling or deleting the booking releases the loan instalment, so a later
+		# payroll period can deduct it instead.
+		"on_cancel": "hr_suite.hr_suite.integrations.hrms.on_additional_salary_cancel",
+		"on_trash": "hr_suite.hr_suite.integrations.hrms.on_additional_salary_cancel",
 	},
 	"Employee": {
 		"after_insert": "hr_suite.hr_suite.integrations.hrms.on_employee_insert",

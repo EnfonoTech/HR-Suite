@@ -515,13 +515,20 @@ def get_employee_work_country(employee: str) -> str:
 
     Resolution order:
     1. Active Country Employment Contract.work_country
-    2. Employee's Company.country → mapped to ISO-2 code
-    3. Hr Suite Settings.default_work_country (global fallback)
+    2. Employee.work_country (hr_suite Custom Field, install.EMPLOYEE_MASTER_FIELDS)
+    3. Employee's Company.country → mapped to ISO-2 code
+    4. Hr Suite Settings.default_work_country (global fallback)
+
+    Step 2 is what makes multi-country payroll resolvable per EMPLOYEE. Without it the
+    only per-person answer came from a submitted Country Employment Contract, and an
+    employee master uploaded without contracts could only ever inherit its Company's
+    country — so two countries inside one company were indistinguishable.
     """
     if not employee:
         return ""
 
-    # 1. Active Country Employment Contract
+    # 1. Active Country Employment Contract — a submitted, dated legal document, so it
+    #    outranks the master field below.
     row = frappe.db.get_value(
         "Country Employment Contract",
         {"employee": employee, "contract_status": "Active"},
@@ -531,15 +538,31 @@ def get_employee_work_country(employee: str) -> str:
     if row:
         return row.strip().upper()
 
-    # 2. Derive from Employee's Company country (Frappe standard field)
-    company = frappe.db.get_value("Employee", employee, "company") or ""
+    # The Employee field is a Custom Field, so a bench part-way through install/migrate
+    # can legitimately not have it yet. Read both values in one query either way.
+    employee_fields = ["company"]
+    has_work_country = frappe.db.has_column("Employee", "work_country")
+    if has_work_country:
+        employee_fields.append("work_country")
+
+    employee_row = frappe.db.get_value("Employee", employee, employee_fields, as_dict=True) or frappe._dict()
+
+    # 2. The Employee's own Work Country. Run through country_name_to_code so a record
+    #    holding "Bahrain" resolves the same as one holding "BH".
+    if has_work_country:
+        code = country_name_to_code(cstr(employee_row.get("work_country")).strip())
+        if code:
+            return code
+
+    # 3. Derive from Employee's Company country (Frappe standard field)
+    company = employee_row.get("company") or ""
     if company:
         company_country = frappe.db.get_value("Company", company, "country") or ""
         code = country_name_to_code(company_country)
         if code:
             return code
 
-    # 3. Global default in Hr Suite Settings (stored as a Country Link — resolve to ISO-2)
+    # 4. Global default in Hr Suite Settings (stored as a Country Link — resolve to ISO-2)
     default = frappe.db.get_single_value("Hr Suite Settings", "default_work_country") or ""
     return country_name_to_code(default)
 

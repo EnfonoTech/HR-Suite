@@ -34,36 +34,38 @@
   "notice_period_non_monthly_days",
   "penalty_section",
   "penalty_salary_component",
+  "column_break_penalty",
+  "loan_salary_component",
   "statutory_accounts_section",
   "statutory_accounts_help",
   "statutory_deduction_accounts",
-   "voice_section",
-   "enable_voice_verification",
+  "voice_section",
+  "enable_voice_verification",
   "voice_verification_mode",
-   "voice_language",
-   "voice_whisper_model_size",
-   "voice_compute_type",
-   "column_break_voice",
-   "speaker_model_source",
-   "anti_spoof_model_source",
-   "voice_speaker_threshold",
-   "voice_speech_match_threshold",
-   "voice_anti_spoof_threshold",
-   "voice_bonafide_labels",
+  "voice_language",
+  "voice_whisper_model_size",
+  "voice_compute_type",
+  "column_break_voice",
+  "speaker_model_source",
+  "anti_spoof_model_source",
+  "voice_speaker_threshold",
+  "voice_speech_match_threshold",
+  "voice_anti_spoof_threshold",
+  "voice_bonafide_labels",
   "alerts_section",
   "iqama_expiry_alert_days",
   "contract_expiry_alert_days",
   "column_break_alerts",
   "work_permit_expiry_alert_days",
- "send_email_alerts",
- "branch_employee_import_section",
- "branch_employee_import_help",
- "employee_branch_import_file",
- "branch_employee_directory",
- "attendance_api_section",
- "attendance_api_help",
- "mobile_attendance_base_url",
- "mobile_attendance_api_reference",
+  "send_email_alerts",
+  "branch_employee_import_section",
+  "branch_employee_import_help",
+  "employee_branch_import_file",
+  "branch_employee_directory",
+  "attendance_api_section",
+  "attendance_api_help",
+  "mobile_attendance_base_url",
+  "mobile_attendance_api_reference",
   "muqeem_section",
   "muqeem_enabled",
   "muqeem_establishment_id",
@@ -254,113 +256,124 @@
    "fieldname": "notice_period_non_monthly_days",
    "fieldtype": "Int",
    "label": "Notice Period — Non-Monthly (Days)"
-   },
-   {
-    "fieldname": "penalty_section",
-    "fieldtype": "Section Break",
-    "label": "Employee Penalty"
-   },
-   {
-    "fieldname": "penalty_salary_component",
-    "fieldtype": "Link",
-    "label": "Penalty Salary Component",
-    "options": "Salary Component",
-    "description": "Deduction component used for Employee Penalty payroll integration. Defaults to \"Penalty Deduction\" if left blank (auto-created on first use)."
-   },
-   {
-    "fieldname": "statutory_accounts_section",
-    "fieldtype": "Section Break",
-    "label": "Statutory Deduction Accounts"
-   },
-   {
-    "fieldname": "statutory_accounts_help",
-    "fieldtype": "HTML",
-    "options": "<p class=\"text-muted\" style=\"font-size:0.85rem;\">HR Suite injects the country's statutory deduction (GOSI / GPSSA / SIO / PASI / EPF / ESI) into the Salary Slip before submission. A Salary Component that has no <b>Salary Component Account</b> for the company makes Payroll Entry's accrual Journal Entry fail, which rolls the whole payroll run back. Map one liability account per company here; without a mapping HR Suite skips the injection instead of breaking payroll.</p>"
-   },
-   {
-    "fieldname": "statutory_deduction_accounts",
-    "fieldtype": "Table",
-    "label": "Statutory Deduction Account (per Company)",
-    "options": "Statutory Deduction Account Row"
-   },
-   {
-    "fieldname": "voice_section",
-    "fieldtype": "Section Break",
-    "label": "Voice Verification"
-   },
-   {
-    "default": "0",
-    "fieldname": "enable_voice_verification",
-    "fieldtype": "Check",
-    "label": "Enable Voice Verification"
-   },
-    {
-     "default": "Challenge Only",
-     "fieldname": "voice_verification_mode",
-     "fieldtype": "Select",
-     "label": "Voice Verification Mode",
-     "options": "Challenge Only"
-    },
-   {
-    "default": "ar",
-    "fieldname": "voice_language",
-    "fieldtype": "Data",
-    "label": "Voice Language"
-   },
-   {
-    "default": "small",
-    "fieldname": "voice_whisper_model_size",
-    "fieldtype": "Data",
-    "label": "Whisper Model Size"
-   },
-   {
-    "default": "int8",
-    "fieldname": "voice_compute_type",
-    "fieldtype": "Select",
-    "label": "Whisper Compute Type",
-    "options": "int8\nfloat32\nfloat16"
-   },
-   {
-    "fieldname": "column_break_voice",
-    "fieldtype": "Column Break"
-   },
-   {
-    "default": "speechbrain/spkrec-ecapa-voxceleb",
-    "fieldname": "speaker_model_source",
-    "fieldtype": "Data",
-    "label": "Speaker Model Source"
-   },
-   {
-    "fieldname": "anti_spoof_model_source",
-    "fieldtype": "Data",
-    "label": "Anti-Spoof Model Source"
-   },
-   {
-    "default": "0.25",
-    "fieldname": "voice_speaker_threshold",
-    "fieldtype": "Float",
-    "label": "Speaker Threshold",
-    "precision": "4"
-   },
-   {
-    "default": "0.75",
-    "fieldname": "voice_speech_match_threshold",
-    "fieldtype": "Float",
-    "label": "Speech Match Threshold",
-    "precision": "4"
-   },
-   {
-    "default": "0.50",
-    "fieldname": "voice_anti_spoof_threshold",
-    "fieldtype": "Float",
-    "label": "Anti-Spoof Threshold",
-    "precision": "4"
-   },
-   {
-    "default": "bonafide,genuine,human,real",
-    "fieldname": "voice_bonafide_labels",
-    "fieldtype": "Data",
-    "label": "Bonafide Labels"
+  },
+  {
+   "fieldname": "penalty_section",
+   "fieldtype": "Section Break",
+   "label": "Payroll Deduction Components"
+  },
+  {
+   "fieldname": "penalty_salary_component",
+   "fieldtype": "Link",
+   "label": "Penalty Salary Component",
+   "options": "Salary Component",
+   "description": "Deduction component used for Employee Penalty payroll integration. Defaults to \"Penalty Deduction\" if left blank (auto-created on first use)."
+  },
+  {
+   "fieldname": "column_break_penalty",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "loan_salary_component",
+   "fieldtype": "Link",
+   "label": "Loan Repayment Salary Component",
+   "options": "Salary Component",
+   "description": "Deduction component that carries an Employee Loan instalment onto the Salary Slip. Leave blank to use 'Loan Repayment', which HR Suite creates on first use - but only once it can map an account for the company."
+  },
+  {
+   "fieldname": "statutory_accounts_section",
+   "fieldtype": "Section Break",
+   "label": "Deduction Accounts"
+  },
+  {
+   "fieldname": "statutory_accounts_help",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted\" style=\"font-size:0.85rem;\">HR Suite posts three kinds of deduction onto the Salary Slip: the country statutory contribution (GOSI / GPSSA / SIO / PASI / EPF / ESI), an <b>Employee Loan</b> instalment and an <b>Employee Penalty</b>. A Salary Component that has no <b>Salary Component Account</b> for the company makes Payroll Entry’s accrual Journal Entry fail, which rolls the whole payroll run back. Map the accounts here: a row with no Salary Component is the default for the company, a row naming one overrides it for that component. Without a mapping HR Suite refuses to post the deduction instead of breaking payroll, and says so on Payroll Preview.</p>"
+  },
+  {
+   "fieldname": "statutory_deduction_accounts",
+   "fieldtype": "Table",
+   "label": "Deduction Accounts",
+   "options": "Statutory Deduction Account Row"
+  },
+  {
+   "fieldname": "voice_section",
+   "fieldtype": "Section Break",
+   "label": "Voice Verification"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_voice_verification",
+   "fieldtype": "Check",
+   "label": "Enable Voice Verification"
+  },
+  {
+   "default": "Challenge Only",
+   "fieldname": "voice_verification_mode",
+   "fieldtype": "Select",
+   "label": "Voice Verification Mode",
+   "options": "Challenge Only"
+  },
+  {
+   "default": "ar",
+   "fieldname": "voice_language",
+   "fieldtype": "Data",
+   "label": "Voice Language"
+  },
+  {
+   "default": "small",
+   "fieldname": "voice_whisper_model_size",
+   "fieldtype": "Data",
+   "label": "Whisper Model Size"
+  },
+  {
+   "default": "int8",
+   "fieldname": "voice_compute_type",
+   "fieldtype": "Select",
+   "label": "Whisper Compute Type",
+   "options": "int8\nfloat32\nfloat16"
+  },
+  {
+   "fieldname": "column_break_voice",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "speechbrain/spkrec-ecapa-voxceleb",
+   "fieldname": "speaker_model_source",
+   "fieldtype": "Data",
+   "label": "Speaker Model Source"
+  },
+  {
+   "fieldname": "anti_spoof_model_source",
+   "fieldtype": "Data",
+   "label": "Anti-Spoof Model Source"
+  },
+  {
+   "default": "0.25",
+   "fieldname": "voice_speaker_threshold",
+   "fieldtype": "Float",
+   "label": "Speaker Threshold",
+   "precision": "4"
+  },
+  {
+   "default": "0.75",
+   "fieldname": "voice_speech_match_threshold",
+   "fieldtype": "Float",
+   "label": "Speech Match Threshold",
+   "precision": "4"
+  },
+  {
+   "default": "0.50",
+   "fieldname": "voice_anti_spoof_threshold",
+   "fieldtype": "Float",
+   "label": "Anti-Spoof Threshold",
+   "precision": "4"
+  },
+  {
+   "default": "bonafide,genuine,human,real",
+   "fieldname": "voice_bonafide_labels",
+   "fieldtype": "Data",
+   "label": "Bonafide Labels"
   },
   {
    "fieldname": "alerts_section",
@@ -394,231 +407,231 @@
    "fieldname": "send_email_alerts",
    "fieldtype": "Check",
    "label": "Send Email Alerts"
-    },
-    {
-     "fieldname": "branch_employee_import_section",
-     "fieldtype": "Section Break",
-     "label": "Branch Employees & Bulk Import"
-    },
-    {
-     "fieldname": "branch_employee_import_help",
-     "fieldtype": "Small Text",
-     "label": "Instructions",
-     "read_only": 1,
-     "default": "Download the Excel template, update the target branch for each employee, attach the file here, then click Import Employee Branches."
-    },
-    {
-     "fieldname": "employee_branch_import_file",
-     "fieldtype": "Attach",
-     "label": "Excel Import File"
-    },
-    {
-     "fieldname": "branch_employee_directory",
-     "fieldtype": "Table",
-     "label": "Employee Branch Directory",
-     "options": "Branch Employee Directory Row",
-     "read_only": 1,
-     "cannot_add_rows": 1,
-     "cannot_delete_rows": 1
-    },
-    {
-     "fieldname": "attendance_api_section",
-     "fieldtype": "Section Break",
-     "label": "External HR API Reference",
-     "permlevel": 1
-    },
-    {
-     "default": "This section is a connection reference only. Generate API Key and API Secret from the standard ERPNext User page, then use them in the external app with the Base URL below.",
-     "fieldname": "attendance_api_help",
-     "fieldtype": "Small Text",
-     "label": "Integration Instructions",
-     "permlevel": 1,
-     "read_only": 1
-    },
-    {
-     "description": "Leave empty to use the current site URL.",
-     "fieldname": "mobile_attendance_base_url",
-     "fieldtype": "Data",
-     "label": "Base URL",
-     "permlevel": 1
-    },
-    {
-     "fieldname": "mobile_attendance_api_reference",
-     "fieldtype": "Code",
-     "label": "External App API Reference",
-     "options": "JSON",
-     "permlevel": 1,
-     "read_only": 1
-    },
-    {
-     "fieldname": "muqeem_section",
-     "fieldtype": "Section Break",
-     "label": "Muqeem Integration (MOI — Saudi Arabia)"
-    },
-    {
-     "default": "0",
-     "fieldname": "muqeem_enabled",
-     "fieldtype": "Check",
-     "label": "Enable Muqeem Integration"
-    },
-    {
-     "fieldname": "muqeem_establishment_id",
-     "fieldtype": "Data",
-     "label": "Establishment ID",
-     "depends_on": "eval:doc.muqeem_enabled"
-    },
-    {
-     "default": "https://api.muqeem.sa/v1",
-     "fieldname": "muqeem_api_base_url",
-     "fieldtype": "Data",
-     "label": "API Base URL",
-     "depends_on": "eval:doc.muqeem_enabled",
-     "description": "Muqeem REST API base URL provided by MOI"
-    },
-    {
-     "fieldname": "col_break_muqeem",
-     "fieldtype": "Column Break"
-    },
-    {
-     "fieldname": "muqeem_username",
-     "fieldtype": "Data",
-     "label": "Username",
-     "depends_on": "eval:doc.muqeem_enabled"
-    },
-    {
-     "fieldname": "muqeem_password",
-     "fieldtype": "Password",
-     "label": "Password",
-     "depends_on": "eval:doc.muqeem_enabled"
-    },
-    {
-     "fieldname": "qiwa_section",
-     "fieldtype": "Section Break",
-     "label": "Qiwa Integration (HRSD — Saudi Arabia)"
-    },
-    {
-     "default": "0",
-     "fieldname": "qiwa_enabled",
-     "fieldtype": "Check",
-     "label": "Enable Qiwa Integration"
-    },
-    {
-     "fieldname": "qiwa_establishment_id",
-     "fieldtype": "Data",
-     "label": "Establishment ID",
-     "depends_on": "eval:doc.qiwa_enabled",
-     "description": "10-digit Saudi establishment ID (رقم المنشأة)"
-    },
-    {
-     "default": "https://api.qiwa.info/v1",
-     "fieldname": "qiwa_api_base_url",
-     "fieldtype": "Data",
-     "label": "API Base URL",
-     "depends_on": "eval:doc.qiwa_enabled"
-    },
-    {
-     "fieldname": "col_break_qiwa",
-     "fieldtype": "Column Break"
-    },
-    {
-     "fieldname": "qiwa_client_id",
-     "fieldtype": "Data",
-     "label": "Client ID (OAuth2)",
-     "depends_on": "eval:doc.qiwa_enabled"
-    },
-    {
-     "fieldname": "qiwa_client_secret",
-     "fieldtype": "Password",
-     "label": "Client Secret (OAuth2)",
-     "depends_on": "eval:doc.qiwa_enabled"
-    },
-    {
-     "fieldname": "gosi_api_section",
-     "fieldtype": "Section Break",
-     "label": "GOSI — API Integration"
-    },
-    {
-     "fieldname": "gosi_api_enabled",
-     "fieldtype": "Check",
-     "label": "Enable GOSI API Integration",
-     "description": "Enables direct submission to gosi.gov.sa via API"
-    },
-    {
-     "fieldname": "gosi_establishment_id",
-     "fieldtype": "Data",
-     "label": "GOSI Establishment ID",
-     "depends_on": "eval:doc.gosi_api_enabled",
-     "description": "10-digit GOSI establishment number"
-    },
-    {
-     "default": "https://api.gosi.gov.sa/v1",
-     "fieldname": "gosi_api_base_url",
-     "fieldtype": "Data",
-     "label": "API Base URL",
-     "depends_on": "eval:doc.gosi_api_enabled"
-    },
-    {
-     "fieldname": "col_break_gosi_api",
-     "fieldtype": "Column Break"
-    },
-    {
-     "fieldname": "gosi_api_key",
-     "fieldtype": "Password",
-     "label": "API Key / Bearer Token",
-     "depends_on": "eval:doc.gosi_api_enabled"
-    },
-    {
-     "fieldname": "mudad_section",
-     "fieldtype": "Section Break",
-     "label": "Mudad — Wage Protection System (WPS)"
-    },
-    {
-     "fieldname": "mudad_enabled",
-     "fieldtype": "Check",
-     "label": "Enable Mudad / WPS Integration"
-    },
-    {
-     "fieldname": "mudad_establishment_id",
-     "fieldtype": "Data",
-     "label": "Establishment ID",
-     "depends_on": "eval:doc.mudad_enabled",
-     "description": "Mudad establishment/CR number"
-    },
-    {
-     "fieldname": "mudad_bank_iban",
-     "fieldtype": "Data",
-     "label": "Employer Bank IBAN",
-     "depends_on": "eval:doc.mudad_enabled",
-     "description": "IBAN used for salary disbursement (appears in SIF file)"
-    },
-    {
-     "fieldname": "mudad_bank_code",
-     "fieldtype": "Data",
-     "label": "Employer Bank Code",
-     "depends_on": "eval:doc.mudad_enabled",
-     "description": "SAMA bank routing code (e.g. 1060 for Al Rajhi)"
-    },
-    {
-     "default": "https://api.mudad.com.sa/v1",
-     "fieldname": "mudad_api_base_url",
-     "fieldtype": "Data",
-     "label": "API Base URL",
-     "depends_on": "eval:doc.mudad_enabled"
-    },
-    {
-     "fieldname": "col_break_mudad",
-     "fieldtype": "Column Break"
-    },
-    {
-     "fieldname": "mudad_api_key",
-     "fieldtype": "Password",
-     "label": "API Key / Bearer Token",
-     "depends_on": "eval:doc.mudad_enabled"
-    }
+  },
+  {
+   "fieldname": "branch_employee_import_section",
+   "fieldtype": "Section Break",
+   "label": "Branch Employees & Bulk Import"
+  },
+  {
+   "fieldname": "branch_employee_import_help",
+   "fieldtype": "Small Text",
+   "label": "Instructions",
+   "read_only": 1,
+   "default": "Download the Excel template, update the target branch for each employee, attach the file here, then click Import Employee Branches."
+  },
+  {
+   "fieldname": "employee_branch_import_file",
+   "fieldtype": "Attach",
+   "label": "Excel Import File"
+  },
+  {
+   "fieldname": "branch_employee_directory",
+   "fieldtype": "Table",
+   "label": "Employee Branch Directory",
+   "options": "Branch Employee Directory Row",
+   "read_only": 1,
+   "cannot_add_rows": 1,
+   "cannot_delete_rows": 1
+  },
+  {
+   "fieldname": "attendance_api_section",
+   "fieldtype": "Section Break",
+   "label": "External HR API Reference",
+   "permlevel": 1
+  },
+  {
+   "default": "This section is a connection reference only. Generate API Key and API Secret from the standard ERPNext User page, then use them in the external app with the Base URL below.",
+   "fieldname": "attendance_api_help",
+   "fieldtype": "Small Text",
+   "label": "Integration Instructions",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "description": "Leave empty to use the current site URL.",
+   "fieldname": "mobile_attendance_base_url",
+   "fieldtype": "Data",
+   "label": "Base URL",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "mobile_attendance_api_reference",
+   "fieldtype": "Code",
+   "label": "External App API Reference",
+   "options": "JSON",
+   "permlevel": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "muqeem_section",
+   "fieldtype": "Section Break",
+   "label": "Muqeem Integration (MOI — Saudi Arabia)"
+  },
+  {
+   "default": "0",
+   "fieldname": "muqeem_enabled",
+   "fieldtype": "Check",
+   "label": "Enable Muqeem Integration"
+  },
+  {
+   "fieldname": "muqeem_establishment_id",
+   "fieldtype": "Data",
+   "label": "Establishment ID",
+   "depends_on": "eval:doc.muqeem_enabled"
+  },
+  {
+   "default": "https://api.muqeem.sa/v1",
+   "fieldname": "muqeem_api_base_url",
+   "fieldtype": "Data",
+   "label": "API Base URL",
+   "depends_on": "eval:doc.muqeem_enabled",
+   "description": "Muqeem REST API base URL provided by MOI"
+  },
+  {
+   "fieldname": "col_break_muqeem",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "muqeem_username",
+   "fieldtype": "Data",
+   "label": "Username",
+   "depends_on": "eval:doc.muqeem_enabled"
+  },
+  {
+   "fieldname": "muqeem_password",
+   "fieldtype": "Password",
+   "label": "Password",
+   "depends_on": "eval:doc.muqeem_enabled"
+  },
+  {
+   "fieldname": "qiwa_section",
+   "fieldtype": "Section Break",
+   "label": "Qiwa Integration (HRSD — Saudi Arabia)"
+  },
+  {
+   "default": "0",
+   "fieldname": "qiwa_enabled",
+   "fieldtype": "Check",
+   "label": "Enable Qiwa Integration"
+  },
+  {
+   "fieldname": "qiwa_establishment_id",
+   "fieldtype": "Data",
+   "label": "Establishment ID",
+   "depends_on": "eval:doc.qiwa_enabled",
+   "description": "10-digit Saudi establishment ID (رقم المنشأة)"
+  },
+  {
+   "default": "https://api.qiwa.info/v1",
+   "fieldname": "qiwa_api_base_url",
+   "fieldtype": "Data",
+   "label": "API Base URL",
+   "depends_on": "eval:doc.qiwa_enabled"
+  },
+  {
+   "fieldname": "col_break_qiwa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "qiwa_client_id",
+   "fieldtype": "Data",
+   "label": "Client ID (OAuth2)",
+   "depends_on": "eval:doc.qiwa_enabled"
+  },
+  {
+   "fieldname": "qiwa_client_secret",
+   "fieldtype": "Password",
+   "label": "Client Secret (OAuth2)",
+   "depends_on": "eval:doc.qiwa_enabled"
+  },
+  {
+   "fieldname": "gosi_api_section",
+   "fieldtype": "Section Break",
+   "label": "GOSI — API Integration"
+  },
+  {
+   "fieldname": "gosi_api_enabled",
+   "fieldtype": "Check",
+   "label": "Enable GOSI API Integration",
+   "description": "Enables direct submission to gosi.gov.sa via API"
+  },
+  {
+   "fieldname": "gosi_establishment_id",
+   "fieldtype": "Data",
+   "label": "GOSI Establishment ID",
+   "depends_on": "eval:doc.gosi_api_enabled",
+   "description": "10-digit GOSI establishment number"
+  },
+  {
+   "default": "https://api.gosi.gov.sa/v1",
+   "fieldname": "gosi_api_base_url",
+   "fieldtype": "Data",
+   "label": "API Base URL",
+   "depends_on": "eval:doc.gosi_api_enabled"
+  },
+  {
+   "fieldname": "col_break_gosi_api",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gosi_api_key",
+   "fieldtype": "Password",
+   "label": "API Key / Bearer Token",
+   "depends_on": "eval:doc.gosi_api_enabled"
+  },
+  {
+   "fieldname": "mudad_section",
+   "fieldtype": "Section Break",
+   "label": "Mudad — Wage Protection System (WPS)"
+  },
+  {
+   "fieldname": "mudad_enabled",
+   "fieldtype": "Check",
+   "label": "Enable Mudad / WPS Integration"
+  },
+  {
+   "fieldname": "mudad_establishment_id",
+   "fieldtype": "Data",
+   "label": "Establishment ID",
+   "depends_on": "eval:doc.mudad_enabled",
+   "description": "Mudad establishment/CR number"
+  },
+  {
+   "fieldname": "mudad_bank_iban",
+   "fieldtype": "Data",
+   "label": "Employer Bank IBAN",
+   "depends_on": "eval:doc.mudad_enabled",
+   "description": "IBAN used for salary disbursement (appears in SIF file)"
+  },
+  {
+   "fieldname": "mudad_bank_code",
+   "fieldtype": "Data",
+   "label": "Employer Bank Code",
+   "depends_on": "eval:doc.mudad_enabled",
+   "description": "SAMA bank routing code (e.g. 1060 for Al Rajhi)"
+  },
+  {
+   "default": "https://api.mudad.com.sa/v1",
+   "fieldname": "mudad_api_base_url",
+   "fieldtype": "Data",
+   "label": "API Base URL",
+   "depends_on": "eval:doc.mudad_enabled"
+  },
+  {
+   "fieldname": "col_break_mudad",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "mudad_api_key",
+   "fieldtype": "Password",
+   "label": "API Key / Bearer Token",
+   "depends_on": "eval:doc.mudad_enabled"
+  }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-03-17 00:00:00.000000",
+ "modified": "2026-09-06 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hr Suite",
  "name": "Hr Suite Settings",
