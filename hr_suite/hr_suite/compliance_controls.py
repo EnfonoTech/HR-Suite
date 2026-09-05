@@ -1414,6 +1414,15 @@ def _get_workspace_content(workspace):
 
 def _sync_workspace_content_cards(content):
 	existing_ids = {row.get("id") for row in content if isinstance(row, dict)}
+	# Guard on the CARD NAME too, not just the block id. The shipped workspace JSON
+	# carries these same cards under its own block ids, so an id-only check never
+	# matched and a duplicate card block was appended on EVERY migrate — the same
+	# card then rendered twice (and grew by one copy per migrate).
+	existing_cards = {
+		row.get("data", {}).get("card_name")
+		for row in content
+		if isinstance(row, dict) and row.get("type") == "card"
+	}
 	insert_at = _find_content_index(content, "hr_suite_card_compliance_legal")
 	if insert_at is None:
 		insert_at = _find_content_index(content, "hr_suite_section_governance")
@@ -1422,7 +1431,7 @@ def _sync_workspace_content_cards(content):
 
 	offset = 1
 	for group in WORKSPACE_COMPLIANCE_GROUPS:
-		if group["id"] in existing_ids:
+		if group["id"] in existing_ids or group["label"] in existing_cards:
 			continue
 		content.insert(
 			insert_at + offset,
