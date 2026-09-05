@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\": \"h_qa\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Quick Actions</b></span>\", \"col\": 12}}, {\"id\": \"sc_al\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Annual Leave\", \"col\": 3}}, {\"id\": \"sc_ot\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Overtime Request\", \"col\": 3}}, {\"id\": \"sc_ep\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Employee Penalty\", \"col\": 3}}, {\"id\": \"sc_ppv\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Payroll Preview\", \"col\": 3}}, {\"id\": \"sc_pr\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Monthly Payroll\", \"col\": 3}}, {\"id\": \"sc_dp\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Disciplinary Procedure\", \"col\": 3}}, {\"id\": \"sc_sr\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Staff Rating\", \"col\": 3}}, {\"id\": \"sc_sl\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Sick Leave\", \"col\": 3}}, {\"id\": \"sc_hl\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"HR Letter\", \"col\": 3}}, {\"id\": \"sp0\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h_em\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Employee Management</b></span>\", \"col\": 12}}, {\"id\": \"card_em\", \"type\": \"card\", \"data\": {\"card_name\": \"Employee Management\", \"col\": 4}}, {\"id\": \"card_lo\", \"type\": \"card\", \"data\": {\"card_name\": \"Leave & Overtime\", \"col\": 4}}, {\"id\": \"card_py\", \"type\": \"card\", \"data\": {\"card_name\": \"Payroll\", \"col\": 4}}, {\"id\": \"card_pf\", \"type\": \"card\", \"data\": {\"card_name\": \"Performance\", \"col\": 4}}, {\"id\": \"sp1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h_di\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Disciplinary</b></span>\", \"col\": 12}}, {\"id\": \"card_di\", \"type\": \"card\", \"data\": {\"card_name\": \"Disciplinary\", \"col\": 4}}, {\"id\": \"card_pe\", \"type\": \"card\", \"data\": {\"card_name\": \"Penalties\", \"col\": 4}}, {\"id\": \"sp2\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h_doc\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>HR Letters &amp; Documents</b></span>\", \"col\": 12}}, {\"id\": \"card_hl\", \"type\": \"card\", \"data\": {\"card_name\": \"HR Letters\", \"col\": 4}}, {\"id\": \"card_cx\", \"type\": \"card\", \"data\": {\"card_name\": \"Compliance\", \"col\": 4}}, {\"id\": \"sp3\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h_su\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Setup &amp; Configuration</b></span>\", \"col\": 12}}, {\"id\": \"card_su\", \"type\": \"card\", \"data\": {\"card_name\": \"Setup\", \"col\": 4}}, {\"id\": \"card_cr\", \"type\": \"card\", \"data\": {\"card_name\": \"Compliance Regulations and Records\", \"col\": 4}}, {\"id\": \"card_ed\", \"type\": \"card\", \"data\": {\"card_name\": \"Employee Documentation and Contracts\", \"col\": 4}}, {\"id\": \"sp4\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_rs\", \"type\": \"card\", \"data\": {\"card_name\": \"Recruitment and Staffing Agencies\", \"col\": 4}}, {\"id\": \"card_wp\", \"type\": \"card\", \"data\": {\"card_name\": \"Work Patterns and Hours\", \"col\": 4}}, {\"id\": \"card_sf\", \"type\": \"card\", \"data\": {\"card_name\": \"Safety, Inspection, and Penalties\", \"col\": 4}}]",
+ "content": "[{\"id\": \"h_qa\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Quick Actions</b></span>\", \"col\": 12}}, {\"id\": \"sc_al\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Annual Leave\", \"col\": 3}}, {\"id\": \"sc_ot\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Overtime Request\", \"col\": 3}}, {\"id\": \"sc_ep\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Employee Penalty\", \"col\": 3}}, {\"id\": \"sc_ppv\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Payroll Preview\", \"col\": 3}}, {\"id\": \"sc_pr\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Payroll Entry\", \"col\": 3}}, {\"id\": \"sc_dp\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Disciplinary Procedure\", \"col\": 3}}, {\"id\": \"sc_sr\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Staff Rating\", \"col\": 3}}, {\"id\": \"sc_sl\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Sick Leave\", \"col\": 3}}, {\"id\": \"sc_hl\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"HR Letter\", \"col\": 3}}, {\"id\": \"sc-appraisal\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Appraisal\", \"col\": 3}}, {\"id\": \"sp0\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h_em\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Employee Management</b></span>\", \"col\": 12}}, {\"id\": \"card_em\", \"type\": \"card\", \"data\": {\"card_name\": \"Employee Management\", \"col\": 4}}, {\"id\": \"card_lo\", \"type\": \"card\", \"data\": {\"card_name\": \"Leave & Overtime\", \"col\": 4}}, {\"id\": \"card_py\", \"type\": \"card\", \"data\": {\"card_name\": \"Payroll\", \"col\": 4}}, {\"id\": \"card_pf\", \"type\": \"card\", \"data\": {\"card_name\": \"Performance\", \"col\": 4}}, {\"id\": \"sp1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h_di\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Disciplinary</b></span>\", \"col\": 12}}, {\"id\": \"card_di\", \"type\": \"card\", \"data\": {\"card_name\": \"Disciplinary\", \"col\": 4}}, {\"id\": \"card_pe\", \"type\": \"card\", \"data\": {\"card_name\": \"Penalties\", \"col\": 4}}, {\"id\": \"sp2\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h_doc\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>HR Letters &amp; Documents</b></span>\", \"col\": 12}}, {\"id\": \"card_hl\", \"type\": \"card\", \"data\": {\"card_name\": \"HR Letters\", \"col\": 4}}, {\"id\": \"card_cx\", \"type\": \"card\", \"data\": {\"card_name\": \"Compliance\", \"col\": 4}}, {\"id\": \"sp3\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h_su\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Setup &amp; Configuration</b></span>\", \"col\": 12}}, {\"id\": \"card_su\", \"type\": \"card\", \"data\": {\"card_name\": \"Setup\", \"col\": 4}}, {\"id\": \"card_cr\", \"type\": \"card\", \"data\": {\"card_name\": \"Compliance Regulations and Records\", \"col\": 4}}, {\"id\": \"card_ed\", \"type\": \"card\", \"data\": {\"card_name\": \"Employee Documentation and Contracts\", \"col\": 4}}, {\"id\": \"sp4\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_rs\", \"type\": \"card\", \"data\": {\"card_name\": \"Recruitment and Staffing Agencies\", \"col\": 4}}, {\"id\": \"card_wp\", \"type\": \"card\", \"data\": {\"card_name\": \"Work Patterns and Hours\", \"col\": 4}}, {\"id\": \"card_sf\", \"type\": \"card\", \"data\": {\"card_name\": \"Safety, Inspection, and Penalties\", \"col\": 4}}, {\"id\": \"s-77149403\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h-76903417\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Recruitment, Training &amp; Assets</b></span>\", \"col\": 12}}, {\"id\": \"c-76502556\", \"type\": \"card\", \"data\": {\"card_name\": \"Recruitment & Onboarding\", \"col\": 4}}, {\"id\": \"c-68225649\", \"type\": \"card\", \"data\": {\"card_name\": \"Training & Development\", \"col\": 4}}, {\"id\": \"c-89763308\", \"type\": \"card\", \"data\": {\"card_name\": \"Assets\", \"col\": 4}}, {\"id\": \"s-77149403\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"h-9179144\", \"type\": \"header\", \"data\": {\"text\": \"<span class='h4'><b>Reports</b></span>\", \"col\": 12}}, {\"id\": \"c-94232285\", \"type\": \"card\", \"data\": {\"card_name\": \"Payroll Reports\", \"col\": 4}}, {\"id\": \"c-59831352\", \"type\": \"card\", \"data\": {\"card_name\": \"Employee & Leave Reports\", \"col\": 4}}, {\"id\": \"c-27027702\", \"type\": \"card\", \"data\": {\"card_name\": \"Compliance Reports\", \"col\": 4}}, {\"id\": \"s-77149403\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"c-21841701\", \"type\": \"card\", \"data\": {\"card_name\": \"App Audit (System Manager)\", \"col\": 4}}]",
  "creation": "2026-06-10 00:51:41.384339",
  "custom_blocks": [],
  "docstatus": 0,
@@ -16,7 +16,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Employee Management",
-   "link_count": 0,
+   "link_count": 15,
    "link_type": "DocType",
    "onboard": 1,
    "type": "Card Break"
@@ -114,8 +114,68 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Leave & Overtime",
+   "label": "Employee",
    "link_count": 0,
+   "link_to": "Employee",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Separation",
+   "link_count": 0,
+   "link_to": "Employee Separation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Transfer",
+   "link_count": 0,
+   "link_to": "Employee Transfer",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Promotion",
+   "link_count": 0,
+   "link_to": "Employee Promotion",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Skill Map",
+   "link_count": 0,
+   "link_to": "Employee Skill Map",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Advance",
+   "link_count": 0,
+   "link_to": "Employee Advance",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Leave & Overtime",
+   "link_count": 15,
    "link_type": "DocType",
    "onboard": 1,
    "type": "Card Break"
@@ -213,8 +273,68 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Payroll",
+   "label": "Attendance Request",
    "link_count": 0,
+   "link_to": "Attendance Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Checkin",
+   "link_count": 0,
+   "link_to": "Employee Checkin",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Shift Type",
+   "link_count": 0,
+   "link_to": "Shift Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Shift Assignment",
+   "link_count": 0,
+   "link_to": "Shift Assignment",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Leave Encashment",
+   "link_count": 0,
+   "link_to": "Leave Encashment",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Holiday List",
+   "link_count": 0,
+   "link_to": "Holiday List",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Payroll",
+   "link_count": 16,
    "link_type": "DocType",
    "onboard": 1,
    "type": "Card Break"
@@ -342,6 +462,46 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Employee Benefit Claim",
+   "link_count": 0,
+   "link_to": "Employee Benefit Claim",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Gratuity",
+   "link_count": 0,
+   "link_to": "Gratuity",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Payroll Period",
+   "link_count": 0,
+   "link_to": "Payroll Period",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Salary Component",
+   "link_count": 0,
+   "link_to": "Salary Component",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Performance",
    "link_count": 4,
    "link_type": "DocType",
@@ -392,7 +552,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Disciplinary",
-   "link_count": 0,
+   "link_count": 4,
    "link_type": "DocType",
    "onboard": 1,
    "type": "Card Break"
@@ -441,7 +601,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Penalties",
-   "link_count": 0,
+   "link_count": 1,
    "link_type": "DocType",
    "onboard": 1,
    "type": "Card Break"
@@ -460,7 +620,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "HR Letters",
-   "link_count": 0,
+   "link_count": 2,
    "link_type": "DocType",
    "onboard": 1,
    "type": "Card Break"
@@ -489,7 +649,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Compliance",
-   "link_count": 0,
+   "link_count": 4,
    "link_type": "DocType",
    "onboard": 1,
    "type": "Card Break"
@@ -510,16 +670,6 @@
    "label": "Policy Acknowledgement",
    "link_count": 0,
    "link_to": "Policy Acknowledgement",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Training Record",
-   "link_count": 0,
-   "link_to": "Training Record",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -548,7 +698,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Setup",
-   "link_count": 0,
+   "link_count": 10,
    "link_type": "DocType",
    "onboard": 1,
    "type": "Card Break"
@@ -576,9 +726,79 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "HR Letter Template",
+   "label": "Payroll Settings",
    "link_count": 0,
-   "link_to": "HR Letter Template",
+   "link_to": "Payroll Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Leave Type",
+   "link_count": 0,
+   "link_to": "Leave Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Leave Policy",
+   "link_count": 0,
+   "link_to": "Leave Policy",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Leave Period",
+   "link_count": 0,
+   "link_to": "Leave Period",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Department",
+   "link_count": 0,
+   "link_to": "Department",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Designation",
+   "link_count": 0,
+   "link_to": "Designation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Branch",
+   "link_count": 0,
+   "link_to": "Branch",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Grade",
+   "link_count": 0,
+   "link_to": "Employee Grade",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -587,7 +807,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Compliance Regulations and Records",
-   "link_count": 0,
+   "link_count": 6,
    "link_type": "DocType",
    "onboard": 1,
    "type": "Card Break"
@@ -656,7 +876,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Employee Documentation and Contracts",
-   "link_count": 0,
+   "link_count": 4,
    "link_type": "DocType",
    "onboard": 1,
    "type": "Card Break"
@@ -677,16 +897,6 @@
    "label": "Contract Portal Evidence",
    "link_count": 0,
    "link_to": "Contract Portal Evidence",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Training Agreement",
-   "link_count": 0,
-   "link_to": "Training Agreement",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -715,7 +925,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Recruitment and Staffing Agencies",
-   "link_count": 0,
+   "link_count": 2,
    "link_type": "DocType",
    "onboard": 1,
    "type": "Card Break"
@@ -744,7 +954,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Work Patterns and Hours",
-   "link_count": 0,
+   "link_count": 4,
    "link_type": "DocType",
    "onboard": 1,
    "type": "Card Break"
@@ -793,7 +1003,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Safety, Inspection, and Penalties",
-   "link_count": 0,
+   "link_count": 4,
    "link_type": "DocType",
    "onboard": 1,
    "type": "Card Break"
@@ -840,10 +1050,354 @@
   },
   {
    "hidden": 0,
-   "is_query_report": 1,
-   "label": "Compliance Obligation Backlog",
+   "is_query_report": 0,
+   "label": "Recruitment & Onboarding",
+   "link_count": 7,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Job Requisition",
    "link_count": 0,
-   "link_to": "Compliance Obligation Backlog",
+   "link_to": "Job Requisition",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Job Opening",
+   "link_count": 0,
+   "link_to": "Job Opening",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Job Applicant",
+   "link_count": 0,
+   "link_to": "Job Applicant",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Interview",
+   "link_count": 0,
+   "link_to": "Interview",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Job Offer",
+   "link_count": 0,
+   "link_to": "Job Offer",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Appointment Letter",
+   "link_count": 0,
+   "link_to": "Appointment Letter",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Candidate Profile",
+   "link_count": 0,
+   "link_to": "Candidate Profile",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Training & Development",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Training Program",
+   "link_count": 0,
+   "link_to": "Training Program",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Training Event",
+   "link_count": 0,
+   "link_to": "Training Event",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Training Result",
+   "link_count": 0,
+   "link_to": "Training Result",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Training Record",
+   "link_count": 0,
+   "link_to": "Training Record",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Training Agreement",
+   "link_count": 0,
+   "link_to": "Training Agreement",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Assets",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Asset",
+   "link_count": 0,
+   "link_to": "Asset",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Asset Category",
+   "link_count": 0,
+   "link_to": "Asset Category",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Asset Movement",
+   "link_count": 0,
+   "link_to": "Asset Movement",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Payroll Reports",
+   "link_count": 7,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Pre-Payroll Allocation Register",
+   "link_count": 0,
+   "link_to": "Pre-Payroll Allocation Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "WPS Export Report",
+   "link_count": 0,
+   "link_to": "WPS Export Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "WPS Submission Tracker",
+   "link_count": 0,
+   "link_to": "WPS Submission Tracker",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "GOSI Monthly Report",
+   "link_count": 0,
+   "link_to": "GOSI Monthly Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Loan Deduction Register",
+   "link_count": 0,
+   "link_to": "Loan Deduction Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Monthly Loan Recovery Summary",
+   "link_count": 0,
+   "link_to": "Monthly Loan Recovery Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Outstanding Employee Loans",
+   "link_count": 0,
+   "link_to": "Outstanding Employee Loans",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee & Leave Reports",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Leave Balance Report",
+   "link_count": 0,
+   "link_to": "Leave Balance Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "EOSB Calculation Report",
+   "link_count": 0,
+   "link_to": "EOSB Calculation Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Compliance Case Tracker",
+   "link_count": 0,
+   "link_to": "Compliance Case Tracker",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Compliance Reports",
+   "link_count": 6,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Contract Expiry Report",
+   "link_count": 0,
+   "link_to": "Contract Expiry Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Work Permit Expiry Report",
+   "link_count": 0,
+   "link_to": "Work Permit Expiry Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Nitaqat Compliance Report",
+   "link_count": 0,
+   "link_to": "Nitaqat Compliance Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Policy Compliance Register",
+   "link_count": 0,
+   "link_to": "Policy Compliance Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Labor Inspection Tracker",
+   "link_count": 0,
+   "link_to": "Labor Inspection Tracker",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -857,9 +1411,38 @@
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "App Audit (System Manager)",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Labor Coverage Matrix",
+   "link_count": 0,
+   "link_to": "Labor Coverage Matrix",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Compliance Obligation Backlog",
+   "link_count": 0,
+   "link_to": "Compliance Obligation Backlog",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-09-05 14:30:00.000000",
+ "modified": "2026-09-06 06:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hr Suite",
  "name": "HR Suite",
@@ -898,8 +1481,8 @@
    "color": "#6B21E8",
    "doc_view": "",
    "icon": "dollar-sign",
-   "label": "Monthly Payroll",
-   "link_to": "Monthly Payroll",
+   "label": "Payroll Entry",
+   "link_to": "Payroll Entry",
    "type": "DocType"
   },
   {
@@ -939,6 +1522,14 @@
    "doc_view": "List",
    "label": "Payroll Preview",
    "link_to": "Payroll Preview",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Appraisal",
+   "link_to": "Appraisal",
+   "stats_filter": "",
    "type": "DocType"
   }
  ],

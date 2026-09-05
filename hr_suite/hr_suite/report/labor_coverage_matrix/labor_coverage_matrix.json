@@ -10,7 +10,7 @@
  "idx": 0,
  "is_standard": "Yes",
  "letter_head": null,
- "modified": "2026-03-19 20:01:39.083698",
+ "modified": "2026-09-06 06:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hr Suite",
  "name": "Labor Coverage Matrix",
@@ -20,12 +20,6 @@
  "report_name": "Labor Coverage Matrix",
  "report_type": "Script Report",
  "roles": [
-  {
-   "role": "HR Manager"
-  },
-  {
-   "role": "HR User"
-  },
   {
    "role": "System Manager"
   }
