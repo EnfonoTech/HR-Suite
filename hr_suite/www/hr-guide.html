@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Steel Force HR — Hand Guide</title>
+<link rel="icon" type="image/svg+xml" href="/assets/hr_suite/images/logo.svg" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+       font-size:15px;line-height:1.7;color:#1a1a2e;background:#f5f6fa;display:flex;min-height:100vh}
+
+  /* sidebar */
+  .sidebar{width:264px;min-height:100vh;background:#1a1a2e;color:#c8cfe8;position:fixed;top:0;left:0;
+           overflow-y:auto;display:flex;flex-direction:column;z-index:100}
+  .sidebar-brand{padding:22px 20px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .sidebar-brand .row{display:flex;align-items:center;gap:10px}
+  .sidebar-brand .mark{width:8px;height:30px;background:#c8102e;border-radius:2px;flex-shrink:0}
+  .sidebar-brand h1{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px}
+  .sidebar-brand p{font-size:11px;color:#7c85ad;margin-top:2px;letter-spacing:.08em;text-transform:uppercase}
+  .sidebar-nav{padding:10px 0 30px;flex:1}
+  .nav-group-label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#5f688f;
+                   padding:14px 20px 6px;font-weight:700}
+  .sidebar-nav a{display:block;padding:7px 20px 7px 20px;color:#c8cfe8;text-decoration:none;font-size:13.5px;
+                 border-left:3px solid transparent;transition:background .12s,color .12s}
+  .sidebar-nav a:hover{background:rgba(255,255,255,.05);color:#fff}
+  .sidebar-nav a.active{background:rgba(200,16,46,.14);border-left-color:#c8102e;color:#fff;font-weight:600}
+  .sidebar-nav a .num{display:inline-block;width:20px;color:#6f78a0;font-variant-numeric:tabular-nums}
+  .sidebar-nav a.active .num{color:#e2687a}
+
+  /* main */
+  main{margin-left:264px;flex:1;min-width:0;padding:0 0 80px}
+  .hero{background:linear-gradient(135deg,#1a1a2e 0%,#2b2f52 55%,#7a1327 100%);color:#fff;padding:48px 56px 40px}
+  .hero .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#ffb3bf;font-weight:700}
+  .hero h1{font-size:38px;line-height:1.15;margin:10px 0 12px;letter-spacing:-.6px;max-width:22ch}
+  .hero p{font-size:16.5px;color:#d3d8ea;max-width:70ch}
+  .hero .meta{margin-top:22px;display:flex;flex-wrap:wrap;gap:10px}
+  .hero .chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:999px;
+              padding:5px 13px;font-size:12.5px;color:#fff}
+  .wrap{padding:0 56px;max-width:1080px}
+
+  section{padding-top:44px}
+  h2{font-size:25px;letter-spacing:-.3px;margin-bottom:6px;scroll-margin-top:20px}
+  h2 .stage{display:inline-block;background:#c8102e;color:#fff;font-size:12px;font-weight:700;border-radius:6px;
+            padding:3px 9px;margin-right:10px;vertical-align:middle;letter-spacing:.04em}
+  h3{font-size:17px;margin:26px 0 8px;letter-spacing:-.2px}
+  .lede{color:#4a5273;font-size:16px;margin-bottom:14px;max-width:74ch}
+  p{margin-bottom:12px;max-width:76ch}
+  ul,ol{margin:0 0 14px 22px}
+  li{margin-bottom:6px;max-width:74ch}
+  code{background:#eceef6;border:1px solid #dcdfeb;border-radius:4px;padding:1px 6px;font-size:13px;
+       font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  a{color:#0b57a4}
+
+  .where{display:inline-flex;align-items:center;gap:8px;background:#eef2fb;border:1px solid #d2dcf0;
+         border-left:4px solid #2f6bd0;border-radius:0 6px 6px 0;padding:9px 14px;font-size:13.5px;margin-bottom:16px}
+  .where b{color:#1a3a6b}
+
+  figure{margin:18px 0 22px;border:1px solid #dfe2ee;border-radius:10px;overflow:hidden;background:#fff;
+         box-shadow:0 2px 10px rgba(20,25,50,.06)}
+  figure img{display:block;width:100%;height:auto}
+  figcaption{font-size:13px;color:#5b6485;padding:10px 14px;border-top:1px solid #eceef6;background:#fafbfe}
+
+  .steps{counter-reset:s;list-style:none;margin-left:0}
+  .steps li{counter-increment:s;position:relative;padding-left:38px;margin-bottom:11px}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:25px;height:25px;border-radius:50%;
+                    background:#1a1a2e;color:#fff;font-size:12.5px;font-weight:700;display:flex;
+                    align-items:center;justify-content:center}
+
+  .note,.warn,.ok{border-radius:0 8px 8px 0;padding:13px 17px;margin:16px 0;font-size:14.5px}
+  .note{background:#eef2fb;border-left:4px solid #2f6bd0}
+  .warn{background:#fff5e9;border-left:4px solid #d08a2c}
+  .ok{background:#eefaf3;border-left:4px solid #1f9d63}
+  .note b,.warn b,.ok b{display:block;margin-bottom:3px}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0 20px;font-size:14px;background:#fff;
+        border:1px solid #e2e5f0;border-radius:8px;overflow:hidden}
+  th{background:#f1f3fa;text-align:left;padding:10px 13px;font-size:12.5px;letter-spacing:.05em;
+     text-transform:uppercase;color:#4a5273;border-bottom:1px solid #e2e5f0}
+  td{padding:10px 13px;border-bottom:1px solid #eef0f7;vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  .scroll{overflow-x:auto}
+
+  .badge{display:inline-block;border-radius:5px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+  .b-draft{background:#eceef6;color:#4a5273}
+  .b-ok{background:#e3f6ec;color:#15734a}
+  .b-warn{background:#fdf0dd;color:#8a5a12}
+  .b-stop{background:#fdeaed;color:#a3122b}
+
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0 20px}
+  .flow span{background:#fff;border:1px solid #d8dceb;border-radius:7px;padding:7px 13px;font-size:13.5px;font-weight:600}
+  .flow i{color:#9aa2c0;font-style:normal;font-size:16px}
+
+  footer{margin-top:56px;padding:26px 56px;border-top:1px solid #e2e5f0;color:#6b7396;font-size:13px}
+
+  @media print{
+    .sidebar{display:none} main{margin-left:0} .hero{background:#1a1a2e}
+    figure{break-inside:avoid} section{break-inside:auto}
+  }
+  @media (max-width:900px){
+    .sidebar{position:static;width:100%;min-height:auto}
+    main{margin-left:0}
+    body{flex-direction:column}
+    .hero{padding:32px 22px} .wrap{padding:0 22px} footer{padding:22px}
+    .hero h1{font-size:29px}
+  }
+</style>
+</head>
+<body>
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <div class="row"><div class="mark"></div>
+      <div><h1>Steel Force HR</h1><p>Hand Guide</p></div></div>
+  </div>
+  <div class="sidebar-nav" id="nav">
+    <div class="nav-group-label">Start here</div>
+    <a href="#intro">How to use this guide</a>
+    <a href="#map">The employee journey</a>
+    <div class="nav-group-label">Joining</div>
+    <a href="#s1"><span class="num">1</span>Hiring someone</a>
+    <a href="#s2"><span class="num">2</span>The first day</a>
+    <a href="#s3"><span class="num">3</span>The employee file</a>
+    <a href="#s4"><span class="num">4</span>Setting their pay</a>
+    <div class="nav-group-label">Every month</div>
+    <a href="#s5"><span class="num">5</span>Attendance and shifts</a>
+    <a href="#s6"><span class="num">6</span>Leave</a>
+    <a href="#s7"><span class="num">7</span>Loans and deductions</a>
+    <a href="#s8"><span class="num">8</span>Running payroll</a>
+    <div class="nav-group-label">Along the way</div>
+    <a href="#s9"><span class="num">9</span>Appraisals</a>
+    <a href="#s10"><span class="num">10</span>Permits and LMRA</a>
+    <a href="#s11"><span class="num">11</span>Warnings and discipline</a>
+    <a href="#s12"><span class="num">12</span>Leaving the company</a>
+    <div class="nav-group-label">Reference</div>
+    <a href="#letters">Letters and documents</a>
+    <a href="#reports">Reports</a>
+    <a href="#status">What the statuses mean</a>
+    <a href="#roles">Who can do what</a>
+    <a href="#notyet">Not switched on yet</a>
+  </div>
+</nav>
+<main>
+<div class="hero">
+  <div class="eyebrow">Steel Force Trading WLL &middot; Bahrain</div>
+  <h1>The HR system, from hiring to final settlement</h1>
+  <p>This guide walks through one employee's whole time with the company, in the order it actually
+     happens. Each stage shows you the real screen, what to type, and what the system does next.
+     No technical knowledge needed.</p>
+  <div class="meta">
+    <span class="chip">12 stages</span>
+    <span class="chip">Real screenshots from the test system</span>
+    <span class="chip">Written for HR staff</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+<section id="intro">
+  <h2>How to use this guide</h2>
+  <p class="lede">Read it once end to end, then come back to the stage you need.</p>
+  <p>Every stage is laid out the same way, so you always know where to look:</p>
+  <ul>
+    <li><b>Where to find it</b> — the exact menu path, in a blue bar.</li>
+    <li><b>What it is for</b> — one or two plain sentences.</li>
+    <li><b>What to do</b> — numbered steps, in order.</li>
+    <li><b>A picture of the real screen</b> — so you can match what you see.</li>
+    <li><b>What happens next</b> — what the system does on its own once you save.</li>
+  </ul>
+  <div class="note">
+    <b>Two words you will see a lot</b>
+    <b style="font-weight:600;display:inline">Draft</b> means saved but not final — you can still change it.
+    <b style="font-weight:600;display:inline">Submitted</b> means final — the system now acts on it, and to change it
+    you must cancel and amend. Money and leave balances only move on <b>Submit</b>.
+  </div>
+  <div class="warn">
+    <b>Screens in this guide come from the test system</b>
+    The names and figures you see in the pictures are test data on <code>sft-uat</code>.
+    Your live system will show your own people and your own numbers.
+  </div>
+</section>
+
+<section id="map">
+  <h2>The employee journey</h2>
+  <p class="lede">Everything in this guide hangs off one line: a person joins, works, gets paid, and one day leaves.</p>
+  <div class="flow">
+    <span>Hire</span><i>&rarr;</i><span>First day</span><i>&rarr;</i><span>Employee file</span><i>&rarr;</i>
+    <span>Pay setup</span><i>&rarr;</i><span>Attendance</span><i>&rarr;</i><span>Leave</span><i>&rarr;</i>
+    <span>Deductions</span><i>&rarr;</i><span>Payroll</span><i>&rarr;</i><span>Appraisal</span><i>&rarr;</i>
+    <span>Exit</span>
+  </div>
+  <p>Everything starts from one place. The <b>HR Suite</b> workspace is the front door: quick actions on top,
+     then the full list grouped into Employee Management, Leave &amp; Overtime, and Payroll.</p>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/01-workspace.jpg" alt="HR Suite workspace with quick actions and grouped links" loading="lazy">
+    <figcaption>HR Suite workspace. The numbers next to each quick action tell you how many records are waiting.</figcaption>
+  </figure>
+  <div class="note">
+    <b>The golden rule of this system</b>
+    Enter a fact once, in the right place, and every later screen picks it up on its own. Three unpaid
+    leave days typed into a Leave Application become 23 paid days on the payslip without anybody
+    doing the arithmetic. If you find yourself typing the same number twice, stop — something is set up wrong.
+  </div>
+</section>
+
+<section id="s1">
+  <h2><span class="stage">Stage 1</span>Hiring someone</h2>
+  <p class="lede">From an open job to a signed offer.</p>
+  <div class="where">📍 <b>Where:</b> HR Suite &rarr; Recruitment workspace</div>
+  <p>The hiring chain has six steps, and the system already has a screen for each one:</p>
+  <div class="flow">
+    <span>Job Requisition</span><i>&rarr;</i><span>Job Opening</span><i>&rarr;</i><span>Job Applicant</span><i>&rarr;</i>
+    <span>Interview</span><i>&rarr;</i><span>Job Offer</span><i>&rarr;</i><span>Employee</span>
+  </div>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/02-recruitment-workspace.jpg" alt="Recruitment workspace showing Job Opening, Job Applicant and Job Offer shortcuts" loading="lazy">
+    <figcaption>The Recruitment workspace. Each shortcut shows a live count — all zero until you start using it.</figcaption>
+  </figure>
+
+  <h3>Raising a vacancy</h3>
+  <ol class="steps">
+    <li><b>Job Requisition</b> — the request to hire. Department, designation, how many people, and why.</li>
+    <li><b>Job Opening</b> — the advertised role, created once the requisition is approved.</li>
+    <li>Applicants come in against that opening as <b>Job Applicant</b> records.</li>
+  </ol>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/03-job-applicant.jpg" alt="Empty Job Applicant list" loading="lazy">
+    <figcaption>Job Applicant list. One row per candidate, with a status that moves as you shortlist and reject.</figcaption>
+  </figure>
+
+  <h3>Interviews that score the same things</h3>
+  <p>An <b>Interview Round</b> holds the skill list and the pass mark. Every interviewer on that round
+     scores the same skills out of 5, so two candidates can actually be compared.</p>
+  <ol class="steps">
+    <li>Create the Interview Round once — name it, add the <b>Expected Skill Set</b> rows, set the average rating you expect.</li>
+    <li>Add the interviewers.</li>
+    <li>For each candidate, create an <b>Interview</b> against that round.</li>
+    <li>Each interviewer fills their own <b>Interview Feedback</b> with a score per skill.</li>
+  </ol>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/04-interview-round.jpg" alt="New Interview Round form with Expected Skillset table and expected average rating" loading="lazy">
+    <figcaption>Interview Round. Set the skills and the pass mark once; every interview on this round reuses them.</figcaption>
+  </figure>
+  <div class="warn">
+    <b>Before you can send anything to a candidate</b>
+    Offers, interview invitations and rejections all go out by email. Email is not switched on yet —
+    see <a href="#notyet">Not switched on yet</a>. Until it is, the system will record the offer but will not send it.
+  </div>
+</section>
+
+<section id="s2">
+  <h2><span class="stage">Stage 2</span>The first day</h2>
+  <p class="lede">Turning an accepted offer into a person with a checklist.</p>
+  <div class="where">📍 <b>Where:</b> HR Suite &rarr; Employee Onboarding</div>
+  <p>An <b>Employee Onboarding Template</b> is your joining checklist, written once and reused for
+     everyone in that role. Each row is a task, who owns it, when it starts, and how many days it takes.</p>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/05-onboarding-template.jpg" alt="Employee Onboarding Template with an Activities table" loading="lazy">
+    <figcaption>Onboarding template. The Activities table takes an owner, a start day and a duration for each task.</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>Build one template per role — for example "New warehouse staff".</li>
+    <li>When someone accepts, create an <b>Employee Onboarding</b> from that template.</li>
+    <li>The system raises a project with dated, owned tasks. Each owner sees their own task.</li>
+    <li>When onboarding is complete, it creates the <b>Employee</b> record for you.</li>
+  </ol>
+  <div class="ok">
+    <b>Why bother with a template</b>
+    Because nothing gets forgotten. The IT account, the locker key, the safety induction and the bank
+    details all become tasks with a name against them, instead of living in somebody's head.
+  </div>
+</section>
+
+<section id="s3">
+  <h2><span class="stage">Stage 3</span>The employee file</h2>
+  <p class="lede">One record per person. Everything else in this guide points back at it.</p>
+  <div class="where">📍 <b>Where:</b> HR Suite &rarr; Employee</div>
+  <p>This is the single most important screen in the system. If it is wrong, payroll is wrong,
+     leave is wrong and every report is wrong.</p>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/07-employee-list.jpg" alt="Employee list view" loading="lazy">
+    <figcaption>Employee list. Records are named by employee number, so the ID you use on paper is the ID in the system.</figcaption>
+  </figure>
+
+  <h3>The fields that matter most</h3>
+  <div class="scroll"><table>
+    <tr><th>Field</th><th>Why it matters</th><th>What breaks if it is wrong</th></tr>
+    <tr><td><b>Date of Joining</b></td><td>Start of service</td><td>End-of-service benefit, probation, leave accrual</td></tr>
+    <tr><td><b>Date of Birth</b></td><td>Age, retirement</td><td>Statutory checks</td></tr>
+    <tr><td><b>Nationality</b></td><td>Decides the social insurance rate</td><td>Wrong GOSI / LMRA deduction</td></tr>
+    <tr><td><b>National ID / CPR</b></td><td>Identifies the person to government</td><td>WPS file rejected</td></tr>
+    <tr><td><b>Work Country</b></td><td>Which labour law applies</td><td>Wrong leave and end-of-service rules</td></tr>
+    <tr><td><b>Department, Designation, Branch, Grade</b></td><td>Grouping and approvals</td><td>Reports cannot be split by area</td></tr>
+  </table></div>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/08-employee-record.jpg" alt="Employee record showing date of joining and date of birth" loading="lazy">
+    <figcaption>The Employee record. Check Date of Joining and Date of Birth are genuinely different before you save.</figcaption>
+  </figure>
+
+  <h3>Identity and work country</h3>
+  <p>Scroll down the employee record to <b>Identity &amp; Work Country</b>. This is where nationality,
+     the National ID / CPR number and the work country live.</p>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/09-employee-identity.jpg" alt="Identity and Work Country section on the employee record" loading="lazy">
+    <figcaption>Identity &amp; Work Country. These three fields drive social insurance, the WPS file and nationalisation counts.</figcaption>
+  </figure>
+  <div class="warn">
+    <b>These fields exist but are mostly empty today</b>
+    Only one employee currently has nationality, CPR and work country filled in. This is a data-loading
+    job, not a software job — see <a href="#notyet">Not switched on yet</a>.
+  </div>
+
+  <h3>Loading many people at once</h3>
+  <p>Do not type twenty people in by hand. Use <b>Data Import</b>: download the template, fill the
+     spreadsheet, upload it once.</p>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/10-data-import.jpg" alt="Data Import list showing an employee import" loading="lazy">
+    <figcaption>Data Import. Each run tells you whether it succeeded, and keeps the file you uploaded.</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>Make sure Department, Designation, Branch and Grade exist first — the import points at them.</li>
+    <li>Download the Employee template from Data Import.</li>
+    <li>Fill it in. One row per person.</li>
+    <li>Upload, check the preview, then run it.</li>
+  </ol>
+  <div class="warn">
+    <b>Order matters</b>
+    An import that points at a department or grade that does not exist yet will fail that row.
+    Create the lists first, import people second.
+  </div>
+
+  <h3>Employee documents</h3>
+  <p>Passport, CPR, contract, certificates — each has a <b>document type</b>, an expiry date, and its own row.</p>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/11-employee-document-type.jpg" alt="Employee Document Type list with 14 types" loading="lazy">
+    <figcaption>Fourteen document types are already set up, from Passport to Police Clearance.</figcaption>
+  </figure>
+</section>
+<section id="s4">
+  <h2><span class="stage">Stage 4</span>Setting their pay</h2>
+  <p class="lede">Until an employee has a salary structure assigned, payroll cannot pay them.</p>
+  <div class="where">📍 <b>Where:</b> HR Suite &rarr; Salary Structure Assignment</div>
+  <p>Two pieces:</p>
+  <ul>
+    <li><b>Salary Structure</b> — the recipe. Which earnings and which deductions, and how each is worked out. Built once per pay pattern.</li>
+    <li><b>Salary Structure Assignment</b> — the link between one employee, one structure, and one base amount, from a date.</li>
+  </ul>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/22-salary-structure-assignment.jpg" alt="Salary Structure Assignment list" loading="lazy">
+    <figcaption>Salary Structure Assignment. One submitted row per employee, carrying the base salary payroll will use.</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>Open Salary Structure Assignment and choose the employee.</li>
+    <li>Pick the salary structure.</li>
+    <li>Enter the <b>Base</b> — the monthly basic figure in Bahraini dinars.</li>
+    <li>Set <b>From Date</b>. Payroll uses whichever assignment is in force for the month being run.</li>
+    <li><b>Submit.</b> A draft assignment is invisible to payroll.</li>
+  </ol>
+  <div class="warn">
+    <b>A pay rise is a new assignment, not an edit</b>
+    Never change the base on an old assignment — that rewrites history. Create a new assignment with the
+    new base and the date it starts from. The old one stays as the record of what was paid before.
+  </div>
+</section>
+
+<section id="s5">
+  <h2><span class="stage">Stage 5</span>Attendance and shifts</h2>
+  <p class="lede">Who was in, who was not, and which hours they were meant to work.</p>
+  <div class="where">📍 <b>Where:</b> HR Suite &rarr; Attendance / Shift Type / Holiday List</div>
+
+  <h3>The working week</h3>
+  <p>A <b>Holiday List</b> defines the days nobody is expected in. It holds the weekly off day and the
+     public holidays, and payroll uses it to work out how many working days are in a month.</p>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/14-holiday-list.jpg" alt="Holiday List for 2026 showing 52 holidays" loading="lazy">
+    <figcaption>Holiday List for 2026. Fifty two dates — one per Friday.</figcaption>
+  </figure>
+  <div class="warn">
+    <b>Public holidays are missing</b>
+    The 2026 list has 52 Fridays and no Bahrain public holidays. Add them with <b>Add Local Holidays</b>
+    before the first live payroll, or those days will be treated as normal working days.
+  </div>
+
+  <h3>Shifts</h3>
+  <p>A <b>Shift Type</b> is a start and end time with a name. Assign it to people so the system knows
+     what "on time" means for them.</p>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/13-day-shift.jpg" alt="Day Shift record showing 08:00 start and 17:00 end" loading="lazy">
+    <figcaption>Day Shift, 08:00 to 17:00. Tick <b>Enable Auto Attendance</b> to have check-ins become attendance automatically.</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>Create the shift with its start and end time.</li>
+    <li>Give each employee a <b>Default Shift</b> on their employee record, or create <b>Shift Assignment</b> rows for a period.</li>
+    <li>Only then can the system judge late arrivals and overtime.</li>
+  </ol>
+
+  <h3>Recording attendance</h3>
+  <p>There are three ways in, and you only need one:</p>
+  <div class="scroll"><table>
+    <tr><th>Method</th><th>How it works</th><th>Best for</th></tr>
+    <tr><td><b>Employee Check-in</b></td><td>A device or app posts each punch; the shift turns punches into attendance</td><td>Day to day, once a device is connected</td></tr>
+    <tr><td><b>Attendance record</b></td><td>One row per person per day, entered or imported</td><td>Corrections and small teams</td></tr>
+    <tr><td><b>Attendance Request</b></td><td>The employee asks, a manager approves</td><td>Forgotten punches, work from site</td></tr>
+  </table></div>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/12-attendance-list.jpg" alt="Attendance list showing statuses" loading="lazy">
+    <figcaption>Attendance list. Each row carries a status — Present, Absent, Half Day or On Leave.</figcaption>
+  </figure>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/15-employee-checkin.jpg" alt="Empty Employee Checkin list" loading="lazy">
+    <figcaption>Employee Check-in is empty. No clock-in device is connected to this system yet.</figcaption>
+  </figure>
+
+  <h3>Overtime</h3>
+  <p>An <b>Overtime Request</b> records extra hours and works out the money for you from the employee's
+     basic pay and the overtime multiplier.</p>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/16-overtime-request.jpg" alt="Overtime Request showing 4 hours and an overtime amount" loading="lazy">
+    <figcaption>Overtime Request. Enter the hours; the amount is calculated, not typed.</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>Pick the employee and the date.</li>
+    <li>Enter <b>Overtime Hours</b>. Normal plus overtime cannot exceed 12 hours in a day.</li>
+    <li>The system fills the hourly rate from the current basic salary and calculates the amount.</li>
+    <li>Set Approval Status to <b>Approved</b>, then Submit.</li>
+  </ol>
+</section>
+
+<section id="s6">
+  <h2><span class="stage">Stage 6</span>Leave</h2>
+  <p class="lede">Record an absence once, and the payslip already knows about it.</p>
+  <div class="where">📍 <b>Where:</b> HR Suite &rarr; Leave Application / Leave Allocation</div>
+
+  <h3>How a balance appears</h3>
+  <p>Nobody types in a leave balance. It arrives through a chain:</p>
+  <div class="flow">
+    <span>Leave Type</span><i>&rarr;</i><span>Leave Policy</span><i>&rarr;</i><span>Leave Period</span><i>&rarr;</i>
+    <span>Policy Assignment</span><i>&rarr;</i><span>Leave Allocation</span>
+  </div>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/18-leave-type.jpg" alt="Leave Type list with nine types" loading="lazy">
+    <figcaption>Nine leave types are set up, including Annual, Sick, Hajj, Maternity and Leave Without Pay.</figcaption>
+  </figure>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/19-leave-policy-assignment.jpg" alt="Leave Policy Assignment record" loading="lazy">
+    <figcaption>Leave Policy Assignment. It ties one employee to one policy for one dated leave period.</figcaption>
+  </figure>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/20-leave-allocation.jpg" alt="Leave Allocation list" loading="lazy">
+    <figcaption>Submitting the assignment creates the Leave Allocations — the actual balances people can spend.</figcaption>
+  </figure>
+  <div class="ok">
+    <b>Already done for you</b>
+    The leave year, the policies and the allocations are set up. You should not need to create allocations by hand.
+  </div>
+
+  <h3>Applying for leave</h3>
+  <ol class="steps">
+    <li>Open <b>Leave Application</b> and choose the employee.</li>
+    <li>Pick the <b>Leave Type</b>. The balance shows on screen — you cannot spend more than is there.</li>
+    <li>Enter From and To dates. Tick Half Day if it is half a day.</li>
+    <li>Write the reason. Future you will want to know.</li>
+    <li>Approve and <b>Submit</b>.</li>
+  </ol>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/21-leave-application.jpg" alt="Leave Application for three days of Leave Without Pay" loading="lazy">
+    <figcaption>A Leave Application. This one is three days of Leave Without Pay in October.</figcaption>
+  </figure>
+
+  <h3>What happens to the pay</h3>
+  <p>This is the part worth understanding, because it is where the system saves you the most work.</p>
+  <ul>
+    <li><b>Paid leave</b> — balance drops, pay does not change.</li>
+    <li><b>Leave Without Pay</b> — the days are removed from payment days, and the pay drops in proportion.</li>
+    <li><b>Partially paid leave</b> — a fraction of a day's pay, set on the leave type.</li>
+  </ul>
+  <p>Three unpaid days in a 26 working day month gives 23 payment days, and the pay follows:</p>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/27-salary-slip-payment-days.jpg" alt="Salary slip payment days tab: 26 working days, 3 leave without pay, 23 payment days" loading="lazy">
+    <figcaption>The payslip counted it: 26 working days, 3 without pay, 23 payment days. Nobody typed 23.</figcaption>
+  </figure>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/28-salary-slip-net-pay.jpg" alt="Salary slip net pay of 619.231 BHD" loading="lazy">
+    <figcaption>700.000 for a full month becomes 619.231 — exactly 700 &times; 23 &divide; 26.</figcaption>
+  </figure>
+</section>
+<section id="s7">
+  <h2><span class="stage">Stage 7</span>Loans and deductions</h2>
+  <p class="lede">Money owed to the company, collected by the payroll run instead of by memory.</p>
+  <div class="where">📍 <b>Where:</b> HR Suite &rarr; Employee Loan / Employee Penalty / Additional Salary</div>
+
+  <h3>Employee Loan</h3>
+  <p>Agree the loan once and the instalments collect themselves.</p>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/23-employee-loan.jpg" alt="Employee Loan list showing loan amounts and approval status" loading="lazy">
+    <figcaption>Employee Loan list. Each loan carries its amount, its status and its approval state.</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>Create the loan: employee, loan amount, and the instalment amount or number of instalments.</li>
+    <li>The system builds the repayment schedule — one row per month.</li>
+    <li>Get it approved, then <b>Submit</b>.</li>
+    <li>Every payroll run picks up the instalment that is due and puts it on the payslip as a deduction.</li>
+    <li>The outstanding balance reduces itself as each payslip is submitted.</li>
+  </ol>
+  <div class="ok">
+    <b>This is the ticket that started it all</b>
+    The complaint was that a loan instalment had to be remembered and typed in every month. It does not.
+    Agree it once here and the payslip collects it, reduces the balance, and puts it back if the payslip is cancelled.
+  </div>
+
+  <h3>Other things that change the pay</h3>
+  <div class="scroll"><table>
+    <tr><th>Use this</th><th>For</th><th>Direction</th></tr>
+    <tr><td><b>Employee Loan</b></td><td>A loan or advance repaid over months</td><td>Deduction, scheduled</td></tr>
+    <tr><td><b>Employee Penalty</b></td><td>A fine against a penalty type</td><td>Deduction, one off</td></tr>
+    <tr><td><b>Additional Salary</b></td><td>A bonus, allowance or one-off deduction</td><td>Either, one month or recurring</td></tr>
+    <tr><td><b>Overtime Request</b></td><td>Extra hours worked</td><td>Earning</td></tr>
+    <tr><td><b>Salary Adjustment</b></td><td>A correction to an agreed figure</td><td>Either</td></tr>
+  </table></div>
+  <div class="note">
+    <b>Which one do I use for a bonus?</b>
+    <b style="font-weight:600;display:inline">Additional Salary.</b> Pick the employee, pick the salary
+    component, enter the amount and the payroll date. It appears on that month's payslip and nowhere else.
+    Do not edit the salary structure for a one-off — that changes it for everybody on that structure.
+  </div>
+</section>
+
+<section id="s8">
+  <h2><span class="stage">Stage 8</span>Running payroll</h2>
+  <p class="lede">Look before you leap. Check the whole month on one screen, then run it.</p>
+  <div class="where">📍 <b>Where:</b> HR Suite &rarr; Payroll Preview, then Payroll Entry</div>
+
+  <h3>Step one: Payroll Preview</h3>
+  <p>This is the screen the whole payroll ticket was about. Before a single payslip exists, Payroll
+     Preview shows everything already booked against every employee for the month — earnings,
+     deductions, loan instalments, leave, penalties — pulled live from the source documents.</p>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/24-payroll-preview-list.jpg" alt="Payroll Preview list with Ready and With issues statuses" loading="lazy">
+    <figcaption>Payroll Preview list. Every run carries its own status, so you know before you start.</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>Create a Payroll Preview for the company and the month.</li>
+    <li>Press <b>Refresh Allocations</b>. The system reads the source documents again.</li>
+    <li>Read the banner at the top. It either says ready, or it tells you what is missing.</li>
+    <li>Work through the Summary: number of employees, employees with issues, total earnings, total deductions, net estimate.</li>
+    <li>Open the Allocations table. Every line names the document it came from.</li>
+  </ol>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/25-payroll-preview-record.jpg" alt="Payroll Preview record showing summary totals and a green ready banner" loading="lazy">
+    <figcaption>A Payroll Preview that is ready. The green banner means no blocking issues were found.</figcaption>
+  </figure>
+  <div class="scroll"><table>
+    <tr><th>Status</th><th>Meaning</th><th>What to do</th></tr>
+    <tr><td><span class="badge b-ok">Ready</span></td><td>Nothing blocking</td><td>Create the Payroll Entry</td></tr>
+    <tr><td><span class="badge b-stop">With issues</span></td><td>At least one employee is missing something payroll needs</td><td>Fix the source record, refresh, look again</td></tr>
+    <tr><td><span class="badge b-warn">Not Refreshed</span></td><td>Figures may be stale</td><td>Press Refresh Allocations</td></tr>
+  </table></div>
+  <div class="ok">
+    <b>Nothing on this screen is stored</b>
+    Payroll Preview holds no figures of its own. It rebuilds from your documents each time you refresh,
+    so it can never quietly disagree with them.
+  </div>
+  <div class="note">
+    <b>The gate</b>
+    While a preview has blocking issues, the <b>Create Payroll Entry</b> button is not there. That is
+    deliberate. You cannot start a payroll run on broken data by accident.
+  </div>
+
+  <h3>Step two: Payroll Entry</h3>
+  <p>Once the preview is clean, press <b>Create Payroll Entry</b>. The filters you used carry across.</p>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/26-payroll-entry.jpg" alt="Payroll Entry list" loading="lazy">
+    <figcaption>Payroll Entry. One per company, per month — this is the run itself.</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>Check the company, the dates and the list of employees pulled in.</li>
+    <li><b>Submit</b>. The system creates one draft Salary Slip per employee.</li>
+    <li>Open a few payslips and check them against the preview.</li>
+    <li><b>Submit Salary Slips</b>. This is the point of no return — the accounting entry is made and loan balances move.</li>
+    <li>Make the bank payment entry, and generate the <b>WPS Submission</b> file.</li>
+  </ol>
+  <div class="flow">
+    <span>Payroll Preview</span><i>&rarr;</i><span>Payroll Entry</span><i>&rarr;</i><span>Draft payslips</span><i>&rarr;</i>
+    <span>Submit</span><i>&rarr;</i><span>Accounting entry</span><i>&rarr;</i><span>WPS file</span>
+  </div>
+  <div class="warn">
+    <b>Check before you submit, not after</b>
+    Cancelling submitted payslips means cancelling the accounting entry too. Five minutes in Payroll
+    Preview is cheaper than an hour of reversals.
+  </div>
+</section>
+
+<section id="s9">
+  <h2><span class="stage">Stage 9</span>Appraisals</h2>
+  <p class="lede">The Steel Force appraisal form, on screen, with the scores added up for you.</p>
+  <div class="where">📍 <b>Where:</b> HR Suite &rarr; Appraisal</div>
+  <p>The paper form has been rebuilt inside the system. Fifteen criteria, each scored 1 to 5 by the
+     appraiser and again by the reviewer, side by side.</p>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/29-appraisal-list.jpg" alt="Appraisal list showing scores and statuses" loading="lazy">
+    <figcaption>Appraisal list. Final score and total goal score are visible without opening the record.</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>Create an Appraisal for the employee and the appraisal cycle.</li>
+    <li>Fill the header: type of report, review date, evaluation period, years of experience.</li>
+    <li>Score each of the 15 criteria from 1 to 5 in the appraiser column.</li>
+    <li>The reviewer scores the same criteria in their own column.</li>
+    <li>Totals out of 75 and the grade band are worked out for you.</li>
+    <li>Submit, then print.</li>
+  </ol>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/30-appraisal-record.jpg" alt="Appraisal record with Steel Force Appraisal section" loading="lazy">
+    <figcaption>An Appraisal record. The Steel Force section carries the report type, review date and evaluation period.</figcaption>
+  </figure>
+  <div class="note">
+    <b>Two rules the form enforces</b>
+    A score must be between 1 and 5 — nothing else is accepted. And if the reviewer disagrees with the
+    appraiser, the reviewer must write a comment. Disagreement without an explanation is not allowed through.
+  </div>
+  <div class="ok">
+    <b>Mid-term and annual can both exist</b>
+    You can run a mid-term review and an annual review in the same year for the same person, and both
+    are kept. Set <b>Type of Report</b> to tell them apart.
+  </div>
+</section>
+<section id="s10">
+  <h2><span class="stage">Stage 10</span>Permits and LMRA</h2>
+  <p class="lede">Bahrain work permits, with the renewal window watched for you.</p>
+  <div class="where">📍 <b>Where:</b> HR Suite &rarr; Work Permit Iqama</div>
+  <p>One record per permit. It holds the permit number, the country it was issued in, and the expiry date.</p>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/31-work-permit-iqama.jpg" alt="Work Permit Iqama list showing a Bahrain permit and expiry date" loading="lazy">
+    <figcaption>Work Permit Iqama. A Bahrain LMRA permit with its expiry date; the list shows the status at a glance.</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>Create the record against the employee.</li>
+    <li>Choose the <b>Work Country</b>. Bahrain permits do not ask for an Iqama number — that is a Saudi field.</li>
+    <li>Enter the permit number and the expiry date.</li>
+    <li>Submit. The system now watches the expiry date.</li>
+  </ol>
+  <div class="scroll"><table>
+    <tr><th>Country</th><th>What it is called</th><th>Renewal window</th></tr>
+    <tr><td>Bahrain</td><td>LMRA work permit</td><td>60 days before expiry</td></tr>
+    <tr><td>Saudi Arabia</td><td>Iqama</td><td>Per Saudi rules</td></tr>
+  </table></div>
+  <div class="ok">
+    <b>You get told before it expires</b>
+    A daily job checks permits and raises expiry alerts inside the renewal window for that country,
+    so a permit does not lapse because a date sat in a spreadsheet nobody opened.
+  </div>
+  <div class="warn">
+    <b>The LMRA monthly fee is not set</b>
+    The system can carry the monthly LMRA fee per employee, but the amount has deliberately been left
+    blank — see <a href="#notyet">Not switched on yet</a>. Confirm the figure and who it applies to before switching it on.
+  </div>
+</section>
+
+<section id="s11">
+  <h2><span class="stage">Stage 11</span>Warnings and discipline</h2>
+  <p class="lede">A written trail, from the first warning to the final decision.</p>
+  <div class="where">📍 <b>Where:</b> HR Suite &rarr; Disciplinary Procedure / Employee Warning Notice</div>
+  <div class="flow">
+    <span>Incident</span><i>&rarr;</i><span>Investigation Record</span><i>&rarr;</i><span>Warning Notice</span><i>&rarr;</i>
+    <span>Disciplinary Procedure</span><i>&rarr;</i><span>Decision</span><i>&rarr;</i><span>Appeal</span>
+  </div>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/32-disciplinary-procedure.jpg" alt="Empty Disciplinary Procedure list" loading="lazy">
+    <figcaption>Disciplinary Procedure. Empty today — the screens are ready and waiting for the first real case.</figcaption>
+  </figure>
+  <div class="scroll"><table>
+    <tr><th>Record</th><th>Use it for</th></tr>
+    <tr><td><b>Investigation Record</b></td><td>Gathering the facts before any decision</td></tr>
+    <tr><td><b>Employee Warning Notice</b></td><td>A formal written warning, with the violation named</td></tr>
+    <tr><td><b>Disciplinary Procedure</b></td><td>The case itself, from incident date to outcome</td></tr>
+    <tr><td><b>Disciplinary Decision Log</b></td><td>What was decided and by whom</td></tr>
+    <tr><td><b>Disciplinary Appeal</b></td><td>The employee's challenge to the decision</td></tr>
+    <tr><td><b>Absence Case</b></td><td>Unexplained absence handled as its own case</td></tr>
+  </table></div>
+  <div class="note">
+    <b>Why keep it in the system</b>
+    Because a dismissal that reaches a labour court is only as strong as the paperwork behind it.
+    Dates, warnings and decisions in one place, in order, is the whole point.
+  </div>
+</section>
+
+<section id="s12">
+  <h2><span class="stage">Stage 12</span>Leaving the company</h2>
+  <p class="lede">Notice, clearance, end-of-service money, final settlement.</p>
+  <div class="where">📍 <b>Where:</b> HR Suite &rarr; Termination Notice / End of Service Benefit</div>
+  <div class="flow">
+    <span>Termination Notice</span><i>&rarr;</i><span>Exit Interview</span><i>&rarr;</i><span>Exit Clearance</span><i>&rarr;</i>
+    <span>End of Service Benefit</span><i>&rarr;</i><span>Final Settlement</span>
+  </div>
+
+  <h3>Giving notice</h3>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/33-termination-notice.jpg" alt="Empty Termination Notice list" loading="lazy">
+    <figcaption>Termination Notice. Records who is leaving, why, and the last working day.</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>Create the Termination Notice: employee, reason, notice date and last working day.</li>
+    <li>Submit it. The system starts the exit chain and can raise the Final Settlement for you.</li>
+    <li>Run the <b>Exit Interview</b> and record the answers.</li>
+    <li>Work through <b>Exit Clearance</b> — company property, IT accounts, outstanding loans.</li>
+  </ol>
+
+  <h3>End of service benefit</h3>
+  <p>The gratuity is calculated from the joining date, the last working day, the last basic salary and
+     the reason for leaving. You do not work it out by hand.</p>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/34-end-of-service-benefit.jpg" alt="End of Service Benefit record showing net EOSB" loading="lazy">
+    <figcaption>End of Service Benefit. Termination reason and net figure, calculated from service length.</figcaption>
+  </figure>
+  <div class="warn">
+    <b>Settle the loan first</b>
+    If the employee still owes a loan, that balance has to be cleared against the final settlement.
+    Check Employee Loan before you pay anything out.
+  </div>
+</section>
+
+<section id="letters">
+  <h2>Letters and documents</h2>
+  <div class="where">📍 <b>Where:</b> HR Suite &rarr; HR Letter</div>
+  <p>Salary certificates, employment letters, NOCs and warning letters come from templates, so the
+     wording is the same every time and the employee's details are filled in for you.</p>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/35-hr-letter.jpg" alt="Empty HR Letter list" loading="lazy">
+    <figcaption>HR Letter. Choose a template, choose the employee, and the letter fills itself in.</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>Set up an <b>HR Letter Template</b> once per letter type.</li>
+    <li>Create an <b>HR Letter</b>, pick the employee and the template.</li>
+    <li>Check the merged text, then print or save as PDF.</li>
+  </ol>
+</section>
+
+<section id="reports">
+  <h2>Reports</h2>
+  <p class="lede">The questions people actually ask, already written as reports.</p>
+  <div class="where">📍 <b>Where:</b> the Reports section of the HR Suite workspace</div>
+  <div class="scroll"><table>
+    <tr><th>Report</th><th>Answers</th></tr>
+    <tr><td><b>Outstanding Employee Loans</b></td><td>Who still owes us money, and how much</td></tr>
+    <tr><td><b>Loan Deduction Register</b></td><td>Which instalments were taken in a period</td></tr>
+    <tr><td><b>Monthly Loan Recovery Summary</b></td><td>How much loan money came back this month</td></tr>
+    <tr><td><b>Monthly Attendance Sheet</b></td><td>The month grid, one row per employee</td></tr>
+    <tr><td><b>Shift Attendance</b></td><td>Attendance broken down by shift</td></tr>
+    <tr><td><b>Employee Leave Balance</b></td><td>What everyone has left to take</td></tr>
+    <tr><td><b>Salary Register</b></td><td>Every payslip in a month, side by side</td></tr>
+    <tr><td><b>Employee Document Expiry</b></td><td>Passports, CPRs and permits about to run out</td></tr>
+  </table></div>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/17-attendance-report.jpg" alt="Monthly Attendance Sheet report with a month grid" loading="lazy">
+    <figcaption>Monthly Attendance Sheet. Set the month and company at the top; the grid fills below.</figcaption>
+  </figure>
+  <div class="note">
+    <b>Every report needs its filters</b>
+    Most reports ask for a company and a date range before they will run. That is not an error — it is
+    the report refusing to guess which month you meant.
+  </div>
+</section>
+
+<section id="status">
+  <h2>What the statuses mean</h2>
+  <div class="scroll"><table>
+    <tr><th>Badge</th><th>Means</th><th>Can I still edit it?</th></tr>
+    <tr><td><span class="badge b-draft">Draft</span></td><td>Saved, but the system has not acted on it</td><td>Yes</td></tr>
+    <tr><td><span class="badge b-ok">Submitted</span></td><td>Final. Money, leave and balances have moved</td><td>No — cancel and amend</td></tr>
+    <tr><td><span class="badge b-stop">Cancelled</span></td><td>Reversed. The effects have been undone</td><td>No</td></tr>
+    <tr><td><span class="badge b-ok">Ready</span></td><td>Payroll Preview found nothing blocking</td><td>—</td></tr>
+    <tr><td><span class="badge b-stop">With issues</span></td><td>Somebody is missing something payroll needs</td><td>Fix the source record</td></tr>
+    <tr><td><span class="badge b-warn">Not Refreshed</span></td><td>Figures may be out of date</td><td>Press Refresh Allocations</td></tr>
+    <tr><td><span class="badge b-ok">Approved</span></td><td>The approver has said yes</td><td>Depends on the document</td></tr>
+  </table></div>
+</section>
+
+<section id="roles">
+  <h2>Who can do what</h2>
+  <div class="scroll"><table>
+    <tr><th>Role</th><th>Can</th><th>Cannot</th></tr>
+    <tr><td><b>Employee</b></td><td>See their own record, apply for leave, see their own payslip</td><td>See anyone else's pay or records</td></tr>
+    <tr><td><b>HR User</b></td><td>Create and edit employees, leave, attendance, loans, letters</td><td>Submit payroll, change system settings</td></tr>
+    <tr><td><b>HR Manager</b></td><td>Everything HR User can, plus approvals and payroll</td><td>Change accounts and company setup</td></tr>
+    <tr><td><b>Leave Approver</b></td><td>Approve leave for their people</td><td>Change pay</td></tr>
+    <tr><td><b>Expense Approver</b></td><td>Approve claims and advances</td><td>Change pay</td></tr>
+  </table></div>
+  <div class="note">
+    <b>Approvals follow the employee record</b>
+    Leave Approver and Expense Approver are set per employee, on the <b>Approval Chain</b> tab of their
+    record. If leave is going to the wrong person, that is where to fix it.
+  </div>
+</section>
+
+<section id="notyet">
+  <h2>Not switched on yet</h2>
+  <p class="lede">Being straight about it, so nobody is surprised in month one.</p>
+  <p>These are configuration and data jobs, not missing software. Every screen exists; some of them
+     have nothing behind them yet.</p>
+  <div class="scroll"><table>
+    <tr><th>What</th><th>Where it stands</th><th>What it needs</th></tr>
+    <tr><td><b>Email</b></td><td>The one mail account is switched off for both sending and receiving</td><td>Mail server details, then switch it on. Offers and alerts depend on it.</td></tr>
+    <tr><td><b>Public holidays</b></td><td>The 2026 list holds 52 Fridays and no public holidays</td><td>Add Bahrain public holidays before the first live payroll</td></tr>
+    <tr><td><b>Clock-in device</b></td><td>No check-ins have ever arrived</td><td>Connect the attendance device or app</td></tr>
+    <tr><td><b>Shift assignments</b></td><td>One shift exists, almost nobody is on it</td><td>Set a default shift per employee, or load a roster</td></tr>
+    <tr><td><b>Nationality and CPR</b></td><td>Fields exist; only one employee has them filled</td><td>Load the data. Nationality decides the social insurance rate.</td></tr>
+    <tr><td><b>Employee Grade</b></td><td>No grades created</td><td>Create them if your salary bands use grades</td></tr>
+    <tr><td><b>Dates of joining</b></td><td>Every active employee has joining date equal to date of birth</td><td>Correct them. Gratuity and probation depend on this.</td></tr>
+    <tr><td><b>Recruitment</b></td><td>Every recruitment list is empty</td><td>Nothing technical — start using it, once email works</td></tr>
+    <tr><td><b>LMRA monthly fee</b></td><td>Deliberately left blank</td><td>Confirm the amount and who it applies to</td></tr>
+    <tr><td><b>Sick leave pay bands</b></td><td>Set to full pay across the entitlement</td><td>Confirm the Bahrain tiers so sick leave is not overpaid</td></tr>
+  </table></div>
+  <figure>
+    <img src="/assets/hr_suite/images/guide/06-email-account.jpg" alt="Email Account record with incoming disabled" loading="lazy">
+    <figcaption>The mail account as it stands: both incoming and outgoing are switched off, and the address is still a placeholder.</figcaption>
+  </figure>
+  <div class="warn">
+    <b>The two that block a live payroll</b>
+    Public holidays and the joining dates. Everything else can follow later; those two change the
+    numbers on a payslip.
+  </div>
+</section>
+
+</div>
+<footer>
+  Steel Force HR — Hand Guide &middot; HR Suite for Frappe/ERPNext v15 &middot; Enfono Technologies.<br>
+  Screens captured from the test system. Press Ctrl/Cmd + P to print or save as PDF.
+</footer>
+</main>
+<script>
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('.sidebar-nav a'));
+  var map = {};
+  links.forEach(function(a){
+    var el = document.querySelector(a.getAttribute('href'));
+    if (el) map[el.id] = a;
+  });
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (!e.isIntersecting) return;
+      links.forEach(function(l){ l.classList.remove('active'); });
+      if (map[e.target.id]) map[e.target.id].classList.add('active');
+    });
+  }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+  Object.keys(map).forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) obs.observe(el);
+  });
+})();
+</script>
+</body>
+</html>
