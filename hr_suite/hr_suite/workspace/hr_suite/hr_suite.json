@@ -1375,6 +1375,16 @@
   {
    "hidden": 0,
    "is_query_report": 1,
+   "label": "LMRA Work Permit Register",
+   "link_count": 0,
+   "link_to": "LMRA Work Permit Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
    "label": "Nitaqat Compliance Report",
    "link_count": 0,
    "link_to": "Nitaqat Compliance Report",
@@ -1442,7 +1452,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-09-06 06:00:00.000000",
+ "modified": "2026-09-06 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hr Suite",
  "name": "HR Suite",

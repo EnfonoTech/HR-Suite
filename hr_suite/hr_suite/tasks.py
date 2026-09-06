@@ -2,7 +2,8 @@
 tasks.py — Scheduled Tasks for daily alerts.
 """
 import frappe
-from frappe.utils import today, add_days, flt, get_first_day, get_last_day, getdate
+from frappe import _
+from frappe.utils import today, add_days, cint, cstr, flt, get_first_day, get_last_day, getdate
 
 
 DEFAULT_ALERT_MILESTONES = (30, 14, 7, 1, 0)
@@ -100,27 +101,79 @@ def send_contract_expiry_alerts():
 		)
 
 
+def _country_permit_alert_days() -> dict:
+	"""{country_code: days} from Country Config.permit_expiry_alert_days.
+
+	The client configured Bahrain at 60 days and Saudi Arabia at 90; before this the value
+	was seeded and read by nothing, so every country alerted on the Saudi window.
+	"""
+	if not frappe.db.exists("DocType", "Country Config"):
+		return {}
+
+	windows = {}
+	for row in frappe.get_all(
+		"Country Config",
+		fields=["country_code", "permit_expiry_alert_days"],
+		limit_page_length=0,
+	):
+		days = cint(row.get("permit_expiry_alert_days"))
+		code = cstr(row.get("country_code")).upper()
+		if code and days > 0:
+			windows[code] = days
+	return windows
+
+
+def _permit_label(country_code: str) -> str:
+	"""What this country calls the permit — "CPR / Work Permit" in Bahrain, "Iqama" in SA."""
+	from hr_suite.hr_suite.utils import get_permit_labels
+
+	return get_permit_labels(country_code).get("permit_label") or "Work Permit"
+
+
 def send_work_permit_expiry_alerts():
-	"""Alert for work permit expiry within 90 days."""
+	"""Alert on work-permit expiry, per employee, on that employee's country window.
+
+	Drives off `work_permit_expiry_date` — the country-neutral field — and never off
+	`iqama_expiry_date`, so a Bahrain LMRA work permit alerts exactly like a Saudi Iqama.
+	`send_iqama_expiry_alerts` remains the Saudi-only companion for the Iqama itself.
+	"""
 	settings = _get_hr_suite_settings()
-	alert_days = settings.work_permit_expiry_alert_days or 90
+	default_days = cint(settings.work_permit_expiry_alert_days) or 90
+	per_country = _country_permit_alert_days()
+
+	# Query on the WIDEST configured window, then narrow per record. Filtering the SQL on
+	# the global 90 would silently drop nothing today, but would drop records the moment a
+	# country is configured with a longer window than the global default.
+	window = max([default_days, *per_country.values()]) if per_country else default_days
 
 	records = frappe.get_all(
 		"Work Permit Iqama",
 		filters={
-			"work_permit_expiry_date": ["between", [today(), add_days(today(), alert_days)]],
+			"work_permit_expiry_date": ["between", [today(), add_days(today(), window)]],
 			"docstatus": 1,
 		},
-		fields=["name", "employee", "employee_name", "work_permit_expiry_date"],
+		fields=[
+			"name", "employee", "employee_name", "work_country", "work_permit_expiry_date",
+		],
 	)
 
 	for rec in records:
+		country = cstr(rec.get("work_country")).upper()
+		alert_days = per_country.get(country, default_days)
 		days_left = (getdate(rec.work_permit_expiry_date) - getdate(today())).days
+		if days_left > alert_days:
+			continue
 		if not _should_send_days_left_alert(days_left, alert_days):
 			continue
+
+		label = _permit_label(country)
 		_send_alert(
-			subject=f"Alert: Work permit expiry for {rec.employee_name} in {days_left} days",
-			message=f"Employee {rec.employee_name} ({rec.employee}) work permit expires on {rec.work_permit_expiry_date}.",
+			subject=_("Alert: {0} expiry for {1} in {2} days").format(
+				label, rec.employee_name, days_left
+			),
+			message=_("Employee {0} ({1}) — {2} expires on {3}.").format(
+				rec.employee_name, rec.employee, label, rec.work_permit_expiry_date
+			),
 			doctype="Work Permit Iqama",
 			docname=rec.name,
 		)
@@ -192,9 +245,9 @@ def _send_alert(subject, message, doctype, docname=None):
 		doc_url = f"{site_url}/app/{frappe.scrub(doctype)}"
 
 	html_message = f"""
-	<div dir="rtl" style="font-family:Arial,Tahoma,sans-serif;font-size:13px;color:#222;padding:20px;">
+	<div style="font-family:Arial,Tahoma,sans-serif;font-size:13px;color:#222;padding:20px;">
 		<div style="background:#1a5276;color:white;padding:12px 20px;border-radius:5px;margin-bottom:15px;">
-			<strong>Saudi HR System — Hr Suite</strong>
+			<strong>HR Suite</strong>
 		</div>
 		<p>{message}</p>
 		<p style="margin-top:20px;">
@@ -204,7 +257,7 @@ def _send_alert(subject, message, doctype, docname=None):
 			</a>
 		</p>
 		<hr style="border:1px solid #eee;margin-top:25px;">
-		<p style="font-size:11px;color:#888;">This is an automated email from the Saudi HR System</p>
+		<p style="font-size:11px;color:#888;">This is an automated email from HR Suite</p>
 	</div>
 	"""
 

@@ -9,6 +9,7 @@ from pathlib import Path
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
+from hr_suite.hr_suite.leave_setup import setup_leave_management
 from hr_suite.hr_suite.performance_setup import setup_performance_management
 
 
@@ -42,6 +43,10 @@ def after_install():
 	# Appraisal custom fields + the seeded criteria / appraisal template.
 	setup_performance_management()
 	seed_country_configs()
+	# Leave: Country Config declares the entitlements, this turns them into Leave
+	# Periods / Leave Types / a Leave Policy, and gives payroll something to read.
+	# Must run AFTER seed_country_configs() — it reads what that seeds.
+	setup_leave_management()
 	seed_employee_document_types()
 	seed_grievance_types()
 	frappe.db.commit()
@@ -69,6 +74,10 @@ def after_migrate():
 	# Appraisal custom fields + the seeded criteria / appraisal template.
 	setup_performance_management()
 	seed_country_configs()
+	# Leave: Country Config declares the entitlements, this turns them into Leave
+	# Periods / Leave Types / a Leave Policy, and gives payroll something to read.
+	# Must run AFTER seed_country_configs() — it reads what that seeds.
+	setup_leave_management()
 	seed_employee_document_types()
 	seed_grievance_types()
 	remove_obsolete_reports()
@@ -724,6 +733,22 @@ _COUNTRY_CONFIGS = [
 		"primary_permit_label": "CPR / Work Permit",
 		"permit_expiry_alert_days": 60,
 		"national_id_label": "CPR Number",
+		# Recurring permit fee (client ticket 3.1 — LMRA).
+		# The AUTHORITY is named because the client's own ticket names it. The RATE and the
+		# SCOPE are deliberately left unset: the LMRA tariff and its exemptions are not
+		# declared anywhere in this configuration, and inventing either would put a wrong
+		# statutory number into a payroll system. Reports show "not configured" until Steel
+		# Force enters them.
+		"recurring_permit_fee_authority": "LMRA",
+		"monthly_permit_fee_per_worker": 0.0,
+		"recurring_permit_fee_applies_to": "",
+		"recurring_permit_fee_notes": (
+			"LMRA charges a recurring monthly fee per work-permit holder. Enter the rate "
+			"currently in force and choose who it applies to before relying on the LMRA Work "
+			"Permit Register liability figures. Confirm with the client: the monthly amount, "
+			"whether it is charged for every permit holder or only expatriates, and any "
+			"exemption or SME discount that applies to this establishment."
+		),
 		# WPS
 		"wps_mandatory": 1,
 		"wps_format": "WPS-BH (Bahrain)",

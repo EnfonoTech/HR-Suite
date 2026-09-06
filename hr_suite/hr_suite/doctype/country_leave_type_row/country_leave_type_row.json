@@ -4,14 +4,69 @@
  "doctype": "DocType",
  "istable": 1,
  "fields": [
-  {"fieldname": "leave_type_name", "fieldtype": "Data", "label": "Leave Type Name", "reqd": 1, "in_list_view": 1},
-  {"fieldname": "days_per_year", "fieldtype": "Int", "label": "Days/Year", "in_list_view": 1},
-  {"fieldname": "gender_specific", "fieldtype": "Select", "label": "Applies To", "options": "All\nMale Only\nFemale Only", "default": "All", "in_list_view": 1},
-  {"fieldname": "column_break_1", "fieldtype": "Column Break"},
-  {"fieldname": "is_optional", "fieldtype": "Check", "label": "Optional Leave"},
-  {"fieldname": "once_in_employment", "fieldtype": "Check", "label": "Once in Employment (e.g. Hajj)"},
-  {"fieldname": "max_carry_forward_days", "fieldtype": "Int", "label": "Max Carry Forward (Days)"},
-  {"fieldname": "frappe_leave_type_name", "fieldtype": "Data", "label": "Frappe Leave Type (auto-create name)", "description": "Leave type name that will be created in Frappe HRMS"}
+  {
+   "fieldname": "leave_type_name",
+   "fieldtype": "Data",
+   "label": "Leave Type Name",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "days_per_year",
+   "fieldtype": "Int",
+   "label": "Days/Year",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "gender_specific",
+   "fieldtype": "Select",
+   "label": "Applies To",
+   "options": "All\nMale Only\nFemale Only",
+   "default": "All",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "is_optional",
+   "fieldtype": "Check",
+   "label": "Optional Leave"
+  },
+  {
+   "fieldname": "once_in_employment",
+   "fieldtype": "Check",
+   "label": "Once in Employment (e.g. Hajj)"
+  },
+  {
+   "fieldname": "max_carry_forward_days",
+   "fieldtype": "Int",
+   "label": "Max Carry Forward (Days)"
+  },
+  {
+   "fieldname": "pay_treatment",
+   "fieldtype": "Select",
+   "label": "Pay Treatment",
+   "options": "Full Pay\nPartially Paid\nUnpaid",
+   "default": "Full Pay",
+   "description": "How a day of this leave is paid. 'Partially Paid' and 'Unpaid' are the mechanism for a statutorily tiered leave (e.g. sick leave with a full-pay band, a reduced-pay band and an unpaid band): declare one row per band, each with its own Frappe Leave Type. Leave this on 'Full Pay' unless the client has confirmed the split."
+  },
+  {
+   "fieldname": "paid_fraction",
+   "fieldtype": "Float",
+   "label": "Paid Fraction of Daily Salary",
+   "precision": "3",
+   "depends_on": "eval:doc.pay_treatment=='Partially Paid'",
+   "description": "Fraction of a normal day's salary still PAID on this leave: 0.5 = half pay. Must be strictly between 0 and 1. Maps to Leave Type.fraction_of_daily_salary_per_leave, which Salary Slip reads."
+  },
+  {
+   "fieldname": "frappe_leave_type_name",
+   "fieldtype": "Data",
+   "label": "Frappe Leave Type (auto-create name)",
+   "description": "Leave type name that will be created in Frappe HRMS"
+  }
  ],
- "permissions": []
+ "permissions": [],
+ "modified": "2026-09-06 12:00:00.000000"
 }

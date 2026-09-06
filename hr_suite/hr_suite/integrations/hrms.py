@@ -6,7 +6,8 @@ Leave Allocation, Appraisal) with HR Suite's country-aware modules.
 All functions here are registered in hooks.py under doc_events.
 """
 import frappe
-from frappe.utils import flt, getdate
+from frappe import _
+from frappe.utils import cint, flt, getdate
 
 # Error Log title used by every statutory-deduction diagnostic, so a site can filter
 # `Error Log` by method to see exactly which payroll runs skipped a deduction.
@@ -561,21 +562,40 @@ def on_leave_application_validate(doc, method=None):
         sick_days_before = flt(existing_sick[0][0]) if existing_sick else 0
         sick_days_used = sick_days_before + flt(doc.total_leave_days)
         pay_info = get_sick_leave_pay(employee, int(sick_days_used))
-        if pay_info["rate"] == 0.0:
+        # Only a treatment the country's own Country Config DECLARES may be presented as
+        # that country's law. When is_declared is False the app has no confirmed position
+        # for these days, and the previous wording ("Partial Pay 75% per Bahrain labor
+        # law") contradicted the Salary Slip, which pays the declared rows in full.
+        if not pay_info.get("is_declared"):
+            declared = flt(pay_info.get("declared_days"))
+            if declared and sick_days_used > declared:
+                frappe.msgprint(
+                    _("Employee will have used {0} sick days this year. Country Config for "
+                      "{1} declares only {2} days of sick leave and says nothing about how "
+                      "the days beyond that are paid, so this leave is being paid in FULL. "
+                      "Confirm the statutory bands with the client and add them as extra "
+                      "Country Config sick-leave rows (Pay Treatment / Paid Fraction) "
+                      "before relying on this figure.")
+                    .format(f"{sick_days_used:.0f}", cfg.country_name, cint(declared)),
+                    indicator="orange",
+                    alert=True,
+                )
+        elif pay_info["rate"] == 0.0:
             frappe.msgprint(
-                f"Employee has used {sick_days_used:.0f} sick days this year — additional sick leave will be "
-                f"<b>unpaid</b> per {cfg.country_name} labor law.",
+                _("Employee has used {0} sick days this year — additional sick leave is "
+                  "<b>unpaid</b> under the sick-leave bands configured for {1}.")
+                .format(f"{sick_days_used:.0f}", cfg.country_name),
                 indicator="orange",
                 alert=True,
             )
         elif pay_info["rate"] < 1.0:
             frappe.msgprint(
-                f"Employee has used {sick_days_used:.0f} sick days — this leave will be at "
-                f"<b>{pay_info['label']}</b> per {cfg.country_name} labor law.",
+                _("Employee has used {0} sick days — this leave will be at <b>{1}</b> "
+                  "under the sick-leave bands configured for {2}.")
+                .format(f"{sick_days_used:.0f}", pay_info["label"], cfg.country_name),
                 indicator="blue",
                 alert=True,
             )
-
 
 # ── Leave Allocation → sync with Country Config ───────────────────────────────
 

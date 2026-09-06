@@ -4,6 +4,7 @@ Employee insights and self-service APIs.
 """
 
 import calendar
+import datetime
 import json
 from pathlib import Path
 
@@ -464,10 +465,25 @@ def _get_contract_hours_per_day(employee):
 
 
 def _get_period_bounds(month=None, year=None):
+	"""Resolve a month/year pair that arrives over HTTP into a safe date window.
+
+	`month` and `year` reach here from the whitelisted `get_attendance_insights`
+	endpoint, so they are arbitrary strings. `int()` raised a bare ValueError on
+	anything non-numeric, and an out-of-range month produced an unhelpful
+	"2026-13-01 is not a valid date string" further down. Both are coerced with
+	cint and range-checked here instead.
+	"""
 	today = getdate(nowdate())
-	month_number = int(month or today.month)
-	year_number = int(year or today.year)
-	anchor = getdate(f"{year_number}-{month_number:02d}-01")
+
+	month_number = cint(month) or today.month
+	if not 1 <= month_number <= 12:
+		frappe.throw(_("Month must be between 1 and 12."), title=_("Invalid Period"))
+
+	year_number = cint(year) or today.year
+	if not 1900 <= year_number <= 2999:
+		frappe.throw(_("Year {0} is out of range.").format(year_number), title=_("Invalid Period"))
+
+	anchor = datetime.date(year_number, month_number, 1)
 	return get_first_day(anchor), get_last_day(anchor), month_number, year_number
 
 
@@ -636,7 +652,9 @@ def get_employee_paid_payroll_history(employee, limit=10):
 	if not employee:
 		return []
 
-	limit = max(1, min(int(limit or 10), 50))
+	# `limit` arrives over HTTP on this whitelisted endpoint; int() raised ValueError
+	# on anything non-numeric. cint() coerces, and 0 falls back to the default.
+	limit = max(1, min(cint(limit) or 10, 50))
 	if not frappe.db.exists("Employee", employee):
 		frappe.throw(_("Employee not found."))
 
@@ -768,10 +786,15 @@ def fetch_approved_overtime_for_payroll(payroll_name):
 	if not month_num:
 		frappe.throw(_("Invalid month in payroll"))
 
-	import calendar as cal
-	last_day = cal.monthrange(int(doc.year), month_num)[1]
-	period_start = f"{doc.year}-{month_num:02d}-01"
-	period_end = f"{doc.year}-{month_num:02d}-{last_day:02d}"
+	# `year` is a Data field on Monthly Payroll, so int() would raise a bare ValueError
+	# on anything non-numeric and the period would then be built from it regardless.
+	year_num = cint(doc.year)
+	if not 1900 <= year_num <= 2999:
+		frappe.throw(_("Invalid year {0} in payroll.").format(doc.year))
+
+	last_day = calendar.monthrange(year_num, month_num)[1]
+	period_start = datetime.date(year_num, month_num, 1)
+	period_end = datetime.date(year_num, month_num, last_day)
 
 	overtime_requests = frappe.get_all(
 		"Overtime Request",
