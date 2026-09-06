@@ -27,6 +27,7 @@ frappe.ui.form.on("Employee", {
 		_hr_suite_document_alerts(frm);
 		_hr_suite_contract_banner(frm);
 		_hr_suite_onboarding_banner(frm);
+		_hr_suite_salary_snapshot(frm);
 	},
 });
 
@@ -731,4 +732,55 @@ function _hr_suite_onboarding_banner(frm) {
 		// Onboarding is an HRMS DocType — a banner is never worth an error dialog on
 		// the Employee form if it is unavailable on this site.
 		.catch(function () {});
+}
+
+
+// ─── Salary tab: components fetched from the Salary Structure Assignment ───────
+// The figures are a mirror, never a second copy anybody can edit. If the table is
+// empty but the employee has a submitted assignment, we fetch once on open so the
+// tab is never blank; after that it refreshes when the assignment changes, or on
+// demand from the button.
+function _hr_suite_salary_snapshot(frm) {
+	frm.add_custom_button(
+		__("Fetch from Salary Structure"),
+		function () {
+			_hr_suite_fetch_salary(frm, true);
+		},
+		__("Salary")
+	);
+
+	if (!frm.doc.custom_salary_synced_on && !(frm.doc.custom_salary_components || []).length) {
+		_hr_suite_fetch_salary(frm, false);
+	}
+}
+
+function _hr_suite_fetch_salary(frm, notify) {
+	frappe.call({
+		method: "hr_suite.hr_suite.employee_salary.refresh_salary_snapshot",
+		args: { employee: frm.doc.name },
+		freeze: notify,
+		freeze_message: __("Reading the salary structure…"),
+		callback: function (r) {
+			const res = r.message || {};
+			if (!res.synced) {
+				if (notify) {
+					frappe.msgprint({
+						title: __("Nothing to fetch"),
+						message: res.reason
+							? __("Could not read a salary structure: {0}", [res.reason])
+							: __("This employee has no submitted Salary Structure Assignment."),
+						indicator: "orange",
+					});
+				}
+				return;
+			}
+			frm.reload_doc();
+			if (notify) {
+				frappe.show_alert({
+					message: __("{0} salary component(s) fetched", [res.components || 0]),
+					indicator: "green",
+				});
+			}
+		},
+	});
 }

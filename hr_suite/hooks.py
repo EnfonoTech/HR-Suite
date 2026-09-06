@@ -160,6 +160,11 @@ doc_events = {
 	},
 	"Salary Structure Assignment": {
 		"before_submit": "hr_suite.hr_suite.integrations.hrms.validate_minimum_wage",
+		# The Employee Salary tab mirrors whatever assignment is currently in force,
+		# so it has to be rebuilt whenever one is submitted, cancelled or deleted.
+		"on_submit": "hr_suite.hr_suite.employee_salary.on_salary_structure_assignment_change",
+		"on_cancel": "hr_suite.hr_suite.employee_salary.on_salary_structure_assignment_change",
+		"on_trash": "hr_suite.hr_suite.employee_salary.on_salary_structure_assignment_change",
 	},
 }
 
