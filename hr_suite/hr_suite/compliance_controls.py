@@ -1397,11 +1397,42 @@ def sync_compliance_workspace():
 	content = _get_workspace_content(workspace)
 	_sync_workspace_content_cards(content)
 	_sync_workspace_links(workspace)
+	_sync_workspace_guide_shortcut(workspace, content)
 	workspace.content = json.dumps(content, ensure_ascii=False)
 	workspace.flags.ignore_links = True
 	workspace.flags.ignore_version = True
 	workspace.save(ignore_permissions=True)
 	frappe.clear_cache()
+
+
+def _sync_workspace_guide_shortcut(workspace, content):
+	"""Put the hand guide on the workspace, on every site, on every migrate.
+
+	The shipped workspace JSON carries this shortcut too, but a Workspace is
+	re-imported only when the file's `modified` timestamp beats the database row —
+	so on a site that already has the workspace, editing the JSON alone silently
+	changes nothing. Adding it here as well means an existing site picks it up.
+	"""
+	label = "Hand Guide"
+	if not any((s.label or "") == label for s in (workspace.shortcuts or [])):
+		workspace.append(
+			"shortcuts",
+			{"label": label, "type": "URL", "url": "/hr-guide", "color": "Blue", "icon": "book"},
+		)
+
+	if not any(
+		isinstance(row, dict)
+		and row.get("type") == "shortcut"
+		and (row.get("data") or {}).get("shortcut_name") == label
+		for row in content
+	):
+		last_shortcut = None
+		for idx, row in enumerate(content):
+			if isinstance(row, dict) and row.get("type") == "shortcut":
+				last_shortcut = idx
+		block = {"id": "hr_suite_shortcut_hand_guide", "type": "shortcut",
+				 "data": {"shortcut_name": label, "col": 3}}
+		content.insert(last_shortcut + 1 if last_shortcut is not None else len(content), block)
 
 
 def _get_workspace_content(workspace):
