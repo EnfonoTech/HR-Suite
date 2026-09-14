@@ -733,6 +733,21 @@ def assign_leave_policy(
 	return result
 
 
+def assign_leave_policy_for_employee(employee: str, leave_period: str | None = None,
+                                     carry_forward: int = 0) -> dict:
+	"""Grant ONE employee their leave through the supported route.
+
+	Separate from the whitelisted ``assign_leave_policy`` on purpose: this runs as
+	a side effect of creating an Employee, where the user has already proved their
+	authority by creating the record. The HTTP permission gate on the endpoint
+	would otherwise stop onboarding for a role that may add staff but not assign
+	leave policies.
+	"""
+	from hrms.hr.doctype.leave_policy_assignment.leave_policy_assignment import create_assignment
+
+	return _assign_one(employee, leave_period, cint(carry_forward), create_assignment)
+
+
 def _assign_one(employee: str, leave_period: str | None, carry_forward: int, create_assignment):
 	from hr_suite.hr_suite.utils import get_employee_work_country
 

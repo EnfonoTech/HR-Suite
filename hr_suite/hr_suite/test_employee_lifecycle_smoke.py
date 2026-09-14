@@ -110,3 +110,47 @@ class TestEmployeeLifecycleSmoke(FrappeTestCase):
 		payroll.flags.ignore_permissions = True
 		payroll.submit()
 		self.assertEqual(payroll.status, "Completed")
+
+
+class TestOnboardingLeaveGrant(FrappeTestCase):
+	"""Leave must arrive through a Leave Policy Assignment, never written directly.
+
+	Creating an Employee used to write Leave Allocations straight from Country
+	Config. That left balances with nothing behind them and made the documented
+	Leave Policy Assignment screen fail with OverlapError.
+	"""
+
+	def test_new_employee_balances_have_an_assignment_behind_them(self):
+		emp = frappe.db.get_value(
+			"Employee", {"status": "Active", "company": ["is", "set"]}, "name"
+		)
+		if not emp:
+			self.skipTest("no active employee on this site")
+
+		allocations = frappe.get_all(
+			"Leave Allocation",
+			filters={"employee": emp, "docstatus": 1},
+			fields=["name", "leave_policy_assignment"],
+		)
+		if not allocations:
+			self.skipTest("employee has no leave allocations to judge")
+
+		orphans = [a.name for a in allocations if not a.leave_policy_assignment]
+		self.assertFalse(
+			orphans,
+			msg=f"{emp} has leave allocations with no Leave Policy Assignment: {orphans}",
+		)
+
+	def test_seeding_delegates_to_the_supported_route(self):
+		"""The onboarding hook must not write allocations itself."""
+		import inspect
+
+		from hr_suite.hr_suite.utils import seed_country_leave_types
+
+		source = inspect.getsource(seed_country_leave_types)
+		self.assertNotIn(
+			'"doctype": "Leave Allocation"',
+			source,
+			msg="onboarding is writing Leave Allocations directly again",
+		)
+		self.assertIn("assign_leave_policy_for_employee", source)

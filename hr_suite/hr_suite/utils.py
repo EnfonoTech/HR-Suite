@@ -883,55 +883,30 @@ def get_settlement_estimate(employee: str, termination_reason: str, termination_
     return calculate_settlement(employee, termination_reason, termination_date)
 
 
-def seed_country_leave_types(employee: str):
-    """Create Leave Allocations in Frappe HRMS from the employee's Country Config."""
-    country = get_employee_work_country(employee)
-    cfg = get_country_config(country)
-    if not cfg or not cfg.leave_types:
-        return
+def seed_country_leave_types(employee: str) -> dict:
+    """Grant a new employee their leave through a Leave Policy Assignment.
 
-    emp_doc = frappe.get_doc("Employee", employee)
-    year = getdate().year
+    This used to build Leave Allocations directly from Country Config. Three
+    things were wrong with that:
 
-    for row in cfg.leave_types:
-        lt_name = row.frappe_leave_type_name or row.leave_type_name
-        if not frappe.db.exists("Leave Type", lt_name):
-            frappe.get_doc({
-                "doctype": "Leave Type",
-                "leave_type_name": lt_name,
-                "max_continuous_days_allowed": 0,
-                "is_optional_leave": row.is_optional,
-                "allow_negative": 0,
-            }).insert(ignore_permissions=True)
+      * the balances had no assignment behind them, so nobody could answer
+        "why does this person have thirty days?";
+      * a full year was granted whatever the joining date, so a November joiner
+        received twelve months of annual leave;
+      * a later Leave Policy Assignment — the screen HR is told to use — failed
+        with OverlapError, because allocations for that period already existed.
+        The automatic behaviour blocked the documented one.
 
-        if frappe.db.exists("Leave Allocation", {
-            "employee": employee,
-            "leave_type": lt_name,
-            "docstatus": ["<", 2],
-            "from_date": [">=", f"{year}-01-01"],
-        }):
-            continue
+    Leave Policy Assignment is now the only thing that grants leave, which is
+    what ``leave_setup`` always intended. HRMS pro-rates the allocation from the
+    joining date and keeps the Leave Ledger, carry-forward and expiry correct.
 
-        if row.gender_specific == "Male Only" and emp_doc.gender != "Male":
-            continue
-        if row.gender_specific == "Female Only" and emp_doc.gender != "Female":
-            continue
+    Returns the outcome dict from the assignment helper, e.g.
+    ``{"assigned": ...}`` or ``{"skipped": "No Leave Policy for country BH"}``.
+    """
+    from hr_suite.hr_suite.leave_setup import assign_leave_policy_for_employee
 
-        alloc = frappe.get_doc({
-            "doctype": "Leave Allocation",
-            "employee": employee,
-            "employee_name": emp_doc.employee_name,
-            "leave_type": lt_name,
-            "from_date": f"{year}-01-01",
-            "to_date": f"{year}-12-31",
-            "new_leaves_allocated": row.days_per_year or 0,
-            "carry_forward": 1 if row.max_carry_forward_days else 0,
-        })
-        try:
-            alloc.insert(ignore_permissions=True)
-            alloc.submit()
-        except Exception:
-            frappe.log_error(frappe.get_traceback(), f"HR Suite: Leave allocation failed for {employee} / {lt_name}")
+    return assign_leave_policy_for_employee(employee)
 
 
 def get_sick_leave_pay(employee: str, sick_days_this_year: int) -> dict:
