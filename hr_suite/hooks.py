@@ -188,6 +188,13 @@ jinja = {
 
 override_whitelisted_methods = {}
 
+# hrms submits the payroll accrual Journal Entry inline. Where that entry needs
+# approval, the refusal aborts the whole run and leaves the payslips in draft —
+# see hr_suite/hr_suite/overrides/payroll_entry.py.
+override_doctype_class = {
+	"Payroll Entry": "hr_suite.hr_suite.overrides.payroll_entry.HRSuitePayrollEntry",
+}
+
 permission_query_conditions = {
 	"Annual Leave":       "hr_suite.hr_suite.permissions.get_annual_leave_query",
 	"Sick Leave":         "hr_suite.hr_suite.permissions.get_sick_leave_query",
