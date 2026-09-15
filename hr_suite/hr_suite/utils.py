@@ -93,11 +93,24 @@ def get_active_contract(employee: str, fields=None, as_dict=True):
 	)
 
 
-def get_employee_basic_salary(employee: str) -> float:
+def get_employee_basic_salary(employee: str, as_on=None) -> float:
+	"""Monthly basic pay, for sick and special leave, overtime and end of service.
+
+	Same three-step resolution as :func:`get_employee_basic_salary_global`, and for
+	the same reason: a contract and a CTC are the two things nobody fills, so this
+	used to return 0.0 and every figure built on it — sick leave pay, special leave
+	pay, the overtime hourly rate, the end-of-service basic — silently came out at
+	zero. The salary structure is where basic actually lives.
+	"""
 	contract = get_active_contract(employee, ["basic_salary"], as_dict=True) or {}
 	basic_salary = flt(contract.get("basic_salary"))
 	if basic_salary:
 		return basic_salary
+
+	basic_salary = _basic_from_salary_structure(employee, as_on)
+	if basic_salary:
+		return basic_salary
+
 	return flt(frappe.db.get_value("Employee", employee, "ctc") or 0)
 
 
