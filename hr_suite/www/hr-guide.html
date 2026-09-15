@@ -127,6 +127,7 @@
     <a href="#s6"><span class="num">6</span>Leave</a>
     <a href="#s7"><span class="num">7</span>Loans and deductions</a>
     <a href="#s8"><span class="num">8</span>Running payroll</a>
+    <a href="#statutory"><span class="num">8b</span>Statutory and regional rules</a>
     <div class="nav-group-label">Along the way</div>
     <a href="#s9"><span class="num">9</span>Appraisals</a>
     <a href="#s10"><span class="num">10</span>Permits and LMRA</a>
@@ -616,7 +617,58 @@
     Cancelling submitted payslips means cancelling the accounting entry too. Five minutes in Payroll
     Preview is cheaper than an hour of reversals.
   </div>
+  <div class="note">
+    <b>The accounting entry waits for approval</b>
+    Submitting the payslips also raises the <b>accrual Journal Entry</b> — the one that books the
+    month's salary cost. Because journal entries need approval here, it is created and left at
+    <b>Draft</b>. The payroll run itself finishes normally. Nothing reaches the ledger until somebody
+    approves and submits that entry, so make it the last step of your payroll checklist.
+  </div>
 </section>
+
+<section id="statutory">
+  <h2><span class="stage">Stage 8b</span>Statutory and regional rules</h2>
+  <p class="lede">Social insurance, wage protection and work permits, by the country the employee works in.</p>
+  <div class="where">📍 <b>Where:</b> HR Suite &rarr; Country Config</div>
+  <p>Each country has its own rules, and the system keeps them in one place rather than in somebody's
+     head. The employee's <b>Work Country</b> on their record decides which set applies to them.</p>
+  <div class="scroll"><table>
+    <tr><th>Country</th><th>Scheme</th><th>Employee</th><th>Employer</th><th>Capped at</th><th>Wage file</th></tr>
+    <tr><td><b>Bahrain</b></td><td>SIO</td><td>7% national<br>1% expatriate</td><td>12%<br>3%</td><td class="n">4,000</td><td>WPS-BH</td></tr>
+    <tr><td>Saudi Arabia</td><td>GOSI</td><td>10%</td><td>12% · 2% expat</td><td class="n">45,000</td><td>SARIE</td></tr>
+    <tr><td>UAE</td><td>GPSSA</td><td>5%</td><td>12.5%</td><td>—</td><td>SIF</td></tr>
+    <tr><td>Oman</td><td>PASI</td><td>7%</td><td>10.5%</td><td class="n">5,000</td><td>WPS-OM</td></tr>
+    <tr><td>India</td><td>EPF + ESI</td><td>12%</td><td>12%</td><td>—</td><td>—</td></tr>
+  </table></div>
+
+  <h3>What the deduction is worked out on</h3>
+  <p>Social insurance is charged on <b>basic pay</b>, not on the whole package. The system reads that
+     basic from the employee's <b>Salary Structure Assignment</b> — the same figure payroll itself
+     uses — so there is nothing extra to keep in step. A Country Employment Contract, where one
+     exists, overrides it.</p>
+  <ol class="steps">
+    <li>Set <b>Work Country</b> on the employee record. Without it the country rules cannot be chosen.</li>
+    <li>Set <b>Nationality</b>. It decides whether the national rate or the expatriate rate applies,
+      and on a Bahrain salary those differ by seven times.</li>
+    <li>Make sure the employee has a submitted Salary Structure Assignment — that is where basic comes from.</li>
+    <li>Run payroll. The deduction is added to the payslip for you.</li>
+  </ol>
+  <div class="warn">
+    <b>Two things must be in place before any of this deducts</b>
+    The employee needs a Work Country and a Nationality, and the deduction component named in Country
+    Config must exist with an account against it. If either is missing the system adds nothing rather
+    than guess a figure — see <a href="#notyet">Not switched on yet</a>.
+  </div>
+
+  <h3>Wage protection and work permits</h3>
+  <ul>
+    <li><b>WPS Submission</b> builds the wage protection file in the format that country expects.</li>
+    <li><b>Work Permit Iqama</b> holds each permit with its expiry and warns before it lapses.
+      A Bahrain LMRA permit does not ask for a Saudi Iqama number.</li>
+    <li><b>Nitaqat Record</b> tracks the Saudi nationalisation band.</li>
+  </ul>
+</section>
+
 
 <section id="s9">
   <h2><span class="stage">Stage 9</span>Appraisals</h2>
@@ -835,7 +887,16 @@
     <tr><td><b>Dates of joining</b></td><td>Every active employee has joining date equal to date of birth</td><td>Correct them. Gratuity and probation depend on this.</td></tr>
     <tr><td><b>Recruitment</b></td><td>Every recruitment list is empty</td><td>Nothing technical — start using it, once email works</td></tr>
     <tr><td><b>LMRA monthly fee</b></td><td>Deliberately left blank</td><td>Confirm the amount and who it applies to</td></tr>
-    <tr><td><b>Sick leave pay bands</b></td><td>Set to full pay across the entitlement</td><td>Confirm the Bahrain tiers so sick leave is not overpaid</td></tr>
+    <tr><td><b>Social insurance deduction</b></td>
+      <td>The rates are configured and the basic salary now reads from the salary structure, but
+        nothing deducts yet: no employee has a Work Country or Nationality set, and the deduction
+        component named in Country Config for Bahrain ("SIO") does not exist. Your own
+        <b>Social Security Insurance Deductions</b> component does exist, with its account. The two
+        need to be pointed at each other before a single dinar is withheld.</td><td>Confirm with us</td></tr>
+  <tr><td><b>Fiscal Year 2027</b></td>
+      <td>Only 2026 exists. A payroll dated in 2027 cannot be created until the next fiscal year is
+        opened.</td><td>Steel Force</td></tr>
+  <tr><td><b>Sick leave pay bands</b></td><td>Set to full pay across the entitlement</td><td>Confirm the Bahrain tiers so sick leave is not overpaid</td></tr>
   </table></div>
   <figure>
     <img src="/assets/hr_suite/images/guide/06-email-account.jpg" alt="Email Account record with incoming disabled" loading="lazy">
