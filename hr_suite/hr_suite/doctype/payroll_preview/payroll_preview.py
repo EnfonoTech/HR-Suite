@@ -177,6 +177,7 @@ class PayrollPreview(Document):
 		overtime = self._get_overtime_requests(employee_ids)
 		adjustments = self._get_salary_adjustments(employee_ids)
 
+		structure_listed = self._add_salary_structure_rows(employees, assignments)
 		self._add_additional_salary_rows(employees, additional_salaries)
 		self._add_benefit_claim_rows(employees, benefit_claims)
 		self._add_advance_rows(employees, advances)
@@ -201,6 +202,7 @@ class PayrollPreview(Document):
 			timesheet_based,
 			structure_components,
 			unbooked_loans,
+			structure_listed,
 		)
 
 		self.recalculate_totals()
@@ -1119,6 +1121,64 @@ class PayrollPreview(Document):
 		elif row.entry_type == DEDUCTION:
 			employee.deductions += amount
 
+	def _add_salary_structure_rows(self, employees: dict, assignments: dict) -> set:
+		"""List the salary structure itself, component by component.
+
+		The preview used to carry the structure as a single ``base`` figure and show only
+		the extras booked against the employee — a bonus, a loan instalment. So a screen
+		whose whole job is "what will this person be paid" never showed Basic or Housing,
+		the two largest lines on the payslip.
+
+		The amounts come from the evaluated component mirror kept on the Employee record
+		(refreshed whenever a Salary Structure Assignment is submitted), so they match what
+		payroll pays without building a throwaway slip per employee. Components the slip
+		prorates are scaled by the same payment-day factor every other row uses.
+
+		Returns the set of employees a structure was listed for, so the caller knows whose
+		net no longer needs ``base`` adding to it.
+		"""
+		if not employees:
+			return set()
+
+		rows = frappe.get_all(
+			"Employee Salary Component",
+			filters={
+				"parenttype": "Employee",
+				"parent": ["in", list(employees.keys())],
+			},
+			fields=["parent", "salary_component", "component_type", "amount", "depends_on_payment_days"],
+			order_by="parent asc, idx asc",
+		)
+		if not rows:
+			return set()
+
+		listed = set()
+		for row in rows:
+			employee = employees.get(row.parent)
+			if not employee or not flt(row.amount):
+				continue
+
+			assignment = (assignments or {}).get(row.parent)
+			factor = flt(employee.payment_day_factor if employee.payment_day_factor is not None else 1.0)
+			payable = flt(row.amount) * (factor if cint(row.depends_on_payment_days) else 1.0)
+
+			self._append_allocation(
+				employees,
+				row.parent,
+				entry_type=EARNING if row.component_type == EARNING else DEDUCTION,
+				salary_component=row.salary_component,
+				amount=flt(row.amount),
+				payable_amount=flt(payable, self.precision("net_estimate")),
+				source_doctype="Salary Structure Assignment",
+				source_name=(assignment or {}).get("name"),
+				origin_doctype="Salary Structure",
+				origin_name=(assignment or {}).get("salary_structure"),
+				description=_("From the salary structure"),
+			)
+			listed.add(row.parent)
+
+		return listed
+
 	def _add_additional_salary_rows(self, employees: dict, additional_salaries: list) -> None:
 		prorated_components = self._get_components_depending_on_payment_days(
 			{entry.salary_component for entry in additional_salaries if entry.salary_component}
@@ -1481,6 +1541,7 @@ class PayrollPreview(Document):
 		timesheet_based: dict,
 		structure_components: dict | None = None,
 		unbooked_loans: dict | None = None,
+		structure_listed: set | None = None,
 	) -> None:
 		precision = self.precision("total_earnings")
 		withheld_employees = {row.employee for row in withholdings}
@@ -1524,7 +1585,14 @@ class PayrollPreview(Document):
 			if total_working_days:
 				payable_base = flt(base * flt(counts.payment_days) / total_working_days, precision)
 
-			net_estimate = flt(payable_base + earnings - deductions, precision)
+			# Where the structure was listed component by component, those components are
+			# already inside `earnings` — adding the base again would double the salary.
+			# Employees with no component mirror keep the old base-plus-extras estimate, so
+			# a site that has not refreshed its mirrors reads exactly as it did before.
+			if employee_id in (structure_listed or set()):
+				net_estimate = flt(earnings - deductions, precision)
+			else:
+				net_estimate = flt(payable_base + earnings - deductions, precision)
 
 			blocking, advisory = self._collect_issues(
 				employee=employee,
