@@ -114,23 +114,81 @@ def get_employee_basic_salary(employee: str, as_on=None) -> float:
 	return flt(frappe.db.get_value("Employee", employee, "ctc") or 0)
 
 
+def _components_from_salary_mirror(employee: str) -> dict | None:
+	"""Split the employee's salary structure into the four figures this app uses.
+
+	The Employee record carries an evaluated copy of the current Salary Structure
+	Assignment (the Salary tab's read-only component table, refreshed whenever an
+	assignment is submitted). Reading it here means the breakdown always matches
+	what payroll pays, and costs one query rather than building a throwaway slip.
+
+	Returns ``None`` when the mirror is empty, so the caller can fall through.
+	"""
+	rows = frappe.get_all(
+		"Employee Salary Component",
+		filters={"parent": employee, "parenttype": "Employee", "component_type": "Earning"},
+		fields=["salary_component", "amount"],
+	)
+	if not rows:
+		return None
+
+	buckets = {"basic_salary": 0.0, "housing_allowance": 0.0, "transport_allowance": 0.0, "other_allowances": 0.0}
+	for row in rows:
+		name = (row.salary_component or "").lower()
+		amount = flt(row.amount)
+		if "basic" in name:
+			buckets["basic_salary"] += amount
+		elif any(k in name for k in ("housing", "hra", "living")):
+			buckets["housing_allowance"] += amount
+		elif any(k in name for k in ("transport", "food", "conveyance")):
+			buckets["transport_allowance"] += amount
+		else:
+			buckets["other_allowances"] += amount
+
+	buckets["total_salary"] = sum(buckets.values())
+	return buckets
+
+
 def get_employee_salary_components(employee: str) -> dict:
+	"""Basic, housing, transport, other and total for one employee.
+
+	Used by leave encashment, Monthly Payroll and the end-of-service "Total
+	Contract Wage" basis. It read only the Country Employment Contract, falling
+	back to CTC for basic alone, so on a site with neither — Steel Force
+	production, every employee — the whole breakdown came back as zeros and every
+	figure built on it was zero too.
+	"""
 	contract = get_active_contract(
 		employee,
 		["basic_salary", "housing_allowance", "transport_allowance", "other_allowances", "total_salary"],
 		as_dict=True,
 	) or {}
-	basic = flt(contract.get("basic_salary") or frappe.db.get_value("Employee", employee, "ctc") or 0)
-	housing = flt(contract.get("housing_allowance") or 0)
-	transport = flt(contract.get("transport_allowance") or 0)
-	other = flt(contract.get("other_allowances") or 0)
-	total = flt(contract.get("total_salary") or (basic + housing + transport + other))
+
+	if flt(contract.get("basic_salary")):
+		basic = flt(contract.get("basic_salary"))
+		housing = flt(contract.get("housing_allowance") or 0)
+		transport = flt(contract.get("transport_allowance") or 0)
+		other = flt(contract.get("other_allowances") or 0)
+		total = flt(contract.get("total_salary") or (basic + housing + transport + other))
+		return {
+			"basic_salary": basic,
+			"housing_allowance": housing,
+			"transport_allowance": transport,
+			"other_allowances": other,
+			"total_salary": total,
+		}
+
+	from_structure = _components_from_salary_mirror(employee)
+	if from_structure:
+		return from_structure
+
+	basic = flt(frappe.db.get_value("Employee", employee, "ctc") or 0)
 	return {
 		"basic_salary": basic,
-		"housing_allowance": housing,
-		"transport_allowance": transport,
-		"other_allowances": other,
-		"total_salary": total,
+		"housing_allowance": 0.0,
+		"transport_allowance": 0.0,
+		"other_allowances": 0.0,
+		"total_salary": basic,
 	}
 
 
