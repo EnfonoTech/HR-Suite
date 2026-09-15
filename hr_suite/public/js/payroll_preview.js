@@ -6,7 +6,10 @@ frappe.ui.form.on("Payroll Preview", {
 	setup(frm) {
 		set_payroll_preview_indicators();
 
-		frm.set_query("branch", () => ({ filters: { company: frm.doc.company } }));
+		// Branch is a bare master in ERPNext — its only field is `branch`. Filtering it by
+		// company asks MySQL for a column that does not exist and the field throws
+		// "Unknown column 'tabBranch.company'" the moment anyone clicks it.
+		// Department does carry a company, so that filter below stays.
 		frm.set_query("department", () => ({ filters: { company: frm.doc.company } }));
 	},
 

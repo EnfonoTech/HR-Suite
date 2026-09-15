@@ -20,6 +20,8 @@
   "normal_hours",
   "overtime_hours",
   "overtime_rate",
+  "day_type",
+  "rate_basis",
   "salary_section",
   "monthly_basic",
   "hourly_rate",
@@ -121,10 +123,25 @@
   },
   {
    "default": "1.5",
-   "description": "Saudi Labor Law Art. 107 — 150% of hourly rate",
+   "description": "Read from Country Config for the employee's work country, using the day type below. Not editable here — correct it on Country Config so every request uses the same figure.",
    "fieldname": "overtime_rate",
    "fieldtype": "Float",
    "label": "Overtime Rate",
+   "read_only": 1
+  },
+  {
+   "description": "Read from the employee's Holiday List for this date. A weekly off and a public holiday are paid differently in most countries.",
+   "fieldname": "day_type",
+   "fieldtype": "Select",
+   "label": "Day Type",
+   "options": "Working Day\nWeekly Rest Day\nPublic Holiday",
+   "read_only": 1
+  },
+  {
+   "description": "Which country's rule produced the rate above.",
+   "fieldname": "rate_basis",
+   "fieldtype": "Data",
+   "label": "Rate Basis",
    "read_only": 1
   },
   {

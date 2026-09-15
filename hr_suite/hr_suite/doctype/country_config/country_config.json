@@ -56,7 +56,17 @@
   {"fieldname": "column_break_6", "fieldtype": "Column Break"},
   {"fieldname": "notice_period_days_monthly", "fieldtype": "Int", "label": "Notice Period — Monthly Staff (Days)", "default": "30"},
   {"fieldname": "notice_period_days_others", "fieldtype": "Int", "label": "Notice Period — Others (Days)", "default": "30"},
-  {"fieldname": "max_probation_days", "fieldtype": "Int", "label": "Max Probation (Days)", "default": "90"}
+  {"fieldname": "max_probation_days", "fieldtype": "Int", "label": "Max Probation (Days)", "default": "90"},
+  {"fieldname": "overtime_section", "fieldtype": "Section Break", "label": "Overtime"},
+  {"fieldname": "overtime_hours_per_month", "fieldtype": "Float", "label": "Working Hours per Month", "default": "240", "precision": "2", "description": "Divides the monthly basic salary to give the hourly rate. GCC practice is 30 days x 8 hours = 240; India uses 26 days x 8 hours = 208."},
+  {"fieldname": "overtime_weekday_rate", "fieldtype": "Float", "label": "Weekday Rate (x)", "default": "1.5", "precision": "2", "description": "Multiplier on the hourly rate for overtime worked on an ordinary working day."},
+  {"fieldname": "overtime_night_rate", "fieldtype": "Float", "label": "Night Rate (x)", "precision": "2", "description": "Optional. Used when the shift falls inside the night window. Leave at 0 where the country has no separate night rate."},
+  {"fieldname": "column_break_overtime", "fieldtype": "Column Break"},
+  {"fieldname": "overtime_rest_day_rate", "fieldtype": "Float", "label": "Weekly Rest Day Rate (x)", "default": "1.5", "precision": "2", "description": "Used when the date is a weekly off on the employee's Holiday List."},
+  {"fieldname": "overtime_holiday_rate", "fieldtype": "Float", "label": "Public Holiday Rate (x)", "default": "1.5", "precision": "2", "description": "Used when the date is a public holiday on the employee's Holiday List."},
+  {"fieldname": "overtime_night_start", "fieldtype": "Time", "label": "Night Window Starts", "depends_on": "eval:doc.overtime_night_rate"},
+  {"fieldname": "overtime_night_end", "fieldtype": "Time", "label": "Night Window Ends", "depends_on": "eval:doc.overtime_night_rate"},
+  {"fieldname": "overtime_notes", "fieldtype": "Small Text", "label": "Overtime Notes", "description": "Statutory reference behind these figures, for whoever maintains this record."}
  ],
  "permissions": [
   {"role": "HR Manager", "read": 1, "write": 1, "create": 1, "delete": 1},

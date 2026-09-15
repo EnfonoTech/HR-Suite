@@ -3,13 +3,25 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, nowdate
 
-from hr_suite.hr_suite.utils import assert_employee_access, assert_doctype_permissions, assert_positive_basic_salary, get_employee_basic_salary as get_current_basic_salary, text_matches_tokens
+from hr_suite.hr_suite.utils import (
+	assert_employee_access,
+	assert_doctype_permissions,
+	assert_positive_basic_salary,
+	get_employee_basic_salary as get_current_basic_salary,
+	resolve_overtime_terms,
+	text_matches_tokens,
+)
 
 
 class OvertimeRequest(Document):
+	"""One day of overtime, priced by the law of the country the employee works in.
 
-	OVERTIME_RATE = 1.5
-	WORKING_HOURS_PER_MONTH = 240  # 8 h/day × 30 days
+	The rate is never a constant: Bahrain pays 125% by day and 150% at night, the
+	UAE the same but with a different night window, Saudi a flat 150%, Oman 200%
+	on a rest day, India twice the ordinary rate over a 26-day month. All of it
+	is read from Country Config through ``resolve_overtime_terms`` — nothing here
+	decides what an hour of overtime is worth.
+	"""
 
 	def validate(self):
 		self._validate_overtime_hours()
@@ -29,17 +41,22 @@ class OvertimeRequest(Document):
 			frappe.throw(_("Overtime hours must be greater than 0"))
 
 	def _fetch_salary(self):
-		"""Fetch the basic salary from the employee's active contract."""
+		"""Price the hour: basic salary over the country's month, at the country's rate."""
 		self.monthly_basic = get_current_basic_salary(self.employee)
 		assert_positive_basic_salary(self.employee_name or self.employee, self.monthly_basic, _("calculating overtime"))
-		self.overtime_rate = self.OVERTIME_RATE
 
-		self.hourly_rate = round(self.monthly_basic / self.WORKING_HOURS_PER_MONTH, 4)
+		terms = resolve_overtime_terms(
+			self.employee, self.date, self.shift_start, self.shift_end
+		)
+		self.day_type = terms["day_type"]
+		self.rate_basis = terms["basis"]
+		self.overtime_rate = terms["rate"]
+		self.hourly_rate = round(flt(self.monthly_basic) / flt(terms["hours_per_month"]), 4)
 
 	def _calculate_overtime(self):
-		"""Calculate overtime amount = hours x hourly rate x 1.5"""
+		"""Overtime amount = hours x hourly rate x the country's multiplier."""
 		self.overtime_amount = round(
-			flt(self.overtime_hours) * flt(self.hourly_rate) * self.OVERTIME_RATE, 2
+			flt(self.overtime_hours) * flt(self.hourly_rate) * flt(self.overtime_rate), 2
 		)
 
 	def on_submit(self):
@@ -121,7 +138,8 @@ class OvertimeRequest(Document):
 			"company": company,
 			"posting_date": self.date or nowdate(),
 			"user_remark": (
-				f"Overtime Pay — {self.employee_name} — {self.date} — "
+				f"Overtime Pay — {self.employee_name} — {self.date} "
+				f"({self.day_type or 'Working Day'}) — "
 				f"{self.overtime_hours}h × {self.overtime_rate} = "
 				f"{flt(self.overtime_amount):.2f} {currency} ({self.name})"
 			),
@@ -186,3 +204,10 @@ def get_employee_basic_salary(employee):
 	"""Return the employee's current basic salary for JS auto-fill."""
 	assert_employee_access(employee)
 	return get_current_basic_salary(employee)
+
+
+@frappe.whitelist()
+def get_overtime_terms(employee, date=None, shift_start=None, shift_end=None):
+	"""Rate preview for the form, so HR sees the multiplier before saving."""
+	assert_employee_access(employee)
+	return resolve_overtime_terms(employee, date, shift_start, shift_end)

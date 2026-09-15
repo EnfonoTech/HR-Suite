@@ -652,6 +652,14 @@ _COUNTRY_CONFIGS = [
 		"notice_period_days_monthly": 60,
 		"notice_period_days_others": 30,
 		"max_probation_days": 180,
+		# Overtime — Saudi Labour Law Art. 107: overtime is paid at the hourly wage plus
+		# 50%. Work on a weekly rest day or an Eid holiday is itself overtime, so the same
+		# 150% applies; there is no separate statutory night rate.
+		"overtime_hours_per_month": 240,
+		"overtime_weekday_rate": 1.5,
+		"overtime_rest_day_rate": 1.5,
+		"overtime_holiday_rate": 1.5,
+		"overtime_notes": "Saudi Labour Law Art. 107 — overtime = hourly wage + 50%. Rest-day and Eid work is overtime at the same rate. Confirm against the employment contract, which may be more generous.",
 		# Leave types
 		"leave_types": [
 			{"leave_type_name": "Annual Leave", "days_per_year": 21, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Annual Leave"},
@@ -698,6 +706,17 @@ _COUNTRY_CONFIGS = [
 		"notice_period_days_monthly": 30,
 		"notice_period_days_others": 30,
 		"max_probation_days": 180,
+		# Overtime — UAE Federal Decree-Law 33/2021 Art. 19: 125% of the hourly wage,
+		# rising to 150% for hours worked between 22:00 and 04:00. Rest-day work is a day
+		# off in lieu or 150%.
+		"overtime_hours_per_month": 240,
+		"overtime_weekday_rate": 1.25,
+		"overtime_night_rate": 1.5,
+		"overtime_night_start": "22:00:00",
+		"overtime_night_end": "04:00:00",
+		"overtime_rest_day_rate": 1.5,
+		"overtime_holiday_rate": 1.5,
+		"overtime_notes": "UAE Federal Decree-Law 33/2021 Art. 19 — 125% by day, 150% between 22:00 and 04:00, 150% (or a day in lieu) on a rest day. Confirm against the employment contract.",
 		# Leave types
 		"leave_types": [
 			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 15, "frappe_leave_type_name": "Annual Leave"},
@@ -759,6 +778,17 @@ _COUNTRY_CONFIGS = [
 		"notice_period_days_monthly": 30,
 		"notice_period_days_others": 30,
 		"max_probation_days": 90,
+		# Overtime — Bahrain Labour Law (Law 36/2012) Art. 53: not less than 125% of the
+		# hourly wage by day and 150% for hours worked at night. Work on the weekly rest
+		# day or an official holiday is paid at 150% and earns a compensatory day off.
+		"overtime_hours_per_month": 240,
+		"overtime_weekday_rate": 1.25,
+		"overtime_night_rate": 1.5,
+		"overtime_night_start": "19:00:00",
+		"overtime_night_end": "07:00:00",
+		"overtime_rest_day_rate": 1.5,
+		"overtime_holiday_rate": 1.5,
+		"overtime_notes": "Bahrain Labour Law 36/2012 Art. 53 — 125% by day, 150% at night (19:00-07:00), 150% plus a compensatory day on the weekly rest day or an official holiday. These are statutory minimums; confirm the figures the company actually pays.",
 		# Leave types
 		"leave_types": [
 			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Annual Leave"},
@@ -804,6 +834,14 @@ _COUNTRY_CONFIGS = [
 		"notice_period_days_monthly": 30,
 		"notice_period_days_others": 30,
 		"max_probation_days": 180,
+		# Overtime — Factories Act 1948 s.59 and the Minimum Wages Act: twice the ordinary
+		# rate of wages, with no separate night or holiday rate. The ordinary hourly rate
+		# is the monthly wage over 26 days x 8 hours, not 30 days.
+		"overtime_hours_per_month": 208,
+		"overtime_weekday_rate": 2.0,
+		"overtime_rest_day_rate": 2.0,
+		"overtime_holiday_rate": 2.0,
+		"overtime_notes": "Factories Act 1948 s.59 — overtime = twice the ordinary rate of wages. Hourly rate is computed over 26 days x 8 hours. State shops-and-establishments rules may differ; confirm for the state of employment.",
 		# Leave types
 		"leave_types": [
 			{"leave_type_name": "Earned Leave", "days_per_year": 15, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Earned Leave"},
@@ -850,6 +888,17 @@ _COUNTRY_CONFIGS = [
 		"notice_period_days_monthly": 30,
 		"notice_period_days_others": 30,
 		"max_probation_days": 180,
+		# Overtime — Oman Labour Law (RD 53/2023): 125% of the hourly wage by day and 150%
+		# at night. Work on a weekly rest day or an official holiday is compensated with a
+		# substitute day off or paid at 200%.
+		"overtime_hours_per_month": 240,
+		"overtime_weekday_rate": 1.25,
+		"overtime_night_rate": 1.5,
+		"overtime_night_start": "21:00:00",
+		"overtime_night_end": "06:00:00",
+		"overtime_rest_day_rate": 2.0,
+		"overtime_holiday_rate": 2.0,
+		"overtime_notes": "Oman Labour Law RD 53/2023 — 125% by day, 150% at night, 200% (or a substitute rest day) on a weekly rest day or official holiday. Confirm against the employment contract.",
 		# Leave types
 		"leave_types": [
 			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Annual Leave"},

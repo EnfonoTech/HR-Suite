@@ -1329,3 +1329,132 @@ def get_recurring_permit_fee_config(country_code: str) -> dict:
 		"notes": cstr(config.get("recurring_permit_fee_notes")),
 		"is_configured": bool(monthly_fee > 0 and applies_to),
 	}
+
+
+# ─── Overtime terms ─────────────────────────────────────────────────────────────
+# Overtime is not one number. Every country this app runs in pays a different
+# multiplier, and pays more again for a weekly rest day, an official holiday or
+# night hours. The figures live on Country Config so a client can correct them
+# without a deploy; the constants below are only the last-resort fallback for a
+# site that has no Country Config row at all.
+
+DEFAULT_OVERTIME_RATE = 1.5
+DEFAULT_OVERTIME_HOURS_PER_MONTH = 240.0  # 30 days x 8 hours, the GCC convention
+
+OVERTIME_DAY_TYPES = ("Working Day", "Weekly Rest Day", "Public Holiday")
+
+
+def _time_to_minutes(value) -> int | None:
+	"""Minutes since midnight for a Frappe Time value, or None if unreadable.
+
+	A Time field reaches Python as a ``datetime.timedelta`` from the database and
+	as a ``"HH:MM:SS"`` string from the form, so both have to work.
+	"""
+	if value in (None, ""):
+		return None
+	if hasattr(value, "total_seconds"):
+		return int(value.total_seconds() // 60) % (24 * 60)
+	parts = cstr(value).strip().split(":")
+	if not parts or not parts[0].isdigit():
+		return None
+	hours = cint(parts[0])
+	minutes = cint(parts[1]) if len(parts) > 1 else 0
+	return (hours * 60 + minutes) % (24 * 60)
+
+
+def _intervals(start: int, end: int) -> list:
+	"""Split a possibly midnight-crossing window into plain [start, end) ranges."""
+	if start == end:
+		return []
+	if start < end:
+		return [(start, end)]
+	return [(start, 24 * 60), (0, end)]
+
+
+def _windows_overlap(a_start, a_end, b_start, b_end) -> bool:
+	if None in (a_start, a_end, b_start, b_end):
+		return False
+	for x0, x1 in _intervals(a_start, a_end):
+		for y0, y1 in _intervals(b_start, b_end):
+			if x0 < y1 and y0 < x1:
+				return True
+	return False
+
+
+def get_overtime_day_type(employee: str, date) -> str:
+	"""Classify a date against the employee's Holiday List.
+
+	A weekly off row and a public holiday row live in the same child table and are
+	told apart only by ``weekly_off``, which is exactly the distinction every
+	labour law in the GCC prices differently.
+	"""
+	if not employee or not date:
+		return "Working Day"
+
+	from erpnext.setup.doctype.employee.employee import is_holiday
+
+	try:
+		# raise_exception=False: an employee with no Holiday List is a configuration
+		# gap, not a reason to refuse the overtime entry. They get the weekday rate.
+		if is_holiday(employee, date, raise_exception=False, only_non_weekly=True):
+			return "Public Holiday"
+		if is_holiday(employee, date, raise_exception=False):
+			return "Weekly Rest Day"
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "HR Suite: overtime holiday lookup failed")
+
+	return "Working Day"
+
+
+def resolve_overtime_terms(employee: str, date=None, shift_start=None, shift_end=None) -> dict:
+	"""The overtime rate and hourly divisor that apply to one employee on one date.
+
+	Returns ``rate``, ``hours_per_month``, ``day_type``, ``country`` and a plain
+	``basis`` sentence naming why that rate was chosen — the form shows the basis
+	so HR can see the country and the day type behind the figure instead of
+	trusting an unexplained multiplier.
+	"""
+	country = get_employee_work_country(employee) if employee else ""
+	config = get_country_config(country) if country else None
+
+	day_type = get_overtime_day_type(employee, date)
+
+	hours_per_month = flt(config.get("overtime_hours_per_month")) if config else 0.0
+	if hours_per_month <= 0:
+		hours_per_month = DEFAULT_OVERTIME_HOURS_PER_MONTH
+
+	field_by_day_type = {
+		"Working Day": "overtime_weekday_rate",
+		"Weekly Rest Day": "overtime_rest_day_rate",
+		"Public Holiday": "overtime_holiday_rate",
+	}
+	rate = flt(config.get(field_by_day_type[day_type])) if config else 0.0
+	if rate <= 0:
+		# A country whose config predates these fields, or one whose rest-day rate was
+		# left blank, still has to produce a defensible figure. The weekday rate is the
+		# nearest configured answer; the module default is the last resort.
+		rate = flt(config.get("overtime_weekday_rate")) if config else 0.0
+	if rate <= 0:
+		rate = DEFAULT_OVERTIME_RATE
+
+	basis_country = (config.country_name or country) if config else (country or _("no country"))
+	basis = _("{0} — {1} rate").format(basis_country, _(day_type))
+
+	night_rate = flt(config.get("overtime_night_rate")) if config else 0.0
+	if night_rate > 0:
+		night_start = _time_to_minutes(config.get("overtime_night_start"))
+		night_end = _time_to_minutes(config.get("overtime_night_end"))
+		if _windows_overlap(
+			_time_to_minutes(shift_start), _time_to_minutes(shift_end), night_start, night_end
+		) and night_rate > rate:
+			rate = night_rate
+			basis = _("{0} — night rate").format(basis_country)
+
+	return {
+		"rate": flt(rate, 2),
+		"hours_per_month": flt(hours_per_month, 2),
+		"day_type": day_type,
+		"country": country,
+		"basis": basis,
+		"is_configured": bool(config),
+	}
