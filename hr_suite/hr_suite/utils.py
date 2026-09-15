@@ -3,7 +3,7 @@ utils.py — Helper functions for Hr Suite calculations.
 """
 import frappe
 from frappe import _
-from frappe.utils import cint, cstr, date_diff, flt, getdate
+from frappe.utils import cint, cstr, date_diff, flt, getdate, today
 
 
 def assert_doctype_permissions(doctype: str, permission_types, doc=None):
@@ -662,12 +662,87 @@ def get_active_country_contract(employee: str, fields=None, as_dict=True):
     return row
 
 
-def get_employee_basic_salary_global(employee: str) -> float:
-    """Return basic salary from Country Employment Contract, then Saudi contract, then CTC."""
+def _basic_from_salary_structure(employee: str, as_on=None) -> float:
+    """The Basic earning on the employee's current Salary Structure Assignment.
+
+    Statutory contributions across the GCC are computed on basic pay, and basic
+    pay lives on the salary structure — the same figure payroll itself uses. Two
+    shapes occur in the wild and both have to work:
+
+      * ``Basic`` defined as ``formula = base``  -> the assignment's base
+      * ``Basic`` defined as a flat amount       -> that amount
+
+    Anything else (a formula over other components) cannot be evaluated cheaply
+    here, and a payroll hook is not the place to build a throwaway salary slip
+    per employee, so the assignment's base is used and the caller still gets a
+    sane figure rather than zero.
+    """
+    assignment = frappe.db.get_value(
+        "Salary Structure Assignment",
+        {
+            "employee": employee,
+            "docstatus": 1,
+            "from_date": ["<=", getdate(as_on or today())],
+        },
+        ["base", "salary_structure"],
+        order_by="from_date desc, creation desc",
+        as_dict=True,
+    )
+    if not assignment:
+        return 0.0
+
+    base = flt(assignment.base)
+    if not assignment.salary_structure:
+        return base
+
+    rows = frappe.get_all(
+        "Salary Detail",
+        filters={
+            "parent": assignment.salary_structure,
+            "parenttype": "Salary Structure",
+            "parentfield": "earnings",
+        },
+        fields=["salary_component", "amount", "formula", "amount_based_on_formula"],
+        order_by="idx asc",
+    )
+
+    for row in rows:
+        if "basic" not in (row.salary_component or "").lower():
+            continue
+        if not cint(row.amount_based_on_formula):
+            # A flat Basic is the figure itself; base may be the whole package.
+            return flt(row.amount) or base
+        if (row.formula or "").strip() == "base":
+            return base
+        break
+
+    return base
+
+
+def get_employee_basic_salary_global(employee: str, as_on=None) -> float:
+    """Monthly basic salary, for statutory contributions and end-of-service.
+
+    Order of authority:
+
+      1. Country Employment Contract — an explicit agreed figure wins.
+      2. The Basic earning on the current Salary Structure Assignment.
+      3. Employee CTC — last resort.
+
+    Step 2 used to be missing, and it is the only one most sites populate. With
+    no contract and no CTC this returned 0.0, so social insurance was computed on
+    zero and silently deducted nothing, statutory contribution records were
+    skipped (`if not basic: continue`), and end-of-service came out at zero —
+    on every employee, with no error anywhere.
+    """
     contract = get_active_country_contract(employee, ["basic_salary"], as_dict=True) or {}
     basic = flt(contract.get("basic_salary"))
     if basic:
         return basic
+
+    basic = _basic_from_salary_structure(employee, as_on)
+    if basic:
+        return basic
+
     return flt(frappe.db.get_value("Employee", employee, "ctc") or 0)
 
 

@@ -154,3 +154,58 @@ class TestOnboardingLeaveGrant(FrappeTestCase):
 			msg="onboarding is writing Leave Allocations directly again",
 		)
 		self.assertIn("assign_leave_policy_for_employee", source)
+
+
+class TestBasicSalaryResolution(FrappeTestCase):
+	"""Basic pay drives social insurance, GOSI/EPF records and end-of-service.
+
+	It used to be read only from a Country Employment Contract or Employee CTC —
+	neither of which most sites fill — so it returned 0.0 and every statutory
+	figure silently came out at zero.
+	"""
+
+	def test_basic_comes_from_the_salary_structure(self):
+		from hr_suite.hr_suite.utils import get_employee_basic_salary_global
+
+		ssa = frappe.db.get_value(
+			"Salary Structure Assignment",
+			{"docstatus": 1},
+			["employee", "base", "salary_structure"],
+			as_dict=True,
+		)
+		if not ssa:
+			self.skipTest("no submitted Salary Structure Assignment on this site")
+
+		basic = get_employee_basic_salary_global(ssa.employee)
+		self.assertGreater(
+			basic, 0, msg=f"{ssa.employee} has an assignment (base {ssa.base}) but basic resolved to 0"
+		)
+
+	def test_flat_basic_beats_the_assignment_base(self):
+		"""A flat Basic amount is the basic; base can be the whole package."""
+		from hr_suite.hr_suite.utils import _basic_from_salary_structure
+
+		row = frappe.db.sql(
+			"""
+			SELECT sd.parent, sd.amount
+			FROM `tabSalary Detail` sd
+			WHERE sd.parenttype = 'Salary Structure' AND sd.parentfield = 'earnings'
+			  AND sd.amount_based_on_formula = 0 AND sd.amount > 0
+			  AND LOWER(sd.salary_component) LIKE '%%basic%%'
+			LIMIT 1
+			""",
+			as_dict=True,
+		)
+		if not row:
+			self.skipTest("no flat-amount Basic component on this site")
+
+		ssa = frappe.db.get_value(
+			"Salary Structure Assignment",
+			{"salary_structure": row[0].parent, "docstatus": 1},
+			["employee", "base"],
+			as_dict=True,
+		)
+		if not ssa:
+			self.skipTest("that structure has no submitted assignment")
+
+		self.assertEqual(_basic_from_salary_structure(ssa.employee), row[0].amount)
