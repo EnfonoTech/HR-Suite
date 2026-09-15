@@ -136,6 +136,7 @@
     <div class="nav-group-label">Reference</div>
     <a href="#letters">Letters and documents</a>
     <a href="#reports">Reports</a>
+    <a href="#catalogue">Every feature, in plain English</a>
     <a href="#status">What the statuses mean</a>
     <a href="#roles">Who can do what</a>
     <a href="#notyet">Not switched on yet</a>
@@ -150,6 +151,7 @@
      No technical knowledge needed.</p>
   <div class="meta">
     <span class="chip">12 stages</span>
+    <span class="chip">Every screen listed in plain English</span>
     <span class="chip">Real screenshots from the test system</span>
     <span class="chip">Written for HR staff</span>
   </div>
@@ -413,18 +415,58 @@
   </figure>
 
   <h3>Overtime</h3>
-  <p>An <b>Overtime Request</b> records extra hours and works out the money for you from the employee's
-     basic pay and the overtime multiplier.</p>
+  <p>An <b>Overtime Request</b> records extra hours and works out the money for you. You never type an
+     amount. You type hours; the system finds the person's basic pay, works out what one hour is worth,
+     and multiplies it by the rate the law of their work country sets for that kind of day.</p>
   <figure>
     <img src="/assets/hr_suite/images/guide/16-overtime-request.jpg" alt="Overtime Request showing 4 hours and an overtime amount" loading="lazy">
     <figcaption>Overtime Request. Enter the hours; the amount is calculated, not typed.</figcaption>
   </figure>
   <ol class="steps">
     <li>Pick the employee and the date.</li>
+    <li>Enter the <b>Shift Start</b> and <b>Shift End</b>. These matter — night hours are paid more in
+        several countries, and this is how the system knows.</li>
     <li>Enter <b>Overtime Hours</b>. Normal plus overtime cannot exceed 12 hours in a day.</li>
-    <li>The system fills the hourly rate from the current basic salary and calculates the amount.</li>
-    <li>Set Approval Status to <b>Approved</b>, then Submit.</li>
+    <li>Save. The system fills in <b>Day Type</b>, <b>Overtime Rate</b>, the hourly rate and the amount.</li>
+    <li>Set Approval Status to <b>Approved</b>, then Submit. A Journal Entry is raised for the amount.</li>
   </ol>
+
+  <h3>Why the rate changes by country and by day</h3>
+  <p>An hour of overtime is not worth the same everywhere, and it is not worth the same on every day.
+     A Friday for a Bahrain worker is their weekly rest day and the law prices it higher than a Tuesday.
+     The system knows all of this without anybody remembering to tick a box.</p>
+  <p><b>Where the day type comes from:</b> the employee's own <b>Holiday List</b>. If the date is marked
+     there as a weekly off, it is a <i>Weekly Rest Day</i>. If it is marked as a holiday that is not a
+     weekly off, it is a <i>Public Holiday</i>. Anything else is a <i>Working Day</i>. So keeping the
+     Holiday List correct is what keeps overtime pay correct.</p>
+  <p><b>Where the rate comes from:</b> <b>Country Config</b> for the employee's work country. Each
+     country record carries four figures and, where the law has one, a night rate with its own window.</p>
+  <div class="scroll"><table>
+    <tr><th>Country</th><th>Working day</th><th>Night</th><th>Weekly rest day</th><th>Public holiday</th><th>Hours in a month</th></tr>
+    <tr><td><b>Bahrain</b></td><td>1.25&times;</td><td>1.50&times; (19:00&ndash;07:00)</td><td>1.50&times;</td><td>1.50&times;</td><td>240</td></tr>
+    <tr><td><b>Saudi Arabia</b></td><td>1.50&times;</td><td>&mdash;</td><td>1.50&times;</td><td>1.50&times;</td><td>240</td></tr>
+    <tr><td><b>UAE</b></td><td>1.25&times;</td><td>1.50&times; (22:00&ndash;04:00)</td><td>1.50&times;</td><td>1.50&times;</td><td>240</td></tr>
+    <tr><td><b>Oman</b></td><td>1.25&times;</td><td>1.50&times; (21:00&ndash;06:00)</td><td>2.00&times;</td><td>2.00&times;</td><td>240</td></tr>
+    <tr><td><b>India</b></td><td>2.00&times;</td><td>&mdash;</td><td>2.00&times;</td><td>2.00&times;</td><td>208</td></tr>
+  </table></div>
+  <p><b>Reading the sum.</b> Bahrain, basic 300, four hours of overtime on a Tuesday afternoon:
+     300 &divide; 240 = 1.250 an hour, &times; 1.25 = 1.563, &times; 4 hours = <b>6.250</b>. The same four hours
+     on a Friday: &times; 1.50 = 1.875, &times; 4 = <b>7.500</b>. The form shows you which rule it used in the
+     <b>Rate Basis</b> box, so the figure is never a mystery.</p>
+  <div class="note">
+    <b>These are the legal minimums, not a company policy</b>
+    The figures above are what each country's labour law requires as a floor. If Steel Force has agreed
+    to pay more than that &mdash; in a contract, or as a standing practice &mdash; change the figure on
+    <b>Country Config</b> for that country and every future Overtime Request uses the new rate. Nothing
+    needs to be changed in the software. The reason for each figure is written on the record itself, in
+    the <b>Overtime Notes</b> box.
+  </div>
+  <div class="warn">
+    <b>An employee with no Holiday List gets the working-day rate</b>
+    The system will not refuse the overtime entry &mdash; it would be worse to block HR over a missing
+    setting. But it cannot tell that a Friday is their rest day, so it pays the ordinary rate. If rest-day
+    overtime is coming out too low, the Holiday List on the employee is the first thing to check.
+  </div>
 </section>
 
 <section id="s6">
@@ -584,6 +626,23 @@
     <tr><td><span class="badge b-stop">With issues</span></td><td>At least one employee is missing something payroll needs</td><td>Fix the source record, refresh, look again</td></tr>
     <tr><td><span class="badge b-warn">Not Refreshed</span></td><td>Figures may be stale</td><td>Press Refresh Allocations</td></tr>
   </table></div>
+  <p><b>Where every line on the preview comes from.</b> The Allocations table names its source document
+     on each row, so any figure can be traced back and argued with:</p>
+  <div class="scroll"><table>
+    <tr><th>Line on the preview</th><th>Comes from</th><th>When it appears</th></tr>
+    <tr><td>Basic, Housing, Transport and every other component</td><td><b>Salary Structure Assignment</b></td><td>Always, for anyone on a salary structure</td></tr>
+    <tr><td>Loan instalment</td><td><b>Employee Loan</b></td><td>When an instalment is due in the period</td></tr>
+    <tr><td>Fine or penalty</td><td><b>Employee Penalty</b></td><td>When one is approved and unrecovered</td></tr>
+    <tr><td>Overtime pay</td><td><b>Overtime Request</b></td><td>When approved for a date inside the period</td></tr>
+    <tr><td>One-off addition or correction</td><td><b>Salary Adjustment</b></td><td>When dated into the period</td></tr>
+    <tr><td>Advance recovery</td><td><b>Employee Advance</b></td><td>Only where the advance is marked <i>Repay Unclaimed Amount from Salary</i> and money is still outstanding</td></tr>
+  </table></div>
+  <div class="note">
+    <b>If a line you expected is not there</b>
+    Look at the last column above before assuming the preview is wrong. An advance that was claimed
+    against expenses, or a loan with no instalment falling in this month, is correctly absent &mdash;
+    it is not money due this period.
+  </div>
   <div class="ok">
     <b>Nothing on this screen is stored</b>
     Payroll Preview holds no figures of its own. It rebuilds from your documents each time you refresh,
@@ -828,6 +887,22 @@
     <tr><td><b>Employee Leave Balance</b></td><td>What everyone has left to take</td></tr>
     <tr><td><b>Salary Register</b></td><td>Every payslip in a month, side by side</td></tr>
     <tr><td><b>Employee Document Expiry</b></td><td>Passports, CPRs and permits about to run out</td></tr>
+    <tr><td><b>Leave Balance Report</b></td><td>Balance per leave type, per person, as at a date</td></tr>
+    <tr><td><b>Pre-Payroll Allocation Register</b></td><td>Everything queued to hit the next payroll, before you run it</td></tr>
+    <tr><td><b>Contract Expiry Report</b></td><td>Employment contracts coming up for renewal</td></tr>
+    <tr><td><b>Work Permit Expiry Report</b></td><td>Permits by days remaining, worst first</td></tr>
+    <tr><td><b>LMRA Work Permit Register</b></td><td>The permit register in the shape LMRA expects</td></tr>
+    <tr><td><b>EOSB Calculation Report</b></td><td>What end-of-service would cost today, per employee</td></tr>
+    <tr><td><b>WPS Export Report</b></td><td>The salary file for the bank, in WPS format</td></tr>
+    <tr><td><b>WPS Submission Tracker</b></td><td>Which months were filed, and which were not</td></tr>
+    <tr><td><b>GOSI Monthly Report</b></td><td>Saudi social insurance return for the month</td></tr>
+    <tr><td><b>Nitaqat Compliance Report</b></td><td>Saudi nationalisation band and headcount split</td></tr>
+    <tr><td><b>Labor Coverage Matrix</b></td><td>Which legal obligations are covered, and by what</td></tr>
+    <tr><td><b>Labor Inspection Tracker</b></td><td>Open inspections and their findings</td></tr>
+    <tr><td><b>Compliance Case Tracker</b></td><td>Every open compliance case in one list</td></tr>
+    <tr><td><b>Compliance Obligation Backlog</b></td><td>What is overdue, oldest first</td></tr>
+    <tr><td><b>Policy Compliance Register</b></td><td>Who has read and acknowledged which policy</td></tr>
+    <tr><td><b>Legal Review Queue</b></td><td>Items waiting on a legal opinion</td></tr>
   </table></div>
   <figure>
     <img src="/assets/hr_suite/images/guide/17-attendance-report.jpg" alt="Monthly Attendance Sheet report with a month grid" loading="lazy">
@@ -838,6 +913,201 @@
     Most reports ask for a company and a date range before they will run. That is not an error — it is
     the report refusing to guess which month you meant.
   </div>
+</section>
+
+<section id="catalogue">
+  <h2>Every feature, in plain English</h2>
+  <p class="lede">One line for every screen in the system, in the order of the employee's life &mdash;
+     so you can find the right screen without knowing its name.</p>
+  <p>The system is two things working as one. <b>Standard HR</b> is the HR and Payroll module that ships
+     with ERPNext and is used by thousands of companies. <b>HR Suite</b> is the layer Enfono built on top
+     of it for Bahrain and the Gulf: labour law, LMRA, WPS, end-of-service, loans, compliance. You do not
+     need to know which is which to use them &mdash; they sit side by side in the same workspace &mdash;
+     but the tables below say so, because it tells you where a rule comes from.</p>
+  <div class="note">
+    <b>Not every screen below is switched on for Steel Force today</b>
+    The catalogue is the full shelf. What is live for you is what appears in the HR Suite workspace and
+    in the search bar. Anything you cannot find is either not enabled or not yet configured &mdash;
+    ask before assuming it is broken.
+  </div>
+
+  <h3>Hiring</h3>
+  <div class="scroll"><table>
+    <tr><th>Screen</th><th>What it does</th><th>Part of</th></tr>
+    <tr><td><b>Staffing Plan</b></td><td>How many people each department is allowed to hire this year, and the budget for it</td><td>Standard HR</td></tr>
+    <tr><td><b>Job Requisition</b></td><td>A manager's request to fill a post, with an approval before recruiting starts</td><td>Standard HR</td></tr>
+    <tr><td><b>Job Opening</b></td><td>The advertised vacancy &mdash; title, department, description</td><td>Standard HR</td></tr>
+    <tr><td><b>Job Applicant</b></td><td>One person who applied, with their CV and current stage</td><td>Standard HR</td></tr>
+    <tr><td><b>Interview Round</b> &amp; <b>Interview</b></td><td>Scheduled interviews, the panel, and the skills each round scores</td><td>Standard HR</td></tr>
+    <tr><td><b>Interview Feedback</b></td><td>Each interviewer's score against the same skills, so candidates are compared fairly</td><td>Standard HR</td></tr>
+    <tr><td><b>Job Offer</b></td><td>The offer sent to the chosen candidate, with the terms</td><td>Standard HR</td></tr>
+    <tr><td><b>Candidate Profile</b></td><td>The Gulf-specific detail a job applicant record does not hold &mdash; nationality, visa position, availability</td><td>HR Suite</td></tr>
+    <tr><td><b>Recruitment Service Provider Compliance</b></td><td>Tracks the agencies you hire through, and any violations or complaints against them</td><td>HR Suite</td></tr>
+  </table></div>
+
+  <h3>Joining and the employee file</h3>
+  <div class="scroll"><table>
+    <tr><th>Screen</th><th>What it does</th><th>Part of</th></tr>
+    <tr><td><b>Employee Onboarding</b></td><td>The joining checklist &mdash; every task, who owns it, and whether it is done</td><td>Standard HR</td></tr>
+    <tr><td><b>Employee</b></td><td>The master record. Everything else in the system points at this</td><td>Standard HR</td></tr>
+    <tr><td><b>Employee Document</b> &amp; <b>Employee Document Type</b></td><td>Passport, CPR, permit and certificate copies, each with an expiry the system watches</td><td>HR Suite</td></tr>
+    <tr><td><b>Employee Document Custody Log</b></td><td>Who is physically holding an original document, and when it was handed back</td><td>HR Suite</td></tr>
+    <tr><td><b>Country Employment Contract</b></td><td>The signed contract, its dates, and the salary it agreed &mdash; the legal source for the work country</td><td>HR Suite</td></tr>
+    <tr><td><b>Medical Examination</b></td><td>Pre-employment and periodic medicals, with the fitness result</td><td>HR Suite</td></tr>
+    <tr><td><b>Policy Acknowledgement</b> &amp; <b>HR Policy Document</b></td><td>Publishes a policy and records who has read and accepted it</td><td>HR Suite</td></tr>
+    <tr><td><b>Employee Skill Map</b></td><td>What each person can do, scored, so gaps are visible</td><td>Standard HR</td></tr>
+  </table></div>
+
+  <h3>Pay setup</h3>
+  <div class="scroll"><table>
+    <tr><th>Screen</th><th>What it does</th><th>Part of</th></tr>
+    <tr><td><b>Salary Component</b></td><td>One line that can appear on a payslip &mdash; Basic, Housing, Transport, a deduction</td><td>Standard HR</td></tr>
+    <tr><td><b>Salary Structure</b></td><td>The recipe: which components, in what order, with what formula</td><td>Standard HR</td></tr>
+    <tr><td><b>Salary Structure Assignment</b></td><td>Puts one employee on one structure from one date, with their base figure. <b>This is the single source of the salary</b></td><td>Standard HR</td></tr>
+    <tr><td><b>Salary Structure Assignment Import</b></td><td>Assigns a structure to many employees from a spreadsheet instead of one at a time</td><td>HR Suite</td></tr>
+    <tr><td><b>Employee Salary Component</b></td><td>The read-only breakdown shown on the employee's Salary tab, kept in step with the assignment</td><td>HR Suite</td></tr>
+    <tr><td><b>Salary Component Override</b></td><td>Changes one component for one person without cloning a whole structure</td><td>HR Suite</td></tr>
+    <tr><td><b>Income Tax Slab</b></td><td>Tax bands, where the country has income tax on salary</td><td>Standard HR</td></tr>
+    <tr><td><b>Payroll Period</b></td><td>The tax and payroll year the system computes against</td><td>Standard HR</td></tr>
+  </table></div>
+
+  <h3>Attendance, shifts and working time</h3>
+  <div class="scroll"><table>
+    <tr><th>Screen</th><th>What it does</th><th>Part of</th></tr>
+    <tr><td><b>Holiday List</b></td><td>The weekly off and the public holidays. Drives leave, attendance <i>and</i> the overtime rate</td><td>Standard HR</td></tr>
+    <tr><td><b>Shift Type</b></td><td>Defines a shift &mdash; its hours, grace periods, and how late counts as late</td><td>Standard HR</td></tr>
+    <tr><td><b>Shift Assignment</b> &amp; <b>Shift Request</b></td><td>Puts a person on a shift for a period; a request is the version that needs approval</td><td>Standard HR</td></tr>
+    <tr><td><b>Employee Checkin</b></td><td>Raw in/out punches, from the biometric device or entered by hand</td><td>Standard HR</td></tr>
+    <tr><td><b>Attendance</b></td><td>One day, one person, one status: Present, Absent, Half Day, On Leave</td><td>Standard HR</td></tr>
+    <tr><td><b>Attendance Request</b></td><td>The employee's own request to correct a day they were marked wrongly</td><td>Standard HR</td></tr>
+    <tr><td><b>Employee Attendance Tool</b></td><td>Marks a whole department present for a day in one screen</td><td>Standard HR</td></tr>
+    <tr><td><b>Upload Attendance</b></td><td>Brings a month of attendance in from a spreadsheet</td><td>Standard HR</td></tr>
+    <tr><td><b>Overtime Request</b></td><td>Extra hours, priced by the country's law and the type of day &mdash; see Stage 5</td><td>HR Suite</td></tr>
+    <tr><td><b>Work Arrangement Control</b></td><td>Remote, hybrid and flexible-hours arrangements, and who approved them</td><td>HR Suite</td></tr>
+    <tr><td><b>Working Time Compliance Check</b></td><td>Flags anyone whose hours breach the legal daily or weekly limit</td><td>HR Suite</td></tr>
+    <tr><td><b>Holiday Leave Overlap Rule</b></td><td>Decides whether a public holiday inside a leave spell is counted against the balance</td><td>HR Suite</td></tr>
+  </table></div>
+
+  <h3>Leave</h3>
+  <div class="scroll"><table>
+    <tr><th>Screen</th><th>What it does</th><th>Part of</th></tr>
+    <tr><td><b>Leave Type</b></td><td>Annual, Sick, Maternity &mdash; each with its own rules on carry-forward and pay</td><td>Standard HR</td></tr>
+    <tr><td><b>Leave Period</b></td><td>The year that leave is granted for</td><td>Standard HR</td></tr>
+    <tr><td><b>Leave Policy</b></td><td>A bundle: this many days of that type, for this kind of employee</td><td>Standard HR</td></tr>
+    <tr><td><b>Leave Policy Assignment</b></td><td>Grants the policy to a person. <b>This is what creates the balance</b>, pro-rated from their joining date</td><td>Standard HR</td></tr>
+    <tr><td><b>Leave Allocation</b></td><td>The resulting balance record &mdash; days granted, days taken, days left</td><td>Standard HR</td></tr>
+    <tr><td><b>Leave Application</b></td><td>The request itself. On Submit it marks attendance and reaches the payslip</td><td>Standard HR</td></tr>
+    <tr><td><b>Compensatory Leave Request</b></td><td>Turns a worked holiday into a day off in lieu</td><td>Standard HR</td></tr>
+    <tr><td><b>Leave Encashment</b></td><td>Pays unused leave out as money instead of time off</td><td>Standard HR</td></tr>
+    <tr><td><b>Leave Block List</b></td><td>Dates nobody may take off &mdash; stock count week, year end</td><td>Standard HR</td></tr>
+    <tr><td><b>Annual Leave</b> &amp; <b>Annual Leave Disbursement</b></td><td>The Gulf pattern: annual leave taken as a block with the ticket and leave salary paid up front</td><td>HR Suite</td></tr>
+    <tr><td><b>Sick Leave</b></td><td>Applies the country's sick-pay bands &mdash; full pay, then part pay, then unpaid</td><td>HR Suite</td></tr>
+    <tr><td><b>Maternity / Paternity Leave</b></td><td>Statutory parental leave with the country's entitlement and pay rule</td><td>HR Suite</td></tr>
+    <tr><td><b>Special Leave</b></td><td>Marriage, bereavement, Hajj, exam leave &mdash; the one-off entitlements the law names</td><td>HR Suite</td></tr>
+    <tr><td><b>Absence Case</b></td><td>Unexplained absence handled as a case, with the warnings it triggers</td><td>HR Suite</td></tr>
+  </table></div>
+
+  <h3>Money owed and money deducted</h3>
+  <div class="scroll"><table>
+    <tr><th>Screen</th><th>What it does</th><th>Part of</th></tr>
+    <tr><td><b>Employee Loan</b> &amp; <b>Employee Loan Installment</b></td><td>A loan to staff and its repayment plan; each instalment lands on the payslip automatically</td><td>HR Suite</td></tr>
+    <tr><td><b>Employee Advance</b></td><td>Cash given ahead of a claim or a salary, recovered later</td><td>Standard HR</td></tr>
+    <tr><td><b>Expense Claim</b></td><td>Out-of-pocket spending claimed back, approved, then paid</td><td>Standard HR</td></tr>
+    <tr><td><b>Travel Request</b></td><td>Trip approval, with the advance it needs</td><td>Standard HR</td></tr>
+    <tr><td><b>Additional Salary</b></td><td>A one-off addition or deduction on a named month &mdash; bonus, arrears, a fine</td><td>Standard HR</td></tr>
+    <tr><td><b>Retention Bonus</b> &amp; <b>Employee Incentive</b></td><td>Dated bonus commitments that pay themselves into the right month</td><td>Standard HR</td></tr>
+    <tr><td><b>Salary Adjustment</b></td><td>A correction to one month's pay, with the reason recorded</td><td>HR Suite</td></tr>
+    <tr><td><b>Employee Penalty</b> &amp; <b>Penalty Type</b></td><td>Fines allowed by the work regulation, capped at what the law permits</td><td>HR Suite</td></tr>
+    <tr><td><b>Payroll Adjustment Item</b></td><td>The queue of every pending addition and deduction waiting for the next run</td><td>HR Suite</td></tr>
+  </table></div>
+
+  <h3>Running payroll</h3>
+  <div class="scroll"><table>
+    <tr><th>Screen</th><th>What it does</th><th>Part of</th></tr>
+    <tr><td><b>Payroll Preview</b></td><td>A dry run. Shows every earning and deduction that will hit each person &mdash; structure, loan, advance, penalty, overtime, adjustment &mdash; <b>before</b> a single payslip exists</td><td>HR Suite</td></tr>
+    <tr><td><b>Payroll Entry</b></td><td>The real run: creates the payslips for a period, then books the accounting entry</td><td>Standard HR</td></tr>
+    <tr><td><b>Salary Slip</b></td><td>One person's payslip for one month, with every line shown</td><td>Standard HR</td></tr>
+    <tr><td><b>Monthly Payroll</b></td><td>The month's payroll held as one reviewable record per employee</td><td>HR Suite</td></tr>
+    <tr><td><b>Payroll Settings</b></td><td>How payroll behaves: rounding, payment days, whether unmarked days count as present</td><td>Standard HR</td></tr>
+    <tr><td><b>WPS Submission</b></td><td>The Wage Protection System file for the bank, and the record of filing it</td><td>HR Suite</td></tr>
+    <tr><td><b>Bank Remittance</b></td><td>The standard salary payment file</td><td>Standard HR</td></tr>
+  </table></div>
+
+  <h3>Statutory and country rules</h3>
+  <div class="scroll"><table>
+    <tr><th>Screen</th><th>What it does</th><th>Part of</th></tr>
+    <tr><td><b>Country Config</b></td><td>One record per country holding its law: contribution rates, leave entitlements, end-of-service formula, notice periods, permit labels and the overtime rates</td><td>HR Suite</td></tr>
+    <tr><td><b>Statutory Contribution</b></td><td>The monthly social insurance calculation for each employee</td><td>HR Suite</td></tr>
+    <tr><td><b>GOSI Contribution</b></td><td>Saudi social insurance detail</td><td>HR Suite</td></tr>
+    <tr><td><b>DEWS Contribution</b></td><td>UAE end-of-service savings scheme</td><td>HR Suite</td></tr>
+    <tr><td><b>EPF / ESI Contribution</b> &amp; <b>Professional Tax</b></td><td>The Indian statutory deductions</td><td>HR Suite</td></tr>
+    <tr><td><b>Nitaqat Record</b></td><td>Saudi nationalisation band and the headcount behind it</td><td>HR Suite</td></tr>
+    <tr><td><b>Work Regulation</b></td><td>The company's filed internal work rules &mdash; the document fines and discipline must stay inside</td><td>HR Suite</td></tr>
+    <tr><td><b>Legal Reference Matrix</b></td><td>Links each rule the system applies to the article of law behind it</td><td>HR Suite</td></tr>
+    <tr><td><b>Ministry Filing Tracker</b></td><td>Every filing owed to a ministry, its due date and its status</td><td>HR Suite</td></tr>
+    <tr><td><b>Government Portal Sync Log</b></td><td>What was sent to a government portal, when, and what came back</td><td>HR Suite</td></tr>
+    <tr><td><b>Regulatory Task</b></td><td>A dated compliance job with an owner, so nothing is only in someone's head</td><td>HR Suite</td></tr>
+  </table></div>
+
+  <h3>Permits, visas and inspections</h3>
+  <div class="scroll"><table>
+    <tr><th>Screen</th><th>What it does</th><th>Part of</th></tr>
+    <tr><td><b>Work Permit / Iqama</b></td><td>The permit record, its number, its expiry, and the fee it carries</td><td>HR Suite</td></tr>
+    <tr><td><b>Expat Work Authorization Control</b></td><td>Checks an expatriate is legally allowed to do the job they are in</td><td>HR Suite</td></tr>
+    <tr><td><b>Special Employment Category Control</b></td><td>Rules for categories the law treats differently &mdash; young workers, night workers, women in specific roles</td><td>HR Suite</td></tr>
+    <tr><td><b>Disability Employment Compliance</b> &amp; <b>Accommodation Catalog</b></td><td>The disability quota, and the adjustments made for each person</td><td>HR Suite</td></tr>
+    <tr><td><b>Labor Inspection</b> &amp; <b>Inspection Fine SLA</b></td><td>A ministry inspection, its findings, the fines, and the clock to fix them</td><td>HR Suite</td></tr>
+    <tr><td><b>Safety Inspection and Risk Control</b></td><td>Workplace safety rounds and the controls put in place</td><td>HR Suite</td></tr>
+    <tr><td><b>Work Injury</b></td><td>An injury at work, its reporting, and the compensation that follows</td><td>HR Suite</td></tr>
+  </table></div>
+
+  <h3>Performance, training and growth</h3>
+  <div class="scroll"><table>
+    <tr><th>Screen</th><th>What it does</th><th>Part of</th></tr>
+    <tr><td><b>Appraisal Template</b> &amp; <b>Appraisal Cycle</b></td><td>What is scored, and the review round it belongs to</td><td>Standard HR</td></tr>
+    <tr><td><b>Appraisal</b></td><td>One person's review, with self-score, manager score and the final rating</td><td>Standard HR</td></tr>
+    <tr><td><b>Goal</b></td><td>A target with a deadline and a progress figure</td><td>Standard HR</td></tr>
+    <tr><td><b>Performance Feedback</b></td><td>Feedback recorded between review rounds, so the appraisal is not written from memory</td><td>Standard HR</td></tr>
+    <tr><td><b>Staff Rating</b> &amp; <b>Appraisal Criterion Rating</b></td><td>The Gulf-format rating sheet used alongside the standard appraisal</td><td>HR Suite</td></tr>
+    <tr><td><b>Promotion / Transfer</b></td><td>A move in grade, pay or department, with the effective date and the letter</td><td>HR Suite</td></tr>
+    <tr><td><b>Employee Promotion</b> &amp; <b>Employee Transfer</b></td><td>The standard equivalents, which update the employee record on the effective date</td><td>Standard HR</td></tr>
+    <tr><td><b>Training Program</b>, <b>Event</b>, <b>Result</b>, <b>Feedback</b></td><td>Training planned, delivered, scored and reviewed</td><td>Standard HR</td></tr>
+    <tr><td><b>Training Record</b> &amp; <b>Training Agreement</b></td><td>Company-sponsored training and the bond or repayment terms attached to it</td><td>HR Suite</td></tr>
+    <tr><td><b>Training Disclosure Register</b></td><td>The training the ministry must be told about</td><td>HR Suite</td></tr>
+  </table></div>
+
+  <h3>Discipline and disputes</h3>
+  <div class="scroll"><table>
+    <tr><th>Screen</th><th>What it does</th><th>Part of</th></tr>
+    <tr><td><b>Disciplinary Violation Catalog</b></td><td>The list of offences and the penalty each one allows &mdash; taken from the filed work regulation</td><td>HR Suite</td></tr>
+    <tr><td><b>Disciplinary Procedure</b></td><td>The steps that must be followed before any penalty, in order</td><td>HR Suite</td></tr>
+    <tr><td><b>Investigation Record</b></td><td>The enquiry, the evidence, and the employee's statement</td><td>HR Suite</td></tr>
+    <tr><td><b>Employee Warning Notice</b></td><td>The written warning, and the acknowledgement of it</td><td>HR Suite</td></tr>
+    <tr><td><b>Disciplinary Decision Log</b> &amp; <b>Disciplinary Appeal</b></td><td>What was decided, by whom, and the employee's right of appeal</td><td>HR Suite</td></tr>
+    <tr><td><b>Employee Grievance</b></td><td>A complaint raised by the employee, and how it was resolved</td><td>Standard HR</td></tr>
+    <tr><td><b>Labor Dispute</b></td><td>A case that has gone to the ministry or the court, and where it stands</td><td>HR Suite</td></tr>
+    <tr><td><b>HR Compliance Action Log</b></td><td>The audit trail: every compliance action taken, by whom, when</td><td>HR Suite</td></tr>
+  </table></div>
+
+  <h3>Leaving</h3>
+  <div class="scroll"><table>
+    <tr><th>Screen</th><th>What it does</th><th>Part of</th></tr>
+    <tr><td><b>Termination Notice</b></td><td>Notice given or received, with the country's notice period applied</td><td>HR Suite</td></tr>
+    <tr><td><b>Employee Separation</b></td><td>The leaving checklist, the mirror of onboarding</td><td>Standard HR</td></tr>
+    <tr><td><b>Exit Clearance</b></td><td>Department-by-department sign-off that nothing is outstanding</td><td>HR Suite</td></tr>
+    <tr><td><b>End of Service Benefit</b></td><td>The indemnity or gratuity, calculated by the country's formula and years of service</td><td>HR Suite</td></tr>
+    <tr><td><b>Final Settlement SLA</b></td><td>The clock the law puts on paying a leaver, and whether it was met</td><td>HR Suite</td></tr>
+  </table></div>
+
+  <h3>Letters and shared setup</h3>
+  <div class="scroll"><table>
+    <tr><th>Screen</th><th>What it does</th><th>Part of</th></tr>
+    <tr><td><b>HR Letter</b> &amp; <b>HR Letter Template</b></td><td>Salary certificates, NOCs, experience letters &mdash; written once as a template, issued per employee</td><td>HR Suite</td></tr>
+    <tr><td><b>HR Suite Settings</b></td><td>The switches for the whole app: default work country, approval behaviour, alert windows</td><td>HR Suite</td></tr>
+    <tr><td><b>HR Settings</b></td><td>The standard module's own switches &mdash; leave approver rules, emails, permissions</td><td>Standard HR</td></tr>
+    <tr><td><b>Statutory HR Records Register</b></td><td>The registers a labour inspector can ask to see, kept in the format they expect</td><td>HR Suite</td></tr>
+    <tr><td><b>Employee Advance / Expense approval flows</b></td><td>Approval routes shared with the rest of the ERP, so HR follows the same chain as finance</td><td>Standard HR</td></tr>
+  </table></div>
 </section>
 
 <section id="status">
