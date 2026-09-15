@@ -25,20 +25,7 @@ run complete. The entry still has to be approved before it reaches the ledger.
 import frappe
 from hrms.payroll.doctype.payroll_entry.payroll_entry import PayrollEntry
 
-
-def journal_entry_needs_approval() -> bool:
-	"""True when an active approval workflow covers Journal Entry.
-
-	Only permission_manager's PM Workflow is consulted; a site without it keeps
-	stock hrms behaviour, so this override is inert where there is nothing to
-	approve against.
-	"""
-	if not frappe.db.exists("DocType", "PM Workflow"):
-		return False
-
-	return bool(
-		frappe.db.exists("PM Workflow", {"document_type": "Journal Entry", "is_active": 1})
-	)
+from hr_suite.hr_suite.utils import journal_entry_needs_approval
 
 
 class HRSuitePayrollEntry(PayrollEntry):

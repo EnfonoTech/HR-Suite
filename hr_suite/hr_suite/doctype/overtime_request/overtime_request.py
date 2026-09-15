@@ -138,18 +138,37 @@ class OvertimeRequest(Document):
 				},
 			],
 		})
-		assert_doctype_permissions("Journal Entry", ("create", "submit"))
+		from hr_suite.hr_suite.utils import journal_entry_needs_approval
+
+		needs_approval = journal_entry_needs_approval()
+		assert_doctype_permissions("Journal Entry", ("create",) if needs_approval else ("create", "submit"))
 		je.insert()
-		je.submit()
+
+		# Submitting here while an approval workflow covers Journal Entry is refused, and
+		# the refusal propagates out of on_submit — so the overtime request itself cannot
+		# be approved at all. Leave the entry in Draft for its approver instead; the
+		# overtime is still recorded and the money still reaches the ledger once approved.
+		if not needs_approval:
+			je.submit()
 
 		self.db_set("overtime_journal_entry", je.name)
-		frappe.msgprint(
-			_("Journal Entry <b>{0}</b> created for overtime of {1} {2}.").format(
-				je.name, flt(self.overtime_amount), currency
-			),
-			title=_("Journal Entry Created"),
-			indicator="green",
-		)
+		if needs_approval:
+			frappe.msgprint(
+				_("Journal Entry <b>{0}</b> was created for overtime of {1} {2} and is waiting "
+				  "for approval. It reaches the accounts once approved.").format(
+					je.name, flt(self.overtime_amount), currency
+				),
+				title=_("Journal Entry awaiting approval"),
+				indicator="orange",
+			)
+		else:
+			frappe.msgprint(
+				_("Journal Entry <b>{0}</b> created for overtime of {1} {2}.").format(
+					je.name, flt(self.overtime_amount), currency
+				),
+				title=_("Journal Entry Created"),
+				indicator="green",
+			)
 
 
 @frappe.whitelist()

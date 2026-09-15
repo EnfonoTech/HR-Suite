@@ -93,6 +93,24 @@ def get_active_contract(employee: str, fields=None, as_dict=True):
 	)
 
 
+def journal_entry_needs_approval() -> bool:
+    """True when an active approval workflow covers Journal Entry.
+
+    hrms and this app both raise a Journal Entry and submit it in the same breath.
+    Where an approval workflow covers Journal Entry that submit is refused, and the
+    refusal takes the whole parent operation down with it - a payroll run, an
+    overtime approval. Callers use this to create the entry and leave it in Draft
+    for its approver instead.
+
+    Only permission_manager's PM Workflow is consulted, so a site without it keeps
+    stock behaviour.
+    """
+    if not frappe.db.exists("DocType", "PM Workflow"):
+        return False
+
+    return bool(frappe.db.exists("PM Workflow", {"document_type": "Journal Entry", "is_active": 1}))
+
+
 def get_employee_basic_salary(employee: str, as_on=None) -> float:
 	"""Monthly basic pay, for sick and special leave, overtime and end of service.
 
