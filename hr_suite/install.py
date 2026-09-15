@@ -8,6 +8,7 @@ from pathlib import Path
 
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+from frappe.utils import flt
 
 from hr_suite.hr_suite.leave_setup import setup_leave_management
 from hr_suite.hr_suite.performance_setup import setup_performance_management
@@ -923,8 +924,11 @@ def seed_country_configs():
 
 		existing = frappe.db.get_value("Country Config", {"country_code": code}, "name")
 		if existing:
+			# Don't overwrite admin-customised configs — but DO fill fields this release
+			# added, which an existing record cannot have and which are useless empty.
+			top_up_country_overtime(existing, cfg_data)
 			cfg_data["leave_types"] = leave_types
-			continue  # Don't overwrite admin-customised configs
+			continue
 
 		doc_data = dict(cfg_data)
 		doc_data["doctype"] = "Country Config"
@@ -939,6 +943,60 @@ def seed_country_configs():
 
 		# restore leave_types key in _COUNTRY_CONFIGS entry for idempotent re-runs
 		cfg_data["leave_types"] = leave_types
+
+
+# Every overtime field the seed can supply. The rates are `decimal NOT NULL DEFAULT 0`
+# columns, so an existing record gets 0 the moment the column is added — never NULL —
+# and a "fill only what is blank" test that checks for NULL skips them all. Zero is not
+# a rate anybody can have chosen (it would mean overtime is unpaid), so zero means unset.
+_OVERTIME_NUMERIC_FIELDS = (
+	"overtime_hours_per_month",
+	"overtime_weekday_rate",
+	"overtime_night_rate",
+	"overtime_rest_day_rate",
+	"overtime_holiday_rate",
+)
+_OVERTIME_TEXT_FIELDS = ("overtime_night_start", "overtime_night_end", "overtime_notes")
+
+
+def top_up_country_overtime(name: str, defaults: dict):
+	"""Fill the overtime fields of an existing Country Config that are still unset.
+
+	Runs on every migrate, from seed_country_configs(). That is deliberate: a one-shot
+	patch has to be renamed every time its own emptiness test turns out to be wrong, and
+	this one was wrong twice — first because the DocType carried a `default` that the DDL
+	wrote onto every row, then because the rate columns are NOT NULL and arrive as 0.
+	A top-up that re-runs is self-healing, and writes nothing once the values are there.
+
+	An administrator's figure is never touched. Only a zero rate or a blank window/note
+	is replaced, and only with what this country's law says.
+	"""
+	if not name:
+		return
+
+	columns = set(frappe.db.get_table_columns("Country Config"))
+	fields = [
+		f for f in (_OVERTIME_NUMERIC_FIELDS + _OVERTIME_TEXT_FIELDS)
+		if f in columns and f in defaults
+	]
+	if not fields:
+		return
+
+	current = frappe.db.get_value("Country Config", name, fields, as_dict=True) or {}
+	updates = {}
+	for field in fields:
+		value = current.get(field)
+		if field in _OVERTIME_NUMERIC_FIELDS:
+			if not flt(value):
+				updates[field] = defaults[field]
+		elif value in (None, ""):
+			updates[field] = defaults[field]
+
+	if updates:
+		frappe.db.set_value("Country Config", name, updates, update_modified=False)
+		frappe.logger().info(
+			f"HR Suite: filled overtime terms on Country Config {name}: {sorted(updates)}"
+		)
 
 
 # ─── Employee Document Types ────────────────────────────────────────────────────

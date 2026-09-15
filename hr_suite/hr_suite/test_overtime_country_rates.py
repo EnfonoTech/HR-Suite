@@ -106,3 +106,69 @@ class TestOvertimeTermsFollowCountryConfig(FrappeTestCase):
 		if config and terms["day_type"] == "Working Day" and flt(config.overtime_weekday_rate):
 			self.assertEqual(terms["rate"], flt(config.overtime_weekday_rate, 2))
 			self.assertEqual(terms["hours_per_month"], flt(config.overtime_hours_per_month, 2))
+
+class TestOvertimeSeedIsSelfHealing(FrappeTestCase):
+	"""The top-up fills what is unset, and every country ends up coherent.
+
+	Three separate bugs put a wrong rate on a live site, all the same shape: a field
+	that looked set because the column was NOT NULL or carried a DDL default. These
+	tests assert the end state rather than the mechanism, so they catch the next one.
+	"""
+
+	def test_no_country_carries_a_night_window_that_prices_nothing(self):
+		rows = frappe.get_all(
+			"Country Config",
+			fields=["name", "country_code", "overtime_night_rate", "overtime_night_start", "overtime_night_end"],
+		)
+		if not rows:
+			self.skipTest("No Country Config rows on this site")
+
+		broken = [
+			r.country_code for r in rows
+			if (r.overtime_night_start or r.overtime_night_end) and not flt(r.overtime_night_rate)
+		]
+		self.assertFalse(
+			broken,
+			f"These countries have a night window but a night rate of 0, so the window "
+			f"prices nothing and overtime silently falls back to the weekday rate: {broken}",
+		)
+
+	def test_no_overtime_rate_is_zero(self):
+		rows = frappe.get_all(
+			"Country Config",
+			fields=["country_code", "overtime_weekday_rate", "overtime_rest_day_rate",
+					"overtime_holiday_rate", "overtime_hours_per_month"],
+		)
+		if not rows:
+			self.skipTest("No Country Config rows on this site")
+
+		zeros = [
+			(r.country_code, f)
+			for r in rows
+			for f in ("overtime_weekday_rate", "overtime_rest_day_rate",
+					  "overtime_holiday_rate", "overtime_hours_per_month")
+			if not flt(r.get(f))
+		]
+		self.assertFalse(zeros, f"Unset overtime fields the top-up should have filled: {zeros}")
+
+	def test_the_top_up_is_idempotent(self):
+		from hr_suite.install import _COUNTRY_CONFIGS, top_up_country_overtime
+
+		for defaults in _COUNTRY_CONFIGS:
+			name = frappe.db.get_value("Country Config", {"country_code": defaults["country_code"]}, "name")
+			if not name:
+				continue
+			before = frappe.db.get_value("Country Config", name, "modified")
+			top_up_country_overtime(name, defaults)
+			after = frappe.db.get_value("Country Config", name, "modified")
+			self.assertEqual(before, after, f"{defaults['country_code']} was rewritten by a second top-up")
+
+	def test_a_night_window_without_a_rate_is_refused(self):
+		name = frappe.db.get_value("Country Config", {"country_code": "BH"}, "name")
+		if not name:
+			self.skipTest("No Bahrain Country Config on this site")
+
+		doc = frappe.get_doc("Country Config", name)
+		doc.overtime_night_rate = 0
+		with self.assertRaises(frappe.ValidationError):
+			doc.validate()
