@@ -8,7 +8,7 @@ from pathlib import Path
 
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
-from frappe.utils import flt
+from frappe.utils import cstr, flt
 
 from hr_suite.hr_suite.leave_setup import setup_leave_management
 from hr_suite.hr_suite.performance_setup import setup_performance_management
@@ -671,8 +671,8 @@ _COUNTRY_CONFIGS = [
 		"leave_salary_notes": "Saudi Labour Law Art. 109 and 111 — annual leave is paid in advance on the full wage. Confirm whether the company pays the package or basic only.",
 		# Leave types
 		"leave_types": [
-			{"leave_type_name": "Annual Leave", "days_per_year": 21, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Annual Leave"},
-			{"leave_type_name": "Annual Leave (5+ Years)", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Annual Leave"},
+			{"leave_type_name": "Annual Leave", "days_per_year": 21, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "accrual_frequency": "Monthly", "frappe_leave_type_name": "Annual Leave"},
+			{"leave_type_name": "Annual Leave (5+ Years)", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "accrual_frequency": "Monthly", "frappe_leave_type_name": "Annual Leave"},
 			{"leave_type_name": "Sick Leave", "days_per_year": 120, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Sick Leave"},
 			{"leave_type_name": "Maternity Leave", "days_per_year": 70, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Maternity Leave"},
 			{"leave_type_name": "Paternity Leave", "days_per_year": 3, "gender_specific": "Male Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Paternity Leave"},
@@ -736,7 +736,7 @@ _COUNTRY_CONFIGS = [
 		"leave_salary_notes": "UAE Federal Decree-Law 33/2021 Art. 29 — annual leave paid on the basic wage. Confirm against the employment contract, which often pays the package.",
 		# Leave types
 		"leave_types": [
-			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 15, "frappe_leave_type_name": "Annual Leave"},
+			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 15, "accrual_frequency": "Monthly", "frappe_leave_type_name": "Annual Leave"},
 			{"leave_type_name": "Sick Leave", "days_per_year": 90, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Sick Leave"},
 			{"leave_type_name": "Maternity Leave", "days_per_year": 60, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Maternity Leave"},
 			{"leave_type_name": "Paternity Leave", "days_per_year": 5, "gender_specific": "Male Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Paternity Leave"},
@@ -817,7 +817,7 @@ _COUNTRY_CONFIGS = [
 		"leave_salary_notes": "Bahrain Labour Law 36/2012 Art. 58-60 — 30 days annual leave, paid in advance, at the wage including regular allowances. 30 days a year is 2.5 a month. Confirm which allowances the company treats as regular.",
 		# Leave types
 		"leave_types": [
-			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Annual Leave"},
+			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "accrual_frequency": "Monthly", "frappe_leave_type_name": "Annual Leave"},
 			{"leave_type_name": "Sick Leave", "days_per_year": 55, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Sick Leave"},
 			{"leave_type_name": "Maternity Leave", "days_per_year": 60, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Maternity Leave"},
 			{"leave_type_name": "Paternity Leave", "days_per_year": 1, "gender_specific": "Male Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Paternity Leave"},
@@ -879,7 +879,7 @@ _COUNTRY_CONFIGS = [
 		"leave_salary_notes": "No statutory advance-leave-salary rule in India; earned leave is paid at the wage rate when taken. Figures here are a company-practice default — confirm before use.",
 		# Leave types
 		"leave_types": [
-			{"leave_type_name": "Earned Leave", "days_per_year": 15, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Earned Leave"},
+			{"leave_type_name": "Earned Leave", "days_per_year": 15, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "accrual_frequency": "Monthly", "frappe_leave_type_name": "Earned Leave"},
 			{"leave_type_name": "Casual Leave", "days_per_year": 12, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Casual Leave"},
 			{"leave_type_name": "Sick Leave", "days_per_year": 12, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Sick Leave"},
 			{"leave_type_name": "Maternity Leave", "days_per_year": 182, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Maternity Leave"},
@@ -944,7 +944,7 @@ _COUNTRY_CONFIGS = [
 		"leave_salary_notes": "Oman Labour Law RD 53/2023 Art. 78 — annual leave paid on the gross wage, in advance. Confirm against the employment contract.",
 		# Leave types
 		"leave_types": [
-			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Annual Leave"},
+			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "accrual_frequency": "Monthly", "frappe_leave_type_name": "Annual Leave"},
 			{"leave_type_name": "Sick Leave", "days_per_year": 182, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Sick Leave"},
 			{"leave_type_name": "Maternity Leave", "days_per_year": 50, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Maternity Leave"},
 			{"leave_type_name": "Paternity Leave", "days_per_year": 3, "gender_specific": "Male Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Paternity Leave"},
@@ -969,6 +969,7 @@ def seed_country_configs():
 			# Don't overwrite admin-customised configs — but DO fill fields this release
 			# added, which an existing record cannot have and which are useless empty.
 			top_up_country_defaults(existing, cfg_data)
+			top_up_country_leave_type_rows(existing, leave_types)
 			cfg_data["leave_types"] = leave_types
 			continue
 
@@ -1008,11 +1009,15 @@ _TOPUP_TEXT_FIELDS = (
 	"overtime_night_end",
 	"overtime_notes",
 	"leave_salary_components",
-	"leave_accrual_frequency",
-	"leave_accrual_on_day",
-	"leave_accrual_rounding",
 	"leave_salary_notes",
 )
+
+# Deliberately NOT topped up: leave_accrual_frequency, leave_accrual_on_day and
+# leave_accrual_rounding. Blank is a real answer for all three — "Leave blank for no
+# rounding" is what the field's own description tells the administrator — and a top-up
+# that re-runs on every migrate would write the seeded value back over a cleared field
+# every time. Accrual is switched on per leave type instead, from
+# ``Country Leave Type Row.accrual_frequency``, which is topped up below.
 
 
 def top_up_country_defaults(name: str, defaults: dict):
@@ -1054,6 +1059,60 @@ def top_up_country_defaults(name: str, defaults: dict):
 		frappe.logger().info(
 			f"HR Suite: filled country defaults on Country Config {name}: {sorted(updates)}"
 		)
+
+
+# Row-level fields the seed can fill on leave-type rows that already exist. Accrual is
+# declared per leave type, never country-wide: an annual entitlement is EARNED by serving
+# another month, while sick, maternity and Hajj leave are entitlements you either have or
+# do not have, and dripping those out by twelfths leaves a January sick day uncovered.
+_TOPUP_ROW_TEXT_FIELDS = ("accrual_frequency",)
+
+
+def top_up_country_leave_type_rows(config_name: str, leave_types: list):
+	"""Fill the row-level fields of leave-type rows an existing config already carries.
+
+	Matched on the row's own ``leave_type_name``, and only where the field is still
+	blank, so a row an administrator has answered for is never rewritten. Rows the
+	config carries that the seed does not name are left completely alone.
+	"""
+	if not config_name or not leave_types:
+		return
+
+	if not frappe.db.exists("DocType", "Country Leave Type Row"):
+		return
+
+	columns = set(frappe.db.get_table_columns("Country Leave Type Row"))
+	fields = [f for f in _TOPUP_ROW_TEXT_FIELDS if f in columns]
+	if not fields:
+		return
+
+	declared = {
+		cstr(lt.get("leave_type_name")).strip(): lt
+		for lt in leave_types
+		if cstr(lt.get("leave_type_name")).strip()
+	}
+
+	rows = frappe.get_all(
+		"Country Leave Type Row",
+		filters={"parent": config_name, "parenttype": "Country Config"},
+		fields=["name", "leave_type_name"] + fields,
+	)
+
+	for row in rows:
+		wanted = declared.get(cstr(row.get("leave_type_name")).strip())
+		if not wanted:
+			continue
+
+		updates = {
+			field: wanted[field]
+			for field in fields
+			if field in wanted and row.get(field) in (None, "")
+		}
+		if updates:
+			frappe.db.set_value("Country Leave Type Row", row.name, updates, update_modified=False)
+			frappe.logger().info(
+				f"HR Suite: filled {sorted(updates)} on Country Leave Type Row {row.name}"
+			)
 
 
 # Kept so an older patch module that imports it still resolves.

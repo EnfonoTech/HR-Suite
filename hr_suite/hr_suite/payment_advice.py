@@ -2,8 +2,16 @@
 
 Every HR document that owes an employee money outside the payroll run — an annual
 leave disbursement, a final settlement, an end of service benefit, a loan payout —
-calls :func:`create_payment_advice_for` on submit. Finance answers with
-:func:`mark_paid`, and the source document hears back.
+reaches finance as an HR Payment Advice. Finance answers with :func:`mark_paid`, and
+the source document hears back.
+
+The advice is raised ON REQUEST, from a button on the submitted source document
+(:func:`raise_for_document`), and never from inside the source document's own
+``on_submit``. Inserting and submitting a second submittable document inside another
+document's submit transaction is exactly the pattern that failed a payroll run here
+once: whatever the advice refuses — a missing reference, an approval workflow — takes
+the document that raised it down too. Asking for it afterwards costs one click and
+cannot roll anything back.
 
 Two rules hold this together:
 
@@ -162,7 +170,10 @@ def create_payment_advice_for(doc, lines=None, description: str | None = None):
 	needs_approval = payment_advice_needs_approval()
 	if needs_approval:
 		# Submitting under an approval workflow is refused, and the refusal would
-		# travel out of the source document's on_submit. Leave it for the approver.
+		# travel out of the source document's on_submit. Leave it for the approver —
+		# and say on the document itself that this is what it is waiting for, since a
+		# draft advice is otherwise indistinguishable from one somebody abandoned.
+		advice.db_set("status", "Pending Approval")
 		frappe.msgprint(
 			_("Payment Advice <b>{0}</b> was raised for {1} and is waiting for approval. "
 			  "It reaches finance once approved.").format(advice.name, advice.employee_name or employee),
@@ -180,6 +191,120 @@ def create_payment_advice_for(doc, lines=None, description: str | None = None):
 		)
 
 	return advice
+
+
+# The HR documents that can put a claim to finance, and how each describes itself.
+# `amount_field` is the money to claim, `link_field` is where the advice's name is
+# written back (with `link_type_field` for a Dynamic Link), and `paid_state` is the
+# status the document reaches once finance confirms — see :func:`paid_status_field`.
+SOURCE_DOCUMENTS = {
+	"Annual Leave Disbursement": {
+		# The ticket is an entitlement and the leave pay is an advance, but finance pays
+		# both in one transfer, so both are claimed — and only the leave pay is ever
+		# recovered at payroll. Claimed as the two PARTS, never as total_leave_pay, which
+		# already includes the ticket: claiming the total and the ticket asked finance to
+		# pay the air fare twice.
+		"lines": (
+			("leave_salary_recovery_amount", "Leave salary paid in advance"),
+			("ticket_amount", "Annual air ticket", "ticket_entitled"),
+		),
+	},
+	"Salary Settlement": {
+		"lines": (("net_payable", "Mid-month salary settlement"),),
+		"link_field": "payment_advice",
+		"link_type_field": "payment_advice_type",
+	},
+	"End of Service Benefit": {
+		"lines": (("net_eosb", "End of service benefit"),),
+	},
+}
+
+
+def _claim_lines(doc, spec: dict) -> list:
+	"""What this document is asking finance to pay, one line per figure it carries.
+
+	A line may name a third field that gates it — an air ticket is only claimed where
+	the document says the employee is entitled to one.
+	"""
+	meta = frappe.get_meta(doc.doctype)
+	rows = []
+	for line in spec["lines"]:
+		field, label = line[0], line[1]
+		gate = line[2] if len(line) > 2 else ""
+		if not meta.has_field(field):
+			continue
+		if gate and not doc.get(gate):
+			continue
+		amount = flt(doc.get(field))
+		if amount > 0:
+			rows.append({"amount": amount, "description": _(label)})
+	return rows
+
+
+@frappe.whitelist()
+def raise_for_document(doctype: str, name: str) -> dict:
+	"""Raise the payment advice for one submitted HR document, on request.
+
+	Deliberately a separate action rather than a hook: see the module docstring. The
+	answer is the same whether it is the first click or the fifth — an advice already
+	raised is returned, never duplicated.
+	"""
+	spec = SOURCE_DOCUMENTS.get(doctype)
+	if not spec:
+		frappe.throw(
+			_("{0} does not raise payment advices.").format(_(doctype)), title=_("Payment Advice")
+		)
+
+	frappe.has_permission(doctype, "read", doc=name, throw=True)
+	assert_doctype_permissions(ADVICE_DOCTYPE, ("create",))
+
+	doc = frappe.get_doc(doctype, name)
+	if doc.docstatus != 1:
+		frappe.throw(
+			_("{0} {1} is not submitted, so there is nothing to ask finance to pay yet.").format(
+				_(doctype), name
+			),
+			title=_("Not Submitted"),
+		)
+
+	existing = get_payment_advice_for(doctype, name)
+	if existing:
+		return {"advice": existing, "created": False}
+
+	lines = _claim_lines(doc, spec)
+	if not lines:
+		frappe.throw(
+			_("{0} {1} owes nothing, so no payment advice can be raised for it.").format(
+				_(doctype), name
+			),
+			title=_("Nothing to Pay"),
+		)
+
+	advice = create_payment_advice_for(
+		doc, lines=lines, description=_("{0} {1}").format(_(doctype), name)
+	)
+
+	_write_back_advice_link(doc, spec, advice.name)
+	return {"advice": advice.name, "created": True}
+
+
+def _write_back_advice_link(doc, spec: dict, advice_name: str) -> None:
+	"""Record the advice on the source document, where the document has a field for it.
+
+	``frappe.db.set_value`` and not ``doc.save()``: the source document is submitted,
+	and saving it would re-validate every child row against fields that are not
+	``allow_on_submit``.
+	"""
+	link_field = spec.get("link_field")
+	if not link_field or not frappe.get_meta(doc.doctype).has_field(link_field):
+		return
+
+	values = {link_field: advice_name}
+	type_field = spec.get("link_type_field")
+	if type_field and frappe.get_meta(doc.doctype).has_field(type_field):
+		values[type_field] = ADVICE_DOCTYPE
+
+	frappe.db.set_value(doc.doctype, doc.name, values, update_modified=False)
 
 
 def _normalise_lines(doc, lines, description) -> list:

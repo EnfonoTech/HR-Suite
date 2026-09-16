@@ -1505,15 +1505,24 @@ def get_leave_salary_terms(employee: str) -> dict:
 		"covers": covers,
 		"components": _LEAVE_SALARY_COMPONENT_SETS[covers],
 		"recovery_component": cstr(config.get("leave_salary_recovery_component")) if config else "",
-		"basis": _("{0} — {1}, over {2} days a month").format(
-			(config.country_name if config else None) or country or _("no country"),
-			_(covers), flt(days_per_month, 2),
+		# The basis is stamped onto the disbursement and read back months later. Where no
+		# Country Config answers for this employee the figures are hr_suite's own default
+		# rather than a country rule, and the sentence has to say so instead of quietly
+		# naming a country as though a law had been consulted.
+		"basis": (
+			_("{0} — {1}, over {2} days a month").format(
+				config.country_name or country, _(covers), flt(days_per_month, 2)
+			)
+			if config
+			else _(
+				"No country rule configured — {0}, over {1} days a month (HR Suite default)"
+			).format(_(covers), flt(days_per_month, 2))
 		),
 		"is_configured": bool(config),
 	}
 
 
-def compute_leave_salary(employee: str, days: float, as_on=None) -> dict:
+def compute_leave_salary(employee: str, days: float) -> dict:
 	"""Leave pay for a number of days, broken down the way the payslip breaks it down.
 
 	Returns every component separately rather than one total, because the employee is
@@ -1548,26 +1557,44 @@ def get_leave_salary_recovery_component(company: str, country_component: str = "
 
 	Created once if it does not exist. It must never depend on payment days: the
 	advance was a fixed sum of money, so the recovery is that same sum whatever the
-	month's working days turn out to be.
+	month's working days turn out to be — and the months a leave spans are exactly
+	the months whose payment days are unusual. ``Salary Component`` defaults that
+	flag to 1, and an administrator naming their own component on Country Config
+	will have created it through the form, so the flag is forced here rather than
+	assumed — on the country's component as much as on ours.
 	"""
-	if country_component and frappe.db.exists("Salary Component", country_component):
-		return country_component
-
 	name = LEAVE_SALARY_RECOVERY_COMPONENT
-	if not frappe.db.exists("Salary Component", name):
+	if country_component and frappe.db.exists("Salary Component", country_component):
+		name = country_component
+	elif not frappe.db.exists("Salary Component", name):
 		doc = frappe.get_doc({
 			"doctype": "Salary Component",
 			"salary_component": name,
 			"salary_component_abbr": "LSR",
 			"type": "Deduction",
 			"depends_on_payment_days": 0,
-			"is_additional_component": 1,
 			"description": (
 				"Recovers leave salary that was paid in advance, on the payslip for the "
 				"month the leave falls in. Created by HR Suite."
 			),
 		})
 		doc.insert(ignore_permissions=True)
+
+	component_type = cstr(frappe.db.get_value("Salary Component", name, "type"))
+	if component_type != "Deduction":
+		# An Earning here would PAY the leave salary a second time on the covering
+		# payslip instead of taking it back — the exact opposite of a recovery, and
+		# invisible until someone reads the payslip. Country Config's Link field accepts
+		# any component, so the type is checked rather than assumed.
+		frappe.throw(
+			_("Salary Component {0} is an {1}, so it cannot recover leave salary — a recovery "
+			  "has to be a Deduction. Point Country Config at a deduction component, or clear "
+			  "the field and HR Suite will create one.").format(name, _(component_type or "unknown type")),
+			title=_("Recovery Component Is Not a Deduction"),
+		)
+
+	if cint(frappe.db.get_value("Salary Component", name, "depends_on_payment_days")):
+		frappe.db.set_value("Salary Component", name, "depends_on_payment_days", 0)
 
 	return name
 

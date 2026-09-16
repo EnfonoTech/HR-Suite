@@ -17,18 +17,22 @@ frappe.listview_settings["HR Payment Advice"] = {
 
 	formatters: {
 		employee_name(value, df, doc) {
-			// mark the ones an HR document raised on submit, so a human knows what to review
-			const name = frappe.utils.escape_html(value || "");
-			return doc.auto_generated
-				? `${name} <span class="indicator-pill gray" title="${__("Raised by an HR document")}">${__("auto")}</span>`
-				: name;
+			// Mark the ones an HR document raised on submit, so a human knows what to review.
+			// employee_name is this doctype's title_field, and the subject column is written
+			// with textContent — markup would show as literal angle brackets on every row,
+			// and escaping it here would double-escape a name like "O'Brien & Sons".
+			const name = value || "";
+			return doc.auto_generated ? `${name} (${__("auto")})` : name;
 		},
 	},
 
 	onload(listview) {
 		listview.page.add_inner_button(__("Awaiting Payment"), () => {
-			listview.filter_area.clear();
-			listview.filter_area.add([["HR Payment Advice", "status", "=", "Approved"]]);
+			// clear() is async — it resets each standard filter through a promise chain —
+			// so a filter added on the next line is blanked by the clear that follows it.
+			listview.filter_area.clear().then(() => {
+				listview.filter_area.add([["HR Payment Advice", "status", "=", "Approved"]]);
+			});
 		});
 	},
 };

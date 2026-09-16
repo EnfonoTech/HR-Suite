@@ -26,6 +26,7 @@
   "default_holiday_list",
   "monthly_leave_alloc_section",
   "monthly_leave_allocation_enabled",
+  "accrual_switch_over_now",
   "monthly_leave_alloc_help",
   "contract_section",
   "probation_period_days",
@@ -216,19 +217,27 @@
   {
    "fieldname": "monthly_leave_alloc_section",
    "fieldtype": "Section Break",
-   "label": "Monthly Leave Allocation"
+   "label": "Monthly Leave Accrual"
   },
   {
    "default": "0",
    "fieldname": "monthly_leave_allocation_enabled",
    "fieldtype": "Check",
-   "label": "Enable Monthly Leave Allocation",
-   "description": "When enabled, a Leave Allocation is auto-created for each active employee on the 1st of every month, prorating the annual entitlement from Country Config (annual_days / 12)."
+   "read_only": 1,
+   "label": "Enable Monthly Leave Allocation (retired)",
+   "description": "Retired. This used to create one Leave Allocation per employee per month, windowed to that month, so the days expired at month end and could never be carried. Leave accrues through HRMS earned leave now — see Leave Type \u2192 Is Earned Leave, switched on for you from Country Config \u2192 leave-type rows."
+  },
+  {
+   "default": "0",
+   "fieldname": "accrual_switch_over_now",
+   "fieldtype": "Check",
+   "label": "Switch Leave Types to Accrual Immediately",
+   "description": "Off (the recommended setting): a leave type is only switched to monthly accrual once no employee still holds a live allocation for it, i.e. from the next Leave Period \u2014 otherwise HRMS would credit accrued days ON TOP of an entitlement that has already been granted for this year. Tick this only on a test site, or after you have adjusted the existing allocations by hand."
   },
   {
    "fieldname": "monthly_leave_alloc_help",
    "fieldtype": "HTML",
-   "options": "<p class=\"text-muted\" style=\"font-size:0.85rem;\">Leave types and annual days are read from the Country Config for each employee's work country. A Leave Allocation (docstatus=Submitted) is created per employee per leave type. Existing allocations for the same period are skipped.</p>"
+   "options": "<p class=\"text-muted\" style=\"font-size:0.85rem;\">Monthly accrual is HRMS's own earned-leave engine: a leave type carrying <b>Is Earned Leave</b> is topped up on its one year-long allocation by a daily scheduled job, which divides the Leave Policy's annual allocation by the frequency and rounds it. HR Suite switches that on per leave type from the <b>Accrues</b> column of Country Config, and never allocates leave by hand.</p>"
   },
   {
    "fieldname": "contract_section",

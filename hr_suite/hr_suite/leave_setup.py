@@ -436,16 +436,17 @@ def _declared_rows(country_code: str) -> list:
 					# which means the config's plain full-pay entitlement.
 					"pay_treatment": cstr(row.get("pay_treatment") or PAY_FULL),
 					"paid_fraction": flt(row.get("paid_fraction")),
-					# Accrual, resolved row-first / country-second here so every caller
-					# sees one answer instead of re-deriving the order.
-					"accrual_frequency": cstr(
-						row.get("accrual_frequency") or accrual.leave_accrual_frequency or ""
-					).strip(),
-					"accrual_source": (
-						"row"
-						if cstr(row.get("accrual_frequency")).strip()
-						else ("country" if cstr(accrual.leave_accrual_frequency).strip() else "")
-					),
+					# Accrual is declared BY THE ROW, never by the country.
+					#
+					# The country-wide frequency used to cascade onto every row that said
+					# nothing, which flipped Sick (120 days in Bahrain), Maternity and
+					# Paternity leave to HRMS earned leave: an employee would have held
+					# 10 of their 120 sick days in January and been refused the eleventh
+					# on the day they were ill, because the rest had not been "earned" yet.
+					# Only leave that is earned by serving another month accrues, and the
+					# row is the only place that distinction is recorded.
+					"accrual_frequency": cstr(row.get("accrual_frequency") or "").strip(),
+					"accrual_source": "row" if cstr(row.get("accrual_frequency")).strip() else "",
 					"accrual_on_day": cstr(accrual.leave_accrual_on_day or "").strip(),
 					"accrual_rounding": cstr(accrual.leave_accrual_rounding or "").strip(),
 					"carry_forward_expiry_days": cint(accrual.carry_forward_expiry_days),
@@ -582,6 +583,7 @@ def sync_leave_types_from_country_config() -> dict:
 
 			doc = frappe.get_doc("Leave Type", leave_type)
 			values = _drop_accrual_for_compensatory(leave_type, doc, values, result)
+			values = _defer_accrual_while_already_granted(leave_type, doc, values, result)
 			changed = {
 				field: value
 				for field, value in values.items()
@@ -716,7 +718,58 @@ def _drop_accrual_for_compensatory(leave_type: str, doc, values: dict, result: d
 	result["conflicts"].append(
 		{
 			"leave_type": leave_type,
-			"reason": "Accrual declared for a Leave Type that HRMS marks compensatory",
+			"reason": _("Accrual declared for a Leave Type that HRMS marks compensatory"),
+		}
+	)
+	return {field: value for field, value in values.items() if field not in ACCRUAL_FIELDS}
+
+
+def _defer_accrual_while_already_granted(leave_type: str, doc, values: dict, result: dict) -> dict:
+	"""Do not switch a leave type to accrual while employees still hold this year's grant.
+
+	HRMS accrues onto the allocation that is live TODAY, and stops only at the Leave
+	Policy's annual allocation — it has no notion of "these days were already handed
+	over". So flipping ``is_earned_leave`` mid-period on a site whose employees hold a
+	grant made by a Leave Policy Assignment credits accrued days ON TOP of that grant:
+	a joiner pro-rated to 8 days in July would be topped up to the full 30 by December,
+	and those extra days are real money the moment they are encashed or paid as leave
+	salary.
+
+	The switch is therefore deferred until no live allocation is left, which in practice
+	means the next Leave Period, and the deferral is reported rather than hidden. A site
+	that has adjusted its allocations by hand — or a test site — can override it with
+	``Hr Suite Settings.accrual_switch_over_now``.
+	"""
+	if not cint(values.get("is_earned_leave")) or cint(doc.is_earned_leave):
+		# Nothing to switch on, or it is already on: accrual is then the status quo and
+		# the allocations live beside it were created knowing that.
+		return values
+
+	if cint(frappe.db.get_single_value("Hr Suite Settings", "accrual_switch_over_now")):
+		return values
+
+	live = frappe.db.count(
+		"Leave Allocation",
+		{
+			"docstatus": 1,
+			"leave_type": leave_type,
+			"from_date": ["<=", today()],
+			"to_date": [">=", today()],
+		},
+	)
+	if not live:
+		return values
+
+	result["conflicts"].append(
+		{
+			"leave_type": leave_type,
+			"reason": _(
+				"Monthly accrual is not switched on yet: {0} employee(s) still hold a live "
+				"allocation of {1} for this leave period, and HRMS would credit accrued days on "
+				"top of it. It switches over by itself once those allocations end, or "
+				"immediately if you tick Switch Leave Types to Accrual Immediately in "
+				"Hr Suite Settings."
+			).format(live, leave_type),
 		}
 	)
 	return {field: value for field, value in values.items() if field not in ACCRUAL_FIELDS}
@@ -1278,6 +1331,14 @@ def _open_next_period(company: str, run_date, force: int, result: dict) -> None:
 	latest = _latest_period(company)
 	if not latest:
 		result["skipped"].append({"company": company, "reason": _("No Leave Period to roll forward")})
+		return
+
+	# One period ahead is the whole job. ``force`` skips the lead-time wait, not this:
+	# without it a second forced call would roll forward from the period the first call
+	# created, and a third from that one, opening a new leave year on every run.
+	current = _period_covering(company, run_date)
+	if current and getdate(latest.to_date) > getdate(current.to_date):
+		result["periods_existing"].append(latest.name)
 		return
 
 	if not force and run_date < add_days(getdate(latest.to_date), -PERIOD_ROLL_FORWARD_LEAD_DAYS):

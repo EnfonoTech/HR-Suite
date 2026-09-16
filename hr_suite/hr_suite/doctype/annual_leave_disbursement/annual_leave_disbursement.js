@@ -159,5 +159,35 @@ frappe.ui.form.on("Annual Leave Disbursement", {
 		if (frm.doc.leave_salary_basis) {
 			frm.dashboard.add_comment(frm.doc.leave_salary_basis, "green", true);
 		}
+
+		add_payment_advice_button(frm);
 	},
 });
+
+// Ask finance to pay this document. Deliberately a button and not an on_submit hook:
+// raising (and submitting) a second submittable document inside another document's
+// submit transaction is how a payroll run died here once — anything the advice refuses
+// would roll the source document back with it.
+function add_payment_advice_button(frm) {
+	if (frm.doc.docstatus !== 1) return;
+
+	frm.add_custom_button(__("Raise Payment Advice"), function () {
+		frappe.call({
+			method: "hr_suite.hr_suite.payment_advice.raise_for_document",
+			args: { doctype: frm.doc.doctype, name: frm.doc.name },
+			freeze: true,
+			freeze_message: __("Raising payment advice..."),
+			callback(r) {
+				if (!r.message) return;
+				frappe.show_alert({
+					message: r.message.created
+						? __("Payment Advice {0} raised.", [r.message.advice])
+						: __("Payment Advice {0} was already raised for this document.", [r.message.advice]),
+					indicator: "green",
+				});
+				frappe.set_route("Form", "HR Payment Advice", r.message.advice);
+			},
+		});
+	}, __("Actions"));
+}
+

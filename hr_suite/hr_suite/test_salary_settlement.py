@@ -121,6 +121,28 @@ def prorated_earnings(doc, prorated_components) -> float:
 	)
 
 
+
+class SavepointTestCase(FrappeTestCase):
+	"""A test case that undoes its OWN documents, test by test.
+
+	``FrappeTestCase`` registers its rollback with ``addClassCleanup``, so everything a
+	test writes stays visible to the tests that follow it in the same class — and these
+	suites run against a REAL site, where a submitted document left behind by one test
+	makes the next one refuse ("this period has already been disbursed"), and an
+	interrupted run leaves it on the site for good. A savepoint per test is the cheap
+	fix: class-level fixtures built in ``setUpClass`` survive, the test's own writes do
+	not.
+	"""
+
+	def setUp(self):
+		super().setUp()
+		self._savepoint = "hr_suite_{0}".format(type(self).__name__.lower())
+		frappe.db.savepoint(self._savepoint)
+
+	def tearDown(self):
+		frappe.db.rollback(save_point=self._savepoint)
+		super().tearDown()
+
 class TestSalarySettlementContract(FrappeTestCase):
 	"""What the DocType promises, checked without needing a single employee."""
 
@@ -175,7 +197,7 @@ class TestSalarySettlementContract(FrappeTestCase):
 		self.assertFalse(cint(component.depends_on_payment_days))
 
 
-class TestSalarySettlementProration(FrappeTestCase):
+class TestSalarySettlementProration(SavepointTestCase):
 	"""The divisor, checked against payroll's own by invariant rather than by formula."""
 
 	@classmethod
@@ -184,6 +206,7 @@ class TestSalarySettlementProration(FrappeTestCase):
 		cls.assignment = find_settleable_employee()
 
 	def setUp(self):
+		super().setUp()
 		if not self.assignment:
 			self.skipTest("No employee on this site has a submitted Salary Structure Assignment "
 			              "and a populated salary mirror")
@@ -248,7 +271,7 @@ class TestSalarySettlementProration(FrappeTestCase):
 		self.assertLess(flt(half.earned_days), flt(whole.earned_days))
 
 
-class TestSalarySettlementTotals(FrappeTestCase):
+class TestSalarySettlementTotals(SavepointTestCase):
 	"""What reaches the net, and what deliberately does not."""
 
 	@classmethod
@@ -257,6 +280,7 @@ class TestSalarySettlementTotals(FrappeTestCase):
 		cls.assignment = find_settleable_employee()
 
 	def setUp(self):
+		super().setUp()
 		if not self.assignment:
 			self.skipTest("No employee on this site can be settled")
 
@@ -328,7 +352,7 @@ class TestSalarySettlementTotals(FrappeTestCase):
 		self.assertEqual(expected, listed)
 
 
-class TestSalarySettlementRefusals(FrappeTestCase):
+class TestSalarySettlementRefusals(SavepointTestCase):
 	"""The three settlements this document must not let anybody save."""
 
 	@classmethod
@@ -337,6 +361,7 @@ class TestSalarySettlementRefusals(FrappeTestCase):
 		cls.assignment = find_settleable_employee()
 
 	def setUp(self):
+		super().setUp()
 		if not self.assignment:
 			self.skipTest("No employee on this site can be settled")
 

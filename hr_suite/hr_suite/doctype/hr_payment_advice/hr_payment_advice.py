@@ -25,14 +25,19 @@ class HRPaymentAdvice(Document):
 		self._set_draft_status()
 
 	def on_submit(self):
-		"""Hand the advice to whoever signs it off.
+		"""Submitting IS the approval — from here the advice is finance's to pay.
+
+		It used to ask ``payment_advice_needs_approval()`` here, but that predicate is
+		site-level: it answers "does a workflow cover this doctype", not "has THIS
+		document been signed", so it read the same before and after the approver acted.
+		On any site with that workflow every signed advice stayed "Pending Approval"
+		for ever and the Awaiting Payment queue was permanently empty. The pending
+		state belongs on the draft, which is where it is set now.
 
 		Assignments made in ``on_submit`` are not persisted — the row is already
 		written by the time this runs — so the status goes through ``db_set``.
 		"""
-		from hr_suite.hr_suite.payment_advice import payment_advice_needs_approval
-
-		self.db_set("status", "Pending Approval" if payment_advice_needs_approval() else "Approved")
+		self.db_set("status", "Approved")
 
 	def on_cancel(self):
 		if self.status == "Paid":
@@ -144,5 +149,10 @@ class HRPaymentAdvice(Document):
 	def _set_draft_status(self):
 		# validate() also runs on the way through submit, by which time docstatus is
 		# already 1 — resetting to Draft there would undo on_submit on every later save.
-		if self.docstatus == 0:
+		#
+		# "Pending Approval" is a draft state too: an advice raised while an approval
+		# workflow covers this doctype waits, unsubmitted, for its approver. Resetting
+		# that to Draft on the approver's first save would erase the one signal telling
+		# them the document is theirs to act on.
+		if self.docstatus == 0 and self.status != "Pending Approval":
 			self.status = "Draft"

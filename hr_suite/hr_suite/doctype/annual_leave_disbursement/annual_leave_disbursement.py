@@ -276,12 +276,12 @@ class AnnualLeaveDisbursement(Document):
 				 "root_type": "Expense", "is_group": 0},
 				"name",
 			)
-			or frappe.db.get_value(
-				"Account",
-				{"company": company, "root_type": "Expense", "is_group": 0},
-				"name",
-			)
 		)
+		# Deliberately no third "any expense account" fallback. frappe.db.get_value orders
+		# by `modified`, so the account it picked was effectively arbitrary — leave salary
+		# was landing in Depreciation or Cost of Goods Sold on any chart that does not use
+		# the English word "Salary", and the entry still msgprinted green. Refusing is the
+		# honest answer: name the account and the site can fix it in a minute.
 
 		payable_account = (
 			frappe.db.get_value(
@@ -298,14 +298,17 @@ class AnnualLeaveDisbursement(Document):
 		)
 
 		if not expense_account or not payable_account:
-			frappe.msgprint(
-				_("Could not find accounts for the Leave Salary Journal Entry. "
-				  "Please configure Salary expense and Salary Payable accounts in the "
-				  "Chart of Accounts."),
+			# Throw, never warn. on_submit goes on to book and submit the payroll recovery
+			# after this, so returning here would deduct the advance from the next payslip
+			# for money the ledger never recorded — and the orange msgprint is invisible to
+			# an API or background submit.
+			frappe.throw(
+				_("Could not find the accounts this Journal Entry needs for {0}: a leave-salary "
+				  "or salary EXPENSE account, and a Salary Payable account. Add them to the "
+				  "Chart of Accounts (or set Default Payroll Payable Account on the Company) "
+				  "and submit again. Nothing was posted.").format(company),
 				title=_("Account Not Found"),
-				indicator="orange",
 			)
-			return
 
 		# Currency must follow the company — this app runs in BH/AE/OM/IN as well as SA.
 		currency = frappe.get_cached_value("Company", company, "default_currency")
@@ -333,15 +336,19 @@ class AnnualLeaveDisbursement(Document):
 			"posting_date": nowdate(),
 			"user_remark": remark,
 			"accounts": [
+				# The party belongs on the PAYABLE row and nowhere else. erpnext refuses a
+				# Receivable/Payable account row with no party, and refuses a party on a row
+				# whose account is neither — so party on the expense row broke the entry at
+				# insert on one chart and at submit on another.
 				{
 					"account": expense_account,
 					"debit_in_account_currency": flt(self.total_leave_pay),
-					"party_type": "Employee",
-					"party": self.employee,
 				},
 				{
 					"account": payable_account,
 					"credit_in_account_currency": flt(self.total_leave_pay),
+					"party_type": "Employee",
+					"party": self.employee,
 				},
 			],
 		})
@@ -392,8 +399,11 @@ class AnnualLeaveDisbursement(Document):
 			# submits it next week would pay out a disbursement that no longer exists. The
 			# draft goes with the disbursement, and the link goes with the draft: a Link
 			# field pointing at a deleted document breaks every later save of this one.
-			frappe.delete_doc("Journal Entry", je.name)
+			# Clear the link FIRST. frappe.delete_doc runs check_if_doc_is_linked, which
+			# sees this document's own linked_payroll_entry still pointing at the draft and
+			# raises LinkExistsError — taking the whole cancellation down with it.
 			self.db_set("linked_payroll_entry", None, update_modified=False)
+			frappe.delete_doc("Journal Entry", je.name, ignore_permissions=True)
 			frappe.msgprint(
 				_("The draft Journal Entry for this disbursement was deleted, so it cannot be "
 				  "approved after the disbursement was cancelled."),
@@ -497,10 +507,10 @@ class AnnualLeaveDisbursement(Document):
 				"overwrite_salary_structure_amount": 0,
 				"deduct_full_tax_on_selected_payroll_date": 0,
 			})
+			self._refuse_if_payroll_already_ran(payroll_date, amount, currency)
+
 			additional_salary.insert(ignore_permissions=True)
 			additional_salary.submit()
-
-			self._warn_if_payroll_already_ran(payroll_date, amount, currency)
 
 		frappe.msgprint(
 			_("Leave salary of {0} {1} will be recovered across {2} payroll month(s) through "
@@ -511,8 +521,16 @@ class AnnualLeaveDisbursement(Document):
 			indicator="green",
 		)
 
-	def _warn_if_payroll_already_ran(self, payroll_date, amount, currency):
-		"""A month already paid will never read this deduction — say so now, loudly."""
+	def _refuse_if_payroll_already_ran(self, payroll_date, amount, currency):
+		"""A month already paid can never read this deduction, so do not book one.
+
+		hrms only reads an Additional Salary while it is building a Salary Slip
+		(``get_additional_salaries`` matches payroll_date between the slip's start and end
+		dates). A recovery aimed at a month whose payslip is already submitted is
+		therefore never taken: the employee keeps both the advance and a full payslip for
+		that month, and no report anywhere flags it. This used to warn AFTER inserting the
+		row, which recorded the problem and created it in the same breath.
+		"""
 		slip = frappe.db.get_value(
 			"Salary Slip",
 			{
@@ -526,12 +544,13 @@ class AnnualLeaveDisbursement(Document):
 		if not slip:
 			return
 
-		frappe.msgprint(
-			_("Salary Slip {0} for {1} is already submitted, so the {2} {3} booked against that "
-			  "month will not be recovered by it. Recover it manually, or cancel and re-run "
-			  "that payslip.").format(slip, formatdate(payroll_date), flt(amount), currency),
+		frappe.throw(
+			_("Salary Slip {0} for {1} is already submitted, so the {2} {3} this disbursement "
+			  "would recover from that month can never be taken back. Cancel and re-run that "
+			  "payslip, or recover this by hand and record it outside payroll.").format(
+				slip, formatdate(payroll_date), flt(amount), currency
+			),
 			title=_("Payroll Already Run"),
-			indicator="red",
 		)
 
 	def _cancel_recovery_additional_salaries(self):

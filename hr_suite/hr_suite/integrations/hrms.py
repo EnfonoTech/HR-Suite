@@ -894,3 +894,61 @@ def validate_minimum_wage(doc, method=None):
         frappe.throw(_("Below Minimum Wage: Base ({0}) is less than the minimum wage ({1}) for {2}").format(
             flt(doc.base), minimum_wage, cfg.country_name or country
         ))
+
+
+# ── Journal Entry ────────────────────────────────────────────────────────────
+
+# Which HR documents hold a Journal Entry, and where. Both of these book a payroll
+# recovery (an Additional Salary deduction) at the same moment they raise the entry, so
+# an entry that is cancelled or deleted afterwards — by its PM Workflow approver, say,
+# rejecting the payout — must take that deduction with it. Otherwise the next payslip
+# claws back an advance the ledger never paid.
+_JOURNAL_ENTRY_SOURCES = (
+    ("Annual Leave Disbursement", "linked_payroll_entry"),
+    ("Salary Settlement", "journal_entry"),
+)
+
+
+def on_journal_entry_cancel(doc, method=None):
+    """Release the payroll recovery of any HR document this entry belonged to."""
+    for doctype, field in _JOURNAL_ENTRY_SOURCES:
+        if not frappe.db.exists("DocType", doctype):
+            continue
+
+        for name in frappe.get_all(
+            doctype, filters={field: doc.name, "docstatus": 1}, pluck="name"
+        ):
+            _release_payroll_recovery(doctype, name, doc.name)
+
+
+def _release_payroll_recovery(doctype: str, name: str, journal_entry: str) -> None:
+    released = []
+    for additional_salary in frappe.get_all(
+        "Additional Salary",
+        filters={"ref_doctype": doctype, "ref_docname": name, "docstatus": 1},
+        pluck="name",
+    ):
+        try:
+            frappe.get_doc("Additional Salary", additional_salary).cancel()
+            released.append(additional_salary)
+        except Exception:
+            # A payslip has already taken it, which frappe refuses to undo. That is a
+            # human problem now: say so rather than failing the cancellation of an entry
+            # the approver has every right to reject.
+            frappe.log_error(
+                title=_("HR Suite: payroll recovery could not be released"),
+                message=frappe.get_traceback(),
+            )
+
+    if frappe.get_meta(doctype).has_field("recovery_booked"):
+        frappe.db.set_value(doctype, name, "recovery_booked", 0, update_modified=False)
+
+    frappe.msgprint(
+        _(
+            "Journal Entry {0} belonged to {1} {2}. {3} payroll recovery row(s) were cancelled "
+            "with it, so no payslip will deduct an advance that was never posted. Cancel {2} "
+            "as well if the payment is not going ahead."
+        ).format(journal_entry, _(doctype), name, len(released)),
+        title=_("Payroll Recovery Released"),
+        indicator="orange",
+    )

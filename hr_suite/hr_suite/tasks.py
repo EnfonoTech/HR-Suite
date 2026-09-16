@@ -3,7 +3,7 @@ tasks.py — Scheduled Tasks for daily alerts.
 """
 import frappe
 from frappe import _
-from frappe.utils import today, add_days, cint, cstr, flt, get_first_day, get_last_day, getdate
+from frappe.utils import add_days, cint, cstr, getdate, today
 
 
 DEFAULT_ALERT_MILESTONES = (30, 14, 7, 1, 0)

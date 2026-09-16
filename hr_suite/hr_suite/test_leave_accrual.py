@@ -64,6 +64,28 @@ def _row(**overrides):
 	return row
 
 
+
+class SavepointTestCase(FrappeTestCase):
+	"""A test case that undoes its OWN documents, test by test.
+
+	``FrappeTestCase`` registers its rollback with ``addClassCleanup``, so everything a
+	test writes stays visible to the tests that follow it in the same class — and these
+	suites run against a REAL site, where a submitted document left behind by one test
+	makes the next one refuse ("this period has already been disbursed"), and an
+	interrupted run leaves it on the site for good. A savepoint per test is the cheap
+	fix: class-level fixtures built in ``setUpClass`` survive, the test's own writes do
+	not.
+	"""
+
+	def setUp(self):
+		super().setUp()
+		self._savepoint = "hr_suite_{0}".format(type(self).__name__.lower())
+		frappe.db.savepoint(self._savepoint)
+
+	def tearDown(self):
+		frappe.db.rollback(save_point=self._savepoint)
+		super().tearDown()
+
 class TestAccrualDeclaration(FrappeTestCase):
 	"""Country Config -> the four HRMS earned-leave fields."""
 
@@ -246,7 +268,7 @@ class TestLeaveTypeCarriesTheFieldsWeWrite(FrappeTestCase):
 		self.assertIn(DEFAULT_ALLOCATE_ON_DAY, options)
 
 
-class TestProvisionedAccrual(FrappeTestCase):
+class TestProvisionedAccrual(SavepointTestCase):
 	"""Run the sync and read the Leave Types back."""
 
 	def test_declared_accrual_reaches_the_leave_type(self):
@@ -294,7 +316,7 @@ class TestProvisionedAccrual(FrappeTestCase):
 					self.assertGreaterEqual(cap, row.days_per_year)
 
 
-class TestMonthWindowAllocationsAreRetired(FrappeTestCase):
+class TestMonthWindowAllocationsAreRetired(SavepointTestCase):
 	"""The old grant model created allocations that expired at month end."""
 
 	def test_the_monthly_job_allocates_nothing(self):
@@ -331,7 +353,7 @@ class TestMonthWindowAllocationsAreRetired(FrappeTestCase):
 		)
 
 
-class TestDoubleAllocationGuard(FrappeTestCase):
+class TestDoubleAllocationGuard(SavepointTestCase):
 	def test_the_report_has_the_documented_shape(self):
 		report = check_double_allocation_risk()
 		self.assertIn("ok", report)
@@ -362,7 +384,7 @@ class TestDoubleAllocationGuard(FrappeTestCase):
 		self.assertIn(leave_type.name, orphaned[0]["leave_types"])
 
 
-class TestYearRollForward(FrappeTestCase):
+class TestYearRollForward(SavepointTestCase):
 	def test_the_next_period_starts_the_day_the_current_one_ends(self):
 		next_from, next_to = _next_period_dates("2026-01-01", "2026-12-31")
 		self.assertEqual(cstr(next_from), "2027-01-01")

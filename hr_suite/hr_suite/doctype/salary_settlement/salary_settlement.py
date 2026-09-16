@@ -225,6 +225,7 @@ class SalarySettlement(Document):
 
 		self._assignment = get_current_assignment(self.employee, self.settlement_date)
 		if self._assignment:
+			self._validate_currency()
 			return
 
 		frappe.throw(
@@ -233,6 +234,32 @@ class SalarySettlement(Document):
 				self.employee_name or self.employee, formatdate(self.settlement_date)
 			),
 			title=_("No Salary Structure Assignment"),
+		)
+
+	def _validate_currency(self):
+		"""The payslip and the ledger have to be talking about the same money.
+
+		The recovery Additional Salary is stamped with the employee's PAYROLL currency,
+		while the Journal Entry posts in the company's own. Where those differ the
+		payslip claws back 400 dollars against a 400-dinar debit and the advance account
+		never clears — so the settlement refuses rather than posting a figure that only
+		looks right.
+		"""
+		company_currency = frappe.get_cached_value("Company", self.company, "default_currency")
+		payroll_currency = cstr((self._assignment or {}).get("currency")) or company_currency
+
+		if payroll_currency == company_currency:
+			return
+
+		frappe.throw(
+			_(
+				"{0} is paid in {1} while {2} keeps its books in {3}. A settlement across two "
+				"currencies would post one figure to the ledger and recover another at payroll. "
+				"Settle this by hand, or assign a salary structure in {3}."
+			).format(
+				self.employee_name or self.employee, payroll_currency, self.company, company_currency
+			),
+			title=_("Currency Mismatch"),
 		)
 
 	def _validate_no_overlap(self):
@@ -362,17 +389,31 @@ class SalarySettlement(Document):
 		fields = ["salary_component", "component_type", "amount", "depends_on_payment_days"]
 		filters = {"parenttype": "Employee", "parent": self.employee}
 
-		rows = frappe.get_all(
-			"Employee Salary Component", filters=filters, fields=fields, order_by="idx asc"
+		from hr_suite.hr_suite.employee_salary import sync_employee_salary
+
+		# The mirror is only refreshed when an assignment is submitted, cancelled or
+		# deleted, and always as at THAT day. A future-dated assignment therefore leaves
+		# the mirror on the old rate until someone touches an assignment again — so a
+		# settlement dated after the new rate took effect would pro-rate the old one and
+		# pay the employee at a rate nobody is on. Rebuild whenever the mirror was not
+		# written from the assignment that is in force on the settlement date.
+		mirrored_from = frappe.db.get_value("Employee", self.employee, "custom_salary_effective_from")
+		in_force_from = (self._assignment or {}).get("from_date")
+		stale = bool(in_force_from) and getdate(mirrored_from) != getdate(in_force_from) if mirrored_from else True
+
+		rows = (
+			[]
+			if stale
+			else frappe.get_all(
+				"Employee Salary Component", filters=filters, fields=fields, order_by="idx asc"
+			)
 		)
 		if rows:
 			return rows
 
-		# An employee whose structure was assigned before the mirror existed has an empty
-		# one. Rebuilding it costs one throwaway slip and keeps the settlement on the same
-		# figures as the Salary tab and Payroll Preview.
-		from hr_suite.hr_suite.employee_salary import sync_employee_salary
-
+		# Either the mirror is stale, or an employee whose structure was assigned before
+		# the mirror existed has an empty one. Rebuilding it costs one throwaway slip and
+		# keeps the settlement on the same figures as the Salary tab and Payroll Preview.
 		sync_employee_salary(self.employee, self.settlement_date)
 		rows = frappe.get_all(
 			"Employee Salary Component", filters=filters, fields=fields, order_by="idx asc"
@@ -818,13 +859,24 @@ class SalarySettlement(Document):
 		self.net_payable = flt(self.total_earnings - self.total_deductions, precision)
 
 		if self.net_payable < 0:
-			frappe.msgprint(
-				_("{0} owes more than this period earned, so the net is {1}. Settle a longer "
-				  "period, or leave the balance to payroll.").format(
-					self.employee_name or self.employee, flt(self.net_payable)
+			# A negative net is not a payment, it is a claim on the employee — and nothing
+			# here can collect it. The Journal Entry would balance itself by debiting
+			# Salary Payable, i.e. the company would book money as owed to itself, while
+			# the recovery still claws back only the gross earned and the deduction rows
+			# would be marked collected against cash that never changed hands. Refusing is
+			# the only honest answer: those deductions belong on the next payslip.
+			frappe.throw(
+				_(
+					"{0} owes more over this period ({1}) than it earned ({2}), so the "
+					"settlement would pay {3}. Nothing here can collect the difference — "
+					"settle a longer period, or leave these deductions to payroll."
+				).format(
+					self.employee_name or self.employee,
+					flt(self.total_deductions, precision),
+					flt(self.total_earnings, precision),
+					flt(self.net_payable, precision),
 				),
 				title=_("Nothing Left To Pay"),
-				indicator="orange",
 			)
 
 	# ── recovery at payroll ───────────────────────────────────────────────────
@@ -870,8 +922,22 @@ class SalarySettlement(Document):
 				title=_("No Salary Structure"),
 			)
 
+		relieving = frappe.db.get_value("Employee", self.employee, "relieving_date")
+		relieving = getdate(relieving) if relieving else None
+
 		created = []
 		for month_start, amount in sorted(by_month.items()):
+			# The deduction has to land on the payslip for the month it advanced, so the
+			# month end is the natural date — except for someone who has left, whose final
+			# payslip is dated on their relieving date. Additional Salary refuses a payroll
+			# date after that date outright (hrms additional_salary.py validate_dates), so
+			# a final settlement could not be submitted at all without this clamp.
+			payroll_date = get_last_day(month_start)
+			if relieving and relieving < getdate(payroll_date):
+				payroll_date = max(relieving, getdate(month_start))
+
+			self._refuse_if_payroll_already_ran(payroll_date, amount)
+
 			additional_salary = frappe.get_doc({
 				"doctype": "Additional Salary",
 				"employee": self.employee,
@@ -879,7 +945,7 @@ class SalarySettlement(Document):
 				"currency": currency,
 				"salary_component": component,
 				"amount": amount,
-				"payroll_date": get_last_day(month_start),
+				"payroll_date": payroll_date,
 				"is_recurring": 0,
 				# Never overwrite: the recovery is charged ON TOP of whatever the structure
 				# already carries for this component.
@@ -898,6 +964,46 @@ class SalarySettlement(Document):
 			  "out: {1}.").format(len(created), ", ".join(created)),
 			title=_("Recovery Booked"),
 			indicator="green",
+		)
+
+	def _refuse_if_payroll_already_ran(self, payroll_date, amount):
+		"""A month whose payslip is already submitted can never read this deduction.
+
+		hrms only picks an Additional Salary up while building a Salary Slip. Booking a
+		recovery into a month payroll has closed books an advance that is never taken
+		back: the employee keeps both the settlement cash and the full payslip for that
+		month, and no report anywhere flags it. Refusing the submit is the safe failure —
+		the settlement can be raised against an open month instead, or the deduction
+		entered on the next payroll by hand.
+		"""
+		slip = frappe.db.get_value(
+			"Salary Slip",
+			{
+				"employee": self.employee,
+				"docstatus": 1,
+				"start_date": ["<=", payroll_date],
+				"end_date": [">=", payroll_date],
+			},
+			["name", "start_date", "end_date"],
+			as_dict=True,
+		)
+		if not slip:
+			return
+
+		frappe.throw(
+			_(
+				"Payroll for {0} has already been run — Salary Slip {1} covers {2} to {3} and "
+				"is submitted, so a deduction of {4} dated {5} would never be taken. Settle a "
+				"month payroll has not closed, or recover this by hand on the next payslip."
+			).format(
+				formatdate(payroll_date, "MMM yyyy"),
+				slip.name,
+				formatdate(slip.start_date),
+				formatdate(slip.end_date),
+				flt(amount, self.precision("net_payable")),
+				formatdate(payroll_date),
+			),
+			title=_("Payroll Already Run"),
 		)
 
 	def _prepare_recovery_component(self) -> tuple:
@@ -956,14 +1062,17 @@ class SalarySettlement(Document):
 
 		payable_account = self._payroll_payable_account()
 		if not payable_account:
-			frappe.msgprint(
+			# Throw, never warn. _book_payroll_recovery has already run by this point and
+			# has an Additional Salary submitted against the next payslip: returning here
+			# would leave a settlement marked Posted, with a deduction waiting at payroll,
+			# for an advance the ledger never recorded. Throwing rolls the whole submit
+			# back, recovery included.
+			frappe.throw(
 				_("Could not find a Salary Payable account for {0}. Set Default Payroll Payable "
 				  "Account on the Company, or add a Payable account to the Chart of Accounts. "
 				  "Nothing was posted.").format(company),
 				title=_("Account Not Found"),
-				indicator="orange",
 			)
-			return
 
 		accounts = self._journal_entry_rows(payable_account)
 		if not accounts:
@@ -1035,15 +1144,15 @@ class SalarySettlement(Document):
 				SETTLEMENT_RECOVERY_COMPONENT
 			) or self._settlement_advance_account()
 			if not advance_account:
-				frappe.msgprint(
+				# Same reasoning as the payable account above: the payroll recovery is
+				# already booked, so a silent return would strand it.
+				frappe.throw(
 					_("Salary Component {0} has no account for {1} and no salary advance account "
 					  "could be found, so nothing was posted.").format(
 						SETTLEMENT_RECOVERY_COMPONENT, self.company
 					),
 					title=_("Account Not Found"),
-					indicator="orange",
 				)
-				return []
 
 			accounts.append(
 				dict(
@@ -1082,10 +1191,11 @@ class SalarySettlement(Document):
 				)
 			)
 		elif flt(self.net_payable) < 0:
-			# More was owed than the period earned. Nothing is handed over; what the
-			# employee still owes is a debit against salary payable, which the month's
-			# payroll then works off. Without this row the entry does not balance and the
-			# whole submit fails on an accounting error nobody can read.
+			# Unreachable from the desk: _recalculate_totals refuses a settlement whose
+			# deductions exceed its earnings, because nothing here can collect the
+			# difference. Kept as the balancing row so a document built in code — a test,
+			# a migration — still produces an entry that balances rather than failing on
+			# an accounting error nobody can read.
 			accounts.append(
 				dict(
 					account=payable_account,

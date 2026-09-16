@@ -94,6 +94,28 @@ def build_disbursement(allocation, **overrides):
 	return doc
 
 
+
+class SavepointTestCase(FrappeTestCase):
+	"""A test case that undoes its OWN documents, test by test.
+
+	``FrappeTestCase`` registers its rollback with ``addClassCleanup``, so everything a
+	test writes stays visible to the tests that follow it in the same class — and these
+	suites run against a REAL site, where a submitted document left behind by one test
+	makes the next one refuse ("this period has already been disbursed"), and an
+	interrupted run leaves it on the site for good. A savepoint per test is the cheap
+	fix: class-level fixtures built in ``setUpClass`` survive, the test's own writes do
+	not.
+	"""
+
+	def setUp(self):
+		super().setUp()
+		self._savepoint = "hr_suite_{0}".format(type(self).__name__.lower())
+		frappe.db.savepoint(self._savepoint)
+
+	def tearDown(self):
+		frappe.db.rollback(save_point=self._savepoint)
+		super().tearDown()
+
 class TestLeaveSalaryArithmetic(FrappeTestCase):
 	"""The month split and the pricing, neither of which needs a site with data."""
 
@@ -140,7 +162,7 @@ class TestLeaveSalaryArithmetic(FrappeTestCase):
 		self.assertTrue(terms["basis"])
 
 
-class TestLeaveSalaryRecoveryComponent(FrappeTestCase):
+class TestLeaveSalaryRecoveryComponent(SavepointTestCase):
 	def test_recovery_component_is_a_deduction_that_ignores_payment_days(self):
 		company = frappe.db.get_value("Company", {}, "name")
 		if not company:
@@ -156,13 +178,14 @@ class TestLeaveSalaryRecoveryComponent(FrappeTestCase):
 		self.assertEqual(component.depends_on_payment_days, 0)
 
 
-class TestAnnualLeaveDisbursement(FrappeTestCase):
+class TestAnnualLeaveDisbursement(SavepointTestCase):
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
 		cls.allocation = find_disbursable_employee()
 
 	def setUp(self):
+		super().setUp()
 		if not self.allocation:
 			self.skipTest("No employee on this site has an allocation, a salary and a free leave window")
 

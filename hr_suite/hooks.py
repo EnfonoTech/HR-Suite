@@ -25,6 +25,17 @@ app_include_css = ["/assets/hr_suite/css/hr_suite.css"]
 scheduler_events = {
 	"daily": [
 		"hr_suite.hr_suite.salary_override_api.apply_pending_salary_overrides",
+		# The leave year has to be opened before it starts and assigned once it has:
+		# hrms accrues onto the allocation that is live today, so without a Leave Period
+		# and a Leave Policy Assignment for the new year, accrual stops on 1 January and
+		# every Leave Application fails for want of an allocation. Idempotent, and a
+		# no-op until 60 days before the current period ends.
+		"hr_suite.hr_suite.leave_setup.roll_forward_leave_periods",
+		# The accrual switch-over waits for the last whole-year grant to end, and that
+		# happens on a date nobody runs a migrate on. Re-reading Country Config daily is
+		# what makes "it switches over by itself" true; the sync writes nothing when
+		# nothing has changed, and logs rather than throws when a country disagrees.
+		"hr_suite.hr_suite.leave_setup.sync_leave_types_from_country_config",
 		"hr_suite.hr_suite.integrations.muqeem.sync_expiring_iqamas",
 		"hr_suite.hr_suite.tasks.send_iqama_expiry_alerts",
 		"hr_suite.hr_suite.tasks.send_contract_expiry_alerts",
@@ -128,6 +139,15 @@ doc_events = {
 		# instalment, which is what makes a re-run of the period idempotent.
 		"on_submit": "hr_suite.hr_suite.integrations.hrms.on_salary_slip_submit",
 		"on_cancel": "hr_suite.hr_suite.integrations.hrms.on_salary_slip_cancel",
+	},
+	"Journal Entry": {
+		# A leave disbursement or a settlement books its payroll recovery at the same
+		# moment it raises its Journal Entry, and where a PM Workflow covers Journal Entry
+		# that entry is left in Draft for an approver. An approver who rejects it — by
+		# cancelling or deleting the entry — must take the recovery with it, or the next
+		# payslip deducts an advance the ledger never posted.
+		"on_cancel": "hr_suite.hr_suite.integrations.hrms.on_journal_entry_cancel",
+		"on_trash": "hr_suite.hr_suite.integrations.hrms.on_journal_entry_cancel",
 	},
 	"Additional Salary": {
 		# Cancelling or deleting the booking releases the loan instalment, so a later
