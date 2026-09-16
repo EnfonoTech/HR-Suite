@@ -65,6 +65,13 @@
    "fieldtype": "Data",
    "label": "Frappe Leave Type (auto-create name)",
    "description": "Leave type name that will be created in Frappe HRMS"
+  },
+  {
+   "fieldname": "accrual_frequency",
+   "fieldtype": "Select",
+   "label": "Accrues",
+   "options": "\nNone\nMonthly\nQuarterly\nHalf-Yearly\nYearly",
+   "description": "How this entitlement is earned. Monthly turns 30 days a year into 2.5 days credited each month. Leave blank to follow the country default; set None for leave that is granted whole (sick, maternity, Hajj) rather than earned."
   }
  ],
  "permissions": [],

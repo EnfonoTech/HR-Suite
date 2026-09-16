@@ -1,0 +1,360 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-09-16 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "reason",
+  "settlement_date",
+  "column_break_header",
+  "company",
+  "department",
+  "currency",
+  "status",
+  "period_section",
+  "period_from",
+  "period_to",
+  "column_break_period",
+  "earned_days",
+  "proration_basis",
+  "breakdown_section",
+  "settlement_breakdown",
+  "lines",
+  "totals_section",
+  "earned_amount",
+  "leave_salary_amount",
+  "total_earnings",
+  "column_break_totals",
+  "total_deductions",
+  "net_payable",
+  "payroll_section",
+  "journal_entry",
+  "recovery_booked",
+  "annual_leave_disbursement",
+  "column_break_payroll",
+  "payment_advice_type",
+  "payment_advice",
+  "remarks",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SETL-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "default": "Going on Leave",
+   "description": "Why the employee is being paid before the payroll run. It does not change the arithmetic — every settlement is an advance of salary already earned, recovered on the payslip for the month it covers.",
+   "fieldname": "reason",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Reason",
+   "options": "Going on Leave\nFinal Settlement\nSalary Advance",
+   "reqd": 1
+  },
+  {
+   "description": "The day the money is handed over. Any day of the month.",
+   "fieldname": "settlement_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Settlement Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_header",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Draft\nAwaiting Journal Approval\nPosted\nPaid\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "period_section",
+   "fieldtype": "Section Break",
+   "label": "Period Settled"
+  },
+  {
+   "description": "First day the settlement pays for. Usually the first of the month.",
+   "fieldname": "period_from",
+   "fieldtype": "Date",
+   "label": "Period From",
+   "reqd": 1
+  },
+  {
+   "description": "Last day this settlement claims. Defaults to the settlement date. Another settlement for the same employee may not overlap this window.",
+   "fieldname": "period_to",
+   "fieldtype": "Date",
+   "label": "Period To",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_period",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Payment days earned between Period From and Settlement Date, counted the way the Salary Slip counts them.",
+   "fieldname": "earned_days",
+   "fieldtype": "Float",
+   "label": "Earned Days",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "description": "Which divisor produced the figures, month by month. Read it before arguing with the total.",
+   "fieldname": "proration_basis",
+   "fieldtype": "Small Text",
+   "label": "Proration Basis",
+   "read_only": 1
+  },
+  {
+   "fieldname": "breakdown_section",
+   "fieldtype": "Section Break",
+   "label": "Breakdown"
+  },
+  {
+   "fieldname": "settlement_breakdown",
+   "fieldtype": "HTML",
+   "label": "Settlement Breakdown"
+  },
+  {
+   "collapsible": 1,
+   "description": "Earning and Deduction rows make up the net paid today. Information rows are listed because they exist, but the month's own payroll collects them — counting them here would charge the employee twice.",
+   "fieldname": "lines",
+   "fieldtype": "Table",
+   "label": "Computed Lines",
+   "options": "Payroll Preview Allocation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "totals_section",
+   "fieldtype": "Section Break",
+   "label": "Totals"
+  },
+  {
+   "fieldname": "earned_amount",
+   "fieldtype": "Currency",
+   "label": "Earned Salary",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "leave_salary_amount",
+   "fieldtype": "Currency",
+   "label": "Leave Salary",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_earnings",
+   "fieldtype": "Currency",
+   "label": "Total Earnings",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_totals",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Only what this employee owes that no payslip will collect. Anything already booked into payroll is listed as Information instead.",
+   "fieldname": "total_deductions",
+   "fieldtype": "Currency",
+   "label": "Total Deductions",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "bold": 1,
+   "fieldname": "net_payable",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Net Payable",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payroll_section",
+   "fieldtype": "Section Break",
+   "label": "Payroll and Accounts"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "journal_entry",
+   "fieldtype": "Link",
+   "label": "Journal Entry",
+   "no_copy": 1,
+   "options": "Journal Entry",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "description": "An Additional Salary deduction exists for every month this settlement covers, so that month's payroll nets the advance out.",
+   "fieldname": "recovery_booked",
+   "fieldtype": "Check",
+   "label": "Recovery Booked into Payroll",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "The leave salary disbursement paid out by this settlement, if any.",
+   "fieldname": "annual_leave_disbursement",
+   "fieldtype": "Link",
+   "label": "Annual Leave Disbursement",
+   "no_copy": 1,
+   "options": "Annual Leave Disbursement",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_payroll",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Payment Entry",
+   "description": "Which document carries the payment advice on this site. hr_suite ships none of its own, so the target is named here rather than hard-wired — a fixed Link would break install on every site without that DocType.",
+   "fieldname": "payment_advice_type",
+   "fieldtype": "Link",
+   "label": "Payment Advice Type",
+   "options": "DocType"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "The document that actually moved the money to the employee.",
+   "fieldname": "payment_advice",
+   "fieldtype": "Dynamic Link",
+   "label": "Payment Advice",
+   "no_copy": 1,
+   "options": "payment_advice_type"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Salary Settlement",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-09-16 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Suite",
+ "name": "Salary Settlement",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager"
+  },
+  {
+   "read": 1,
+   "role": "Employee"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee_name",
+ "track_changes": 1
+}

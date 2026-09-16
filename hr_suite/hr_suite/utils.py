@@ -3,7 +3,7 @@ utils.py — Helper functions for Hr Suite calculations.
 """
 import frappe
 from frappe import _
-from frappe.utils import cint, cstr, date_diff, flt, getdate, today
+from frappe.utils import add_days, cint, cstr, date_diff, flt, getdate, today
 
 
 def assert_doctype_permissions(doctype: str, permission_types, doc=None):
@@ -1458,3 +1458,138 @@ def resolve_overtime_terms(employee: str, date=None, shift_start=None, shift_end
 		"basis": basis,
 		"is_configured": bool(config),
 	}
+
+
+# ─── Leave salary ───────────────────────────────────────────────────────────────
+# An employee going on annual leave is paid before they travel. That payment is an
+# ADVANCE of the salary they would have been paid at month end for the same days —
+# not extra money — so it has to come back off the payslip for the month it covers,
+# or the employee is paid twice for those days.
+#
+# The recovery rides on Additional Salary, which payroll and Payroll Preview already
+# read. Nothing here touches Salary Slip's own payment-days arithmetic: that is
+# computed at salary_slip.py:166 and consumed three lines later, so a doc_events hook
+# cannot influence it without overriding the controller — the riskiest surgery in
+# payroll, for no gain over a deduction row that is already plumbed in.
+
+DEFAULT_LEAVE_SALARY_DAYS_PER_MONTH = 30.0
+LEAVE_SALARY_RECOVERY_COMPONENT = "Leave Salary Recovery"
+
+_LEAVE_SALARY_COMPONENT_SETS = {
+	"Basic Only": ("basic_salary",),
+	"Basic + Housing": ("basic_salary", "housing_allowance"),
+	"Full Package": ("basic_salary", "housing_allowance", "transport_allowance", "other_allowances"),
+}
+
+
+def get_leave_salary_terms(employee: str) -> dict:
+	"""How this employee's leave salary is worked out, per their work country.
+
+	``basis`` names the country and the rule, so a figure on screen can be explained
+	without opening Country Config.
+	"""
+	country = get_employee_work_country(employee) if employee else ""
+	config = get_country_config(country) if country else None
+
+	days_per_month = flt(config.get("leave_salary_days_per_month")) if config else 0.0
+	if days_per_month <= 0:
+		days_per_month = DEFAULT_LEAVE_SALARY_DAYS_PER_MONTH
+
+	covers = cstr(config.get("leave_salary_components")) if config else ""
+	if covers not in _LEAVE_SALARY_COMPONENT_SETS:
+		covers = "Full Package"
+
+	return {
+		"country": country,
+		"days_per_month": flt(days_per_month, 2),
+		"covers": covers,
+		"components": _LEAVE_SALARY_COMPONENT_SETS[covers],
+		"recovery_component": cstr(config.get("leave_salary_recovery_component")) if config else "",
+		"basis": _("{0} — {1}, over {2} days a month").format(
+			(config.country_name if config else None) or country or _("no country"),
+			_(covers), flt(days_per_month, 2),
+		),
+		"is_configured": bool(config),
+	}
+
+
+def compute_leave_salary(employee: str, days: float, as_on=None) -> dict:
+	"""Leave pay for a number of days, broken down the way the payslip breaks it down.
+
+	Returns every component separately rather than one total, because the employee is
+	entitled to see which parts of their pay were advanced and which were not.
+	"""
+	terms = get_leave_salary_terms(employee)
+	salary = get_employee_salary_components(employee) or {}
+	days = flt(days)
+	per_month = flt(terms["days_per_month"]) or DEFAULT_LEAVE_SALARY_DAYS_PER_MONTH
+
+	lines = {}
+	total = 0.0
+	for field in terms["components"]:
+		monthly = flt(salary.get(field))
+		if monthly <= 0:
+			continue
+		amount = flt(monthly / per_month * days, 3)
+		lines[field] = amount
+		total += amount
+
+	return {
+		"days": days,
+		"lines": lines,
+		"daily_rate": flt(sum(flt(salary.get(f)) for f in terms["components"]) / per_month, 4),
+		"total": flt(total, 3),
+		"terms": terms,
+	}
+
+
+def get_leave_salary_recovery_component(company: str, country_component: str = "") -> str:
+	"""The deduction that claws back leave salary on the covering payslip.
+
+	Created once if it does not exist. It must never depend on payment days: the
+	advance was a fixed sum of money, so the recovery is that same sum whatever the
+	month's working days turn out to be.
+	"""
+	if country_component and frappe.db.exists("Salary Component", country_component):
+		return country_component
+
+	name = LEAVE_SALARY_RECOVERY_COMPONENT
+	if not frappe.db.exists("Salary Component", name):
+		doc = frappe.get_doc({
+			"doctype": "Salary Component",
+			"salary_component": name,
+			"salary_component_abbr": "LSR",
+			"type": "Deduction",
+			"depends_on_payment_days": 0,
+			"is_additional_component": 1,
+			"description": (
+				"Recovers leave salary that was paid in advance, on the payslip for the "
+				"month the leave falls in. Created by HR Suite."
+			),
+		})
+		doc.insert(ignore_permissions=True)
+
+	return name
+
+
+def split_days_by_month(from_date, to_date) -> list:
+	"""[(month_start, days_in_that_month), …] for a date range.
+
+	Leave rarely respects a month boundary. A 21-day leave beginning on the 12th is
+	partly March and partly April, and each part has to be recovered from its own
+	payslip — otherwise April's payroll pays days that March already recovered.
+	"""
+	start, end = getdate(from_date), getdate(to_date)
+	if end < start:
+		return []
+
+	from frappe.utils import get_first_day, get_last_day
+
+	out = []
+	cursor = start
+	while cursor <= end:
+		month_end = get_last_day(cursor)
+		chunk_end = min(month_end, end)
+		out.append((get_first_day(cursor), date_diff(chunk_end, cursor) + 1))
+		cursor = add_days(chunk_end, 1)
+	return out

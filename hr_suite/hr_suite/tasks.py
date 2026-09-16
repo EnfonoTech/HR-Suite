@@ -481,80 +481,39 @@ def send_training_disclosure_due_alerts():
 		days_ahead=30,
 	)
 
-
 def allocate_monthly_leave():
-	"""Auto-create HRMS Leave Allocations for the current month for every active employee.
+	"""Retired. Monthly accrual is HRMS's own earned-leave engine, not this job.
 
-	Reads leave types and annual days from Country Config; prorates to monthly (annual / 12).
-	Skips employees whose country config has no leave_types configured.
-	Skips if an allocation already exists for the same employee + leave_type + period.
-	Runs on the 1st of each month via scheduler_events["monthly"].
+	This used to create ONE Leave Allocation per employee per leave type per MONTH,
+	windowed from the 1st to the last day of that month. Days allocated that way die
+	with the window: on the 1st of the next month the balance is gone, so nothing
+	could ever be carried into the next year and a December application could not
+	spend a day earned in March. It also granted beside whatever a Leave Policy
+	Assignment had already granted, which is the same year of leave issued twice.
+
+	What replaced it: ``Leave Type.is_earned_leave`` + ``earned_leave_frequency``,
+	topped up on ONE year-long allocation by the daily scheduled job
+	``hrms.hr.utils.allocate_earned_leaves``. hr_suite switches that on from Country
+	Config in ``hr_suite.hr_suite.leave_setup`` and never allocates leave by hand.
+
+	The name is kept because ``hooks.py`` scheduler_events["monthly"] still points
+	here. All the job does now is assert that the two grant models are not both live,
+	which is the one failure the switch-over can still produce.
 	"""
-	if not frappe.db.get_single_value("Hr Suite Settings", "monthly_leave_allocation_enabled"):
-		return
+	from hr_suite.hr_suite.leave_setup import report_double_allocation_risk
 
-	from hr_suite.hr_suite.utils import get_employee_work_country, get_country_config
+	report = report_double_allocation_risk()
 
-	run_date = getdate(today())
-	from_date = str(get_first_day(run_date))
-	to_date = str(get_last_day(run_date))
+	if cint(frappe.db.get_single_value("Hr Suite Settings", "monthly_leave_allocation_enabled")):
+		# Left switched on, but nothing reads it any more: say so rather than letting an
+		# administrator believe a grant is happening every month.
+		frappe.log_error(
+			_(
+				"Monthly leave allocation is switched on in Hr Suite Settings, but the "
+				"month-window allocation job has been retired: leave now accrues through "
+				"HRMS earned leave. Switch the setting off."
+			),
+			"HR Suite: retired monthly leave allocation is still enabled",
+		)
 
-	employees = frappe.get_all(
-		"Employee",
-		filters={"status": "Active"},
-		fields=["name", "employee_name", "company", "department"],
-	)
-
-	created = 0
-	for emp in employees:
-		country = get_employee_work_country(emp.name)
-		cfg = get_country_config(country)
-		if not cfg or not cfg.leave_types:
-			continue
-
-		for lt in cfg.leave_types:
-			leave_type_name = (lt.leave_type_name or "").strip()
-			if not leave_type_name:
-				continue
-			# Verify the Leave Type exists in HRMS
-			if not frappe.db.exists("Leave Type", leave_type_name):
-				continue
-
-			annual_days = flt(lt.get("days_per_year") or lt.get("days_below_threshold") or 0)
-			if annual_days <= 0:
-				continue
-
-			monthly_days = round(annual_days / 12, 4)
-
-			# Skip if allocation for this period already exists
-			if frappe.db.exists("Leave Allocation", {
-				"employee": emp.name,
-				"leave_type": leave_type_name,
-				"from_date": from_date,
-				"to_date": to_date,
-				"docstatus": ["<", 2],
-			}):
-				continue
-
-			try:
-				doc = frappe.new_doc("Leave Allocation")
-				doc.employee = emp.name
-				doc.employee_name = emp.employee_name
-				doc.department = emp.department
-				doc.company = emp.company
-				doc.leave_type = leave_type_name
-				doc.from_date = from_date
-				doc.to_date = to_date
-				doc.new_leaves_allocated = monthly_days
-				doc.carry_forward = 0
-				doc.insert(ignore_permissions=True)
-				doc.submit()
-				created += 1
-			except Exception:
-				frappe.log_error(
-					f"Monthly leave allocation failed for {emp.name} / {leave_type_name}",
-					"HR Suite Monthly Leave Allocation",
-				)
-
-	if created:
-		frappe.logger().info(f"HR Suite: created {created} monthly Leave Allocation records for {from_date} – {to_date}")
+	return report

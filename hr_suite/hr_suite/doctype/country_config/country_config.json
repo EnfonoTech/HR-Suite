@@ -66,7 +66,17 @@
   {"fieldname": "overtime_holiday_rate", "fieldtype": "Float", "label": "Public Holiday Rate (x)", "precision": "2", "description": "Used when the date is a public holiday on the employee's Holiday List."},
   {"fieldname": "overtime_night_start", "fieldtype": "Time", "label": "Night Window Starts", "depends_on": "eval:doc.overtime_night_rate"},
   {"fieldname": "overtime_night_end", "fieldtype": "Time", "label": "Night Window Ends", "depends_on": "eval:doc.overtime_night_rate"},
-  {"fieldname": "overtime_notes", "fieldtype": "Small Text", "label": "Overtime Notes", "description": "Statutory reference behind these figures, for whoever maintains this record."}
+  {"fieldname": "overtime_notes", "fieldtype": "Small Text", "label": "Overtime Notes", "description": "Statutory reference behind these figures, for whoever maintains this record."},
+  {"fieldname": "leave_salary_section", "fieldtype": "Section Break", "label": "Leave Salary & Accrual"},
+  {"fieldname": "leave_salary_days_per_month", "fieldtype": "Float", "label": "Days per Month (Leave Salary)", "precision": "2", "description": "Divides the monthly salary to give one day of leave pay. Gulf practice is 30. Use 26 where only working days are paid."},
+  {"fieldname": "leave_salary_components", "fieldtype": "Select", "label": "Leave Salary Covers", "options": "\nBasic Only\nBasic + Housing\nFull Package", "description": "Which parts of the salary are paid in advance when an employee goes on leave."},
+  {"fieldname": "leave_salary_recovery_component", "fieldtype": "Link", "label": "Recovery Salary Component", "options": "Salary Component", "description": "The deduction that claws leave salary back on the payslip for the month it covers. Leave blank and HR Suite creates one named Leave Salary Recovery."},
+  {"fieldname": "column_break_leave_salary", "fieldtype": "Column Break"},
+  {"fieldname": "leave_accrual_frequency", "fieldtype": "Select", "label": "Leave Accrues", "options": "\nNone\nMonthly\nQuarterly\nHalf-Yearly\nYearly", "description": "Monthly turns a 30-day annual entitlement into 2.5 days credited every month, instead of the whole year granted up front."},
+  {"fieldname": "leave_accrual_on_day", "fieldtype": "Select", "label": "Credited On", "options": "\nFirst Day\nLast Day\nDate of Joining", "description": "Which day of the period the accrued days land."},
+  {"fieldname": "leave_accrual_rounding", "fieldtype": "Select", "label": "Rounded To", "options": "\n0.25\n0.5\n1.0", "description": "Leave blank for no rounding."},
+  {"fieldname": "carry_forward_expiry_days", "fieldtype": "Int", "label": "Carried Leave Expires After (Days)", "description": "0 means carried leave never expires. Bahrain allows a limit; enter the one your contracts use."},
+  {"fieldname": "leave_salary_notes", "fieldtype": "Small Text", "label": "Leave Salary Notes", "description": "Which law or contract these figures come from."}
  ],
  "permissions": [
   {"role": "HR Manager", "read": 1, "write": 1, "create": 1, "delete": 1},

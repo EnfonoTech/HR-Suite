@@ -661,6 +661,14 @@ _COUNTRY_CONFIGS = [
 		"overtime_rest_day_rate": 1.5,
 		"overtime_holiday_rate": 1.5,
 		"overtime_notes": "Saudi Labour Law Art. 107 — overtime = hourly wage + 50%. Rest-day and Eid work is overtime at the same rate. Confirm against the employment contract, which may be more generous.",
+		# Leave salary — KSA Art. 109/111: annual leave is paid in advance at the wage the
+		# employee is on when the leave starts. "Wage" in KSA means the full package.
+		"leave_salary_days_per_month": 30,
+		"leave_salary_components": "Full Package",
+		"leave_accrual_frequency": "Monthly",
+		"leave_accrual_on_day": "Last Day",
+		"leave_accrual_rounding": "0.5",
+		"leave_salary_notes": "Saudi Labour Law Art. 109 and 111 — annual leave is paid in advance on the full wage. Confirm whether the company pays the package or basic only.",
 		# Leave types
 		"leave_types": [
 			{"leave_type_name": "Annual Leave", "days_per_year": 21, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Annual Leave"},
@@ -718,6 +726,14 @@ _COUNTRY_CONFIGS = [
 		"overtime_rest_day_rate": 1.5,
 		"overtime_holiday_rate": 1.5,
 		"overtime_notes": "UAE Federal Decree-Law 33/2021 Art. 19 — 125% by day, 150% between 22:00 and 04:00, 150% (or a day in lieu) on a rest day. Confirm against the employment contract.",
+		# Leave salary — UAE Federal Decree-Law 33/2021 Art. 29: annual leave is paid at the
+		# basic wage; the full wage is due only where leave is taken in the year it accrued.
+		"leave_salary_days_per_month": 30,
+		"leave_salary_components": "Basic Only",
+		"leave_accrual_frequency": "Monthly",
+		"leave_accrual_on_day": "Last Day",
+		"leave_accrual_rounding": "0.5",
+		"leave_salary_notes": "UAE Federal Decree-Law 33/2021 Art. 29 — annual leave paid on the basic wage. Confirm against the employment contract, which often pays the package.",
 		# Leave types
 		"leave_types": [
 			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 15, "frappe_leave_type_name": "Annual Leave"},
@@ -790,6 +806,15 @@ _COUNTRY_CONFIGS = [
 		"overtime_rest_day_rate": 1.5,
 		"overtime_holiday_rate": 1.5,
 		"overtime_notes": "Bahrain Labour Law 36/2012 Art. 53 — 125% by day, 150% at night (19:00-07:00), 150% plus a compensatory day on the weekly rest day or an official holiday. These are statutory minimums; confirm the figures the company actually pays.",
+		# Leave salary — Bahrain Labour Law (Law 36/2012) Art. 58 and 60: annual leave is 30
+		# days, taken with pay, and the employer pays the wage in advance of the leave. The
+		# "wage" is the basic plus the regular allowances, which is the full package here.
+		"leave_salary_days_per_month": 30,
+		"leave_salary_components": "Full Package",
+		"leave_accrual_frequency": "Monthly",
+		"leave_accrual_on_day": "Last Day",
+		"leave_accrual_rounding": "0.5",
+		"leave_salary_notes": "Bahrain Labour Law 36/2012 Art. 58-60 — 30 days annual leave, paid in advance, at the wage including regular allowances. 30 days a year is 2.5 a month. Confirm which allowances the company treats as regular.",
 		# Leave types
 		"leave_types": [
 			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Annual Leave"},
@@ -843,6 +868,15 @@ _COUNTRY_CONFIGS = [
 		"overtime_rest_day_rate": 2.0,
 		"overtime_holiday_rate": 2.0,
 		"overtime_notes": "Factories Act 1948 s.59 — overtime = twice the ordinary rate of wages. Hourly rate is computed over 26 days x 8 hours. State shops-and-establishments rules may differ; confirm for the state of employment.",
+		# Leave salary — earned leave under the state Shops & Establishments Act is paid at
+		# the wage rate; there is no statutory advance-payment rule, so leave salary here is
+		# a company practice rather than a legal requirement.
+		"leave_salary_days_per_month": 26,
+		"leave_salary_components": "Basic Only",
+		"leave_accrual_frequency": "Monthly",
+		"leave_accrual_on_day": "Last Day",
+		"leave_accrual_rounding": "0.5",
+		"leave_salary_notes": "No statutory advance-leave-salary rule in India; earned leave is paid at the wage rate when taken. Figures here are a company-practice default — confirm before use.",
 		# Leave types
 		"leave_types": [
 			{"leave_type_name": "Earned Leave", "days_per_year": 15, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Earned Leave"},
@@ -900,6 +934,14 @@ _COUNTRY_CONFIGS = [
 		"overtime_rest_day_rate": 2.0,
 		"overtime_holiday_rate": 2.0,
 		"overtime_notes": "Oman Labour Law RD 53/2023 — 125% by day, 150% at night, 200% (or a substitute rest day) on a weekly rest day or official holiday. Confirm against the employment contract.",
+		# Leave salary — Oman Labour Law (RD 53/2023) Art. 78: annual leave is paid with the
+		# gross wage before the leave begins.
+		"leave_salary_days_per_month": 30,
+		"leave_salary_components": "Full Package",
+		"leave_accrual_frequency": "Monthly",
+		"leave_accrual_on_day": "Last Day",
+		"leave_accrual_rounding": "0.5",
+		"leave_salary_notes": "Oman Labour Law RD 53/2023 Art. 78 — annual leave paid on the gross wage, in advance. Confirm against the employment contract.",
 		# Leave types
 		"leave_types": [
 			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "frappe_leave_type_name": "Annual Leave"},
@@ -926,7 +968,7 @@ def seed_country_configs():
 		if existing:
 			# Don't overwrite admin-customised configs — but DO fill fields this release
 			# added, which an existing record cannot have and which are useless empty.
-			top_up_country_overtime(existing, cfg_data)
+			top_up_country_defaults(existing, cfg_data)
 			cfg_data["leave_types"] = leave_types
 			continue
 
@@ -945,30 +987,45 @@ def seed_country_configs():
 		cfg_data["leave_types"] = leave_types
 
 
-# Every overtime field the seed can supply. The rates are `decimal NOT NULL DEFAULT 0`
-# columns, so an existing record gets 0 the moment the column is added — never NULL —
-# and a "fill only what is blank" test that checks for NULL skips them all. Zero is not
-# a rate anybody can have chosen (it would mean overtime is unpaid), so zero means unset.
-_OVERTIME_NUMERIC_FIELDS = (
+# Fields the seed can fill on a Country Config that already exists. Numeric ones are
+# `decimal NOT NULL DEFAULT 0` columns, so an existing record holds 0 the moment the
+# column is added — never NULL — and a "fill only what is blank" test that checks for
+# NULL skips every one of them. That mistake shipped twice. Zero is not a rate or a
+# divisor anybody can have chosen, so for these fields zero means unset.
+#
+# Add new country fields to these two tuples and they are filled on the next migrate,
+# on every site, with no patch to write and no emptiness test to re-guess.
+_TOPUP_NUMERIC_FIELDS = (
 	"overtime_hours_per_month",
 	"overtime_weekday_rate",
 	"overtime_night_rate",
 	"overtime_rest_day_rate",
 	"overtime_holiday_rate",
+	"leave_salary_days_per_month",
 )
-_OVERTIME_TEXT_FIELDS = ("overtime_night_start", "overtime_night_end", "overtime_notes")
+_TOPUP_TEXT_FIELDS = (
+	"overtime_night_start",
+	"overtime_night_end",
+	"overtime_notes",
+	"leave_salary_components",
+	"leave_accrual_frequency",
+	"leave_accrual_on_day",
+	"leave_accrual_rounding",
+	"leave_salary_notes",
+)
 
 
-def top_up_country_overtime(name: str, defaults: dict):
-	"""Fill the overtime fields of an existing Country Config that are still unset.
+def top_up_country_defaults(name: str, defaults: dict):
+	"""Fill the fields of an existing Country Config that are still unset.
 
 	Runs on every migrate, from seed_country_configs(). That is deliberate: a one-shot
 	patch has to be renamed every time its own emptiness test turns out to be wrong, and
-	this one was wrong twice — first because the DocType carried a `default` that the DDL
-	wrote onto every row, then because the rate columns are NOT NULL and arrive as 0.
-	A top-up that re-runs is self-healing, and writes nothing once the values are there.
+	the overtime one was wrong twice — first because the DocType carried a `default` that
+	the DDL wrote onto every row, then because the rate columns are NOT NULL and arrive
+	as 0. A top-up that re-runs is self-healing, and writes nothing once the values are
+	there.
 
-	An administrator's figure is never touched. Only a zero rate or a blank window/note
+	An administrator's figure is never touched. Only a zero number or a blank text field
 	is replaced, and only with what this country's law says.
 	"""
 	if not name:
@@ -976,7 +1033,7 @@ def top_up_country_overtime(name: str, defaults: dict):
 
 	columns = set(frappe.db.get_table_columns("Country Config"))
 	fields = [
-		f for f in (_OVERTIME_NUMERIC_FIELDS + _OVERTIME_TEXT_FIELDS)
+		f for f in (_TOPUP_NUMERIC_FIELDS + _TOPUP_TEXT_FIELDS)
 		if f in columns and f in defaults
 	]
 	if not fields:
@@ -986,7 +1043,7 @@ def top_up_country_overtime(name: str, defaults: dict):
 	updates = {}
 	for field in fields:
 		value = current.get(field)
-		if field in _OVERTIME_NUMERIC_FIELDS:
+		if field in _TOPUP_NUMERIC_FIELDS:
 			if not flt(value):
 				updates[field] = defaults[field]
 		elif value in (None, ""):
@@ -995,8 +1052,12 @@ def top_up_country_overtime(name: str, defaults: dict):
 	if updates:
 		frappe.db.set_value("Country Config", name, updates, update_modified=False)
 		frappe.logger().info(
-			f"HR Suite: filled overtime terms on Country Config {name}: {sorted(updates)}"
+			f"HR Suite: filled country defaults on Country Config {name}: {sorted(updates)}"
 		)
+
+
+# Kept so an older patch module that imports it still resolves.
+top_up_country_overtime = top_up_country_defaults
 
 
 # ─── Employee Document Types ────────────────────────────────────────────────────
