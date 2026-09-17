@@ -847,6 +847,38 @@ def check_double_allocation_risk(as_on: str | None = None) -> dict:
 			flt(detail.annual_allocation), annual_by_type.get(detail.leave_type, 0.0)
 		)
 
+	# An allocation with neither a policy nor an assignment is invisible to hrms's
+	# earned-leave job, so an accruing leave type simply never credits a day on it —
+	# silently, with no error anywhere.
+	unpolicied = frappe.get_all(
+		"Leave Allocation",
+		filters={
+			"docstatus": 1,
+			"leave_type": ["in", earned_names],
+			"from_date": ["<=", run_date],
+			"to_date": [">=", run_date],
+			"leave_policy": ["in", ["", None]],
+			"leave_policy_assignment": ["in", ["", None]],
+		},
+		fields=["name", "employee", "leave_type"],
+	)
+	if unpolicied:
+		findings.append(
+			{
+				"issue": "accrues_but_allocation_has_no_policy",
+				"detail": _(
+					"{0} live allocation(s) of an accruing leave type carry no Leave Policy and no "
+					"Leave Policy Assignment. HRMS accrues onto neither, so those employees will "
+					"never earn a day. Reassign them through a Leave Policy Assignment."
+				).format(len(unpolicied)),
+				"count": len(unpolicied),
+				"examples": [
+					{"allocation": a.name, "employee": a.employee, "leave_type": a.leave_type}
+					for a in unpolicied[:5]
+				],
+			}
+		)
+
 	orphaned = [name for name in earned_names if name not in annual_by_type]
 	if orphaned:
 		findings.append(
@@ -1414,6 +1446,29 @@ def _assign_current_period(company: str, run_date, create_assignment, result: di
 		},
 		fields=["employee", "leave_policy"],
 	)
+
+	# An employee whose leave was allocated BY HAND holds no Leave Policy Assignment, and
+	# on this client's data that is not a rarity — 3 of 19. They matter twice over: the
+	# year would end with nothing carried into the next one, and hrms's earned-leave job
+	# skips an allocation that carries neither a policy nor an assignment
+	# (hrms.hr.utils.allocate_earned_leaves), so they would never accrue a day either.
+	# They are rolled forward onto the policy their country declares.
+	with_assignment = {row.employee for row in held_last_period}
+	for row in frappe.get_all(
+		"Leave Allocation",
+		filters={
+			"docstatus": 1,
+			"employee": ["in", employees],
+			"from_date": ["<=", previous.to_date],
+			"to_date": [">=", previous.from_date],
+		},
+		fields=["employee"],
+		group_by="employee",
+	):
+		if row.employee not in with_assignment:
+			held_last_period.append(frappe._dict({"employee": row.employee, "leave_policy": None}))
+			with_assignment.add(row.employee)
+
 	if not held_last_period:
 		return
 
