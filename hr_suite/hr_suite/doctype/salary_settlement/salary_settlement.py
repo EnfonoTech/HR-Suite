@@ -535,6 +535,20 @@ class SalarySettlement(Document):
 
 		disbursements = self._unsettled_leave_disbursements()
 		if not disbursements:
+			for older in self._older_unsettled_disbursements():
+				self._append_line(
+					entry_type=INFORMATION,
+					amount=flt(older.total_leave_pay),
+					payable_amount=0,
+					posting_date=older.leave_from_date,
+					source_doctype="Annual Leave Disbursement",
+					source_name=older.name,
+					description=_(
+						"Leave salary for {0} to {1} is still unpaid, and this settlement does not "
+						"pay it: payroll has already dealt with those months. Raise its own payment "
+						"advice."
+					).format(formatdate(older.leave_from_date), formatdate(older.leave_to_date)),
+				)
 			return
 
 		first = disbursements[0]
@@ -553,6 +567,20 @@ class SalarySettlement(Document):
 			).format(formatdate(first.leave_from_date), formatdate(first.leave_to_date)),
 		)
 
+		for older in self._older_unsettled_disbursements():
+			self._append_line(
+				entry_type=INFORMATION,
+				amount=flt(older.total_leave_pay),
+				payable_amount=0,
+				posting_date=older.leave_from_date,
+				source_doctype="Annual Leave Disbursement",
+				source_name=older.name,
+				description=_(
+					"Leave salary for {0} to {1} is still unpaid, and this settlement does not pay "
+					"it: payroll has already dealt with those months. Raise its own payment advice."
+				).format(formatdate(older.leave_from_date), formatdate(older.leave_to_date)),
+			)
+
 		for extra in disbursements[1:]:
 			self._append_line(
 				entry_type=INFORMATION,
@@ -568,7 +596,48 @@ class SalarySettlement(Document):
 			)
 
 	def _unsettled_leave_disbursements(self) -> list:
-		"""Submitted disbursements nobody has handed over or claimed yet."""
+		"""Submitted disbursements nobody has handed over or claimed yet.
+
+		WHICH ones depends on why this settlement exists, and getting that wrong pays the
+		employee for the wrong leave:
+
+		  * **Going on leave / salary advance** — only the leave they are leaving FOR, i.e.
+		    a disbursement whose leave starts on or after the settlement date. An older
+		    unpaid disbursement belongs to a month payroll has already dealt with; sweeping
+		    it in here moved a September payout into November's settlement and left the
+		    November leave, the one the employee was actually about to take, unpaid.
+		  * **Final settlement** — everything still unpaid. The employee is leaving, so
+		    this is the last payment they will receive and nothing can be left behind.
+
+		Whatever is not absorbed is still reported on the document, as an information line,
+		so nobody has to guess where the money went.
+		"""
+		filters = {
+			"docstatus": 1,
+			"employee": self.employee,
+			"company": self.company,
+			"status": ("in", _ALD_UNSETTLED),
+		}
+		if cstr(self.reason) != "Final Settlement":
+			filters["leave_from_date"] = (">=", self.settlement_date)
+
+		rows = frappe.get_all(
+			"Annual Leave Disbursement",
+			filters=filters,
+			fields=["name", "leave_from_date", "leave_to_date", "total_leave_pay"],
+			order_by="leave_from_date asc",
+		)
+		if not rows:
+			return []
+
+		claimed = self._leave_disbursements_claimed_elsewhere([row.name for row in rows])
+		return [row for row in rows if row.name not in claimed and flt(row.total_leave_pay) > 0]
+
+	def _older_unsettled_disbursements(self) -> list:
+		"""Unpaid disbursements this settlement deliberately does NOT absorb."""
+		if cstr(self.reason) == "Final Settlement":
+			return []
+
 		rows = frappe.get_all(
 			"Annual Leave Disbursement",
 			filters={
@@ -576,13 +645,11 @@ class SalarySettlement(Document):
 				"employee": self.employee,
 				"company": self.company,
 				"status": ("in", _ALD_UNSETTLED),
+				"leave_from_date": ("<", self.settlement_date),
 			},
 			fields=["name", "leave_from_date", "leave_to_date", "total_leave_pay"],
 			order_by="leave_from_date asc",
 		)
-		if not rows:
-			return []
-
 		claimed = self._leave_disbursements_claimed_elsewhere([row.name for row in rows])
 		return [row for row in rows if row.name not in claimed and flt(row.total_leave_pay) > 0]
 
