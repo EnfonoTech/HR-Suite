@@ -109,6 +109,36 @@ def draft_settlement(assignment, period_from, period_to, settlement_date, reason
 	return doc
 
 
+def force_disbursement(assignment, leave_from, leave_to):
+	"""A minimal Annual Leave Disbursement row, forced to docstatus 1 — enough for
+	Salary Settlement's own ``_disbursed_leave_dates`` to find it by employee and
+	date range, without going through the disbursement's OWN balance and Country
+	Config checks. Those are annual_leave_disbursement.py's business rules, not
+	the ones under test here — the same reasoning
+	test_an_overlapping_submitted_settlement_is_refused already applies to a
+	Salary Settlement fixture below.
+
+	None if this site has no Leave Type at all to point the row at.
+	"""
+	leave_type = frappe.db.get_value("Leave Type", {}, "name")
+	if not leave_type:
+		return None
+
+	ald = frappe.get_doc({
+		"doctype": "Annual Leave Disbursement",
+		"employee": assignment.employee,
+		"company": assignment.company,
+		"leave_type": leave_type,
+		"leave_from_date": leave_from,
+		"leave_to_date": leave_to,
+	})
+	ald.flags.ignore_validate = True
+	ald.flags.ignore_mandatory = True
+	ald.insert(ignore_permissions=True)
+	frappe.db.set_value("Annual Leave Disbursement", ald.name, "docstatus", 1)
+	return ald.name
+
+
 def prorated_earnings(doc, prorated_components) -> float:
 	"""Only the components the Salary Slip scales by payment days."""
 	return flt(
@@ -269,6 +299,92 @@ class TestSalarySettlementProration(SavepointTestCase):
 		self.assertGreater(flt(half.earned_amount), 0)
 		self.assertGreater(flt(half.earned_days), 0)
 		self.assertLess(flt(half.earned_days), flt(whole.earned_days))
+
+
+class TestSalarySettlementLeaveOverlap(SavepointTestCase):
+	"""A day already paid as leave salary is never also paid as ordinary salary."""
+
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		cls.assignment = find_settleable_employee()
+
+	def setUp(self):
+		super().setUp()
+		if not self.assignment:
+			self.skipTest("No employee on this site can be settled")
+
+	def test_disbursed_days_drop_out_of_earned_days(self):
+		month_start, month_end = self.assignment.month_start, self.assignment.month_end
+		overlap_from = add_days(month_start, 4)
+		overlap_to = add_days(month_start, 9)
+
+		without = draft_settlement(self.assignment, month_start, month_end, month_end)
+
+		ald_name = force_disbursement(self.assignment, overlap_from, overlap_to)
+		if not ald_name:
+			self.skipTest("No Leave Type exists on this site to build a throwaway disbursement")
+
+		with_overlap = draft_settlement(self.assignment, month_start, month_end, month_end)
+
+		delta = flt(without.earned_days) - flt(with_overlap.earned_days)
+		self.assertGreater(
+			delta, 0,
+			msg="A disbursement overlapping the settlement window must reduce earned days",
+		)
+		self.assertLessEqual(
+			delta, 6.0,
+			msg="A 6-day disbursement cannot exclude more than 6 days, holidays already netted out",
+		)
+		self.assertIn(
+			ald_name, with_overlap.proration_basis,
+			msg="The basis line must name the disbursement it excluded, not just a smaller number",
+		)
+
+	def test_absorbed_disbursement_cancels_its_own_recovery_row(self):
+		"""annual_leave_disbursement.cancel_recovery_not_yet_taken, called from
+		_cancel_absorbed_disbursement_recovery, without dragging a real settlement
+		submit (Journal Entry, payroll payable account) into this test."""
+		ald_name = force_disbursement(
+			self.assignment,
+			self.assignment.month_start,
+			add_days(self.assignment.month_start, 4),
+		)
+		if not ald_name:
+			self.skipTest("No Leave Type exists on this site to build a throwaway disbursement")
+
+		component = frappe.db.get_value("Salary Component", {"type": "Deduction"}, "name")
+		if not component:
+			self.skipTest("No Deduction-type Salary Component exists on this site")
+
+		additional_salary = frappe.get_doc({
+			"doctype": "Additional Salary",
+			"employee": self.assignment.employee,
+			"company": self.assignment.company,
+			"currency": frappe.get_cached_value("Company", self.assignment.company, "default_currency"),
+			"salary_component": component,
+			"amount": 1,
+			"payroll_date": self.assignment.month_start,
+			"ref_doctype": "Annual Leave Disbursement",
+			"ref_docname": ald_name,
+			"overwrite_salary_structure_amount": 0,
+		})
+		try:
+			additional_salary.insert(ignore_permissions=True)
+			additional_salary.submit()
+		except frappe.ValidationError as e:
+			self.skipTest(f"This site's own Additional Salary rules refused the fixture: {e}")
+
+		from hr_suite.hr_suite.doctype.annual_leave_disbursement.annual_leave_disbursement import (
+			cancel_recovery_not_yet_taken,
+		)
+
+		already_taken = cancel_recovery_not_yet_taken(ald_name)
+
+		self.assertEqual(already_taken, [])
+		self.assertEqual(
+			frappe.db.get_value("Additional Salary", additional_salary.name, "docstatus"), 2
+		)
 
 
 class TestSalarySettlementTotals(SavepointTestCase):

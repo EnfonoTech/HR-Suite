@@ -658,6 +658,55 @@ class AnnualLeaveDisbursement(Document):
 # ── Module helpers ────────────────────────────────────────────────────────────
 
 
+def cancel_recovery_not_yet_taken(ald_name: str) -> list:
+	"""Cancel this disbursement's recovery Additional Salary rows, except any a
+	SUBMITTED Salary Slip has already taken.
+
+	Used when a Salary Settlement absorbs this disbursement's liability instead of
+	a Payment Advice paying it: the settlement's own Journal Entry has just
+	discharged the liability, so the per-month payroll clawback this document
+	booked for the future is no longer this document's job. Left running it would
+	either sit forever unconsumed, or — worse — dock a payslip for days the
+	settlement has already excluded from its own earned-salary lines
+	(``salary_settlement._disbursed_leave_dates``), taking the same day's pay away
+	a second time in the other direction.
+
+	Cancelling a row a submitted Salary Slip already took raises
+	``frappe.LinkExistsError`` (the slip's own ``Salary Detail.additional_salary``
+	Link field is what Frappe's cancel-time link check finds) — payroll already
+	recovered that part, correctly, so there is nothing to undo. Returns the names
+	Frappe refused, so the caller reports them instead of the failure vanishing
+	silently.
+	"""
+	booked = frappe.get_all(
+		"Additional Salary",
+		filters={"ref_doctype": "Annual Leave Disbursement", "ref_docname": ald_name, "docstatus": 1},
+		pluck="name",
+	)
+	already_taken = []
+	for name in booked:
+		try:
+			frappe.get_doc("Additional Salary", name).cancel()
+		except frappe.LinkExistsError:
+			already_taken.append(name)
+	return already_taken
+
+
+def recreate_recovery(ald_name: str) -> None:
+	"""Rebuild this disbursement's per-month recovery from its own saved fields.
+
+	Used when a Salary Settlement that had absorbed this disbursement (and, on
+	absorbing it, cancelled its recovery via ``cancel_recovery_not_yet_taken``
+	above) is itself cancelled: the disbursement goes back to being its own
+	responsibility, and needs the payroll clawback back. Only call this when NO
+	recovery rows for this disbursement currently exist — calling it while some
+	remain (the ones a payslip already took, left alone above) would book a
+	second, duplicate deduction for whatever month that row already covers. The
+	caller checks that; this does not.
+	"""
+	frappe.get_doc("Annual Leave Disbursement", ald_name)._create_recovery_additional_salaries()
+
+
 def resolve_leave_salary_accounts(company: str) -> tuple:
 	"""(expense, payable) for leave salary — configured first, guessed second.
 

@@ -7,7 +7,7 @@ HRMS v15 has no off-cycle payroll. When somebody flies on the 12th they are paid
 hand, outside the system, and the month's payslip does not know it happened — so the
 month's payroll pays those twelve days a second time.
 
-Three rules hold this document together. Breaking any one of them pays somebody twice.
+Four rules hold this document together. Breaking any one of them pays somebody twice.
 
 1. **Pro-ration is payroll's, not ours.** Earned salary is
    ``amount x payment_days / total_working_days`` per calendar month, with the days
@@ -40,6 +40,25 @@ own per-month recovery (annual_leave_disbursement.py
 ``_create_recovery_additional_salaries``). Settling it here therefore discharges a
 liability that already exists — the Journal Entry DEBITS Salary Payable for it — and
 books no second recovery.
+
+4. **A day already paid as leave salary is never ALSO paid as ordinary salary.**
+   Every calendar day inside a submitted Annual Leave Disbursement's dates is
+   subtracted from this settlement's own payment days (``_disbursed_leave_dates``),
+   for every disbursement that overlaps the window — not only the one this
+   settlement absorbs. Without it, a settlement whose period reaches back over
+   leave that was already advanced (an employee leaving mid-leave is the case that
+   surfaces it; the window does not have to be a Final Settlement to overlap) pays
+   the same day twice: once as leave salary, once as an ordinary earned day. And
+   once THIS settlement has absorbed a disbursement's liability, that
+   disbursement's own future payroll clawback is cancelled
+   (``_cancel_absorbed_disbursement_recovery``, annual_leave_disbursement.py
+   ``cancel_recovery_not_yet_taken``) — left running, it would either never fire
+   (dead data, nothing lost) or fire against a payslip for days this settlement
+   has already excluded, taking the same day's pay away a second time in the
+   OTHER direction. Cancelling that settlement again restores it
+   (``_restore_disbursement_recovery``), unless part of it had already reached a
+   payslip before it was ever absorbed — rebuilding blind then risks a duplicate,
+   so it stops and asks instead.
 """
 
 import frappe
@@ -128,6 +147,7 @@ class SalarySettlement(Document):
 		self._book_payroll_recovery()
 		self._create_settlement_journal_entry()
 		self._mark_leave_disbursement_settled()
+		self._cancel_absorbed_disbursement_recovery()
 
 	def before_cancel(self):
 		self.status = "Cancelled"
@@ -480,6 +500,17 @@ class SalarySettlement(Document):
 					title=_("No Working Days"),
 				)
 
+			# A day already handed over as leave salary — by any submitted disbursement
+			# whose leave dates reach into this chunk, not only the one this settlement
+			# absorbs — is not ALSO an ordinary earned day. Counted against payment_days,
+			# not total_working_days: the day still belongs to the month, this settlement
+			# simply is not the one paying for it.
+			disbursed = self._disbursed_leave_dates(chunk_start, chunk_end)
+			if not include_holidays:
+				holidays_here = self._holiday_dates(chunk_start, chunk_end)
+				disbursed = {day: name for day, name in disbursed.items() if day not in holidays_here}
+			payment_days -= len(disbursed)
+
 			payment_days = max(payment_days, 0)
 			factor = flt(flt(payment_days) / flt(total_working_days), _FACTOR_PRECISION)
 
@@ -493,6 +524,10 @@ class SalarySettlement(Document):
 				formatdate(chunk_end),
 				_("counted") if include_holidays else _("not counted"),
 			)
+			if disbursed:
+				disbursement_names = ", ".join(sorted(set(disbursed.values())))
+				excluded_note = _("day(s) already paid as leave salary by")
+				basis = basis + " " + cstr(len(disbursed)) + " " + excluded_note + " " + disbursement_names + _(", excluded here.")
 
 			out.append(
 				frappe._dict(
@@ -518,6 +553,35 @@ class SalarySettlement(Document):
 			return set()
 
 		return {getdate(date) for date in get_holiday_dates_between(holiday_list, start_date, end_date)}
+
+	def _disbursed_leave_dates(self, start_date, end_date) -> dict:
+		"""{date: disbursement_name} for every day in [start_date, end_date] already
+		handed over as leave salary by a submitted Annual Leave Disbursement of
+		this employee — any status, not only the one this settlement absorbs.
+
+		An older, already-Paid disbursement still means the day was paid; a
+		Cancelled one (docstatus 2, excluded by the docstatus filter below) means
+		it was not, so those days are not in this set.
+		"""
+		rows = frappe.get_all(
+			"Annual Leave Disbursement",
+			filters={
+				"employee": self.employee,
+				"docstatus": 1,
+				"leave_from_date": ["<=", end_date],
+				"leave_to_date": [">=", start_date],
+			},
+			fields=["name", "leave_from_date", "leave_to_date"],
+		)
+
+		dates = {}
+		for row in rows:
+			day = max(getdate(row.leave_from_date), getdate(start_date))
+			last = min(getdate(row.leave_to_date), getdate(end_date))
+			while day <= last:
+				dates[day] = row.name
+				day = add_days(day, 1)
+		return dates
 
 	# ── leave salary ──────────────────────────────────────────────────────────
 
@@ -1475,6 +1539,32 @@ class SalarySettlement(Document):
 			update_modified=False,
 		)
 
+	def _cancel_absorbed_disbursement_recovery(self):
+		"""The disbursement this settlement absorbed no longer needs its own
+		payroll clawback — this settlement's Journal Entry has just discharged
+		that liability instead, and _disbursed_leave_dates above has already
+		excluded its days from this settlement's own earned-salary lines. See
+		annual_leave_disbursement.cancel_recovery_not_yet_taken for what "left
+		alone" means and why.
+		"""
+		if not self.annual_leave_disbursement:
+			return
+
+		from hr_suite.hr_suite.doctype.annual_leave_disbursement.annual_leave_disbursement import (
+			cancel_recovery_not_yet_taken,
+		)
+
+		already_taken = cancel_recovery_not_yet_taken(self.annual_leave_disbursement)
+		if already_taken:
+			frappe.msgprint(
+				_(
+					"{0}'s payroll recovery had already reached a submitted payslip through {1} "
+					"before this settlement — that part is already recovered, so it was left alone."
+				).format(self.annual_leave_disbursement, ", ".join(already_taken)),
+				title=_("Recovery Already Taken"),
+				indicator="blue",
+			)
+
 	def _release_leave_disbursement(self):
 		if not self.annual_leave_disbursement:
 			return
@@ -1494,6 +1584,38 @@ class SalarySettlement(Document):
 			"Approved",
 			update_modified=False,
 		)
+		self._restore_disbursement_recovery(self.annual_leave_disbursement)
+
+	def _restore_disbursement_recovery(self, ald_name):
+		"""Undo _cancel_absorbed_disbursement_recovery: the disbursement is no
+		longer absorbed, so it is this settlement's turn to give its payroll
+		clawback back.
+
+		Refuses to guess where part of the recovery already reached a payslip
+		before this settlement ever absorbed the disbursement — rebuilding blind
+		then risks a second, duplicate deduction for a month already taken.
+		"""
+		still_there = frappe.db.exists(
+			"Additional Salary",
+			{"ref_doctype": "Annual Leave Disbursement", "ref_docname": ald_name, "docstatus": 1},
+		)
+		if still_there:
+			frappe.msgprint(
+				_(
+					"{0}'s payroll recovery is only partly restored: some of it reached a payslip "
+					"before this settlement absorbed it, and rebuilding the rest automatically "
+					"risks a duplicate deduction. Check {0} and its recovery deductions by hand."
+				).format(ald_name),
+				title=_("Leave Salary Recovery Needs Review"),
+				indicator="orange",
+			)
+			return
+
+		from hr_suite.hr_suite.doctype.annual_leave_disbursement.annual_leave_disbursement import (
+			recreate_recovery,
+		)
+
+		recreate_recovery(ald_name)
 
 	def _leave_disbursement_has_paid_state(self) -> bool:
 		"""Annual Leave Disbursement is owned elsewhere; never assume its option list."""
