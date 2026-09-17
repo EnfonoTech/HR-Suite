@@ -65,6 +65,7 @@ from hr_suite.hr_suite.doctype.payroll_preview.payroll_preview import (
 	EARNING,
 	INFORMATION,
 )
+from hr_suite.hr_suite.payment_advice import assert_no_live_advice
 from hr_suite.hr_suite.utils import (
 	assert_doctype_permissions,
 	assert_employee_access,
@@ -132,6 +133,10 @@ class SalarySettlement(Document):
 		self.status = "Cancelled"
 
 	def on_cancel(self):
+		# Before anything is undone: a payment advice that still claims this settlement
+		# has to be dealt with first, and a PAID one means the money is already gone.
+		assert_no_live_advice(self)
+
 		# Recovery rows first, and deliberately. Frappe refuses to cancel an Additional
 		# Salary a SUBMITTED Salary Slip has already taken, and that refusal has to stop
 		# the whole cancellation: the advance was recovered on a payslip, so the

@@ -256,6 +256,43 @@ def _claim_lines(doc, spec: dict) -> list:
 	return [{"amount": flt(amount), "description": " + ".join(labels)}]
 
 
+def assert_no_live_advice(doc) -> None:
+	"""Refuse to cancel an HR document a submitted payment advice still claims.
+
+	frappe stops this anyway — the advice's reference row is a dynamic link — but it
+	stops it with a generic "Cannot delete or cancel because … is linked with …", which
+	says nothing about what to do. Worse, the two cases are not the same: an advice
+	still waiting to be paid can simply be cancelled first, while one already PAID means
+	the money has left the bank and cancelling the document that justified it would
+	leave a payment with nothing behind it.
+	"""
+	advice = get_payment_advice_for(doc.doctype, doc.name)
+	if not advice:
+		return
+
+	row = frappe.db.get_value(ADVICE_DOCTYPE, advice, ["docstatus", "status", "payment_date"], as_dict=True)
+	if not row or row.docstatus != 1:
+		return
+
+	if row.status == "Paid":
+		frappe.throw(
+			_(
+				"Payment Advice {0} for this {1} was paid on {2}, so the money has already left "
+				"the company. Cancelling this document would leave that payment with nothing "
+				"behind it — reverse the payment in the accounts first."
+			).format(advice, _(doc.doctype), frappe.format(row.payment_date, {"fieldtype": "Date"})),
+			title=_("Already Paid"),
+		)
+
+	frappe.throw(
+		_(
+			"Payment Advice {0} still claims this {1} from finance. Cancel that advice first, "
+			"then cancel this document."
+		).format(advice, _(doc.doctype)),
+		title=_("Payment Advice Outstanding"),
+	)
+
+
 @frappe.whitelist()
 def raise_for_document(doctype: str, name: str) -> dict:
 	"""Raise the payment advice for one submitted HR document, on request.

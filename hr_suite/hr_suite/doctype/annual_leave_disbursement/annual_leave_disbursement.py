@@ -25,6 +25,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cstr, date_diff, flt, formatdate, getdate, nowdate
 
+from hr_suite.hr_suite.payment_advice import assert_no_live_advice
 from hr_suite.hr_suite.utils import (
 	assert_doctype_permissions,
 	assert_employee_access,
@@ -79,6 +80,10 @@ class AnnualLeaveDisbursement(Document):
 		self._create_recovery_additional_salaries()
 
 	def on_cancel(self):
+		# Before anything is undone: a payment advice that still claims this disbursement
+		# has to be dealt with first, and a PAID one means the money is already gone.
+		assert_no_live_advice(self)
+
 		# Deduction rows first, and deliberately. Frappe refuses to cancel an Additional
 		# Salary that a SUBMITTED Salary Slip has already taken, and that refusal has to
 		# stop the whole cancellation: the money was recovered on a payslip, so the
