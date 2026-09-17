@@ -23,7 +23,7 @@ not from this app's own counters, which no payslip and no leave dashboard consul
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cstr, date_diff, flt, formatdate, getdate, nowdate
+from frappe.utils import cint, cstr, date_diff, flt, formatdate, getdate, nowdate
 
 from hr_suite.hr_suite.payment_advice import assert_no_live_advice
 from hr_suite.hr_suite.utils import (
@@ -59,6 +59,7 @@ class AnnualLeaveDisbursement(Document):
 
 	def validate(self):
 		self._pull_from_leave_application()
+		self._validate_leave_may_be_advanced()
 		self._validate_leave_period()
 		self._read_allocation_balance()
 		self._guard_duplicate_period()
@@ -126,6 +127,106 @@ class AnnualLeaveDisbursement(Document):
 		self.leave_to_date = application.to_date
 		self.leave_days_to_pay = flt(application.total_leave_days)
 
+	def _validate_leave_may_be_advanced(self):
+		"""Leave salary is an advance of leave that was EARNED, not of every kind of leave.
+
+		Sick leave is the case that matters. It is paid by payroll for the month it falls
+		in, and in Bahrain it is paid in tiers — Law 36/2012 pays the first days in full,
+		the next at half, the rest not at all. Advancing it would hand over a full day's
+		salary for every day and then take the same amount back, so an employee who was
+		sick for a month would be paid in full for days the law does not pay at all, and
+		nothing downstream would notice.
+
+		Which leave may be advanced is therefore a declaration, not a guess: the tick on
+		Country Config's leave-type row. Annual and earned leave are seeded ticked; a
+		client who really does advance maternity pay ticks that row themselves.
+		"""
+		if not (self.employee and self.leave_type):
+			return
+
+		leave_type = frappe.db.get_value(
+			"Leave Type", self.leave_type, ["is_lwp", "is_compensatory"], as_dict=True
+		) or frappe._dict()
+
+		if cint(leave_type.is_lwp):
+			frappe.throw(
+				_("{0} is leave without pay, so there is no salary to advance.").format(self.leave_type),
+				title=_("Unpaid Leave"),
+			)
+
+		if cint(leave_type.is_compensatory):
+			frappe.throw(
+				_("{0} is compensatory leave — time given back for time worked, which payroll has "
+				  "already paid. There is nothing to advance.").format(self.leave_type),
+				title=_("Compensatory Leave"),
+			)
+
+		row = self._country_leave_row()
+		if not row:
+			# The country says nothing about this leave type at all. Fall back to what HRMS
+			# knows: an earned-leave type is one the employee accrues, which is exactly the
+			# leave that can be asked for early.
+			if cint(frappe.db.get_value("Leave Type", self.leave_type, "is_earned_leave")):
+				return
+
+			frappe.throw(
+				_("{0} is not declared for {1} on Country Config, so HR Suite cannot tell whether it "
+				  "may be paid in advance. Add it to the country's leave types and tick "
+				  "<b>May Be Paid In Advance</b>, or disburse an earned-leave type instead.").format(
+					self.leave_type, self._work_country() or _("this employee's country")
+				),
+				title=_("Leave Type Not Declared"),
+			)
+
+		if cstr(row.get("pay_treatment") or "Full Pay") != "Full Pay":
+			frappe.throw(
+				_("{0} is {1} leave for {2}, so a full day's salary cannot be advanced against it. "
+				  "Payroll pays it at the rate the law allows, on the payslip for the month it falls "
+				  "in.").format(self.leave_type, _(cstr(row.get("pay_treatment"))).lower(), self._work_country()),
+				title=_("Leave Is Not Paid In Full"),
+			)
+
+		if not cint(row.get("leave_salary_in_advance")):
+			frappe.throw(
+				_("{0} is not paid in advance for {1}. Payroll pays it on the payslip for the month "
+				  "it falls in — which is what sick, maternity and Hajj leave normally do. If this "
+				  "company really does pay it early, tick <b>May Be Paid In Advance</b> on that leave "
+				  "type in Country Config.").format(self.leave_type, self._work_country()),
+				title=_("Not Paid In Advance"),
+			)
+
+	def _work_country(self) -> str:
+		from hr_suite.hr_suite.utils import get_employee_work_country
+
+		return get_employee_work_country(self.employee) if self.employee else ""
+
+	def _country_leave_row(self):
+		"""The employee's country's declaration for this leave type, or None."""
+		country = self._work_country()
+		if not country:
+			return None
+
+		config = frappe.db.get_value("Country Config", {"country_code": country}, "name")
+		if not config:
+			return None
+
+		columns = set(frappe.db.get_table_columns("Country Leave Type Row"))
+		fields = ["name", "pay_treatment"] + (
+			["leave_salary_in_advance"] if "leave_salary_in_advance" in columns else []
+		)
+
+		for field in ("frappe_leave_type_name", "leave_type_name"):
+			row = frappe.db.get_value(
+				"Country Leave Type Row",
+				{"parent": config, "parenttype": "Country Config", field: self.leave_type},
+				fields,
+				as_dict=True,
+			)
+			if row:
+				return row
+
+		return None
+
 	def _validate_leave_period(self):
 		if not (self.leave_from_date and self.leave_to_date):
 			return
@@ -134,7 +235,13 @@ class AnnualLeaveDisbursement(Document):
 			frappe.throw(_("Leave To cannot fall before Leave From."), title=_("Invalid Leave Period"))
 
 		span = date_diff(self.leave_to_date, self.leave_from_date) + 1
-		if not flt(self.leave_days_to_pay):
+		if not flt(self.leave_days_to_pay) and not (
+			self.ticket_entitled and flt(self.ticket_amount) > 0
+		):
+			# Blank days mean "the whole period", which is what HR means nine times out of ten.
+			# The exception is a document raised for the TICKET alone — an employee owed their
+			# annual air fare who is not asking for the leave pay early — where filling the
+			# period in would hand over a fortnight's salary nobody asked for.
 			self.leave_days_to_pay = span
 
 		if flt(self.leave_days_to_pay) > span:

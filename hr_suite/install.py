@@ -668,8 +668,8 @@ _COUNTRY_CONFIGS = [
 		"leave_salary_notes": "Saudi Labour Law Art. 109 and 111 — annual leave is paid in advance on the full wage. Confirm whether the company pays the package or basic only.",
 		# Leave types
 		"leave_types": [
-			{"leave_type_name": "Annual Leave", "days_per_year": 21, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "accrual_frequency": "Monthly", "frappe_leave_type_name": "Annual Leave"},
-			{"leave_type_name": "Annual Leave (5+ Years)", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "accrual_frequency": "Monthly", "frappe_leave_type_name": "Annual Leave"},
+			{"leave_type_name": "Annual Leave", "days_per_year": 21, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "accrual_frequency": "Monthly", "leave_salary_in_advance": 1, "frappe_leave_type_name": "Annual Leave"},
+			{"leave_type_name": "Annual Leave (5+ Years)", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "accrual_frequency": "Monthly", "leave_salary_in_advance": 1, "frappe_leave_type_name": "Annual Leave"},
 			{"leave_type_name": "Sick Leave", "days_per_year": 120, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Sick Leave"},
 			{"leave_type_name": "Maternity Leave", "days_per_year": 70, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Maternity Leave"},
 			{"leave_type_name": "Paternity Leave", "days_per_year": 3, "gender_specific": "Male Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Paternity Leave"},
@@ -730,7 +730,7 @@ _COUNTRY_CONFIGS = [
 		"leave_salary_notes": "UAE Federal Decree-Law 33/2021 Art. 29 — annual leave paid on the basic wage. Confirm against the employment contract, which often pays the package.",
 		# Leave types
 		"leave_types": [
-			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 15, "accrual_frequency": "Monthly", "frappe_leave_type_name": "Annual Leave"},
+			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 15, "accrual_frequency": "Monthly", "leave_salary_in_advance": 1, "frappe_leave_type_name": "Annual Leave"},
 			{"leave_type_name": "Sick Leave", "days_per_year": 90, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Sick Leave"},
 			{"leave_type_name": "Maternity Leave", "days_per_year": 60, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Maternity Leave"},
 			{"leave_type_name": "Paternity Leave", "days_per_year": 5, "gender_specific": "Male Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Paternity Leave"},
@@ -808,7 +808,7 @@ _COUNTRY_CONFIGS = [
 		"leave_salary_notes": "Bahrain Labour Law 36/2012 Art. 58-60 — 30 days annual leave, paid in advance, at the wage including regular allowances. 30 days a year is 2.5 a month. Confirm which allowances the company treats as regular.",
 		# Leave types
 		"leave_types": [
-			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "accrual_frequency": "Monthly", "frappe_leave_type_name": "Annual Leave"},
+			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "accrual_frequency": "Monthly", "leave_salary_in_advance": 1, "frappe_leave_type_name": "Annual Leave"},
 			{"leave_type_name": "Sick Leave", "days_per_year": 55, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Sick Leave"},
 			{"leave_type_name": "Maternity Leave", "days_per_year": 60, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Maternity Leave"},
 			{"leave_type_name": "Paternity Leave", "days_per_year": 1, "gender_specific": "Male Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Paternity Leave"},
@@ -867,7 +867,7 @@ _COUNTRY_CONFIGS = [
 		"leave_salary_notes": "No statutory advance-leave-salary rule in India; earned leave is paid at the wage rate when taken. Figures here are a company-practice default — confirm before use.",
 		# Leave types
 		"leave_types": [
-			{"leave_type_name": "Earned Leave", "days_per_year": 15, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "accrual_frequency": "Monthly", "frappe_leave_type_name": "Earned Leave"},
+			{"leave_type_name": "Earned Leave", "days_per_year": 15, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "accrual_frequency": "Monthly", "leave_salary_in_advance": 1, "frappe_leave_type_name": "Earned Leave"},
 			{"leave_type_name": "Casual Leave", "days_per_year": 12, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Casual Leave"},
 			{"leave_type_name": "Sick Leave", "days_per_year": 12, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Sick Leave"},
 			{"leave_type_name": "Maternity Leave", "days_per_year": 182, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Maternity Leave"},
@@ -929,7 +929,7 @@ _COUNTRY_CONFIGS = [
 		"leave_salary_notes": "Oman Labour Law RD 53/2023 Art. 78 — annual leave paid on the gross wage, in advance. Confirm against the employment contract.",
 		# Leave types
 		"leave_types": [
-			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "accrual_frequency": "Monthly", "frappe_leave_type_name": "Annual Leave"},
+			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 30, "accrual_frequency": "Monthly", "leave_salary_in_advance": 1, "frappe_leave_type_name": "Annual Leave"},
 			{"leave_type_name": "Sick Leave", "days_per_year": 182, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Sick Leave"},
 			{"leave_type_name": "Maternity Leave", "days_per_year": 50, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Maternity Leave"},
 			{"leave_type_name": "Paternity Leave", "days_per_year": 3, "gender_specific": "Male Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Paternity Leave"},

@@ -72,6 +72,13 @@
    "label": "Accrues",
    "options": "\nNone\nMonthly\nQuarterly\nHalf-Yearly\nYearly",
    "description": "How this entitlement is earned. Monthly turns 30 days a year into 2.5 days credited each month. Leave blank to follow the country default; set None for leave that is granted whole (sick, maternity, Hajj) rather than earned."
+  },
+  {
+   "default": "0",
+   "fieldname": "leave_salary_in_advance",
+   "fieldtype": "Check",
+   "label": "May Be Paid In Advance",
+   "description": "Tick where the employee can ask for this leave's salary BEFORE they go — annual leave, normally. Leave unticked for leave that payroll pays as it happens: sick leave is paid on the payslip for the month it falls in, and advancing it would hand over a full day's pay for days the law may pay at half or not at all."
   }
  ],
  "permissions": [],
