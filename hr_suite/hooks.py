@@ -25,17 +25,21 @@ app_include_css = ["/assets/hr_suite/css/hr_suite.css"]
 scheduler_events = {
 	"daily": [
 		"hr_suite.hr_suite.salary_override_api.apply_pending_salary_overrides",
+		# ORDER MATTERS between these two. The leave-type sync switches a type to monthly
+		# accrual only while no employee holds a live allocation of it, which is true for
+		# exactly one moment each year: after the old leave year has ended and before the
+		# new year's Leave Policy Assignments are written. Running the sync first means a
+		# type that is due to accrue is already earned-leave when the assignment is made,
+		# so hrms allocates it the accrual way (nothing up front, topped up monthly)
+		# instead of granting the whole year again and blocking the switch for another
+		# twelve months.
+		"hr_suite.hr_suite.leave_setup.sync_leave_types_from_country_config",
 		# The leave year has to be opened before it starts and assigned once it has:
 		# hrms accrues onto the allocation that is live today, so without a Leave Period
 		# and a Leave Policy Assignment for the new year, accrual stops on 1 January and
 		# every Leave Application fails for want of an allocation. Idempotent, and a
 		# no-op until 60 days before the current period ends.
 		"hr_suite.hr_suite.leave_setup.roll_forward_leave_periods",
-		# The accrual switch-over waits for the last whole-year grant to end, and that
-		# happens on a date nobody runs a migrate on. Re-reading Country Config daily is
-		# what makes "it switches over by itself" true; the sync writes nothing when
-		# nothing has changed, and logs rather than throws when a country disagrees.
-		"hr_suite.hr_suite.leave_setup.sync_leave_types_from_country_config",
 		"hr_suite.hr_suite.integrations.muqeem.sync_expiring_iqamas",
 		"hr_suite.hr_suite.tasks.send_iqama_expiry_alerts",
 		"hr_suite.hr_suite.tasks.send_contract_expiry_alerts",

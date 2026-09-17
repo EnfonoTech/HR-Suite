@@ -910,7 +910,18 @@ _JOURNAL_ENTRY_SOURCES = (
 
 
 def on_journal_entry_cancel(doc, method=None):
-    """Release the payroll recovery of any HR document this entry belonged to."""
+    """Release the payroll recovery of any HR document this entry belonged to.
+
+    Runs on cancel AND on delete, because an approver rejecting a payout does one or
+    the other. Both paths end in frappe's own link check — `check_no_back_links_exist`
+    after on_cancel, `check_if_doc_is_linked` after on_trash — and the link that makes
+    the source document findable here is exactly the link that check refuses to release.
+    So clearing that link is part of the release, and the entry is told to ignore this
+    doctype; otherwise everything below is rolled back the moment the hook returns and
+    the approver is shown a success message for work that did not survive.
+    """
+    ignore = list(doc.get("ignore_linked_doctypes") or [])
+
     for doctype, field in _JOURNAL_ENTRY_SOURCES:
         if not frappe.db.exists("DocType", doctype):
             continue
@@ -918,11 +929,19 @@ def on_journal_entry_cancel(doc, method=None):
         for name in frappe.get_all(
             doctype, filters={field: doc.name, "docstatus": 1}, pluck="name"
         ):
-            _release_payroll_recovery(doctype, name, doc.name)
+            _release_payroll_recovery(doctype, name, field, doc.name)
+            if doctype not in ignore:
+                ignore.append(doctype)
+
+    if ignore:
+        # Set here rather than in before_cancel: erpnext's own JournalEntry.on_cancel
+        # assigns ignore_linked_doctypes itself, so anything written earlier is lost.
+        doc.ignore_linked_doctypes = tuple(ignore)
 
 
-def _release_payroll_recovery(doctype: str, name: str, journal_entry: str) -> None:
-    released = []
+def _release_payroll_recovery(doctype: str, name: str, link_field: str, journal_entry: str) -> None:
+    released, stuck = [], []
+
     for additional_salary in frappe.get_all(
         "Additional Salary",
         filters={"ref_doctype": doctype, "ref_docname": name, "docstatus": 1},
@@ -932,22 +951,44 @@ def _release_payroll_recovery(doctype: str, name: str, journal_entry: str) -> No
             frappe.get_doc("Additional Salary", additional_salary).cancel()
             released.append(additional_salary)
         except Exception:
-            # A payslip has already taken it, which frappe refuses to undo. That is a
-            # human problem now: say so rather than failing the cancellation of an entry
-            # the approver has every right to reject.
+            # A payslip has already taken it, and frappe refuses to undo that. It is a
+            # human problem from here: say so rather than failing the cancellation of an
+            # entry the approver has every right to reject.
+            stuck.append(additional_salary)
             frappe.log_error(
-                title=_("HR Suite: payroll recovery could not be released"),
+                title="HR Suite: payroll recovery could not be released",
                 message=frappe.get_traceback(),
             )
 
-    if frappe.get_meta(doctype).has_field("recovery_booked"):
+    # The link has to go, or frappe's post-cancel / post-delete check refuses the whole
+    # operation — see on_journal_entry_cancel.
+    frappe.db.set_value(doctype, name, link_field, None, update_modified=False)
+
+    if not stuck and frappe.get_meta(doctype).has_field("recovery_booked"):
+        # Only when everything really was released. Clearing this while a payslip still
+        # holds one of the deductions would report a hole as closed.
         frappe.db.set_value(doctype, name, "recovery_booked", 0, update_modified=False)
+
+    if stuck:
+        frappe.msgprint(
+            _(
+                "Journal Entry {0} belonged to {1} {2}. {3} payroll recovery row(s) were "
+                "cancelled, but {4} could NOT be — a submitted Salary Slip has already taken "
+                "them: {5}. Those deductions stand, so the employee has been charged for an "
+                "advance this entry no longer records. That has to be put right by hand."
+            ).format(
+                journal_entry, _(doctype), name, len(released), len(stuck), ", ".join(stuck)
+            ),
+            title=_("Payroll Recovery Partly Stuck"),
+            indicator="red",
+        )
+        return
 
     frappe.msgprint(
         _(
             "Journal Entry {0} belonged to {1} {2}. {3} payroll recovery row(s) were cancelled "
-            "with it, so no payslip will deduct an advance that was never posted. Cancel {2} "
-            "as well if the payment is not going ahead."
+            "with it, so no payslip will deduct an advance that was never posted. Cancel {2} as "
+            "well if the payment is not going ahead."
         ).format(journal_entry, _(doctype), name, len(released)),
         title=_("Payroll Recovery Released"),
         indicator="orange",

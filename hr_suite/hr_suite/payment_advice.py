@@ -181,6 +181,9 @@ def create_payment_advice_for(doc, lines=None, description: str | None = None):
 			indicator="orange",
 		)
 	else:
+		# insert() left ignore_permissions set on this object; submitting is a separate
+		# right and has to be checked as one.
+		advice.flags.ignore_permissions = False
 		advice.submit()
 		frappe.msgprint(
 			_("Payment Advice <b>{0}</b> was raised for {1}.").format(
@@ -221,13 +224,20 @@ SOURCE_DOCUMENTS = {
 
 
 def _claim_lines(doc, spec: dict) -> list:
-	"""What this document is asking finance to pay, one line per figure it carries.
+	"""What this document is asking finance to pay — ONE row, however many parts.
 
-	A line may name a third field that gates it — an air ticket is only claimed where
+	A disbursement pays leave salary and an air ticket, and finance transfers them
+	together. They cannot be two reference rows: HR Payment Advice refuses to list the
+	same document twice, which is the guard that stops a hand-built advice claiming one
+	document's money over and over. So the parts are summed and their labels joined,
+	which keeps the guard intact and still tells finance what it is paying for.
+
+	A part may name a third field that gates it — an air ticket is only claimed where
 	the document says the employee is entitled to one.
 	"""
 	meta = frappe.get_meta(doc.doctype)
-	rows = []
+	amount, labels = 0.0, []
+
 	for line in spec["lines"]:
 		field, label = line[0], line[1]
 		gate = line[2] if len(line) > 2 else ""
@@ -235,10 +245,15 @@ def _claim_lines(doc, spec: dict) -> list:
 			continue
 		if gate and not doc.get(gate):
 			continue
-		amount = flt(doc.get(field))
-		if amount > 0:
-			rows.append({"amount": amount, "description": _(label)})
-	return rows
+		part = flt(doc.get(field))
+		if part > 0:
+			amount += part
+			labels.append(_(label))
+
+	if amount <= 0:
+		return []
+
+	return [{"amount": flt(amount), "description": " + ".join(labels)}]
 
 
 @frappe.whitelist()
@@ -283,6 +298,10 @@ def raise_for_document(doctype: str, name: str) -> dict:
 	advice = create_payment_advice_for(
 		doc, lines=lines, description=_("{0} {1}").format(_(doctype), name)
 	)
+	# insert(ignore_permissions=True) leaves the flag set on the object, so the submit
+	# inside create_payment_advice_for would skip its own permission check. A user who is
+	# allowed to prepare a claim is not necessarily allowed to release one.
+
 
 	_write_back_advice_link(doc, spec, advice.name)
 	return {"advice": advice.name, "created": True}

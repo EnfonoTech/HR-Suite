@@ -23,7 +23,7 @@ not from this app's own counters, which no payslip and no leave dashboard consul
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import date_diff, flt, formatdate, getdate, nowdate
+from frappe.utils import cstr, date_diff, flt, formatdate, getdate, nowdate
 
 from hr_suite.hr_suite.utils import (
 	assert_doctype_permissions,
@@ -253,20 +253,26 @@ class AnnualLeaveDisbursement(Document):
 
 	# ── Journal Entry ─────────────────────────────────────────────────────────
 
-	def _create_leave_salary_journal_entry(self):
-		"""Post the disbursement, under the same rules as Overtime Request."""
-		if self.linked_payroll_entry:
-			return
+	def _leave_salary_accounts(self) -> tuple:
+		"""(expense, payable) for leave salary — configured first, guessed second.
 
-		if not flt(self.total_leave_pay) > 0:
-			return
-
+		Matching account NAMES is a last resort: on a chart that does not use the English
+		word "Salary" it finds nothing, and on one that uses it more than once it picks
+		whichever row was modified least recently. A site that has answered the question
+		on Hr Suite Settings is therefore asked first.
+		"""
 		company = self.company
 
-		expense_account = (
+		expense_account = _configured_account(company, "leave_salary_expense_account", "Expense") or (
 			frappe.db.get_value(
 				"Account",
 				{"company": company, "account_name": ["like", "%Leave Salary%"],
+				 "root_type": "Expense", "is_group": 0},
+				"name",
+			)
+			or frappe.db.get_value(
+				"Account",
+				{"company": company, "account_name": ["like", "%Salari%"],
 				 "root_type": "Expense", "is_group": 0},
 				"name",
 			)
@@ -276,15 +282,31 @@ class AnnualLeaveDisbursement(Document):
 				 "root_type": "Expense", "is_group": 0},
 				"name",
 			)
+			or frappe.db.get_value(
+				"Account",
+				{"company": company, "account_name": ["like", "%Wages%"],
+				 "root_type": "Expense", "is_group": 0},
+				"name",
+			)
 		)
-		# Deliberately no third "any expense account" fallback. frappe.db.get_value orders
-		# by `modified`, so the account it picked was effectively arbitrary — leave salary
-		# was landing in Depreciation or Cost of Goods Sold on any chart that does not use
-		# the English word "Salary", and the entry still msgprinted green. Refusing is the
-		# honest answer: name the account and the site can fix it in a minute.
+		# Deliberately no "any expense account" fallback: frappe.db.get_value orders by
+		# `modified`, so that fallback was landing leave salary in whichever expense
+		# account happened to be oldest — Depreciation, Cost of Goods Sold.
 
-		payable_account = (
-			frappe.db.get_value(
+		payable_account = _configured_account(company, "leave_salary_payable_account", "Liability") or (
+			# The company's own payroll payable answer comes before any name matching, so
+			# the disbursement credits the account the monthly payroll accrual debits and
+			# the two documents meet on the same liability.
+			_validated_liability(
+				frappe.get_cached_value("Company", company, "default_payroll_payable_account"), company
+			)
+			or frappe.db.get_value(
+				"Account",
+				{"company": company, "account_name": ["like", "%Leave Salary Payable%"],
+				 "root_type": "Liability", "is_group": 0},
+				"name",
+			)
+			or frappe.db.get_value(
 				"Account",
 				{"company": company, "account_name": ["like", "%Salary Payable%"],
 				 "root_type": "Liability", "is_group": 0},
@@ -296,6 +318,20 @@ class AnnualLeaveDisbursement(Document):
 				"name",
 			)
 		)
+
+		return expense_account, payable_account
+
+	def _create_leave_salary_journal_entry(self):
+		"""Post the disbursement, under the same rules as Overtime Request."""
+		if self.linked_payroll_entry:
+			return
+
+		if not flt(self.total_leave_pay) > 0:
+			return
+
+		company = self.company
+
+		expense_account, payable_account = self._leave_salary_accounts()
 
 		if not expense_account or not payable_account:
 			# Throw, never warn. on_submit goes on to book and submit the payroll recovery
@@ -344,12 +380,14 @@ class AnnualLeaveDisbursement(Document):
 					"account": expense_account,
 					"debit_in_account_currency": flt(self.total_leave_pay),
 				},
-				{
-					"account": payable_account,
-					"credit_in_account_currency": flt(self.total_leave_pay),
-					"party_type": "Employee",
-					"party": self.employee,
-				},
+				dict(
+					account=payable_account,
+					credit_in_account_currency=flt(self.total_leave_pay),
+					# erpnext refuses a party on an account that is neither Receivable nor
+					# Payable, and refuses a Receivable/Payable row WITHOUT one — and a
+					# "Salary Payable" account is not obliged to carry the account type.
+					**_party_fields(payable_account, self.employee),
+				),
 			],
 		})
 
@@ -439,6 +477,11 @@ class AnnualLeaveDisbursement(Document):
 			component,
 			self.company,
 			component_type="Deduction",
+			# The recovery credits back the same account the advance debited, so the
+			# month's salary expense ends up stated once rather than twice. Passing it
+			# here also means a site does not have to map the component by hand before
+			# the first disbursement can be submitted.
+			fallback_account=self._leave_salary_accounts()[0],
 			# The advance was a fixed sum of money. Scaling the recovery by the month's
 			# payment days would give back less than was handed over — and the months a
 			# leave spans are exactly the months with unusual payment days.
@@ -565,6 +608,49 @@ class AnnualLeaveDisbursement(Document):
 
 
 # ── Module helpers ────────────────────────────────────────────────────────────
+
+
+def _validated_liability(account: str, company: str) -> str:
+	"""`account` if it is a postable liability of this company, else ""."""
+	if not account:
+		return ""
+
+	row = frappe.db.get_value("Account", account, ["company", "is_group", "root_type"], as_dict=True)
+	if not row or row.company != company or row.is_group or row.root_type != "Liability":
+		return ""
+
+	return account
+
+
+def _party_fields(account: str, employee: str) -> dict:
+	"""Party on a Journal Entry row, only where erpnext will accept one.
+
+	``JournalEntry.validate_party`` demands a party on a Receivable/Payable account and
+	``validate_against_jv``/GL refuses one on any other account, so the row has to ask
+	the account what it is rather than assume.
+	"""
+	if frappe.get_cached_value("Account", account, "account_type") in ("Receivable", "Payable"):
+		return {"party_type": "Employee", "party": employee}
+
+	return {}
+
+
+def _configured_account(company: str, settings_field: str, root_type: str) -> str:
+	"""An account named on Hr Suite Settings, if it is real and belongs to this company.
+
+	A mapping left pointing at another company's tree, at a group, or at an account that
+	has since been deleted would produce a Journal Entry that cannot post — so it is
+	treated as unconfigured and the name-matching fallback takes over.
+	"""
+	account = cstr(frappe.db.get_single_value("Hr Suite Settings", settings_field))
+	if not account:
+		return ""
+
+	row = frappe.db.get_value("Account", account, ["company", "is_group", "root_type"], as_dict=True)
+	if not row or row.company != company or row.is_group or row.root_type != root_type:
+		return ""
+
+	return account
 
 
 def get_leave_allocation(employee: str, leave_type: str, on_date):

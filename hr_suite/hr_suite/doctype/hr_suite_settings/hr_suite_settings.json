@@ -28,6 +28,11 @@
   "monthly_leave_allocation_enabled",
   "accrual_switch_over_now",
   "monthly_leave_alloc_help",
+  "leave_salary_accounts_section",
+  "leave_salary_expense_account",
+  "leave_salary_payable_account",
+  "column_break_leave_salary_accounts",
+  "settlement_advance_account",
   "contract_section",
   "probation_period_days",
   "max_probation_period_days",
@@ -238,6 +243,37 @@
    "fieldname": "monthly_leave_alloc_help",
    "fieldtype": "HTML",
    "options": "<p class=\"text-muted\" style=\"font-size:0.85rem;\">Monthly accrual is HRMS's own earned-leave engine: a leave type carrying <b>Is Earned Leave</b> is topped up on its one year-long allocation by a daily scheduled job, which divides the Leave Policy's annual allocation by the frequency and rounds it. HR Suite switches that on per leave type from the <b>Accrues</b> column of Country Config, and never allocates leave by hand.</p>"
+  },
+  {
+   "fieldname": "leave_salary_accounts_section",
+   "fieldtype": "Section Break",
+   "label": "Leave Salary & Settlement Accounts",
+   "description": "Where leave salary and mid-month settlements post. Leave these blank and HR Suite falls back to matching account NAMES in the Chart of Accounts, which picks the wrong account on any chart that does not use the English words it looks for."
+  },
+  {
+   "fieldname": "leave_salary_expense_account",
+   "fieldtype": "Link",
+   "label": "Leave Salary Expense Account",
+   "options": "Account",
+   "description": "Debited when leave salary is paid in advance. Normally the same salary/wages expense the monthly payroll uses, so the payslip recovery nets back against it."
+  },
+  {
+   "fieldname": "leave_salary_payable_account",
+   "fieldtype": "Link",
+   "label": "Leave Salary Payable Account",
+   "options": "Account",
+   "description": "Credited with what the employee is owed until finance transfers it."
+  },
+  {
+   "fieldname": "column_break_leave_salary_accounts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "settlement_advance_account",
+   "fieldtype": "Link",
+   "label": "Settlement Advance Account",
+   "options": "Account",
+   "description": "Where a mid-month salary settlement sits until the month's payslip recovers it. An asset (employee advance) account."
   },
   {
    "fieldname": "contract_section",

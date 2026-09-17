@@ -1594,6 +1594,18 @@ def get_leave_salary_recovery_component(company: str, country_component: str = "
 		)
 
 	if cint(frappe.db.get_value("Salary Component", name, "depends_on_payment_days")):
+		if name != LEAVE_SALARY_RECOVERY_COMPONENT:
+			# Someone else's component may well be on live salary structures, and clearing
+			# the flag there would change what every payslip on the site deducts. Refuse
+			# and let a human decide, the same way a non-Deduction component is refused.
+			frappe.throw(
+				_("Salary Component {0} is scaled by payment days, so it would claw back less "
+				  "than the leave salary that was advanced. Untick Depends on Payment Days on "
+				  "that component if it is only used for this, or point Country Config at a "
+				  "component of its own.").format(name),
+				title=_("Recovery Component Is Prorated"),
+			)
+
 		frappe.db.set_value("Salary Component", name, "depends_on_payment_days", 0)
 
 	return name

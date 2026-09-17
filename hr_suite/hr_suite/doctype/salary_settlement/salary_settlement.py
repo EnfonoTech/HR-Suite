@@ -97,6 +97,26 @@ class SalarySettlement(Document):
 		self._recalculate_totals()
 
 	def before_submit(self):
+		if flt(self.net_payable) < 0:
+			# A negative net is not a payment, it is a claim on the employee — and nothing
+			# here can collect it. The Journal Entry would balance itself by debiting Salary
+			# Payable, i.e. the company booking money as owed to itself, while the recovery
+			# still claws back only the gross earned and the deduction rows would be marked
+			# collected against cash that never changed hands.
+			frappe.throw(
+				_(
+					"{0} owes more over this period ({1}) than it earned ({2}), so the settlement "
+					"would pay {3}. Nothing here can collect the difference — settle a longer "
+					"period, or leave these deductions to payroll."
+				).format(
+					self.employee_name or self.employee,
+					flt(self.total_deductions),
+					flt(self.total_earnings),
+					flt(self.net_payable),
+				),
+				title=_("Nothing Left To Pay"),
+			)
+
 		# Set here rather than by db_set in on_submit: a status written after the submit
 		# save has already persisted leaves the document reading "Draft" to anyone who
 		# looked in between, and a submit that throws later leaves it reading "Draft"
@@ -389,35 +409,27 @@ class SalarySettlement(Document):
 		fields = ["salary_component", "component_type", "amount", "depends_on_payment_days"]
 		filters = {"parenttype": "Employee", "parent": self.employee}
 
-		from hr_suite.hr_suite.employee_salary import sync_employee_salary
+		from hr_suite.hr_suite.employee_salary import evaluate_salary_components
 
 		# The mirror is only refreshed when an assignment is submitted, cancelled or
-		# deleted, and always as at THAT day. A future-dated assignment therefore leaves
-		# the mirror on the old rate until someone touches an assignment again — so a
-		# settlement dated after the new rate took effect would pro-rate the old one and
-		# pay the employee at a rate nobody is on. Rebuild whenever the mirror was not
-		# written from the assignment that is in force on the settlement date.
+		# deleted, and always as at THAT day. So it answers for the assignment in force
+		# today, which is not necessarily the one in force on the settlement date — a
+		# future-dated raise leaves it behind, a back-dated settlement leaves it ahead.
+		# Where it does not answer for the right assignment the structure is evaluated
+		# here instead, and the stored mirror is left alone: it is the Employee master's
+		# own "what this employee is paid now", not this document's scratch pad.
 		mirrored_from = frappe.db.get_value("Employee", self.employee, "custom_salary_effective_from")
 		in_force_from = (self._assignment or {}).get("from_date")
-		stale = bool(in_force_from) and getdate(mirrored_from) != getdate(in_force_from) if mirrored_from else True
+		fresh = bool(mirrored_from) and bool(in_force_from) and getdate(mirrored_from) == getdate(in_force_from)
 
-		rows = (
-			[]
-			if stale
-			else frappe.get_all(
+		if fresh:
+			rows = frappe.get_all(
 				"Employee Salary Component", filters=filters, fields=fields, order_by="idx asc"
 			)
-		)
-		if rows:
-			return rows
+			if rows:
+				return rows
 
-		# Either the mirror is stale, or an employee whose structure was assigned before
-		# the mirror existed has an empty one. Rebuilding it costs one throwaway slip and
-		# keeps the settlement on the same figures as the Salary tab and Payroll Preview.
-		sync_employee_salary(self.employee, self.settlement_date)
-		rows = frappe.get_all(
-			"Employee Salary Component", filters=filters, fields=fields, order_by="idx asc"
-		)
+		rows = evaluate_salary_components(self.employee, self.settlement_date)
 		if rows:
 			return rows
 
@@ -859,24 +871,21 @@ class SalarySettlement(Document):
 		self.net_payable = flt(self.total_earnings - self.total_deductions, precision)
 
 		if self.net_payable < 0:
-			# A negative net is not a payment, it is a claim on the employee — and nothing
-			# here can collect it. The Journal Entry would balance itself by debiting
-			# Salary Payable, i.e. the company would book money as owed to itself, while
-			# the recovery still claws back only the gross earned and the deduction rows
-			# would be marked collected against cash that never changed hands. Refusing is
-			# the only honest answer: those deductions belong on the next payslip.
-			frappe.throw(
+			# Warned here, refused at submit. _build_lines() rebuilds every line on each
+			# save, so a user cannot delete the advance line that put the net below zero —
+			# throwing in validate() would make the draft unsaveable and unreviewable.
+			frappe.msgprint(
 				_(
-					"{0} owes more over this period ({1}) than it earned ({2}), so the "
-					"settlement would pay {3}. Nothing here can collect the difference — "
-					"settle a longer period, or leave these deductions to payroll."
+					"{0} owes more over this period ({1}) than it earned ({2}), so this "
+					"settlement cannot be submitted as it stands: nothing here can collect the "
+					"difference. Settle a longer period, or leave these deductions to payroll."
 				).format(
 					self.employee_name or self.employee,
 					flt(self.total_deductions, precision),
 					flt(self.total_earnings, precision),
-					flt(self.net_payable, precision),
 				),
 				title=_("Nothing Left To Pay"),
+				indicator="orange",
 			)
 
 	# ── recovery at payroll ───────────────────────────────────────────────────
@@ -1257,7 +1266,20 @@ class SalarySettlement(Document):
 		)
 
 	def _settlement_advance_account(self) -> str:
-		"""An asset account the advance can sit on until payroll recovers it."""
+		"""An asset account the advance can sit on until payroll recovers it.
+
+		A site that has answered the question on Hr Suite Settings is asked first; the
+		name matching below is a fallback for sites that have not, and it picks by
+		account NAME, which no chart is obliged to spell the way this code expects.
+		"""
+		from hr_suite.hr_suite.doctype.annual_leave_disbursement.annual_leave_disbursement import (
+			_configured_account,
+		)
+
+		configured = _configured_account(self.company, "settlement_advance_account", "Asset")
+		if configured:
+			return configured
+
 		for filters in (
 			{"company": self.company, "account_name": ["like", "%Salary Advance%"],
 			 "root_type": "Asset", "is_group": 0},
@@ -1318,8 +1340,11 @@ class SalarySettlement(Document):
 			# submits it next week would pay out a settlement that no longer exists. The
 			# draft goes with the settlement, and the link goes with the draft: a Link field
 			# pointing at a deleted document breaks every later save of this one.
-			frappe.delete_doc("Journal Entry", je.name, ignore_permissions=True)
+			# Clear the link FIRST. frappe.delete_doc runs check_if_doc_is_linked, which
+			# sees this settlement's own journal_entry still pointing at the draft and
+			# raises LinkExistsError — taking the whole cancellation down with it.
 			self.db_set("journal_entry", None, update_modified=False)
+			frappe.delete_doc("Journal Entry", je.name, ignore_permissions=True)
 			frappe.msgprint(
 				_("The draft Journal Entry for this settlement was deleted, so it cannot be "
 				  "approved after the settlement was cancelled."),

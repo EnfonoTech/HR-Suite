@@ -735,9 +735,16 @@ def _defer_accrual_while_already_granted(leave_type: str, doc, values: dict, res
 	and those extra days are real money the moment they are encashed or paid as leave
 	salary.
 
-	The switch is therefore deferred until no live allocation is left, which in practice
-	means the next Leave Period, and the deferral is reported rather than hidden. A site
-	that has adjusted its allocations by hand — or a test site — can override it with
+	The switch is therefore deferred until no live allocation is left. That moment does
+	arrive, once a year: the old leave year ends before the new year's Leave Policy
+	Assignments are written, and ``hooks.py`` runs this sync BEFORE
+	``roll_forward_leave_periods`` in the daily list for exactly that reason — the type
+	is already earned-leave by the time the new assignment is made, so hrms allocates it
+	the accrual way (nothing up front, topped up monthly) instead of granting the whole
+	year again and blocking the switch for another twelve months.
+
+	The deferral is reported rather than hidden, and a site that has adjusted its
+	allocations by hand — or a test site — can override it with
 	``Hr Suite Settings.accrual_switch_over_now``.
 	"""
 	if not cint(values.get("is_earned_leave")) or cint(doc.is_earned_leave):

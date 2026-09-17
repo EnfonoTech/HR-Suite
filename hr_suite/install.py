@@ -665,9 +665,6 @@ _COUNTRY_CONFIGS = [
 		# employee is on when the leave starts. "Wage" in KSA means the full package.
 		"leave_salary_days_per_month": 30,
 		"leave_salary_components": "Full Package",
-		"leave_accrual_frequency": "Monthly",
-		"leave_accrual_on_day": "Last Day",
-		"leave_accrual_rounding": "0.5",
 		"leave_salary_notes": "Saudi Labour Law Art. 109 and 111 — annual leave is paid in advance on the full wage. Confirm whether the company pays the package or basic only.",
 		# Leave types
 		"leave_types": [
@@ -730,9 +727,6 @@ _COUNTRY_CONFIGS = [
 		# basic wage; the full wage is due only where leave is taken in the year it accrued.
 		"leave_salary_days_per_month": 30,
 		"leave_salary_components": "Basic Only",
-		"leave_accrual_frequency": "Monthly",
-		"leave_accrual_on_day": "Last Day",
-		"leave_accrual_rounding": "0.5",
 		"leave_salary_notes": "UAE Federal Decree-Law 33/2021 Art. 29 — annual leave paid on the basic wage. Confirm against the employment contract, which often pays the package.",
 		# Leave types
 		"leave_types": [
@@ -811,9 +805,6 @@ _COUNTRY_CONFIGS = [
 		# "wage" is the basic plus the regular allowances, which is the full package here.
 		"leave_salary_days_per_month": 30,
 		"leave_salary_components": "Full Package",
-		"leave_accrual_frequency": "Monthly",
-		"leave_accrual_on_day": "Last Day",
-		"leave_accrual_rounding": "0.5",
 		"leave_salary_notes": "Bahrain Labour Law 36/2012 Art. 58-60 — 30 days annual leave, paid in advance, at the wage including regular allowances. 30 days a year is 2.5 a month. Confirm which allowances the company treats as regular.",
 		# Leave types
 		"leave_types": [
@@ -873,9 +864,6 @@ _COUNTRY_CONFIGS = [
 		# a company practice rather than a legal requirement.
 		"leave_salary_days_per_month": 26,
 		"leave_salary_components": "Basic Only",
-		"leave_accrual_frequency": "Monthly",
-		"leave_accrual_on_day": "Last Day",
-		"leave_accrual_rounding": "0.5",
 		"leave_salary_notes": "No statutory advance-leave-salary rule in India; earned leave is paid at the wage rate when taken. Figures here are a company-practice default — confirm before use.",
 		# Leave types
 		"leave_types": [
@@ -938,9 +926,6 @@ _COUNTRY_CONFIGS = [
 		# gross wage before the leave begins.
 		"leave_salary_days_per_month": 30,
 		"leave_salary_components": "Full Package",
-		"leave_accrual_frequency": "Monthly",
-		"leave_accrual_on_day": "Last Day",
-		"leave_accrual_rounding": "0.5",
 		"leave_salary_notes": "Oman Labour Law RD 53/2023 Art. 78 — annual leave paid on the gross wage, in advance. Confirm against the employment contract.",
 		# Leave types
 		"leave_types": [
@@ -1012,12 +997,15 @@ _TOPUP_TEXT_FIELDS = (
 	"leave_salary_notes",
 )
 
-# Deliberately NOT topped up: leave_accrual_frequency, leave_accrual_on_day and
-# leave_accrual_rounding. Blank is a real answer for all three — "Leave blank for no
-# rounding" is what the field's own description tells the administrator — and a top-up
-# that re-runs on every migrate would write the seeded value back over a cleared field
-# every time. Accrual is switched on per leave type instead, from
-# ``Country Leave Type Row.accrual_frequency``, which is topped up below.
+# Deliberately NOT seeded and NOT topped up: leave_accrual_frequency,
+# leave_accrual_on_day and leave_accrual_rounding. Blank is a real answer for all three
+# — "Leave blank for no rounding" is what the field's own description tells the
+# administrator — and a top-up that re-runs on every migrate would write the seeded
+# value back over a cleared field every time. Seeding them on a fresh install while an
+# upgraded site got nothing would be worse still: the same Country Config would accrue
+# a different number of days depending on which way the site was created. Accrual is
+# declared per leave type instead, from ``Country Leave Type Row.accrual_frequency``,
+# which IS topped up below; the day and the rounding are the administrator's to set.
 
 
 def top_up_country_defaults(name: str, defaults: dict):
