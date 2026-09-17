@@ -752,7 +752,19 @@ class SalarySettlement(Document):
 		preview = self._preview_reader()
 		employee_ids = [self.employee]
 
-		additional_salaries = preview._get_additional_salaries(employee_ids)
+		# An Annual Leave Disbursement's own recovery rows are ALWAYS represented
+		# through _add_leave_salary_lines above — as the earning line if this
+		# settlement absorbs it, or as one of its own information lines if not.
+		# Listing one here too would be redundant at best; at worst, one that
+		# falls inside this settlement's own window (which is exactly why the
+		# disbursement got absorbed) creates a live link FROM this settlement's
+		# own `lines` table TO that row the moment this document submits — and
+		# _cancel_absorbed_disbursement_recovery then tries to cancel a row this
+		# very settlement is holding onto, throwing mid-submit.
+		additional_salaries = [
+			entry for entry in preview._get_additional_salaries(employee_ids)
+			if entry.ref_doctype != "Annual Leave Disbursement"
+		]
 		self._add_additional_salary_lines(additional_salaries)
 		self._add_loan_lines(preview._get_loan_installments(employee_ids), additional_salaries)
 		self._add_penalty_lines(preview._get_employee_penalties(employee_ids, additional_salaries))
