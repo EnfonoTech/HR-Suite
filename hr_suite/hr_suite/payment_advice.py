@@ -434,6 +434,20 @@ def payment_target(reference_doctype: str = None, reference_record: str = None) 
 	if cint(frappe.db.get_value("Journal Entry", entry, "docstatus")) != 1:
 		return None
 
+	# erpnext allocates a payment against a Journal Entry only through a row that carries
+	# BOTH the party account and the party (PaymentEntry.validate_journal_entry), and it
+	# throws rather than skipping when it cannot find one — which would stop finance
+	# creating the Payment Entry at all. A payable account that is not party-typed gets no
+	# party on its row, so say nothing here and let the payment land unallocated against
+	# the account instead.
+	employee = frappe.db.get_value(reference_doctype, reference_record, "employee")
+	has_party_row = frappe.db.exists(
+		"Journal Entry Account",
+		{"parent": entry, "party_type": "Employee", "party": employee, "docstatus": 1},
+	)
+	if not has_party_row:
+		return None
+
 	return {"reference_doctype": "Journal Entry", "reference_name": entry}
 
 
