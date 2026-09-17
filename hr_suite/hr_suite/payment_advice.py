@@ -28,7 +28,7 @@ Two rules hold this together:
 
 import frappe
 from frappe import _
-from frappe.utils import cstr, flt, getdate, nowdate
+from frappe.utils import cint, cstr, flt, getdate, nowdate
 
 from hr_suite.hr_suite.utils import assert_doctype_permissions
 
@@ -266,11 +266,18 @@ def assert_no_live_advice(doc) -> None:
 	the money has left the bank and cancelling the document that justified it would
 	leave a payment with nothing behind it.
 	"""
+	advice_doctype = ADVICE_DOCTYPE
 	advice = get_payment_advice_for(doc.doctype, doc.name)
+	if not advice:
+		advice = get_finance_advice_for(doc.doctype, doc.name)
+		advice_doctype = FINANCE_ADVICE_DOCTYPE
 	if not advice:
 		return
 
-	row = frappe.db.get_value(ADVICE_DOCTYPE, advice, ["docstatus", "status", "payment_date"], as_dict=True)
+	date_field = "payment_date" if advice_doctype == ADVICE_DOCTYPE else "payment_entry_date"
+	row = frappe.db.get_value(advice_doctype, advice, ["docstatus", "status", date_field], as_dict=True)
+	if row:
+		row.payment_date = row.get(date_field)
 	if not row or row.docstatus != 1:
 		return
 
@@ -293,6 +300,177 @@ def assert_no_live_advice(doc) -> None:
 	)
 
 
+FINANCE_ADVICE_DOCTYPE = "Payment Advice"
+
+
+def finance_advice_available() -> bool:
+	"""True when sf_trading's Payment Advice is installed AND takes Employee advices.
+
+	Checked rather than assumed: hr_suite does not depend on sf_trading, and an older
+	sf_trading whose party_type Select has no Employee option would accept the insert and
+	then refuse every save.
+	"""
+	if not frappe.db.exists("DocType", FINANCE_ADVICE_DOCTYPE):
+		return False
+
+	field = frappe.get_meta(FINANCE_ADVICE_DOCTYPE).get_field("party_type")
+	return bool(field and "Employee" in cstr(field.options).split("\n"))
+
+
+def employee_payable_account(party: str = None, company: str = None, advice=None) -> str:
+	"""Which account an employee payment settles — sf_trading's `payment_advice_party_account`.
+
+	The HR documents credit the leave-salary payable (Hr Suite Settings, falling back to a
+	name match), so that is the account a payment against them has to clear. Without this
+	erpnext resolves Party Type Employee to the company's default PAYABLE account —
+	Creditors — where nothing is owed to an employee at all, and the leave-salary payable
+	would carry the amount for ever.
+	"""
+	if not company:
+		return ""
+
+	from hr_suite.hr_suite.doctype.annual_leave_disbursement.annual_leave_disbursement import (
+		resolve_leave_salary_accounts,
+	)
+
+	return resolve_leave_salary_accounts(company)[1] or ""
+
+
+def get_finance_advice_for(source_doctype: str, source_name: str) -> str | None:
+	"""The live sf_trading advice already claiming this document, or None."""
+	if not finance_advice_available():
+		return None
+
+	rows = frappe.get_all(
+		"Payment Advice Reference",
+		filters={
+			"parenttype": FINANCE_ADVICE_DOCTYPE,
+			"reference_doctype": source_doctype,
+			"reference_record": source_name,
+		},
+		fields=["parent"],
+	)
+	for row in rows:
+		if cint(frappe.db.get_value(FINANCE_ADVICE_DOCTYPE, row.parent, "docstatus")) < 2:
+			return row.parent
+
+	return None
+
+
+def create_finance_advice_for(doc, lines, description: str | None = None):
+	"""Raise sf_trading's Payment Advice for an HR document.
+
+	Left in DRAFT deliberately. A PM Workflow covers Payment Advice on the sites that use
+	it, and the advice carries its own approval route — submitting here would either be
+	refused outright or would bypass the route finance relies on. Finance picks it up from
+	the queue they already work.
+	"""
+	amount = flt(sum(flt(line.get("amount")) for line in lines), 3)
+
+	advice = frappe.get_doc(
+		{
+			"doctype": FINANCE_ADVICE_DOCTYPE,
+			"company": doc.get("company"),
+			"transaction_date": nowdate(),
+			"party_type": "Employee",
+			"party": doc.get("employee"),
+			"payment_amount": amount,
+			"auto_generated": 1,
+			"remarks": description or _("Raised by {0} {1}").format(_(doc.doctype), doc.name),
+			"payment_advice_reference": [
+				{
+					"reference_doctype": doc.doctype,
+					"reference_record": doc.name,
+					"remarks": line.get("description"),
+					"allocated_amount": flt(line.get("amount")),
+				}
+				for line in lines
+			],
+		}
+	)
+	# The advice is a consequence of a document this user was already allowed to submit;
+	# demanding a separate create permission here would refuse a legitimate claim.
+	advice.insert(ignore_permissions=True)
+
+	frappe.msgprint(
+		_("Payment Advice <b>{0}</b> was raised for {1} — {2}. It is in the finance queue "
+		  "for approval and payment.").format(
+			advice.name, doc.get("employee_name") or doc.get("employee"), flt(amount)
+		),
+		title=_("Payment Advice Raised"),
+		indicator="green",
+	)
+	return advice
+
+
+# Where each HR document keeps the Journal Entry it posted.
+_JOURNAL_ENTRY_FIELD = {
+	"Annual Leave Disbursement": "linked_payroll_entry",
+	"Salary Settlement": "journal_entry",
+	"End of Service Benefit": "journal_entry",
+}
+
+
+def payment_target(reference_doctype: str = None, reference_record: str = None) -> dict | None:
+	"""sf_trading's `payment_advice_payment_targets` — what the payment really settles.
+
+	A Payment Entry for an Employee allocates against Journal Entries and nothing else
+	(erpnext PaymentEntry.get_valid_reference_doctypes), so an advice row naming a
+	disbursement is answered with the Journal Entry that disbursement posted. The payment
+	then closes exactly the liability the HR document raised, instead of sitting
+	unallocated against the account.
+
+	Returns None while that entry is still in Draft — an entry nobody has approved has
+	posted nothing to settle.
+	"""
+	field = _JOURNAL_ENTRY_FIELD.get(reference_doctype)
+	if not field or not reference_record:
+		return None
+
+	entry = frappe.db.get_value(reference_doctype, reference_record, field)
+	if not entry:
+		return None
+
+	if cint(frappe.db.get_value("Journal Entry", entry, "docstatus")) != 1:
+		return None
+
+	return {"reference_doctype": "Journal Entry", "reference_name": entry}
+
+
+def on_employee_payment_entry(doc, method=None):
+	"""Tell the HR documents an advice covers that the money has gone — or come back.
+
+	Hooked on the Payment Entry, not on the advice: sf_trading stamps the advice with
+	``db_set(update_modified=False)``, which fires no document event, so a hook on the
+	advice would never run. sf_trading's own handler runs first (it is earlier in
+	apps.txt), so by the time this runs the advice already reads Paid or Approved.
+	"""
+	if doc.get("party_type") != "Employee" or not finance_advice_available():
+		return
+
+	for name in frappe.get_all(
+		FINANCE_ADVICE_DOCTYPE, filters={"payment_entry": doc.name, "docstatus": 1}, pluck="name"
+	):
+		_sync_paid_state(frappe.get_doc(FINANCE_ADVICE_DOCTYPE, name))
+
+
+def _sync_paid_state(advice) -> None:
+	paid = advice.get("status") == "Paid"
+
+	for row in advice.get("payment_advice_reference") or []:
+		field = paid_status_field(row.reference_doctype)
+		if not field:
+			continue
+
+		current = frappe.db.get_value(row.reference_doctype, row.reference_record, field)
+		if paid and current != "Paid":
+			frappe.db.set_value(row.reference_doctype, row.reference_record, field, "Paid")
+		elif not paid and current == "Paid":
+			# The payment was cancelled: the document is owed again. "Approved" is the state
+			# every one of these reaches on submit.
+			frappe.db.set_value(row.reference_doctype, row.reference_record, field, "Approved")
+
+
 @frappe.whitelist()
 def raise_for_document(doctype: str, name: str) -> dict:
 	"""Raise the payment advice for one submitted HR document, on request.
@@ -307,8 +485,12 @@ def raise_for_document(doctype: str, name: str) -> dict:
 			_("{0} does not raise payment advices.").format(_(doctype)), title=_("Payment Advice")
 		)
 
+	# One finance queue where sf_trading provides one, hr_suite's own where it does not.
+	use_finance_advice = finance_advice_available()
+	target_doctype = FINANCE_ADVICE_DOCTYPE if use_finance_advice else ADVICE_DOCTYPE
+
 	frappe.has_permission(doctype, "read", doc=name, throw=True)
-	assert_doctype_permissions(ADVICE_DOCTYPE, ("create",))
+	assert_doctype_permissions(target_doctype, ("create",))
 
 	doc = frappe.get_doc(doctype, name)
 	if doc.docstatus != 1:
@@ -319,9 +501,11 @@ def raise_for_document(doctype: str, name: str) -> dict:
 			title=_("Not Submitted"),
 		)
 
-	existing = get_payment_advice_for(doctype, name)
+	existing = (
+		get_finance_advice_for(doctype, name) if use_finance_advice else get_payment_advice_for(doctype, name)
+	)
 	if existing:
-		return {"advice": existing, "created": False}
+		return {"advice": existing, "doctype": target_doctype, "created": False}
 
 	lines = _claim_lines(doc, spec)
 	if not lines:
@@ -332,19 +516,18 @@ def raise_for_document(doctype: str, name: str) -> dict:
 			title=_("Nothing to Pay"),
 		)
 
-	advice = create_payment_advice_for(
-		doc, lines=lines, description=_("{0} {1}").format(_(doctype), name)
+	description = _("{0} {1}").format(_(doctype), name)
+	advice = (
+		create_finance_advice_for(doc, lines, description)
+		if use_finance_advice
+		else create_payment_advice_for(doc, lines=lines, description=description)
 	)
-	# insert(ignore_permissions=True) leaves the flag set on the object, so the submit
-	# inside create_payment_advice_for would skip its own permission check. A user who is
-	# allowed to prepare a claim is not necessarily allowed to release one.
+
+	_write_back_advice_link(doc, spec, advice.name, target_doctype)
+	return {"advice": advice.name, "doctype": target_doctype, "created": True}
 
 
-	_write_back_advice_link(doc, spec, advice.name)
-	return {"advice": advice.name, "created": True}
-
-
-def _write_back_advice_link(doc, spec: dict, advice_name: str) -> None:
+def _write_back_advice_link(doc, spec: dict, advice_name: str, advice_doctype: str = None) -> None:
 	"""Record the advice on the source document, where the document has a field for it.
 
 	``frappe.db.set_value`` and not ``doc.save()``: the source document is submitted,
@@ -358,7 +541,7 @@ def _write_back_advice_link(doc, spec: dict, advice_name: str) -> None:
 	values = {link_field: advice_name}
 	type_field = spec.get("link_type_field")
 	if type_field and frappe.get_meta(doc.doctype).has_field(type_field):
-		values[type_field] = ADVICE_DOCTYPE
+		values[type_field] = advice_doctype or ADVICE_DOCTYPE
 
 	frappe.db.set_value(doc.doctype, doc.name, values, update_modified=False)
 

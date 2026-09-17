@@ -144,6 +144,14 @@ doc_events = {
 		"on_submit": "hr_suite.hr_suite.integrations.hrms.on_salary_slip_submit",
 		"on_cancel": "hr_suite.hr_suite.integrations.hrms.on_salary_slip_cancel",
 	},
+	# A payment against an sf_trading Payment Advice tells the HR documents it covers that
+	# the money has gone. Hooked on the PAYMENT ENTRY rather than on the advice: sf_trading
+	# stamps the advice with db_set(update_modified=False), which fires no document event at
+	# all, so an advice hook would never run.
+	"Payment Entry": {
+		"on_submit": "hr_suite.hr_suite.payment_advice.on_employee_payment_entry",
+		"on_cancel": "hr_suite.hr_suite.payment_advice.on_employee_payment_entry",
+	},
 	"Journal Entry": {
 		# A leave disbursement or a settlement books its payroll recovery at the same
 		# moment it raises its Journal Entry, and where a PM Workflow covers Journal Entry
@@ -236,6 +244,40 @@ has_permission = {
 	"Maternity Paternity Leave":"hr_suite.hr_suite.permissions.has_maternity_paternity_leave_permission",
 	"Special Leave":            "hr_suite.hr_suite.permissions.has_special_leave_permission",
 }
+
+# ─── Payment Advice (sf_trading), where that app is installed ───────────────────
+#
+# An HR document that owes an employee money outside payroll reaches finance through
+# sf_trading's Payment Advice, the same queue suppliers are paid from — one inbox, one
+# approval workflow, one Payment Entry. sf_trading knows nothing about HR: it asks these
+# three hooks which documents an Employee may be paid against, which field on each
+# carries the money, and which account the payment settles.
+#
+# Nothing here creates a dependency in either direction. On a bench without sf_trading
+# the hooks are simply never read, and hr_suite falls back to its own HR Payment Advice.
+payment_advice_reference_doctypes = {
+	"Employee": [
+		"Annual Leave Disbursement",
+		"Salary Settlement",
+		"End of Service Benefit",
+	],
+}
+
+payment_advice_reference_amount_fields = {
+	"Annual Leave Disbursement": ["total_leave_pay"],
+	"Salary Settlement": ["net_payable"],
+	"End of Service Benefit": ["net_eosb"],
+}
+
+payment_advice_party_account = [
+	"hr_suite.hr_suite.payment_advice.employee_payable_account",
+]
+
+# A Payment Entry for an Employee allocates against Journal Entries and nothing else, so
+# an advice row naming an HR document is answered with the entry that document posted.
+payment_advice_payment_targets = [
+	"hr_suite.hr_suite.payment_advice.payment_target",
+]
 
 after_install = "hr_suite.install.after_install"
 
