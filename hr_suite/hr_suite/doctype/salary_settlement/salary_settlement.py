@@ -1177,13 +1177,19 @@ class SalarySettlement(Document):
 			)
 
 		if flt(self.leave_salary_amount) > 0:
-			# The disbursement already credited Salary Payable for this. Settling it moves
-			# that liability into today's payout rather than creating a second one.
+			# The disbursement already credited a liability for this, and settling it moves
+			# that liability into today's payout rather than creating a second one — so the
+			# debit has to land on the account the DISBURSEMENT credited, which is the
+			# leave-salary payable, not the payroll payable. Debiting the payroll payable
+			# instead left the leave-salary payable carrying the amount for ever while the
+			# payroll payable went the same amount the other way: the employee was paid
+			# once and the books never agreed about it.
+			leave_salary_payable = self._leave_salary_payable_account() or payable_account
 			accounts.append(
 				dict(
-					account=payable_account,
+					account=leave_salary_payable,
 					debit_in_account_currency=flt(self.leave_salary_amount),
-					**self._party_fields(payable_account),
+					**self._party_fields(leave_salary_payable),
 				)
 			)
 
@@ -1269,6 +1275,36 @@ class SalarySettlement(Document):
 				"account",
 			)
 		)
+
+	def _leave_salary_payable_account(self) -> str:
+		"""The liability an Annual Leave Disbursement credits, resolved its way.
+
+		Read from the disbursement this settlement is discharging where there is one, so
+		the two documents meet on the same account even if the configuration changed in
+		between; otherwise resolved exactly as the disbursement would resolve it today.
+		"""
+		from hr_suite.hr_suite.doctype.annual_leave_disbursement.annual_leave_disbursement import (
+			resolve_leave_salary_accounts,
+		)
+
+		disbursements = {
+			line.source_name
+			for line in self.lines
+			if line.source_doctype == "Annual Leave Disbursement" and line.source_name
+		}
+		for name in sorted(disbursements):
+			entry = frappe.db.get_value("Annual Leave Disbursement", name, "linked_payroll_entry")
+			if not entry:
+				continue
+			row = frappe.db.get_value(
+				"Journal Entry Account",
+				{"parent": entry, "credit_in_account_currency": [">", 0]},
+				"account",
+			)
+			if row:
+				return row
+
+		return resolve_leave_salary_accounts(self.company)[1]
 
 	def _settlement_advance_account(self) -> str:
 		"""An asset account the advance can sit on until payroll recovers it.

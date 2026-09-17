@@ -259,72 +259,8 @@ class AnnualLeaveDisbursement(Document):
 	# ── Journal Entry ─────────────────────────────────────────────────────────
 
 	def _leave_salary_accounts(self) -> tuple:
-		"""(expense, payable) for leave salary — configured first, guessed second.
-
-		Matching account NAMES is a last resort: on a chart that does not use the English
-		word "Salary" it finds nothing, and on one that uses it more than once it picks
-		whichever row was modified least recently. A site that has answered the question
-		on Hr Suite Settings is therefore asked first.
-		"""
-		company = self.company
-
-		expense_account = _configured_account(company, "leave_salary_expense_account", "Expense") or (
-			frappe.db.get_value(
-				"Account",
-				{"company": company, "account_name": ["like", "%Leave Salary%"],
-				 "root_type": "Expense", "is_group": 0},
-				"name",
-			)
-			or frappe.db.get_value(
-				"Account",
-				{"company": company, "account_name": ["like", "%Salari%"],
-				 "root_type": "Expense", "is_group": 0},
-				"name",
-			)
-			or frappe.db.get_value(
-				"Account",
-				{"company": company, "account_name": ["like", "%Salary%"],
-				 "root_type": "Expense", "is_group": 0},
-				"name",
-			)
-			or frappe.db.get_value(
-				"Account",
-				{"company": company, "account_name": ["like", "%Wages%"],
-				 "root_type": "Expense", "is_group": 0},
-				"name",
-			)
-		)
-		# Deliberately no "any expense account" fallback: frappe.db.get_value orders by
-		# `modified`, so that fallback was landing leave salary in whichever expense
-		# account happened to be oldest — Depreciation, Cost of Goods Sold.
-
-		payable_account = _configured_account(company, "leave_salary_payable_account", "Liability") or (
-			# The company's own payroll payable answer comes before any name matching, so
-			# the disbursement credits the account the monthly payroll accrual debits and
-			# the two documents meet on the same liability.
-			_validated_liability(
-				frappe.get_cached_value("Company", company, "default_payroll_payable_account"), company
-			)
-			or frappe.db.get_value(
-				"Account",
-				{"company": company, "account_name": ["like", "%Leave Salary Payable%"],
-				 "root_type": "Liability", "is_group": 0},
-				"name",
-			)
-			or frappe.db.get_value(
-				"Account",
-				{"company": company, "account_name": ["like", "%Salary Payable%"],
-				 "root_type": "Liability", "is_group": 0},
-				"name",
-			)
-			or frappe.db.get_value(
-				"Account",
-				{"company": company, "account_type": "Payable", "is_group": 0},
-				"name",
-			)
-		)
-
-		return expense_account, payable_account
+		"""(expense, payable) for this disbursement's company."""
+		return resolve_leave_salary_accounts(self.company)
 
 	def _create_leave_salary_journal_entry(self):
 		"""Post the disbursement, under the same rules as Overtime Request."""
@@ -613,6 +549,74 @@ class AnnualLeaveDisbursement(Document):
 
 
 # ── Module helpers ────────────────────────────────────────────────────────────
+
+
+def resolve_leave_salary_accounts(company: str) -> tuple:
+	"""(expense, payable) for leave salary — configured first, guessed second.
+
+	Matching account NAMES is a last resort: on a chart that does not use the English
+	word "Salary" it finds nothing, and on one that uses it more than once it picks
+	whichever row was modified least recently. A site that has answered the question
+	on Hr Suite Settings is therefore asked first.
+	"""
+
+	expense_account = _configured_account(company, "leave_salary_expense_account", "Expense") or (
+		frappe.db.get_value(
+			"Account",
+			{"company": company, "account_name": ["like", "%Leave Salary%"],
+			 "root_type": "Expense", "is_group": 0},
+			"name",
+		)
+		or frappe.db.get_value(
+			"Account",
+			{"company": company, "account_name": ["like", "%Salari%"],
+			 "root_type": "Expense", "is_group": 0},
+			"name",
+		)
+		or frappe.db.get_value(
+			"Account",
+			{"company": company, "account_name": ["like", "%Salary%"],
+			 "root_type": "Expense", "is_group": 0},
+			"name",
+		)
+		or frappe.db.get_value(
+			"Account",
+			{"company": company, "account_name": ["like", "%Wages%"],
+			 "root_type": "Expense", "is_group": 0},
+			"name",
+		)
+	)
+	# Deliberately no "any expense account" fallback: frappe.db.get_value orders by
+	# `modified`, so that fallback was landing leave salary in whichever expense
+	# account happened to be oldest — Depreciation, Cost of Goods Sold.
+
+	payable_account = _configured_account(company, "leave_salary_payable_account", "Liability") or (
+		# The company's own payroll payable answer comes before any name matching, so
+		# the disbursement credits the account the monthly payroll accrual debits and
+		# the two documents meet on the same liability.
+		_validated_liability(
+			frappe.get_cached_value("Company", company, "default_payroll_payable_account"), company
+		)
+		or frappe.db.get_value(
+			"Account",
+			{"company": company, "account_name": ["like", "%Leave Salary Payable%"],
+			 "root_type": "Liability", "is_group": 0},
+			"name",
+		)
+		or frappe.db.get_value(
+			"Account",
+			{"company": company, "account_name": ["like", "%Salary Payable%"],
+			 "root_type": "Liability", "is_group": 0},
+			"name",
+		)
+		or frappe.db.get_value(
+			"Account",
+			{"company": company, "account_type": "Payable", "is_group": 0},
+			"name",
+		)
+	)
+
+	return expense_account, payable_account
 
 
 def _validated_liability(account: str, company: str) -> str:
