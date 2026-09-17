@@ -671,12 +671,17 @@ def cancel_recovery_not_yet_taken(ald_name: str) -> list:
 	(``salary_settlement._disbursed_leave_dates``), taking the same day's pay away
 	a second time in the other direction.
 
-	Cancelling a row a submitted Salary Slip already took raises
-	``frappe.LinkExistsError`` (the slip's own ``Salary Detail.additional_salary``
-	Link field is what Frappe's cancel-time link check finds) — payroll already
-	recovered that part, correctly, so there is nothing to undo. Returns the names
-	Frappe refused, so the caller reports them instead of the failure vanishing
-	silently.
+	A row a submitted Salary Slip already took is checked for FIRST and never
+	cancelled at all — not attempted-then-caught. ``Document.cancel()`` writes
+	``docstatus=2`` to the database in ``_save()`` and only checks for back-links
+	afterwards, in ``run_post_save_methods()``; a ``frappe.LinkExistsError`` raised
+	there does not undo that write (confirmed against this site's own Frappe
+	source and live-tested — no savepoint wraps the two). In a normal desk cancel
+	the surrounding HTTP request rolls back on the uncaught exception, so this
+	never surfaces; caught here and continued past, it would silently leave the
+	row cancelled anyway, contradicting the very thing this function promises.
+	Returns the names left alone, so the caller reports them rather than the
+	skip vanishing silently.
 	"""
 	booked = frappe.get_all(
 		"Additional Salary",
@@ -685,10 +690,10 @@ def cancel_recovery_not_yet_taken(ald_name: str) -> list:
 	)
 	already_taken = []
 	for name in booked:
-		try:
-			frappe.get_doc("Additional Salary", name).cancel()
-		except frappe.LinkExistsError:
+		if frappe.db.exists("Salary Detail", {"additional_salary": name, "docstatus": 1}):
 			already_taken.append(name)
+			continue
+		frappe.get_doc("Additional Salary", name).cancel()
 	return already_taken
 
 

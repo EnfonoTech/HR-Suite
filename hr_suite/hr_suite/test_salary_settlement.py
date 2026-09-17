@@ -386,6 +386,72 @@ class TestSalarySettlementLeaveOverlap(SavepointTestCase):
 			frappe.db.get_value("Additional Salary", additional_salary.name, "docstatus"), 2
 		)
 
+	def test_recovery_already_on_a_payslip_is_left_untouched(self):
+		"""The bug this guards against: ``Additional Salary.cancel()`` writes
+		docstatus=2 to the database BEFORE it checks for back-links (Frappe's own
+		_save() calls db_update() before run_post_save_methods(), which is where
+		the Cancel-time link check runs) — so a naive try/cancel/except
+		LinkExistsError still leaves the row cancelled despite "refusing". This
+		must check first and never call .cancel() on an already-consumed row at
+		all, or an employee whose payroll already recovered their advance would
+		have that recovery silently erased the moment a settlement tries to
+		absorb the same disbursement."""
+		ald_name = force_disbursement(
+			self.assignment,
+			self.assignment.month_start,
+			add_days(self.assignment.month_start, 4),
+		)
+		if not ald_name:
+			self.skipTest("No Leave Type exists on this site to build a throwaway disbursement")
+
+		component = frappe.db.get_value("Salary Component", {"type": "Deduction"}, "name")
+		if not component:
+			self.skipTest("No Deduction-type Salary Component exists on this site")
+
+		additional_salary = frappe.get_doc({
+			"doctype": "Additional Salary",
+			"employee": self.assignment.employee,
+			"company": self.assignment.company,
+			"currency": frappe.get_cached_value("Company", self.assignment.company, "default_currency"),
+			"salary_component": component,
+			"amount": 1,
+			"payroll_date": self.assignment.month_start,
+			"ref_doctype": "Annual Leave Disbursement",
+			"ref_docname": ald_name,
+			"overwrite_salary_structure_amount": 0,
+		})
+		try:
+			additional_salary.insert(ignore_permissions=True)
+			additional_salary.submit()
+
+			month_start, month_end = self.assignment.month_start, self.assignment.month_end
+			slip = frappe.get_doc({
+				"doctype": "Salary Slip",
+				"employee": self.assignment.employee,
+				"posting_date": month_end,
+				"start_date": month_start,
+				"end_date": month_end,
+			})
+			slip.insert(ignore_permissions=True)
+			slip.submit()
+		except frappe.ValidationError as e:
+			self.skipTest(f"This site's own payroll rules refused the fixture: {e}")
+
+		if not frappe.db.exists("Salary Detail", {"additional_salary": additional_salary.name, "docstatus": 1}):
+			self.skipTest("The slip did not pick up the fixture Additional Salary — nothing to test")
+
+		from hr_suite.hr_suite.doctype.annual_leave_disbursement.annual_leave_disbursement import (
+			cancel_recovery_not_yet_taken,
+		)
+
+		already_taken = cancel_recovery_not_yet_taken(ald_name)
+
+		self.assertEqual(already_taken, [additional_salary.name])
+		self.assertEqual(
+			frappe.db.get_value("Additional Salary", additional_salary.name, "docstatus"), 1,
+			msg="A row already on a submitted payslip must stay untouched, not get cancelled anyway",
+		)
+
 
 class TestSalarySettlementTotals(SavepointTestCase):
 	"""What reaches the net, and what deliberately does not."""
