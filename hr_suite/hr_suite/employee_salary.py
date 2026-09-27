@@ -55,6 +55,51 @@ def _build_preview_slip(assignment: dict, employee: str, as_on=None):
 	)
 
 
+def evaluate_salary_components(employee: str, as_on=None) -> list:
+	"""The employee's components as at a date, WITHOUT touching the stored mirror.
+
+	The mirror on the Employee is "what this employee is paid now", and a document that
+	prices a past period must not rewrite it — a settlement for March would otherwise
+	leave the Employee master showing March's structure until the next assignment is
+	submitted. This evaluates the structure in force on ``as_on`` through the same
+	throwaway Salary Slip and returns the rows, in the same shape the mirror stores.
+	"""
+	assignment = get_current_assignment(employee, as_on)
+	if not assignment:
+		return []
+
+	try:
+		slip = _build_preview_slip(assignment, employee, as_on)
+	except Exception:
+		frappe.log_error(
+			message=frappe.get_traceback(),
+			title=f"Salary evaluation failed for {employee}",
+		)
+		return []
+
+	rows = []
+	for component_type, lines in (
+		("Earning", slip.get("earnings") or []),
+		("Deduction", slip.get("deductions") or []),
+	):
+		for line in lines:
+			amount = flt(line.get("amount"))
+			if not amount:
+				continue
+			rows.append(
+				frappe._dict(
+					{
+						"salary_component": line.get("salary_component"),
+						"component_type": component_type,
+						"amount": amount,
+						"depends_on_payment_days": line.get("depends_on_payment_days") or 0,
+					}
+				)
+			)
+
+	return rows
+
+
 def sync_employee_salary(employee: str, as_on=None) -> dict:
 	"""Rebuild the salary mirror on one Employee. Returns a short result dict."""
 	if not frappe.db.exists("Employee", employee):

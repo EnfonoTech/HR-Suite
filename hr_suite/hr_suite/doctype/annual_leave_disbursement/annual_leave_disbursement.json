@@ -13,6 +13,8 @@
   "company",
   "department",
   "leave_section",
+  "leave_type",
+  "leave_application",
   "leave_year",
   "leave_from_date",
   "leave_to_date",
@@ -20,18 +22,22 @@
   "leave_days_entitled",
   "leave_days_taken",
   "leave_days_balance",
+  "leave_allocation",
   "leave_days_to_pay",
   "status",
   "salary_section",
   "monthly_basic_salary",
   "monthly_gross_salary",
   "daily_basic_rate",
+  "leave_salary_basis",
   "column_break_3",
   "disbursement_type",
   "basic_leave_pay",
   "housing_allowance_pay",
   "transport_allowance_pay",
+  "other_allowances_pay",
   "total_leave_pay",
+  "leave_salary_recovery_amount",
   "additional_section",
   "ticket_entitled",
   "ticket_amount",
@@ -86,11 +92,25 @@
    "label": "Leave Details"
   },
   {
+   "description": "The HRMS Leave Type whose Leave Allocation this disbursement draws down.",
+   "fieldname": "leave_type",
+   "fieldtype": "Link",
+   "label": "Leave Type",
+   "options": "Leave Type",
+   "reqd": 1
+  },
+  {
+   "description": "Optional. When set, the dates, leave type and day count are taken from it.",
+   "fieldname": "leave_application",
+   "fieldtype": "Link",
+   "label": "Leave Application",
+   "options": "Leave Application"
+  },
+  {
    "fieldname": "leave_year",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Leave Year",
-   "reqd": 1
+   "label": "Leave Year"
   },
   {
    "fieldname": "leave_from_date",
@@ -113,13 +133,13 @@
   {
    "fieldname": "leave_days_entitled",
    "fieldtype": "Float",
-   "label": "Entitled Days",
+   "label": "Allocated Days",
    "read_only": 1
   },
   {
    "fieldname": "leave_days_taken",
    "fieldtype": "Float",
-   "label": "Days Taken Before",
+   "label": "Days Consumed",
    "read_only": 1
   },
   {
@@ -129,19 +149,27 @@
    "read_only": 1
   },
   {
+   "fieldname": "leave_allocation",
+   "fieldtype": "Link",
+   "label": "Leave Allocation",
+   "no_copy": 1,
+   "options": "Leave Allocation",
+   "read_only": 1
+  },
+  {
    "fieldname": "leave_days_to_pay",
    "fieldtype": "Float",
    "label": "Days to Disburse",
    "reqd": 1
   },
   {
+   "allow_on_submit": 1,
    "default": "Draft",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft\nApproved\nPaid\nCancelled",
-   "allow_on_submit": 1
+   "options": "Draft\nApproved\nPaid\nCancelled"
   },
   {
    "fieldname": "salary_section",
@@ -151,7 +179,8 @@
   {
    "fieldname": "monthly_basic_salary",
    "fieldtype": "Currency",
-   "label": "Monthly Basic"
+   "label": "Monthly Basic",
+   "read_only": 1
   },
   {
    "fieldname": "monthly_gross_salary",
@@ -162,7 +191,14 @@
   {
    "fieldname": "daily_basic_rate",
    "fieldtype": "Currency",
-   "label": "Daily Basic Rate",
+   "label": "Daily Leave Rate",
+   "read_only": 1
+  },
+  {
+   "description": "Which country rule priced this leave, read from Country Config.",
+   "fieldname": "leave_salary_basis",
+   "fieldtype": "Data",
+   "label": "Leave Salary Basis",
    "read_only": 1
   },
   {
@@ -172,9 +208,9 @@
   {
    "fieldname": "disbursement_type",
    "fieldtype": "Select",
-   "label": "Disbursement Basis",
-   "options": "Basic Salary Only\nFull Salary",
-   "reqd": 1
+   "label": "Leave Salary Covers",
+   "options": "Basic Only\nBasic + Housing\nFull Package\nBasic Salary Only\nFull Salary",
+   "read_only": 1
   },
   {
    "fieldname": "basic_leave_pay",
@@ -183,24 +219,38 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval:doc.housing_allowance_pay",
    "fieldname": "housing_allowance_pay",
    "fieldtype": "Currency",
    "label": "Housing Allowance Pay",
-   "read_only": 1,
-   "depends_on": "eval:doc.disbursement_type && doc.disbursement_type.indexOf('Full') !== -1"
+   "read_only": 1
   },
   {
+   "depends_on": "eval:doc.transport_allowance_pay",
    "fieldname": "transport_allowance_pay",
    "fieldtype": "Currency",
    "label": "Transport Allowance Pay",
-   "read_only": 1,
-   "depends_on": "eval:doc.disbursement_type && doc.disbursement_type.indexOf('Full') !== -1"
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.other_allowances_pay",
+   "fieldname": "other_allowances_pay",
+   "fieldtype": "Currency",
+   "label": "Other Allowances Pay",
+   "read_only": 1
   },
   {
    "fieldname": "total_leave_pay",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Total Leave Pay",
+   "read_only": 1
+  },
+  {
+   "description": "Leave pay only. The annual ticket is an entitlement, not an advance, so it is never recovered.",
+   "fieldname": "leave_salary_recovery_amount",
+   "fieldtype": "Currency",
+   "label": "Recovered at Payroll",
    "read_only": 1
   },
   {
@@ -221,9 +271,11 @@
    "label": "Ticket Amount"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "linked_payroll_entry",
    "fieldtype": "Link",
    "label": "Linked Journal Entry",
+   "no_copy": 1,
    "options": "Journal Entry",
    "read_only": 1
   },
@@ -239,7 +291,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-03-17 00:00:00.000000",
+ "modified": "2026-09-16 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hr Suite",
  "name": "Annual Leave Disbursement",

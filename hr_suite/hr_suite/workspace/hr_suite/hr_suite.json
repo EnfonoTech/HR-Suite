@@ -502,6 +502,26 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Salary Settlement",
+   "link_count": 0,
+   "link_to": "Salary Settlement",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "HR Payment Advice",
+   "link_count": 0,
+   "link_to": "HR Payment Advice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Performance",
    "link_count": 4,
    "link_type": "DocType",
@@ -1452,7 +1472,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-09-06 12:00:00.000000",
+ "modified": "2026-09-20 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hr Suite",
  "name": "HR Suite",

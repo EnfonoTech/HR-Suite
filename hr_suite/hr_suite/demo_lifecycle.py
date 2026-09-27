@@ -357,20 +357,39 @@ def seed_employee_lifecycle_demo():
         "name",
     )
     if not existing_ald:
-        frappe.get_doc({
-            "doctype": "Annual Leave Disbursement",
-            "employee": tariq,
-            "company": company,
-            "leave_year": getdate(today).year,
-            "leave_from_date": add_days(today, -365),
-            "leave_to_date": today,
-            "leave_days_entitled": 22,
-            "leave_days_to_pay": 22,
-            "disbursement_type": "Basic Salary Only",
-            "monthly_basic_salary": 14000,
-            "daily_basic_rate": round(14000 / 30, 2),
-            "status": "Draft",
-        }).insert(ignore_permissions=True)
+        # A disbursement now names its Leave Type and reads the employee's submitted
+        # Leave Allocation for that type — it is a real claim on a real balance, not a
+        # free-standing figure. The demo therefore rides on an allocation that already
+        # exists rather than inventing leave masters of its own; where the site has
+        # none, the demo simply leaves this document out instead of failing the seed.
+        allocation = frappe.db.get_value(
+            "Leave Allocation",
+            {
+                "employee": tariq,
+                "docstatus": 1,
+                "from_date": ["<=", today],
+                "to_date": [">=", today],
+            },
+            ["name", "leave_type"],
+            as_dict=True,
+            order_by="to_date desc",
+        )
+        if allocation:
+            frappe.get_doc({
+                "doctype": "Annual Leave Disbursement",
+                "employee": tariq,
+                "company": company,
+                "leave_type": allocation.leave_type,
+                "leave_year": getdate(today).year,
+                "leave_from_date": add_days(today, -10),
+                "leave_to_date": add_days(today, -5),
+                "leave_days_entitled": 22,
+                "leave_days_to_pay": 6,
+                "disbursement_type": "Basic Salary Only",
+                "monthly_basic_salary": 14000,
+                "daily_basic_rate": round(14000 / 30, 2),
+                "status": "Draft",
+            }).insert(ignore_permissions=True)
 
     # Termination notice (resignation)
     termination = _ensure_termination({
