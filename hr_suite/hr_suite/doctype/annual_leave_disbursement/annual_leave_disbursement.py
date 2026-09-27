@@ -32,6 +32,9 @@ from hr_suite.hr_suite.utils import (
 	compute_leave_salary,
 	get_employee_salary_components,
 	get_leave_salary_recovery_component,
+	get_mapped_account,
+	ACCOUNT_PURPOSE_LEAVE_SALARY_EXPENSE,
+	ACCOUNT_PURPOSE_LEAVE_SALARY_PAYABLE,
 	get_leave_salary_terms,
 	journal_entry_needs_approval,
 	split_days_by_month,
@@ -721,7 +724,7 @@ def resolve_leave_salary_accounts(company: str) -> tuple:
 	on Hr Suite Settings is therefore asked first.
 	"""
 
-	expense_account = _configured_account(company, "leave_salary_expense_account", "Expense") or (
+	expense_account = _configured_account(company, ACCOUNT_PURPOSE_LEAVE_SALARY_EXPENSE, "Expense") or (
 		frappe.db.get_value(
 			"Account",
 			{"company": company, "account_name": ["like", "%Leave Salary%"],
@@ -751,7 +754,7 @@ def resolve_leave_salary_accounts(company: str) -> tuple:
 	# `modified`, so that fallback was landing leave salary in whichever expense
 	# account happened to be oldest — Depreciation, Cost of Goods Sold.
 
-	payable_account = _configured_account(company, "leave_salary_payable_account", "Liability") or (
+	payable_account = _configured_account(company, ACCOUNT_PURPOSE_LEAVE_SALARY_PAYABLE, "Liability") or (
 		# The company's own payroll payable answer comes before any name matching, so
 		# the disbursement credits the account the monthly payroll accrual debits and
 		# the two documents meet on the same liability.
@@ -805,22 +808,15 @@ def _party_fields(account: str, employee: str) -> dict:
 	return {}
 
 
-def _configured_account(company: str, settings_field: str, root_type: str) -> str:
-	"""An account named on Hr Suite Settings, if it is real and belongs to this company.
+def _configured_account(company: str, purpose: str, root_type: str) -> str:
+	"""Backwards-compatible shim over the per-company mapping table.
 
-	A mapping left pointing at another company's tree, at a group, or at an account that
-	has since been deleted would produce a Journal Entry that cannot post — so it is
-	treated as unconfigured and the name-matching fallback takes over.
+	The three global Link fields this used to read could only ever hold ONE account,
+	which is wrong the moment a site runs a second company — an Account belongs to
+	exactly one. The mapping now lives in the ``hr_account_mappings`` child table,
+	keyed by (company, purpose).
 	"""
-	account = cstr(frappe.db.get_single_value("Hr Suite Settings", settings_field))
-	if not account:
-		return ""
-
-	row = frappe.db.get_value("Account", account, ["company", "is_group", "root_type"], as_dict=True)
-	if not row or row.company != company or row.is_group or row.root_type != root_type:
-		return ""
-
-	return account
+	return get_mapped_account(company, purpose, root_type)
 
 
 def get_leave_allocation(employee: str, leave_type: str, on_date):

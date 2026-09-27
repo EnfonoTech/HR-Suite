@@ -1459,8 +1459,11 @@ class SalarySettlement(Document):
 		from hr_suite.hr_suite.doctype.annual_leave_disbursement.annual_leave_disbursement import (
 			_configured_account,
 		)
+		from hr_suite.hr_suite.utils import (
+			ACCOUNT_PURPOSE_SETTLEMENT_ADVANCE,
+		)
 
-		configured = _configured_account(self.company, "settlement_advance_account", "Asset")
+		configured = _configured_account(self.company, ACCOUNT_PURPOSE_SETTLEMENT_ADVANCE, "Asset")
 		if configured:
 			return configured
 

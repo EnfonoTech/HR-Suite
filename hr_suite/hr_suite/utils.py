@@ -1632,3 +1632,49 @@ def split_days_by_month(from_date, to_date) -> list:
 		out.append((get_first_day(cursor), date_diff(chunk_end, cursor) + 1))
 		cursor = add_days(chunk_end, 1)
 	return out
+
+
+# ─── Account mapping ────────────────────────────────────────────────────────────
+# Which account HR Suite posts to is a per-COMPANY answer: an Account belongs to
+# exactly one company, so a single global setting cannot serve a site running more
+# than one. The mapping therefore lives in a child table on Hr Suite Settings, keyed
+# by (company, purpose), the same shape as the Deduction Accounts table next to it.
+
+ACCOUNT_PURPOSE_LEAVE_SALARY_EXPENSE = "Leave Salary Expense"
+ACCOUNT_PURPOSE_LEAVE_SALARY_PAYABLE = "Leave Salary Payable"
+ACCOUNT_PURPOSE_SETTLEMENT_ADVANCE = "Settlement Advance"
+
+
+def get_mapped_account(company: str, purpose: str, root_type: str = "") -> str:
+	"""The account mapped for this company and purpose, or "" if there is none usable.
+
+	A mapping that points at another company's tree, at a group, at the wrong side of
+	the balance sheet, or at an account that has since been deleted would produce a
+	Journal Entry that cannot post. Treat all of those as unconfigured and let the
+	caller's fallback take over, rather than raising at submit time.
+	"""
+	if not company or not purpose:
+		return ""
+
+	try:
+		settings = frappe.get_cached_doc("Hr Suite Settings")
+	except Exception:
+		# A bench part-way through install/migrate legitimately has no Single yet.
+		return ""
+
+	for row in settings.get("hr_account_mappings") or []:
+		if row.get("purpose") != purpose or row.get("company") != company or not row.get("account"):
+			continue
+
+		account = row.get("account")
+		detail = frappe.db.get_value(
+			"Account", account, ["company", "is_group", "root_type"], as_dict=True
+		)
+		if not detail or detail.company != company or detail.is_group:
+			continue
+		if root_type and detail.root_type != root_type:
+			continue
+
+		return account
+
+	return ""

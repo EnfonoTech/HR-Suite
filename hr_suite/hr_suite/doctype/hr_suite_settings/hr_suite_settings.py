@@ -18,7 +18,67 @@ MAX_IMPORT_FILE_SIZE_BYTES = 10 * 1024 * 1024
 
 
 class HrSuiteSettings(Document):
-	pass
+	def validate(self):
+		self._validate_account_mappings()
+
+	def _validate_account_mappings(self):
+		"""Catch a bad mapping here, not at submit time on somebody's payroll.
+
+		These rows are read when a Journal Entry is being built. A row naming another
+		company's account, a group account, or the wrong side of the balance sheet is
+		silently skipped at that point and the name-matching fallback takes over — so
+		the administrator would never learn the row was useless. Refuse it on save.
+		"""
+		expected_root = {
+			"Leave Salary Expense": "Expense",
+			"Leave Salary Payable": "Liability",
+			"Settlement Advance": "Asset",
+		}
+		seen = {}
+
+		for row in self.get("hr_account_mappings") or []:
+			if not (row.company and row.purpose and row.account):
+				continue
+
+			key = (row.company, row.purpose)
+			if key in seen:
+				frappe.throw(
+					_("Row #{0}: {1} already has an account mapped for {2} in row #{3}. "
+					  "One account per company per purpose.").format(
+						row.idx, row.company, _(row.purpose), seen[key]),
+					title=_("Duplicate mapping"),
+				)
+			seen[key] = row.idx
+
+			detail = frappe.db.get_value(
+				"Account", row.account, ["company", "is_group", "root_type"], as_dict=True
+			)
+			if not detail:
+				continue
+
+			if detail.company != row.company:
+				frappe.throw(
+					_("Row #{0}: account {1} belongs to {2}, not {3}. A Journal Entry "
+					  "built from this row could not post.").format(
+						row.idx, row.account, detail.company, row.company),
+					title=_("Account is in another company"),
+				)
+
+			if detail.is_group:
+				frappe.throw(
+					_("Row #{0}: {1} is a group account. Nothing can be posted to it — "
+					  "pick one of its children.").format(row.idx, row.account),
+					title=_("Group account"),
+				)
+
+			wanted = expected_root.get(row.purpose)
+			if wanted and detail.root_type != wanted:
+				frappe.throw(
+					_("Row #{0}: {1} is written for {2}, but {3} is {4}. Check the "
+					  "account before payroll uses it.").format(
+						row.idx, _(row.purpose), _(wanted), row.account, _(detail.root_type)),
+					title=_("Wrong kind of account"),
+				)
 
 
 def _assert_settings_access():

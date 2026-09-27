@@ -29,10 +29,7 @@
   "accrual_switch_over_now",
   "monthly_leave_alloc_help",
   "leave_salary_accounts_section",
-  "leave_salary_expense_account",
-  "leave_salary_payable_account",
-  "column_break_leave_salary_accounts",
-  "settlement_advance_account",
+  "hr_account_mappings",
   "contract_section",
   "probation_period_days",
   "max_probation_period_days",
@@ -230,7 +227,7 @@
    "fieldtype": "Check",
    "read_only": 1,
    "label": "Enable Monthly Leave Allocation (retired)",
-   "description": "Retired. This used to create one Leave Allocation per employee per month, windowed to that month, so the days expired at month end and could never be carried. Leave accrues through HRMS earned leave now — see Leave Type \u2192 Is Earned Leave, switched on for you from Country Config \u2192 leave-type rows."
+   "description": "Retired. This used to create one Leave Allocation per employee per month, windowed to that month, so the days expired at month end and could never be carried. Leave accrues through HRMS earned leave now \u2014 see Leave Type \u2192 Is Earned Leave, switched on for you from Country Config \u2192 leave-type rows."
   },
   {
    "default": "0",
@@ -248,32 +245,14 @@
    "fieldname": "leave_salary_accounts_section",
    "fieldtype": "Section Break",
    "label": "Leave Salary & Settlement Accounts",
-   "description": "Where leave salary and mid-month settlements post. Leave these blank and HR Suite falls back to matching account NAMES in the Chart of Accounts, which picks the wrong account on any chart that does not use the English words it looks for."
+   "description": "Where leave salary and mid-month settlements post, per company. An account belongs to one company, so this has to be a row per company \u2014 a single account cannot serve a site running more than one. With no row for a company, HR Suite falls back to matching account NAMES in that company's Chart of Accounts, which picks the wrong account on any chart that does not use the English words it looks for."
   },
   {
-   "fieldname": "leave_salary_expense_account",
-   "fieldtype": "Link",
-   "label": "Leave Salary Expense Account",
-   "options": "Account",
-   "description": "Debited when leave salary is paid in advance. Normally the same salary/wages expense the monthly payroll uses, so the payslip recovery nets back against it."
-  },
-  {
-   "fieldname": "leave_salary_payable_account",
-   "fieldtype": "Link",
-   "label": "Leave Salary Payable Account",
-   "options": "Account",
-   "description": "Credited with what the employee is owed until finance transfers it."
-  },
-  {
-   "fieldname": "column_break_leave_salary_accounts",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "settlement_advance_account",
-   "fieldtype": "Link",
-   "label": "Settlement Advance Account",
-   "options": "Account",
-   "description": "Where a mid-month salary settlement sits until the month's payslip recovers it. An asset (employee advance) account."
+   "fieldname": "hr_account_mappings",
+   "fieldtype": "Table",
+   "label": "Leave Salary & Settlement Accounts",
+   "options": "HR Suite Account Row",
+   "description": "One row per company per purpose. Mirrors the Deduction Accounts table below."
   },
   {
    "fieldname": "contract_section",
