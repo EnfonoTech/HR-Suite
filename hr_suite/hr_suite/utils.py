@@ -642,6 +642,10 @@ _COUNTRY_NAME_TO_CODE = {
     "india": "IN",
     # Oman
     "oman": "OM",
+    # Qatar
+    "qatar": "QA",
+    # Kuwait
+    "kuwait": "KW",
 }
 
 

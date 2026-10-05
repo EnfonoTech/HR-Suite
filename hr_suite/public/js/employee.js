@@ -28,6 +28,7 @@ frappe.ui.form.on("Employee", {
 		_hr_suite_contract_banner(frm);
 		_hr_suite_onboarding_banner(frm);
 		_hr_suite_salary_snapshot(frm);
+		_hr_suite_policy_panel(frm);
 	},
 });
 
@@ -781,6 +782,56 @@ function _hr_suite_fetch_salary(frm, notify) {
 					indicator: "green",
 				});
 			}
+		},
+	});
+}
+
+
+// ── Leave & End-of-Service policy panel ─────────────────────────────────────────
+// Read-only: the policy lives on Country Config and is resolved Employee -> Company ->
+// Country by hr_suite.hr_suite.policy. The override fields beside it are the only part
+// an HR user edits here.
+function _hr_suite_policy_panel(frm) {
+	const field = frm.get_field("hr_policy_summary");
+	if (!field || !field.$wrapper) return;
+
+	frappe.call({
+		method: "hr_suite.hr_suite.policy.get_employee_policy",
+		args: { employee: frm.doc.name },
+		callback: function (r) {
+			const p = r.message || {};
+			if (!p.has_policy) {
+				field.$wrapper.html(
+					`<p class="text-muted">${__("No Country Config found for this employee's country.")}</p>`
+				);
+				return;
+			}
+			const esc = frappe.utils.escape_html;
+			const a = p.annual || {};
+			const band = p.annual_band ? esc(p.annual_band.label || "") : __("Not yet earning");
+			const tiers = (p.sick_leave_tiers || [])
+				.map((t) => `${t.tier_days}d @ ${flt(t.pay_percent)}%`)
+				.join(" · ");
+			const slabs = (p.gratuity_slabs || [])
+				.map((s) => {
+					const to = flt(s.to_years) ? s.to_years : "+";
+					return `${s.from_years}-${to}y: ${s.rate_value} ${esc((s.rate_unit || "").split(" ")[0].toLowerCase())}`;
+				})
+				.join(" · ");
+			const used = (a.overrides_used || []).length
+				? `<span class="indicator-pill orange">${__("Override")}: ${esc(a.overrides_used.join(", "))}</span>`
+				: "";
+			const row = (k, v) => `<tr><td class="text-muted" style="width:40%">${k}</td><td>${v}</td></tr>`;
+			field.$wrapper.html(`
+				<table class="table table-sm" style="margin-bottom:0">
+					${row(__("Country"), `${esc(p.country_name || p.country_code)} ${used}`)}
+					${row(__("Service"), `${p.service_months} ${__("months")} — ${band}`)}
+					${row(__("Annual leave"), `${flt(a.leave_days_per_year)} ${__("days/yr")} (${flt(a.leave_days_per_month)}/${__("month")}); ${__("leave salary")} ${flt(a.salary_days_per_year)} ${__("days/yr")} (${flt(a.salary_days_per_month)}/${__("month")})`)}
+					${row(__("Leave can be taken"), p.leave_can_be_taken ? __("Yes") : `${__("After")} ${p.annual_leave_eligible_after_months} ${__("months")}`)}
+					${row(__("Leave salary barrier"), `${flt(p.leave_salary_min_earned_days)} ${__("earned days")} + ${p.leave_salary_min_service_days} ${__("days of service")}`)}
+					${row(__("Sick leave"), `${p.sick_leave_days_per_year} ${__("days/yr")}: ${tiers || "-"}`)}
+					${row(__("Gratuity"), `${esc(p.gratuity_base)}; ${slabs || "-"}${flt(p.gratuity_cap_months) ? "; " + __("cap") + " " + p.gratuity_cap_months + " " + __("months") : ""}`)}
+				</table>`);
 		},
 	});
 }

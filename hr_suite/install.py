@@ -12,6 +12,7 @@ from frappe.utils import cstr, flt
 
 from hr_suite.hr_suite.leave_setup import setup_leave_management
 from hr_suite.hr_suite.performance_setup import setup_performance_management
+from hr_suite.hr_suite.policy_defaults import apply_policy_defaults
 
 
 def _get_existing_employee_approver_fields():
@@ -589,13 +590,104 @@ EMPLOYEE_MASTER_FIELDS = [
 		"fieldtype": "Select",
 		# Same options as Country Employment Contract.work_country, and the same ISO-2
 		# codes Country Config is keyed on.
-		"options": "\nSA\nAE\nBH\nIN\nOM",
+		"options": "\nSA\nAE\nBH\nIN\nOM\nQA\nKW",
 		"insert_after": "hr_suite_identity_column",
 		"module": "Hr Suite",
 		"description": (
 			"Country whose labour law and statutory scheme apply to this employee. "
 			"Leave blank to inherit the Company's country."
 		),
+	},
+	# ── Leave & end-of-service policy ────────────────────────────────────────────
+	# The country policy is read-only here (it lives on Country Config); the override
+	# block is for company-specific terms that differ from the legal default.
+	{
+		"fieldname": "hr_policy_section",
+		"label": "Leave & End-of-Service Policy",
+		"fieldtype": "Section Break",
+		"insert_after": "work_country",
+		"collapsible": 1,
+		"module": "Hr Suite",
+	},
+	{
+		"fieldname": "hr_policy_summary",
+		"label": "Policy That Applies",
+		"fieldtype": "HTML",
+		"insert_after": "hr_policy_section",
+		"module": "Hr Suite",
+		"description": "Resolved from Employee, Company and Country. Edit it on Country Config.",
+	},
+	{
+		"fieldname": "hr_policy_override_section",
+		"label": "Policy Override (Optional)",
+		"fieldtype": "Section Break",
+		"insert_after": "hr_policy_summary",
+		"collapsible": 1,
+		"module": "Hr Suite",
+		"description": "Only for terms this company gives that differ from the country policy. Leave blank to follow the policy.",
+	},
+	{
+		"fieldname": "override_leave_days_per_year",
+		"label": "Leave Days / Year",
+		"fieldtype": "Float",
+		"precision": "2",
+		"insert_after": "hr_policy_override_section",
+		"module": "Hr Suite",
+		"description": "e.g. 30 where the policy gives 21 (KSA company option).",
+	},
+	{
+		"fieldname": "override_salary_days_per_year",
+		"label": "Leave-Salary Days / Year",
+		"fieldtype": "Float",
+		"precision": "2",
+		"insert_after": "override_leave_days_per_year",
+		"module": "Hr Suite",
+		"description": "e.g. 21 where leave days are 30 (KSA company option: 2.5 leave days, 1.75 salary days a month).",
+	},
+	{
+		"fieldname": "override_leave_cycle_years",
+		"label": "Leave Cycle (Years)",
+		"fieldtype": "Select",
+		"options": "\n1\n2",
+		"insert_after": "override_salary_days_per_year",
+		"module": "Hr Suite",
+		"description": "2 = the two-year labour cycle (leave is taken every second year).",
+	},
+	{
+		"fieldname": "hr_policy_override_column",
+		"fieldtype": "Column Break",
+		"insert_after": "override_leave_cycle_years",
+		"module": "Hr Suite",
+	},
+	{
+		"fieldname": "override_ticket_entitled",
+		"label": "Air Ticket Entitled",
+		"fieldtype": "Check",
+		"insert_after": "hr_policy_override_column",
+		"module": "Hr Suite",
+	},
+	{
+		"fieldname": "override_ticket_amount",
+		"label": "Air Ticket Amount",
+		"fieldtype": "Currency",
+		"insert_after": "override_ticket_entitled",
+		"depends_on": "override_ticket_entitled",
+		"module": "Hr Suite",
+	},
+	{
+		"fieldname": "override_ticket_every_months",
+		"label": "Air Ticket Every (Months)",
+		"fieldtype": "Int",
+		"insert_after": "override_ticket_amount",
+		"depends_on": "override_ticket_entitled",
+		"module": "Hr Suite",
+	},
+	{
+		"fieldname": "policy_override_reason",
+		"label": "Override Reason",
+		"fieldtype": "Small Text",
+		"insert_after": "override_ticket_every_months",
+		"module": "Hr Suite",
 	},
 ]
 
@@ -937,11 +1029,102 @@ _COUNTRY_CONFIGS = [
 			{"leave_type_name": "Study Leave", "days_per_year": 15, "gender_specific": "All", "is_optional": 1, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Study Leave"},
 		],
 	},
+	{
+		"country_code": "QA",
+		"country_name": "Qatar",
+		"currency": "QAR",
+		"is_active": 1,
+		# Statutory: GRSIA for Qatari nationals only; expatriates have no social insurance.
+		# VERIFY the rates with the client's legal adviser before go-live.
+		"statutory_scheme": "GRSIA",
+		"contribution_basis": "Basic Salary",
+		"contribution_ceiling": 0,
+		"national_employee_rate": 5.0,
+		"national_employer_rate": 10.0,
+		"expat_employee_rate": 0.0,
+		"expat_employer_rate": 0.0,
+		# Settlement: slab-driven from the gratuity policy tables (HR Suite 2.x)
+		"settlement_formula": "Slab-Policy",
+		"settlement_basis": "Basic Salary",
+		"years_threshold": 5,
+		"gratuity_eligibility_years": 1,
+		"settlement_ceiling_applicable": 0,
+		"primary_permit_label": "Residence Permit (QID)",
+		"permit_expiry_alert_days": 90,
+		"national_id_label": "Qatar ID (QID)",
+		"wps_mandatory": 1,
+		"wps_format": "None",
+		"nationalization_applies": 1,
+		"nationalization_scheme_name": "Qatarization",
+		"national_job_title": "Qatari National",
+		"notice_period_days_monthly": 30,
+		"notice_period_days_others": 30,
+		"max_probation_days": 180,
+		"overtime_hours_per_month": 60,
+		"overtime_weekday_rate": 1.25,
+		"overtime_night_rate": 1.5,
+		"overtime_night_start": "21:00:00",
+		"overtime_night_end": "04:00:00",
+		"overtime_rest_day_rate": 1.5,
+		"overtime_holiday_rate": 1.5,
+		"overtime_notes": "Qatar Labour Law — overtime at the normal rate plus 25%; night work and weekly rest day plus 50%. VERIFY against the current law and the contract.",
+		"leave_salary_days_per_month": 30,
+		"leave_salary_components": "Basic Only",
+		"leave_salary_notes": "Qatar Labour Law — annual leave is paid on the basic wage. Confirm whether the company pays more.",
+		"leave_types": [
+			{"leave_type_name": "Annual Leave", "days_per_year": 21, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "accrual_frequency": "Monthly", "leave_salary_in_advance": 1, "frappe_leave_type_name": "Annual Leave"},
+			{"leave_type_name": "Sick Leave", "days_per_year": 84, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Sick Leave"},
+			{"leave_type_name": "Maternity Leave", "days_per_year": 50, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Maternity Leave"},
+		],
+	},
+	{
+		"country_code": "KW",
+		"country_name": "Kuwait",
+		"currency": "KWD",
+		"is_active": 1,
+		# Statutory: PIFSS for Kuwaiti nationals only. VERIFY the rates before go-live.
+		"statutory_scheme": "PIFSS",
+		"contribution_basis": "Total Salary",
+		"contribution_ceiling": 0,
+		"national_employee_rate": 10.5,
+		"national_employer_rate": 11.5,
+		"expat_employee_rate": 0.0,
+		"expat_employer_rate": 0.0,
+		"settlement_formula": "Slab-Policy",
+		"settlement_basis": "Basic Salary",
+		"years_threshold": 5,
+		"gratuity_eligibility_years": 0,
+		"settlement_ceiling_applicable": 0,
+		"primary_permit_label": "Residence (Civil ID)",
+		"permit_expiry_alert_days": 90,
+		"national_id_label": "Civil ID",
+		"wps_mandatory": 0,
+		"wps_format": "None",
+		"nationalization_applies": 1,
+		"nationalization_scheme_name": "Kuwaitization",
+		"national_job_title": "Kuwaiti National",
+		"notice_period_days_monthly": 90,
+		"notice_period_days_others": 30,
+		"max_probation_days": 100,
+		"overtime_hours_per_month": 60,
+		"overtime_weekday_rate": 1.25,
+		"overtime_rest_day_rate": 1.5,
+		"overtime_holiday_rate": 2.0,
+		"overtime_notes": "Kuwait Labour Law — overtime at the normal rate plus 25%; weekly rest day plus 50%; public holiday double. VERIFY against the current law and the contract.",
+		"leave_salary_days_per_month": 30,
+		"leave_salary_components": "Basic Only",
+		"leave_salary_notes": "Kuwait Labour Law — annual leave is paid on the basic wage. Confirm whether the company pays more.",
+		"leave_types": [
+			{"leave_type_name": "Annual Leave", "days_per_year": 30, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "accrual_frequency": "Monthly", "leave_salary_in_advance": 1, "frappe_leave_type_name": "Annual Leave"},
+			{"leave_type_name": "Sick Leave", "days_per_year": 75, "gender_specific": "All", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Sick Leave"},
+			{"leave_type_name": "Maternity Leave", "days_per_year": 70, "gender_specific": "Female Only", "is_optional": 0, "once_in_employment": 0, "max_carry_forward_days": 0, "frappe_leave_type_name": "Maternity Leave"},
+		],
+	},
 ]
 
 
 def seed_country_configs():
-	"""Seed Country Config master records for all 5 operating countries."""
+	"""Seed Country Config master records for all six GCC operating countries and India."""
 	if not frappe.db.exists("DocType", "Country Config"):
 		return
 
@@ -955,6 +1138,7 @@ def seed_country_configs():
 			# added, which an existing record cannot have and which are useless empty.
 			top_up_country_defaults(existing, cfg_data)
 			top_up_country_leave_type_rows(existing, leave_types)
+			apply_policy_defaults(code, existing)
 			cfg_data["leave_types"] = leave_types
 			continue
 
@@ -965,7 +1149,8 @@ def seed_country_configs():
 		]
 
 		try:
-			frappe.get_doc(doc_data).insert(ignore_permissions=True)
+			inserted = frappe.get_doc(doc_data).insert(ignore_permissions=True)
+			apply_policy_defaults(code, inserted.name)
 		except Exception:
 			frappe.log_error(frappe.get_traceback(), f"HR Suite: failed to seed Country Config for {code}")
 
