@@ -98,6 +98,7 @@
   {"fieldname": "sick_leave_eligible_after_months", "fieldtype": "Int", "label": "Eligible After (Months)", "description": "0 = from joining."},
   {"fieldname": "sick_leave_after_probation", "fieldtype": "Check", "label": "Eligible After Probation"},
   {"fieldname": "sick_leave_requires_certificate", "fieldtype": "Check", "label": "Medical Certificate Required", "default": "1"},
+  {"fieldname": "sick_leave_auto_split", "fieldtype": "Check", "label": "Split Sick Leave Into Pay Tiers Automatically", "description": "Ticked: a Sick Leave application is split across the pay tiers below from what the employee has already used in the leave year, and payroll deducts the unpaid share. Leave unticked where sick leave is already modelled as separate part-pay and unpaid Leave Types, or the pay would be reduced twice."},
   {"fieldname": "sick_policy_column", "fieldtype": "Column Break"},
   {"fieldname": "sick_leave_tiers", "fieldtype": "Table", "label": "Pay Tiers", "options": "Country Sick Leave Tier", "description": "Applied in order as days are used within the leave year. The days must add up to Sick Days / Year."},
   {"fieldname": "gratuity_policy_section", "fieldtype": "Section Break", "label": "Gratuity Policy"},

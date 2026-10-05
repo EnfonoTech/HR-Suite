@@ -181,7 +181,13 @@ doc_events = {
 		"validate": "hr_suite.hr_suite.performance.validate_appraisal",
 	},
 	"Leave Application": {
-		"validate": "hr_suite.hr_suite.integrations.hrms.on_leave_application_validate",
+		"validate": [
+			"hr_suite.hr_suite.integrations.hrms.on_leave_application_validate",
+			"hr_suite.hr_suite.sick_leave_tiers.preview_split",
+		],
+		"before_submit": "hr_suite.hr_suite.sick_leave_tiers.require_certificate",
+		"on_submit": "hr_suite.hr_suite.sick_leave_tiers.on_submit",
+		"on_cancel": "hr_suite.hr_suite.sick_leave_tiers.on_cancel",
 	},
 	"Leave Allocation": {
 		"on_submit": "hr_suite.hr_suite.integrations.hrms.on_leave_allocation_submit",

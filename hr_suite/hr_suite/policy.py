@@ -62,6 +62,15 @@ def _annual_leave_type(cfg) -> str:
 	return "Annual Leave"
 
 
+def _sick_leave_type(cfg) -> str:
+	"""The HRMS Leave Type that carries sick leave: the first declared row with 'sick' in its name."""
+	for row in cfg.get("leave_types") or []:
+		name = cstr(row.get("frappe_leave_type_name") or row.get("leave_type_name")).strip()
+		if "sick" in name.lower():
+			return name
+	return "Sick Leave"
+
+
 def _rows(doc, table, fields):
 	return [{f: row.get(f) for f in fields} for row in (doc.get(table) or [])]
 
@@ -93,6 +102,9 @@ def get_country_policy(country_code: str):
 		leave_salary_min_earned_days=flt(cfg.leave_salary_min_earned_days),
 		leave_salary_min_service_days=cint(cfg.leave_salary_min_service_days),
 		pay_worked_days_in_settlement=cint(cfg.pay_worked_days_in_settlement),
+		sick_leave_auto_split=cint(cfg.sick_leave_auto_split),
+		sick_leave_type=_sick_leave_type(cfg),
+		max_probation_days=cint(cfg.max_probation_days),
 		sick_leave_days_per_year=cint(cfg.sick_leave_days_per_year),
 		sick_leave_eligible_after_months=cint(cfg.sick_leave_eligible_after_months),
 		sick_leave_after_probation=cint(cfg.sick_leave_after_probation),

@@ -45,12 +45,35 @@ def refuse_if_payroll_already_ran(employee, payroll_date, amount, currency):
 	)
 
 
-def prepare_component(employee, company, expense_account):
-	"""(component name, currency) for the deductions, or throws with a finished sentence."""
+def ensure_deduction_component(name, abbr, description):
+	"""A Deduction salary component that does not depend on payment days, created once."""
+	if not frappe.db.exists("Salary Component", name):
+		frappe.get_doc(
+			{
+				"doctype": "Salary Component",
+				"salary_component": name,
+				"salary_component_abbr": abbr,
+				"type": "Deduction",
+				"depends_on_payment_days": 0,
+				"description": description,
+			}
+		).insert(ignore_permissions=True)
+	if cstr(frappe.db.get_value("Salary Component", name, "type")) != "Deduction":
+		frappe.throw(_("Salary Component {0} must be a Deduction.").format(name))
+	return name
+
+
+def prepare_component(employee, company, expense_account, component=None):
+	"""(component name, currency) for the deductions, or throws with a finished sentence.
+
+	`component` names a specific Deduction (sick pay uses its own); by default it is the Leave
+	Salary Recovery component of the employee's country.
+	"""
 	from hr_suite.hr_suite.integrations.hrms import ensure_salary_component_account, get_employee_payroll_currency
 
-	terms = get_leave_salary_terms(employee)
-	component = get_leave_salary_recovery_component(company, terms.get("recovery_component"))
+	if not component:
+		terms = get_leave_salary_terms(employee)
+		component = get_leave_salary_recovery_component(company, terms.get("recovery_component"))
 	ok, reason = ensure_salary_component_account(
 		component,
 		company,

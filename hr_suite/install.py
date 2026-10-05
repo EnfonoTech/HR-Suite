@@ -42,6 +42,7 @@ def after_install():
 	create_default_settings()
 	ensure_employee_custom_fields()
 	ensure_employee_master_fields()
+	ensure_leave_application_fields()
 	# Performance Management (Steel Force Performance Appraisal Form 2025):
 	# Appraisal custom fields + the seeded criteria / appraisal template.
 	setup_performance_management()
@@ -74,6 +75,7 @@ def after_migrate():
 	migrate_legacy_employee_loans()
 	ensure_employee_custom_fields()
 	ensure_employee_master_fields()
+	ensure_leave_application_fields()
 	# Performance Management (Steel Force Performance Appraisal Form 2025):
 	# Appraisal custom fields + the seeded criteria / appraisal template.
 	setup_performance_management()
@@ -703,6 +705,78 @@ EMPLOYEE_MASTER_FIELDS = [
 ]
 
 
+LEAVE_APPLICATION_FIELDS = {
+	"Leave Application": [
+		{
+			"fieldname": "sick_split_section",
+			"label": "Sick Leave Pay",
+			"fieldtype": "Section Break",
+			"insert_after": "description",
+			"depends_on": "eval:doc.sick_tier_split && doc.sick_tier_split.length || doc.medical_certificate",
+			"collapsible": 0,
+			"module": "Hr Suite",
+		},
+		{
+			"fieldname": "medical_certificate",
+			"label": "Medical Certificate",
+			"fieldtype": "Attach",
+			"insert_after": "sick_split_section",
+			"allow_on_submit": 1,
+			"module": "Hr Suite",
+			"description": "Required to submit sick leave where the country policy asks for it.",
+		},
+		{
+			"fieldname": "sick_tier_split",
+			"label": "Pay Split",
+			"fieldtype": "Table",
+			"options": "Leave Application Sick Tier",
+			"insert_after": "medical_certificate",
+			"read_only": 1,
+			"allow_on_submit": 1,
+			"module": "Hr Suite",
+		},
+		{
+			"fieldname": "sick_unpaid_equivalent",
+			"label": "Unpaid-Equivalent Days",
+			"fieldtype": "Float",
+			"precision": "2",
+			"insert_after": "sick_tier_split",
+			"read_only": 1,
+			"allow_on_submit": 1,
+			"module": "Hr Suite",
+			"description": "Days not paid, counting a half-pay day as half. Payroll deducts these.",
+		},
+		{
+			"fieldname": "sick_split_note",
+			"label": "Note",
+			"fieldtype": "Small Text",
+			"insert_after": "sick_unpaid_equivalent",
+			"read_only": 1,
+			"allow_on_submit": 1,
+			"module": "Hr Suite",
+		},
+		{
+			"fieldname": "sick_deduction_rows",
+			"label": "Sick Pay Deductions",
+			"fieldtype": "Long Text",
+			"insert_after": "sick_split_note",
+			"hidden": 1,
+			"read_only": 1,
+			"allow_on_submit": 1,
+			"module": "Hr Suite",
+		},
+	]
+}
+
+
+def ensure_leave_application_fields():
+	"""The sick-leave pay split and medical certificate on the stock Leave Application."""
+	try:
+		create_custom_fields(LEAVE_APPLICATION_FIELDS)
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "HR Suite: failed to create Leave Application fields")
+
+
 def ensure_employee_master_fields():
 	"""Complete the Employee master for payroll, leave, statutory filing and Finance.
 
@@ -1159,6 +1233,8 @@ def seed_country_configs():
 		# here: its employees hold live HRMS allocations, so HR flips the engine on
 		# purpose, after importing the opening balances.
 		doc_data["leave_accrual_engine"] = "HR Suite Ledger"
+		# Same rule for the sick-leave split: a new site starts on it, an existing one is switched by HR.
+		doc_data["sick_leave_auto_split"] = 1
 		doc_data["leave_types"] = [
 			dict(lt, **{"doctype": "Country Leave Type Row"}) for lt in leave_types
 		]
