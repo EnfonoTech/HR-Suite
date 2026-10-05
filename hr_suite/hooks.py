@@ -23,6 +23,12 @@ app_include_css = ["/assets/hr_suite/css/hr_suite.css"]
 
 # ─── Scheduled Tasks ───────────────────────────────────────────────────────────
 scheduler_events = {
+	"cron": {
+		# 03:00 on the 1st: accrue the month that has just ended. Catches up any missed month.
+		"0 3 1 * *": [
+			"hr_suite.hr_suite.leave_accrual.run_monthly_accrual",
+		],
+	},
 	"daily": [
 		"hr_suite.hr_suite.salary_override_api.apply_pending_salary_overrides",
 		# ORDER MATTERS between these two. The leave-type sync switches a type to monthly

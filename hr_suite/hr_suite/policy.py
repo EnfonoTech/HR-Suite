@@ -51,6 +51,17 @@ def resolve_annual_band(bands, service_months: int):
 	return chosen
 
 
+LEDGER_ENGINE = "HR Suite Ledger"
+
+
+def _annual_leave_type(cfg) -> str:
+	"""The HRMS Leave Type that carries annual leave: the row that accrues monthly."""
+	for row in cfg.get("leave_types") or []:
+		if cstr(row.get("accrual_frequency")).strip() == "Monthly":
+			return cstr(row.get("frappe_leave_type_name") or row.get("leave_type_name")).strip() or "Annual Leave"
+	return "Annual Leave"
+
+
 def _rows(doc, table, fields):
 	return [{f: row.get(f) for f in fields} for row in (doc.get(table) or [])]
 
@@ -69,6 +80,10 @@ def get_country_policy(country_code: str):
 			cfg, "annual_leave_bands",
 			("label", "service_from_months", "leave_days_per_year", "salary_days_per_year"),
 		),
+		leave_accrual_engine=cfg.leave_accrual_engine or "",
+		leave_ledger_start_date=cfg.leave_ledger_start_date,
+		accrual_proration_basis=cfg.accrual_proration_basis or "Over 30 Days",
+		annual_leave_type=_annual_leave_type(cfg),
 		annual_leave_eligible_after_months=cint(cfg.annual_leave_eligible_after_months),
 		annual_leave_carry_forward_rule=cfg.annual_leave_carry_forward_rule or "",
 		annual_leave_carry_forward_years=cint(cfg.annual_leave_carry_forward_years),

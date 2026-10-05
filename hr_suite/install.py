@@ -33,6 +33,7 @@ def after_install():
 	sync_compliance_controls()
 	sync_workflow_configs()
 	ensure_department_approver_role()
+	ensure_leave_override_role()
 	sync_department_approver_role_assignments()
 	sync_department_approver_company_permissions()
 	sync_dashboard_chart_configs()
@@ -63,6 +64,7 @@ def after_migrate():
 	sync_compliance_controls()
 	sync_workflow_configs()
 	ensure_department_approver_role()
+	ensure_leave_override_role()
 	sync_department_approver_role_assignments()
 	sync_department_approver_company_permissions()
 	sync_dashboard_chart_configs()
@@ -107,6 +109,15 @@ def ensure_department_approver_role():
 			"desk_access": 1,
 		}
 	).insert(ignore_permissions=True)
+
+
+def ensure_leave_override_role():
+	"""The role that may approve annual leave beyond the balance and before eligibility."""
+	if frappe.db.exists("Role", "HR Leave Override"):
+		return
+	frappe.get_doc({"doctype": "Role", "role_name": "HR Leave Override", "desk_access": 1}).insert(
+		ignore_permissions=True
+	)
 
 
 def sync_department_approver_role_assignments():
@@ -1144,6 +1155,10 @@ def seed_country_configs():
 
 		doc_data = dict(cfg_data)
 		doc_data["doctype"] = "Country Config"
+		# A new site starts on the ledger. An EXISTING Country Config is never switched
+		# here: its employees hold live HRMS allocations, so HR flips the engine on
+		# purpose, after importing the opening balances.
+		doc_data["leave_accrual_engine"] = "HR Suite Ledger"
 		doc_data["leave_types"] = [
 			dict(lt, **{"doctype": "Country Leave Type Row"}) for lt in leave_types
 		]

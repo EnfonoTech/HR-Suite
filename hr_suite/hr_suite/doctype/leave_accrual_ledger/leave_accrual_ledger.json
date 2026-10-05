@@ -1,0 +1,184 @@
+{
+ "name": "Leave Accrual Ledger",
+ "module": "Hr Suite",
+ "doctype": "DocType",
+ "autoname": "LAL-.#####",
+ "sort_field": "period_end",
+ "sort_order": "DESC",
+ "title_field": "employee_name",
+ "search_fields": "employee,employee_name,source",
+ "track_changes": 1,
+ "field_order": [
+  "employee",
+  "employee_name",
+  "company",
+  "country",
+  "column_break_1",
+  "source",
+  "period_end",
+  "period_start",
+  "amounts_section",
+  "days_worked",
+  "leave_days",
+  "column_break_2",
+  "salary_days",
+  "reference_section",
+  "reference_doctype",
+  "reference_name",
+  "leave_allocation",
+  "column_break_3",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "fetch_from": "employee.employee_name",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "fetch_from": "employee.company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Data",
+   "label": "Country",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "label": "Source",
+   "options": "Accrual\nOpening\nAdjustment\nSettlement",
+   "default": "Adjustment",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Accrual is written by the monthly job. Opening is the one-time go-live balance. Adjustment is HR's manual correction. Settlement is written by a Leave Salary Settlement."
+  },
+  {
+   "fieldname": "period_end",
+   "fieldtype": "Date",
+   "label": "Period End / As Of",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Accrual: the last day of the month earned. Opening: the go-live date, ideally a month end. Accrual resumes the month after."
+  },
+  {
+   "fieldname": "period_start",
+   "fieldtype": "Date",
+   "label": "Period Start",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amounts_section",
+   "fieldtype": "Section Break",
+   "label": "Days"
+  },
+  {
+   "fieldname": "days_worked",
+   "fieldtype": "Float",
+   "label": "Days Worked (of 30)",
+   "precision": "2",
+   "read_only": 1,
+   "description": "Accrual rows only: the days that earned leave this month, after proration."
+  },
+  {
+   "fieldname": "leave_days",
+   "fieldtype": "Float",
+   "label": "Leave Days",
+   "precision": "2",
+   "in_list_view": 1,
+   "description": "Added to the employee's annual-leave balance. Negative to take days off."
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "salary_days",
+   "fieldtype": "Float",
+   "label": "Leave-Salary Days",
+   "precision": "2",
+   "in_list_view": 1,
+   "description": "Added to the employee's earned leave-salary balance. Equal to leave days unless the policy or an override says otherwise."
+  },
+  {
+   "fieldname": "reference_section",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference Type",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference",
+   "options": "reference_doctype"
+  },
+  {
+   "fieldname": "leave_allocation",
+   "fieldtype": "Link",
+   "label": "HRMS Leave Allocation",
+   "options": "Leave Allocation",
+   "read_only": 1,
+   "description": "The allocation this row topped up."
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "export": 1,
+   "report": 1,
+   "import": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "report": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1
+  }
+ ],
+ "modified": "2026-10-05 12:00:00.000000"
+}

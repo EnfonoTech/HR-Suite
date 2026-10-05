@@ -522,7 +522,13 @@ def on_leave_application_validate(doc, method=None):
     Validate leave against country-specific rules from Country Config.
     Warns on mismatched leave types and sick leave pay thresholds.
     """
+    from hr_suite.hr_suite.leave_accrual import check_annual_leave_rules
     from hr_suite.hr_suite.utils import get_employee_work_country, get_country_config, get_sick_leave_pay
+
+    # Annual leave on the ledger engine: balance and waiting-period rules. Runs first so a
+    # refusal is not buried under the advisory warnings below.
+    check_annual_leave_rules(doc)
+
     employee = doc.employee
     country = get_employee_work_country(employee)
     cfg = get_country_config(country)
