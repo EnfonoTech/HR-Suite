@@ -61,6 +61,7 @@ _PAY_LINE_FIELDS = {
 class AnnualLeaveDisbursement(Document):
 
 	def validate(self):
+		self._refuse_on_ledger_engine()
 		self._pull_from_leave_application()
 		self._validate_leave_may_be_advanced()
 		self._validate_leave_period()
@@ -96,6 +97,24 @@ class AnnualLeaveDisbursement(Document):
 		self._cancel_leave_salary_journal_entry()
 		self.status = "Cancelled"
 		self.db_set("status", self.status, update_modified=False)
+
+	def _refuse_on_ledger_engine(self):
+		"""A NEW disbursement is not raised for a country on the Leave Accrual Ledger.
+
+		That engine settles leave salary with a Leave Salary Settlement on the last working day.
+		This document stays for existing records, and for countries still on the HRMS accrual.
+		"""
+		if not self.is_new() or not self.employee:
+			return
+		from hr_suite.hr_suite.policy import LEDGER_ENGINE, get_policy
+
+		policy = get_policy(self.employee, on_date=self.leave_from_date)
+		if policy.get("has_policy") and policy.leave_accrual_engine == LEDGER_ENGINE:
+			frappe.throw(
+				_("{0}'s country settles leave salary with a Leave Salary Settlement, not an Annual Leave "
+				  "Disbursement. Create it from the Leave Application.").format(self.employee_name or self.employee),
+				title=_("Use Leave Salary Settlement"),
+			)
 
 	# ── Leave period ──────────────────────────────────────────────────────────
 

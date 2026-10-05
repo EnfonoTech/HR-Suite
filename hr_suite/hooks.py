@@ -213,6 +213,7 @@ doctype_js = {
 	"Payroll Entry": "public/js/wps_payroll.js",
 	"Appraisal": "public/js/appraisal.js",
 	"Payroll Preview": "public/js/payroll_preview.js",
+	"Leave Application": "public/js/leave_application.js",
 }
 
 # ─── Jinja ──────────────────────────────────────────────────────────────────────
@@ -266,6 +267,7 @@ payment_advice_reference_doctypes = {
 		"Annual Leave Disbursement",
 		"Salary Settlement",
 		"End of Service Benefit",
+		"Leave Salary Settlement",
 	],
 }
 
@@ -273,6 +275,7 @@ payment_advice_reference_amount_fields = {
 	"Annual Leave Disbursement": ["total_leave_pay"],
 	"Salary Settlement": ["net_payable"],
 	"End of Service Benefit": ["net_eosb"],
+	"Leave Salary Settlement": ["total_payable"],
 }
 
 payment_advice_party_account = [

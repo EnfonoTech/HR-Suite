@@ -220,6 +220,13 @@ SOURCE_DOCUMENTS = {
 	"End of Service Benefit": {
 		"lines": (("net_eosb", "End of service benefit"),),
 	},
+	"Leave Salary Settlement": {
+		# One line: the settlement already nets off anything an Annual Leave Disbursement
+		# paid and adds the worked-days salary, the leave salary and the ticket.
+		"lines": (("total_payable", "Leave salary settlement"),),
+		"link_field": "payment_advice",
+		"link_type_field": "payment_advice_type",
+	},
 }
 
 

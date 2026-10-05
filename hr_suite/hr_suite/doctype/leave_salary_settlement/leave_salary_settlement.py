@@ -1,0 +1,563 @@
+# Copyright (c) 2026, Enfono and contributors
+# For license information, please see license.txt
+
+"""Leave Salary Settlement: pay an employee going on annual leave, on their last working day.
+
+Built from the approved Leave Application. It prices, from the country policy and the
+employee's ledger, everything owed on that day:
+
+  * the salary for the days worked this month (when the policy says the settlement pays
+    them), 1st of the month to the last working day, over a 30-day month;
+  * the leave salary for the earned leave-salary days - sum of the policy's salary
+    components / 30 x days - but only once BOTH minimums are met (earned salary days and
+    service from joining). Below the barrier the shortfall is shown and no leave salary
+    is paid; only a user with the HR Leave Override role can pay below it, with a reason;
+  * the air ticket where one is due, less anything an Annual Leave Disbursement already paid.
+
+Only EARNED salary days are paid. A partial payout is allowed and the balance still due
+stays on the document, released by a further settlement once more days are earned.
+
+Month-end payroll must not pay the same days again, so the leave days (and, when this
+settlement pays them, the worked days) are kept out of payroll with Additional Salary
+deductions (hr_suite.leave_payroll). HR does no accounting here: the settlement goes to
+a Payment Advice for approval, and Finance books and pays from that.
+
+Nothing here builds SQL from strings. Every f-string or .format() produces display text.
+"""
+
+import frappe
+from frappe import _
+from frappe.model.document import Document
+from frappe.utils import add_days, cint, date_diff, flt, get_first_day, getdate
+
+from hr_suite.hr_suite import leave_payroll as payroll
+from hr_suite.hr_suite.leave_accrual import OVERRIDE_ROLE, get_salary_days_balance
+from hr_suite.hr_suite.payment_advice import assert_no_live_advice
+from hr_suite.hr_suite.policy import LEDGER_ENGINE, get_policy
+from hr_suite.hr_suite.utils import (
+	compute_leave_salary,
+	get_employee_salary_components,
+	split_days_by_month,
+)
+
+MONEY = 3
+STANDARD_MONTH = 30.0
+
+
+# ── pure pricing ──────────────────────────────────────────────────────────────
+
+
+def price_settlement(
+	*,
+	leave_days,
+	paid_days_before,
+	earned_balance,
+	min_earned,
+	service_days,
+	min_service,
+	below_barrier_allowed,
+	monthly_gross,
+	days_worked,
+	pays_worked_days,
+	is_first,
+	leave_monthly,
+	days_per_month,
+	ticket_due,
+	ticket_amount,
+	previously_paid,
+):
+	"""Everything a settlement pays, from plain numbers. Pure.
+
+	Only the first settlement of a leave pays the worked days and the ticket; a later one
+	releases salary days earned since.
+	"""
+	due = max(flt(leave_days) - flt(paid_days_before), 0.0)
+	eligible = flt(earned_balance) >= flt(min_earned) and cint(service_days) >= cint(min_service)
+
+	shortfall = []
+	if flt(earned_balance) < flt(min_earned):
+		shortfall.append(_("earned salary days {0} of the {1} needed").format(flt(earned_balance, 2), flt(min_earned, 2)))
+	if cint(service_days) < cint(min_service):
+		shortfall.append(_("service {0} of the {1} days needed").format(cint(service_days), cint(min_service)))
+
+	can_pay = eligible or below_barrier_allowed
+	paid_days = min(due, max(flt(earned_balance), 0.0)) if can_pay else 0.0
+
+	worked_pay = (
+		flt(flt(monthly_gross) * min(flt(days_worked), STANDARD_MONTH) / STANDARD_MONTH, MONEY)
+		if (pays_worked_days and is_first)
+		else 0.0
+	)
+	# monthly / days-per-month x days, never a rounded daily rate x days: 4,000 over 30 days for
+	# 30 days must come to 4,000.000, not 3,999.999.
+	leave_salary = flt(flt(leave_monthly) / (flt(days_per_month) or STANDARD_MONTH) * paid_days, MONEY)
+	ticket = flt(ticket_amount, MONEY) if (ticket_due and is_first) else 0.0
+	already = flt(previously_paid, MONEY) if is_first else 0.0
+
+	return frappe._dict(
+		due=flt(due, 2),
+		eligible=int(eligible),
+		shortfall=", ".join(shortfall),
+		paid_days=flt(paid_days, 2),
+		unpaid_days=flt(due - paid_days, 2),
+		worked_pay=worked_pay,
+		leave_salary=leave_salary,
+		ticket=ticket,
+		previously_paid=already,
+		total=flt(max(worked_pay + leave_salary + ticket - already, 0.0), MONEY),
+	)
+
+
+# ── the document ──────────────────────────────────────────────────────────────
+
+
+class LeaveSalarySettlement(Document):
+	def validate(self):
+		self._pull_leave_application()
+		self._require_ledger_engine()
+		self._guard_one_open_draft()
+		self._price()
+
+	def before_submit(self):
+		if flt(self.total_payable) <= 0 and flt(self.salary_days_due) <= 0:
+			frappe.throw(
+				_("Nothing to settle: no leave days are left unpaid on this leave, and no salary or ticket is due."),
+				title=_("Nothing To Settle"),
+			)
+
+	def on_submit(self):
+		self.status = "Approved"
+		self.db_set("status", "Approved")
+		self._post_ledger_row()
+		if self._is_first(exclude_self=True):
+			self._sync_exclusions()
+
+	def before_cancel(self):
+		assert_no_live_advice(self)
+
+	def on_cancel(self):
+		payroll.cancel_deductions(_rejoin_record(self).get("deductions"))
+		payroll.cancel_deductions([row["name"] for row in payroll.load_json(self.exclusion_rows)])
+		self._reverse_ledger_rows()
+		self.status = "Cancelled"
+		self.db_set({"status": "Cancelled", "exclusion_rows": "", "rejoin_rows": ""}, update_modified=False)
+
+	# ── inputs ────────────────────────────────────────────────────────────────
+
+	def _pull_leave_application(self):
+		application = frappe.db.get_value(
+			"Leave Application",
+			self.leave_application,
+			["employee", "leave_type", "from_date", "to_date", "total_leave_days", "docstatus", "status"],
+			as_dict=True,
+		)
+		if not application:
+			frappe.throw(_("Leave Application {0} was not found.").format(self.leave_application))
+		if application.employee != self.employee:
+			frappe.throw(
+				_("Leave Application {0} belongs to {1}, not to {2}.").format(
+					self.leave_application, application.employee, self.employee
+				),
+				title=_("Wrong Employee"),
+			)
+		if application.docstatus != 1 or application.status != "Approved":
+			frappe.throw(_("Leave Application {0} is not approved.").format(self.leave_application), title=_("Not Approved"))
+
+		self.leave_type = application.leave_type
+		self.leave_from_date = application.from_date
+		self.leave_to_date = application.to_date
+		self.leave_days = flt(application.total_leave_days)
+		if not self.last_working_day:
+			self.last_working_day = add_days(application.from_date, -1)
+		if getdate(self.last_working_day) >= getdate(application.from_date):
+			frappe.throw(
+				_("The last working day must be before the leave starts on {0}.").format(application.from_date),
+				title=_("Last Working Day"),
+			)
+
+	def _require_ledger_engine(self):
+		self._policy = get_policy(self.employee, on_date=self.last_working_day)
+		if not self._policy.get("has_policy") or self._policy.leave_accrual_engine != LEDGER_ENGINE:
+			frappe.throw(
+				_("{0}'s country is not on the HR Suite Ledger accrual engine, so there is no earned leave-salary "
+				  "balance to settle against. Switch it on in Country Config after importing opening balances.").format(
+					self.employee_name or self.employee
+				),
+				title=_("Ledger Engine Required"),
+			)
+		self.country = self._policy.country_code
+
+	def _guard_one_open_draft(self):
+		other = frappe.db.exists(
+			"Leave Salary Settlement",
+			{
+				"leave_application": self.leave_application,
+				"docstatus": 0,
+				"name": ["!=", self.name or ""],
+			},
+		)
+		if other:
+			frappe.throw(
+				_("{0} is already a draft settlement for this leave. Submit or delete it first.").format(other),
+				title=_("Draft Exists"),
+			)
+
+	def _is_first(self, exclude_self=False):
+		"""True while no EARLIER submitted settlement covers this leave application."""
+		filters = {"leave_application": self.leave_application, "docstatus": 1}
+		if exclude_self and self.name:
+			filters["name"] = ["!=", self.name]
+		return not frappe.db.exists("Leave Salary Settlement", filters)
+
+	# ── pricing ───────────────────────────────────────────────────────────────
+
+	def _price(self):
+		policy = self._policy
+		first = self._is_first(exclude_self=True)
+		last_day = getdate(self.last_working_day)
+		joining = frappe.db.get_value("Employee", self.employee, "date_of_joining")
+
+		salary = get_employee_salary_components(self.employee) or {}
+		self.monthly_gross = flt(salary.get("total_salary"), MONEY)
+
+		month_start = max(get_first_day(last_day), getdate(joining)) if joining else get_first_day(last_day)
+		from hr_suite.hr_suite.gratuity import get_unpaid_days
+
+		self.days_worked = flt(
+			max(date_diff(last_day, month_start) + 1 - get_unpaid_days(self.employee, month_start, last_day), 0), 2
+		)
+
+		self.pay_worked_days_in_settlement = cint(policy.pay_worked_days_in_settlement)
+		self.min_earned_days = flt(policy.leave_salary_min_earned_days)
+		self.min_service_days = cint(policy.leave_salary_min_service_days)
+		self.earned_salary_days = get_salary_days_balance(self.employee)
+		self.service_days = date_diff(last_day, getdate(joining)) if joining else 0
+
+		per_month = flt(policy.leave_salary_days_per_month) or STANDARD_MONTH
+		monthly = compute_leave_salary(self.employee, per_month)
+		leave_monthly = flt(monthly["total"], MONEY)
+		self.daily_leave_rate = flt(leave_monthly / per_month, 4)
+		self.policy_basis = monthly["terms"]["basis"]
+
+		self._default_ticket(policy, first)
+
+		below_ok = self._below_barrier_allowed()
+		result = price_settlement(
+			leave_days=self.leave_days,
+			paid_days_before=self._salary_days_paid_before(),
+			earned_balance=self.earned_salary_days,
+			min_earned=self.min_earned_days,
+			service_days=self.service_days,
+			min_service=self.min_service_days,
+			below_barrier_allowed=below_ok,
+			monthly_gross=self.monthly_gross,
+			days_worked=self.days_worked,
+			pays_worked_days=self.pay_worked_days_in_settlement,
+			is_first=first,
+			leave_monthly=leave_monthly,
+			days_per_month=per_month,
+			ticket_due=cint(self.ticket_entitled),
+			ticket_amount=self.ticket_amount,
+			previously_paid=self._previously_paid_by_disbursement(),
+		)
+
+		self.eligible = result.eligible
+		self.shortfall_note = result.shortfall
+		self.salary_days_due = result.due
+		self.salary_days_paid = result.paid_days
+		self.salary_days_unpaid = result.unpaid_days
+		self.worked_days_pay = result.worked_pay
+		self.leave_salary_amount = result.leave_salary
+		self.previously_paid = result.previously_paid
+		self.total_payable = result.total
+
+		self.set("pay_lines", [])
+		if result.worked_pay:
+			self.append("pay_lines", {"line_type": "Worked Days Salary", "amount": result.worked_pay,
+				"description": _("{0} days worked this month of 30").format(flt(self.days_worked, 2))})
+		if result.paid_days:
+			self.append("pay_lines", {"line_type": "Leave Salary", "amount": result.leave_salary,
+				"description": _("{0} earned salary days at {1}").format(result.paid_days, flt(self.daily_leave_rate, 2))})
+		if result.ticket:
+			self.append("pay_lines", {"line_type": "Air Ticket", "amount": result.ticket, "description": _("Annual air ticket")})
+		if result.previously_paid:
+			self.append("pay_lines", {"line_type": "Previously Paid", "amount": -result.previously_paid,
+				"description": _("Already paid by Annual Leave Disbursement")})
+
+	def _below_barrier_allowed(self) -> bool:
+		if not cint(self.pay_below_barrier):
+			return False
+		if OVERRIDE_ROLE not in frappe.get_roles():
+			frappe.throw(
+				_("Only users with the {0} role can pay leave salary below the barrier.").format(OVERRIDE_ROLE),
+				title=_("Not Permitted"),
+			)
+		if not (self.barrier_override_reason or "").strip():
+			frappe.throw(_("Record the reason for paying below the barrier."), title=_("Reason Required"))
+		return True
+
+	def _default_ticket(self, policy, first):
+		"""Air ticket from the employee's override block, on a new document only."""
+		if not self.is_new() or not first:
+			return
+		annual = policy.get("annual") or frappe._dict()
+		if not cint(annual.get("ticket_entitled")):
+			return
+		every = cint(annual.get("ticket_every_months"))
+		if every:
+			previous = frappe.get_all(
+				"Leave Salary Settlement",
+				filters={"employee": self.employee, "docstatus": 1, "ticket_amount": [">", 0]},
+				fields=["leave_from_date"],
+				order_by="leave_from_date desc",
+				limit=1,
+			)
+			if previous and date_diff(self.leave_from_date, previous[0].leave_from_date) < every * 30:
+				return
+		self.ticket_entitled = 1
+		self.ticket_amount = flt(annual.get("ticket_amount"), MONEY)
+
+	def _salary_days_paid_before(self) -> float:
+		rows = frappe.get_all(
+			"Leave Salary Settlement",
+			filters={"leave_application": self.leave_application, "docstatus": 1, "name": ["!=", self.name or ""]},
+			fields=["salary_days_paid"],
+		)
+		return flt(sum(flt(r.salary_days_paid) for r in rows), 2)
+
+	def _previously_paid_by_disbursement(self) -> float:
+		"""Leave pay an Annual Leave Disbursement already handed over for this very leave."""
+		if not frappe.db.exists("DocType", "Annual Leave Disbursement"):
+			return 0.0
+		rows = frappe.get_all(
+			"Annual Leave Disbursement",
+			filters={"leave_application": self.leave_application, "docstatus": 1, "status": ["!=", "Cancelled"]},
+			fields=["total_leave_pay"],
+		)
+		return flt(sum(flt(r.total_leave_pay) for r in rows), MONEY)
+
+	# ── ledger ────────────────────────────────────────────────────────────────
+
+	def _post_ledger_row(self):
+		if not flt(self.salary_days_paid):
+			return
+		self._ledger(-flt(self.salary_days_paid), _("Leave salary settled for leave {0}").format(self.leave_application))
+
+	def _ledger(self, salary_days, remarks, on_date=None):
+		row = frappe.get_doc(
+			{
+				"doctype": "Leave Accrual Ledger",
+				"employee": self.employee,
+				"source": "Settlement",
+				"period_end": on_date or self.last_working_day,
+				"salary_days": flt(salary_days, 2),
+				"reference_doctype": self.doctype,
+				"reference_name": self.name,
+				"remarks": remarks,
+			}
+		)
+		row.flags.skip_hrms_sync = True
+		row.insert(ignore_permissions=True)
+		return row.name
+
+	def _reverse_ledger_rows(self):
+		rows = frappe.get_all(
+			"Leave Accrual Ledger",
+			filters={"reference_doctype": self.doctype, "reference_name": self.name, "source": "Settlement"},
+			fields=["salary_days"],
+		)
+		net = flt(sum(flt(r.salary_days) for r in rows), 2)
+		if net:
+			self._ledger(-net, _("Reversal: {0} cancelled").format(self.name))
+
+	# ── payroll ───────────────────────────────────────────────────────────────
+
+	def _desired_exclusions(self, leave_end):
+		"""{month_start: (payroll_date, amount)} payroll must NOT pay, given the leave runs to leave_end."""
+		policy = get_policy(self.employee, on_date=self.last_working_day)
+		per_month = flt(policy.leave_salary_days_per_month) or 30.0
+		gross = flt(self.monthly_gross)
+		leave_from = getdate(self.leave_from_date)
+
+		entries = {}
+		if getdate(leave_end) >= leave_from:
+			chunks = split_days_by_month(leave_from, leave_end)
+			for month_start, amount in payroll.month_amounts(gross, per_month, chunks).items():
+				entries[month_start] = [max(getdate(month_start), leave_from), amount]
+
+		if flt(self.worked_days_pay) > 0:
+			month = get_first_day(getdate(self.last_working_day))
+			current = entries.get(month, [getdate(self.last_working_day), 0.0])
+			entries[month] = [getdate(self.last_working_day), min(gross, flt(current[1] + flt(self.worked_days_pay), MONEY))]
+		return entries
+
+	def _sync_exclusions(self, leave_end=None):
+		"""Make the booked payroll deductions match what payroll should skip. Idempotent."""
+		desired = self._desired_exclusions(leave_end or self.leave_to_date)
+		existing = {row["month"]: row for row in payroll.load_json(self.exclusion_rows)}
+		component, currency = payroll.prepare_component(
+			self.employee, self.company, self._expense_account()
+		)
+
+		kept = []
+		for month, row in existing.items():
+			want = desired.get(getdate(month))
+			if want and abs(flt(want[1]) - flt(row["amount"])) < 0.0005:
+				kept.append(row)
+				desired.pop(getdate(month))
+			else:
+				payroll.cancel_deductions([row["name"]])
+
+		for month_start, (payroll_date, amount) in sorted(desired.items()):
+			name = payroll.book_deduction(self, component, currency, payroll_date, amount)
+			if name:
+				kept.append({"name": name, "month": str(month_start), "amount": flt(amount, MONEY)})
+
+		self.db_set("exclusion_rows", payroll.dump_json(kept), update_modified=False)
+
+	def _expense_account(self) -> str:
+		from hr_suite.hr_suite.doctype.annual_leave_disbursement.annual_leave_disbursement import (
+			resolve_leave_salary_accounts,
+		)
+
+		return resolve_leave_salary_accounts(self.company)[0]
+
+
+# ── record the return from leave ──────────────────────────────────────────────
+
+
+@frappe.whitelist()
+def record_rejoin(name, rejoin_date):
+	"""Record the day the employee came back, and adjust for an early or late return.
+
+	Early: the unused leave-salary days are recovered at payroll and handed back to the
+	earned balance, and the days after the rejoin date are no longer kept out of payroll.
+	Late: the extra days are covered from the leave balance if there is one (HR records
+	the extension as a Leave Application, which payroll then pays as leave) and are
+	otherwise unpaid, deducted at payroll. Safe to run again with a corrected date.
+	"""
+	frappe.has_permission("Leave Salary Settlement", "write", doc=name, throw=True)
+	doc = frappe.get_doc("Leave Salary Settlement", name)
+	if doc.docstatus != 1:
+		frappe.throw(_("Submit the settlement before recording the return."), title=_("Not Submitted"))
+
+	first = frappe.get_all(
+		"Leave Salary Settlement",
+		filters={"leave_application": doc.leave_application, "docstatus": 1},
+		fields=["name", "salary_days_paid"],
+		order_by="creation asc",
+	)
+	if first and first[0].name != doc.name:
+		frappe.throw(
+			_("Record the return on the first settlement for this leave, {0}: it holds the payroll adjustments.").format(first[0].name),
+			title=_("Wrong Settlement"),
+		)
+	paid_total = flt(sum(flt(r.salary_days_paid) for r in first), 2)
+
+	rejoin = getdate(rejoin_date)
+	if rejoin <= getdate(doc.last_working_day):
+		frappe.throw(_("The rejoin date must be after the last working day."), title=_("Invalid Date"))
+
+	_undo_rejoin(doc)
+
+	leave_from, leave_to = getdate(doc.leave_from_date), getdate(doc.leave_to_date)
+	values = {
+		"rejoin_date": rejoin,
+		"actual_leave_days": 0,
+		"unused_days": 0,
+		"recovery_amount": 0,
+		"extra_days": 0,
+		"extension_days_covered": 0,
+		"extra_days_unpaid": 0,
+		"rejoin_note": "",
+	}
+	booked, notes = [], []
+	policy = get_policy(doc.employee, on_date=doc.last_working_day)
+	per_month = flt(policy.leave_salary_days_per_month) or 30.0
+	component, currency = payroll.prepare_component(doc.employee, doc.company, doc._expense_account())
+
+	if rejoin <= leave_to:
+		unused = date_diff(leave_to, rejoin) + 1
+		taken = max(date_diff(rejoin, leave_from), 0)
+		values["actual_leave_days"] = flt(taken, 2)
+		values["unused_days"] = flt(unused, 2)
+		doc._sync_exclusions(leave_end=add_days(rejoin, -1))
+
+		unused_paid = min(flt(unused), paid_total)
+		recovery = flt(unused_paid * flt(doc.daily_leave_rate), MONEY)
+		if recovery > 0:
+			name_ = payroll.book_deduction(doc, component, currency, rejoin, recovery)
+			booked.append(name_)
+			values["recovery_amount"] = recovery
+			notes.append(_("Returned {0} day(s) early: {1} of leave salary recovered at payroll and {2} salary day(s) restored to the balance.").format(unused, recovery, flt(unused_paid, 2)))
+			values["_restored"] = flt(unused_paid, 2)
+		else:
+			notes.append(_("Returned {0} day(s) early; no leave salary had been paid for them.").format(unused))
+		notes.append(_("Shorten or cancel-and-amend the Leave Application so the unused leave days return to the balance."))
+	else:
+		values["actual_leave_days"] = flt(doc.leave_days, 2)
+		doc._sync_exclusions(leave_end=leave_to)
+		extra = date_diff(rejoin, leave_to) - 1
+		if extra > 0:
+			from hrms.hr.doctype.leave_application.leave_application import get_leave_balance_on
+
+			balance = max(flt(get_leave_balance_on(doc.employee, doc.leave_type, leave_to)), 0.0)
+			covered = min(flt(extra), balance)
+			unpaid = flt(extra) - covered
+			values.update(extra_days=flt(extra, 2), extension_days_covered=flt(covered, 2), extra_days_unpaid=flt(unpaid, 2))
+			if covered:
+				notes.append(_("{0} extra day(s) fall inside the leave balance: record an extension Leave Application so payroll pays them as leave.").format(covered))
+			if unpaid:
+				start = add_days(leave_to, int(covered) + 1)
+				chunks = split_days_by_month(start, add_days(rejoin, -1))
+				amounts = payroll.month_amounts(flt(doc.monthly_gross), per_month, chunks)
+				for month_start, amount in amounts.items():
+					booked.append(payroll.book_deduction(doc, component, currency, max(getdate(month_start), getdate(start)), amount))
+				notes.append(_("{0} extra day(s) are beyond the balance and unpaid: deducted at payroll.").format(unpaid))
+
+	restored = values.pop("_restored", 0)
+	rows = {"deductions": [b for b in booked if b], "restored": restored}
+	if restored:
+		doc._ledger(restored, _("Returned early: {0} salary day(s) restored").format(restored), on_date=rejoin)
+	values["rejoin_note"] = "\n".join(notes)
+	doc.db_set(values, update_modified=False)
+	doc.db_set("rejoin_rows", payroll.dump_json(rows), update_modified=False)
+	return values
+
+
+def _undo_rejoin(doc):
+	"""Reverse a previous rejoin record so a corrected date starts from a clean slate."""
+	rows = _rejoin_record(doc)
+	if not rows.get("deductions") and not flt(rows.get("restored")):
+		return
+	payroll.cancel_deductions(rows.get("deductions"))
+	if flt(rows.get("restored")):
+		doc._ledger(-flt(rows["restored"]), _("Rejoin corrected: restored days withdrawn"), on_date=doc.rejoin_date)
+	doc.db_set("rejoin_rows", "", update_modified=False)
+
+
+def _rejoin_record(doc) -> dict:
+	"""What the last rejoin booked: {"deductions": [names], "restored": salary days}."""
+	record = payroll.load_json(doc.rejoin_rows)
+	return record if isinstance(record, dict) else {"deductions": record or [], "restored": 0}
+
+
+# ── helpers for the Leave Application button ──────────────────────────────────
+
+
+@frappe.whitelist()
+def make_from_leave_application(leave_application):
+	"""A new, unsaved settlement for an approved Leave Application (the form's starting values)."""
+	frappe.has_permission("Leave Application", "read", doc=leave_application, throw=True)
+	frappe.has_permission("Leave Salary Settlement", "create", throw=True)
+	la = frappe.db.get_value(
+		"Leave Application", leave_application, ["employee", "employee_name", "company", "from_date"], as_dict=True
+	)
+	return {
+		"doctype": "Leave Salary Settlement",
+		"employee": la.employee,
+		"employee_name": la.employee_name,
+		"company": la.company,
+		"leave_application": leave_application,
+		"last_working_day": add_days(la.from_date, -1),
+	}
