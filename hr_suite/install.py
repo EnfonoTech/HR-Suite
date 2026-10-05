@@ -458,6 +458,8 @@ def create_default_settings():
 		"sick_leave_partial_pay_days": 60,
 		"sick_leave_partial_pay_percentage": 75,
 		"iqama_expiry_alert_days": 90,
+		# A new site routes Expense Claims through the payment advice; an existing one is switched on purpose.
+		"route_expense_claims_via_advice": 1,
 	})
 	try:
 		settings.insert(ignore_permissions=True)

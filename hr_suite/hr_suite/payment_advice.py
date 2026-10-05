@@ -40,6 +40,16 @@ REFERENCE_DOCTYPE = "HR Payment Advice Reference"
 # Disbursement keeps it on `status`.
 PAID_STATUS_FIELDS = ("payment_status", "status")
 
+# What kind of payment each source document is, for the Payment Type on the advice.
+PAYMENT_TYPE_BY_SOURCE = {
+	"Expense Claim": "Expense Claim",
+	"Annual Leave Disbursement": "Leave Salary",
+	"Leave Salary Settlement": "Leave Salary",
+	"Leave Encashment": "Leave Encashment",
+	"End of Service Benefit": "Gratuity",
+	"Gratuity": "Gratuity",
+}
+
 
 def payment_advice_needs_approval() -> bool:
 	"""True when an active approval workflow covers HR Payment Advice.
@@ -167,6 +177,19 @@ def create_payment_advice_for(doc, lines=None, description: str | None = None):
 	# and roll the HR document back with it.
 	advice.insert(ignore_permissions=True)
 
+	from hr_suite.hr_suite.payment_advice_flow import approvals_configured
+
+	if approvals_configured(advice.company):
+		# HR reviews the lines and sanctions the amounts, then sends it for approval.
+		frappe.msgprint(
+			_("Payment Advice <b>{0}</b> was raised for {1}. Review and sanction the amounts, then send it for approval.").format(
+				advice.name, advice.employee_name or employee
+			),
+			title=_("Payment Advice raised"),
+			indicator="blue",
+		)
+		return advice
+
 	needs_approval = payment_advice_needs_approval()
 	if needs_approval:
 		# Submitting under an approval workflow is refused, and the refusal would
@@ -220,6 +243,8 @@ SOURCE_DOCUMENTS = {
 	"End of Service Benefit": {
 		"lines": (("net_eosb", "End of service benefit"),),
 	},
+	"Leave Encashment": {"lines": (("encashment_amount", "Leave encashment"),)},
+	"Gratuity": {"lines": (("amount", "Gratuity"),)},
 	"Leave Salary Settlement": {
 		# One line: the settlement already nets off anything an Annual Leave Disbursement
 		# paid and adds the worked-days salary, the leave salary and the ticket.
@@ -585,6 +610,11 @@ def _normalise_lines(doc, lines, description) -> list:
 				"reference_name": line.get("reference_name") or doc.name,
 				"description": cstr(line.get("description") or description or ""),
 				"amount": amount,
+				# Optional: a source that already knows what it sanctions (an Expense Claim's
+				# approver) says so; otherwise the advice sanctions what was claimed.
+				"sanctioned_amount": (
+					min(flt(line["sanctioned_amount"]), amount) if line.get("sanctioned_amount") is not None else None
+				),
 			}
 		)
 
@@ -625,21 +655,7 @@ def mark_paid(advice: str, payment_reference: str = None, payment_date: str = No
 			title=_("Payment Reference Missing"),
 		)
 
-	values = {
-		"status": "Paid",
-		"payment_reference": payment_reference,
-		"payment_date": getdate(payment_date) if payment_date else getdate(nowdate()),
-		"amount_paid": flt(advice_doc.total_amount),
-		"paid_by": frappe.session.user,
-	}
-	if bank_account:
-		values["bank_account"] = bank_account
-
-	# Every one of these fields carries allow_on_submit in the DocType JSON. Without
-	# it this line is an UpdateAfterSubmitError.
-	advice_doc.db_set(values)
-
-	updated = _write_back_payment_status(advice_doc)
+	updated = _record_payment(advice_doc, payment_reference, payment_date, bank_account)
 
 	frappe.msgprint(
 		_("Payment Advice {0} marked paid. {1} document(s) updated.").format(advice_doc.name, len(updated)),
@@ -653,6 +669,25 @@ def mark_paid(advice: str, payment_reference: str = None, payment_date: str = No
 		"already_paid": False,
 		"updated": updated,
 	}
+
+
+def _record_payment(advice_doc, payment_reference, payment_date=None, bank_account=None) -> list:
+	"""Stamp an advice Paid and tell every document on it. Shared by Mark as Paid and by a
+	Payment Entry against an Expense Claim, so both leave exactly the same record."""
+	values = {
+		"status": "Paid",
+		"payment_reference": cstr(payment_reference).strip(),
+		"payment_date": getdate(payment_date) if payment_date else getdate(nowdate()),
+		"amount_paid": flt(advice_doc.total_amount),
+		"paid_by": frappe.session.user,
+	}
+	if bank_account:
+		values["bank_account"] = bank_account
+
+	# Every one of these fields carries allow_on_submit in the DocType JSON. Without
+	# it this line is an UpdateAfterSubmitError.
+	advice_doc.db_set(values)
+	return _write_back_payment_status(advice_doc)
 
 
 def _write_back_payment_status(advice) -> list:

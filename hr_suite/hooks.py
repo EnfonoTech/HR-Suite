@@ -155,8 +155,21 @@ doc_events = {
 	# stamps the advice with db_set(update_modified=False), which fires no document event at
 	# all, so an advice hook would never run.
 	"Payment Entry": {
-		"on_submit": "hr_suite.hr_suite.payment_advice.on_employee_payment_entry",
-		"on_cancel": "hr_suite.hr_suite.payment_advice.on_employee_payment_entry",
+		"validate": "hr_suite.hr_suite.payment_advice_flow.guard_expense_claim_payment",
+		"on_submit": [
+			"hr_suite.hr_suite.payment_advice.on_employee_payment_entry",
+			"hr_suite.hr_suite.payment_advice_flow.on_expense_claim_payment",
+		],
+		"on_cancel": [
+			"hr_suite.hr_suite.payment_advice.on_employee_payment_entry",
+			"hr_suite.hr_suite.payment_advice_flow.on_expense_claim_payment",
+		],
+	},
+	# With routing switched on in Hr Suite Settings, a submitted claim raises an HR Payment Advice and
+	# cannot be paid until HR approves it. Cancelling the claim withdraws an unpaid advice.
+	"Expense Claim": {
+		"on_submit": "hr_suite.hr_suite.payment_advice_flow.route_expense_claim",
+		"on_cancel": "hr_suite.hr_suite.payment_advice_flow.withdraw_expense_claim_advice",
 	},
 	"Journal Entry": {
 		# A leave disbursement or a settlement books its payroll recovery at the same

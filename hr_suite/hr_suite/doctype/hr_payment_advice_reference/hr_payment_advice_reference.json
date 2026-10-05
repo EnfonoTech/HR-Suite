@@ -10,6 +10,7 @@
   "reference_name",
   "description",
   "amount",
+  "sanctioned_amount",
   "reference_status",
   "currency"
  ],
@@ -45,9 +46,17 @@
    "fieldname": "amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Amount",
+   "label": "Claimed Amount",
    "options": "currency",
    "reqd": 1
+  },
+  {
+   "fieldname": "sanctioned_amount",
+   "fieldtype": "Currency",
+   "label": "Sanctioned Amount",
+   "options": "currency",
+   "in_list_view": 1,
+   "description": "What HR approves for payment, never more than claimed. Finance pays the sanctioned total."
   },
   {
    "allow_on_submit": 1,
