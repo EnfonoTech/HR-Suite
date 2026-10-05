@@ -293,135 +293,70 @@ def get_annual_leave_entitlement(employee: str, date: str = None) -> int:
 
 
 def get_eosb_amount(employee: str, termination_reason: str, termination_date: str = None) -> dict:
-	"""
-	Calculate End of Service Benefit (EOSB) per Article 84 of Saudi Labor Law.
+	"""Gratuity for one employee, in the legacy key names (years_of_service, eosb_gross, eosb_net ...).
 
-	Returns dict with:
-		- years_of_service
-		- eosb_gross        (before resignation factor)
-		- resignation_factor
-		- eosb_net          (actual entitlement)
+	Kept for callers written when this was the Saudi-only Article 84 formula; the work is
+	now done by hr_suite.gratuity from the employee's Country Config.
 	"""
-	emp = frappe.get_doc("Employee", employee)
-	details = calculate_eosb_components(
-		emp.date_of_joining,
-		termination_date or getdate(),
-		get_employee_basic_salary(employee),
-		termination_reason,
-	)
+	from hr_suite.hr_suite.gratuity import calculate_for_employee
 
+	result = calculate_for_employee(employee, termination_date or getdate(), termination_reason)
 	return {
-		"years_of_service": details["years_of_service"],
-		"monthly_basic": details["monthly_basic"],
-		"eosb_gross": details["eosb_gross"],
-		"resignation_factor": details["resignation_factor"],
-		"eosb_net": details["net_eosb"],
+		"years_of_service": result.years_of_service,
+		"monthly_basic": result.basic_salary,
+		"eosb_gross": result.gross_entitlement,
+		"resignation_factor": result.factor,
+		"eosb_net": result.net_entitlement,
 	}
 
 
-def _get_resignation_factor(years: float, termination_reason: str) -> float:
+def calculate_eosb_components(
+	joining_date, termination_date, last_basic_salary, termination_reason, eosb_deductions=0,
+	country="SA", unpaid_days=0,
+) -> dict:
+	"""Gratuity from explicit figures, for the form preview and for callers with no Employee.
+
+	`country` selects which Country Config policy applies (Saudi Arabia by default, which is
+	what this function always meant). Returns the End of Service Benefit field names.
 	"""
-	Resignation factor:
-	- Resignation < 2 years  -> 0
-	- Resignation 2-10 years -> 1/3
-	- Resignation > 10 years -> 2/3
-	- Termination by employer / contract end / death -> 1.0
-	- Disciplinary dismissal (Article 80) -> 0
-	"""
-	return get_eosb_factor_and_label(termination_reason, years)[0]
+	from hr_suite.hr_suite.gratuity import THREE_DECIMAL_COUNTRIES, compute_gratuity
+	from hr_suite.hr_suite.policy import get_country_policy
 
-
-def get_eosb_factor_and_label(termination_reason: str, years: float) -> tuple[float, str]:
-	reason = termination_reason or ""
-	if text_matches_tokens(reason, "dismissal", "dismissal"):
-		return 0.0, "Disciplinary Dismissal — No EOSB"
-
-	if text_matches_tokens(reason, "resignation", "resignation"):
-		if years < 2:
-			return 0.0, "Resignation < 2 yrs — No EOSB"
-		return 1.0, "Resignation ≥ 2 yrs — Full EOSB"
-
-	return 1.0, "Full EOSB"
-
-
-def build_eosb_notes(years, monthly_basic, eosb_years_1_5, eosb_years_above_5, eosb_gross, factor, label, net_eosb):
-	return (
-		f"Years of service: {years:.2f} years\n"
-		f"Basic salary: {monthly_basic:,.2f}\n"
-		f"EOSB years 1-5: {eosb_years_1_5:,.2f}\n"
-		f"EOSB years >5: {eosb_years_above_5:,.2f}\n"
-		f"Total EOSB: {eosb_gross:,.2f}\n"
-		f"Resignation factor: {factor} ({label})\n"
-		f"Net EOSB: {net_eosb:,.2f}"
+	code = (country or "SA").upper()
+	policy = get_country_policy(code)
+	if not policy:
+		frappe.throw(
+			_("No Country Config found for {0}; set up the country policy first.").format(code),
+			title=_("Country policy missing"),
+		)
+	result = compute_gratuity(
+		policy,
+		joining_date,
+		termination_date,
+		last_basic_salary,
+		termination_reason,
+		unpaid_days=unpaid_days,
+		deductions=eosb_deductions,
+		precision=3 if code in THREE_DECIMAL_COUNTRIES else 2,
 	)
-
-
-def calculate_eosb_components(joining_date, termination_date, last_basic_salary, termination_reason, eosb_deductions=0) -> dict:
-	joining = getdate(joining_date)
-	termination = getdate(termination_date)
-	if termination <= joining:
-		frappe.throw(
-			_(
-				"Termination date must be after the joining date.<br>"
-				"End of service date must be after the joining date."
-			),
-			title=_("Invalid Date"),
-		)
-
-	monthly_basic = flt(last_basic_salary)
-	if monthly_basic <= 0:
-		frappe.throw(
-			_("Last basic salary must be greater than zero."),
-			title=_("Missing Basic Salary"),
-		)
-
-	deductions = flt(eosb_deductions)
-	if deductions < 0:
-		frappe.throw(
-			_("EOSB deductions cannot be negative."),
-			title=_("Invalid Deduction"),
-		)
-
-	total_days = date_diff(termination, joining)
-	years = total_days / 365.0
-	if years < 1:
-		eosb_years_1_5 = 0.0
-		eosb_years_above_5 = 0.0
-	elif years <= 5:
-		eosb_years_1_5 = round((monthly_basic * 2 / 3) * years, 2)
-		eosb_years_above_5 = 0.0
-	else:
-		eosb_years_1_5 = round((monthly_basic * 2 / 3) * 5, 2)
-		eosb_years_above_5 = round(monthly_basic * (years - 5), 2)
-
-	eosb_gross = round(eosb_years_1_5 + eosb_years_above_5, 2)
-	factor, label = get_eosb_factor_and_label(termination_reason, years)
-	net_eosb = round(eosb_gross * factor - deductions, 2)
-	if net_eosb < 0:
-		frappe.throw(
-			_("EOSB deductions exceed the payable amount."),
-			title=_("Invalid Deduction"),
-		)
-
 	return {
-		"years_of_service": round(years, 2),
-		"monthly_basic": monthly_basic,
-		"eosb_years_1_5": eosb_years_1_5,
-		"eosb_years_above_5": eosb_years_above_5,
-		"eosb_gross": eosb_gross,
-		"resignation_factor": factor,
-		"resignation_factor_label": label,
-		"net_eosb": net_eosb,
-		"calculation_notes": build_eosb_notes(
-			years,
-			monthly_basic,
-			eosb_years_1_5,
-			eosb_years_above_5,
-			eosb_gross,
-			factor,
-			label,
-			net_eosb,
-		),
+		"years_of_service": result.years_of_service,
+		"monthly_basic": result.basic_salary,
+		"eosb_years_1_5": result.eosb_years_1_5,
+		"eosb_years_above_5": result.eosb_years_above_5,
+		"eosb_gross": result.gross_entitlement,
+		"resignation_factor": result.factor,
+		"resignation_factor_label": result.factor_label,
+		"net_eosb": result.net_entitlement,
+		"calculation_notes": result.notes,
+		"calendar_days": result.calendar_days,
+		"unpaid_days": result.unpaid_days,
+		"qualifying_days": result.qualifying_days,
+		"gratuity_base_amount": result.base_amount,
+		"gross_before_cap": result.gross_before_cap,
+		"cap_amount": result.cap_amount,
+		"is_partial_settlement": result.is_partial,
+		"gratuity_breakdown": result.breakdown,
 	}
 
 
@@ -848,87 +783,24 @@ def calculate_settlement(
     eosb_deductions: float = 0,
 ) -> dict:
     """
-    Dispatch to the correct settlement formula based on the employee's work_country.
+    Settlement for one employee: the Country Config slab engine, or the Gratuity Act for India.
     Returns a unified dict with keys: formula, years_of_service, basic_salary,
     gross_entitlement, factor, factor_label, net_entitlement, notes.
     """
     country = get_employee_work_country(employee)
-    emp = frappe.get_doc("Employee", employee)
-    joining = emp.date_of_joining
-    term_date = getdate(termination_date) if termination_date else getdate()
-    basic = get_employee_basic_salary_global(employee)
-    years = date_diff(term_date, getdate(joining)) / 365.0
-
-    if country == "AE":
-        return _calculate_uae_gratuity(employee, years, basic, termination_reason, eosb_deductions)
     if country == "IN":
+        # India is not a slab policy: Payment of Gratuity Act 1972, (15/26) x basic x completed years.
+        emp = frappe.get_doc("Employee", employee)
+        term_date = getdate(termination_date) if termination_date else getdate()
+        years = date_diff(term_date, getdate(emp.date_of_joining)) / 365.0
+        basic = get_employee_basic_salary_global(employee)
         return _calculate_india_gratuity(years, basic, termination_reason, eosb_deductions)
-    if country == "BH":
-        return _calculate_bh_indemnity(years, basic, termination_reason, eosb_deductions)
-    if country == "OM":
-        return _calculate_om_indemnity(years, basic, termination_reason, eosb_deductions)
-    # Default: SA EOSB
-    result = calculate_eosb_components(joining, term_date, basic, termination_reason, eosb_deductions)
-    result["formula"] = "EOSB-SA"
-    result["gross_entitlement"] = result.get("eosb_gross", 0)
-    result["net_entitlement"] = result.get("net_eosb", 0)
-    result["factor_label"] = result.get("resignation_factor_label", "")
-    return result
 
+    from hr_suite.hr_suite.gratuity import calculate_for_employee
 
-def _calculate_uae_gratuity(employee: str, years: float, basic: float, reason: str, deductions: float) -> dict:
-    """
-    UAE Gratuity per Article 51 / 132 of UAE Labour Law 2021.
-    - Years 1–5 : 21 calendar days basic per year
-    - Years 5+  : 30 calendar days basic per year
-    - Capped at 2 years' total wage
-    - Resignation < 1yr: no gratuity. 1–3yrs: 1/3. 3–5yrs: 2/3. 5+yrs: full.
-    """
-    daily = basic / 30.0
-    if years < 1:
-        gross = 0.0
-    elif years <= 5:
-        gross = round(21 * daily * years, 2)
-    else:
-        gross_1_5 = round(21 * daily * 5, 2)
-        gross_above = round(30 * daily * (years - 5), 2)
-        gross = round(gross_1_5 + gross_above, 2)
-
-    # 2-year salary cap
-    annual_salary = basic * 12
-    cap = round(annual_salary * 2, 2)
-    if gross > cap:
-        gross = cap
-
-    # Resignation scaling
-    is_resignation = text_matches_tokens(reason, "resignation")
-    if is_resignation:
-        if years < 1:
-            factor, label = 0.0, "Resignation < 1yr — No Gratuity"
-        elif years < 3:
-            factor, label = 1/3, "Resignation 1–3yrs — 1/3 Gratuity"
-        elif years < 5:
-            factor, label = 2/3, "Resignation 3–5yrs — 2/3 Gratuity"
-        else:
-            factor, label = 1.0, "Resignation 5+yrs — Full Gratuity"
-    else:
-        factor, label = 1.0, "Full Gratuity"
-
-    net = round(max(0, gross * factor - flt(deductions)), 2)
-    return {
-        "formula": "Gratuity-AE",
-        "years_of_service": round(years, 2),
-        "basic_salary": basic,
-        "gross_entitlement": gross,
-        "factor": factor,
-        "factor_label": label,
-        "net_entitlement": net,
-        "notes": (
-            f"UAE Gratuity\nYears: {years:.2f}\nBasic: {basic:,.2f} AED/month\n"
-            f"Daily rate: {daily:.2f}\nGross: {gross:,.2f}\n2yr cap: {cap:,.2f}\n"
-            f"Factor: {factor} ({label})\nNet: {net:,.2f}"
-        ),
-    }
+    return calculate_for_employee(
+        employee, termination_date or getdate(), termination_reason, deductions=eosb_deductions
+    )
 
 
 def _calculate_india_gratuity(years: float, basic: float, reason: str, deductions: float) -> dict:
@@ -967,81 +839,6 @@ def _calculate_india_gratuity(years: float, basic: float, reason: str, deduction
             f"India Gratuity Act\nYears: {years:.2f} ({completed} completed)\n"
             f"Basic: ₹{basic:,.2f}/month\nGross: ₹{gross:,.2f}\n"
             f"Ceiling: ₹20,00,000\n{label}\nNet: ₹{net:,.2f}"
-        ),
-    }
-
-
-def _calculate_bh_indemnity(years: float, basic: float, reason: str, deductions: float) -> dict:
-    """
-    Bahrain Labour Law — Article 116–117.
-    First 3 years: ½ month per year.
-    After 3 years: 1 month per year.
-    """
-    if years <= 0:
-        gross = 0.0
-    elif years <= 3:
-        gross = round((basic / 2) * years, 2)
-    else:
-        gross = round((basic / 2) * 3 + basic * (years - 3), 2)
-
-    is_resignation = text_matches_tokens(reason, "resignation")
-    if is_resignation and years < 1:
-        factor, label = 0.0, "Resignation < 1yr — No Indemnity"
-    elif is_resignation:
-        factor, label = 0.5, "Resignation — 50% Indemnity"
-    else:
-        factor, label = 1.0, "Full Indemnity"
-
-    net = round(max(0, gross * factor - flt(deductions)), 2)
-    return {
-        "formula": "Indemnity-BH",
-        "years_of_service": round(years, 2),
-        "basic_salary": basic,
-        "gross_entitlement": gross,
-        "factor": factor,
-        "factor_label": label,
-        "net_entitlement": net,
-        "notes": (
-            f"Bahrain Indemnity (Art. 116–117)\nYears: {years:.2f}\nBasic: {basic:,.2f} BHD/month\n"
-            f"Gross: {gross:,.2f}\n{label}\nNet: {net:,.2f}"
-        ),
-    }
-
-
-def _calculate_om_indemnity(years: float, basic: float, reason: str, deductions: float) -> dict:
-    """
-    Oman Labour Law — Article 39–40.
-    First 3 years: 15 days basic per year.
-    After 3 years: 1 month basic per year.
-    Expatriates only — Omani nationals covered by PASI.
-    """
-    daily = basic / 30.0
-    if years <= 0:
-        gross = 0.0
-    elif years <= 3:
-        gross = round(15 * daily * years, 2)
-    else:
-        gross_1_3 = round(15 * daily * 3, 2)
-        gross_above = round(basic * (years - 3), 2)
-        gross = round(gross_1_3 + gross_above, 2)
-
-    is_resignation = text_matches_tokens(reason, "resignation")
-    factor, label = (0.5, "Resignation — 50% Indemnity") if is_resignation else (1.0, "Full Indemnity")
-    if is_resignation and years < 1:
-        factor, label = 0.0, "Resignation < 1yr — No Indemnity"
-
-    net = round(max(0, gross * factor - flt(deductions)), 2)
-    return {
-        "formula": "Indemnity-OM",
-        "years_of_service": round(years, 2),
-        "basic_salary": basic,
-        "gross_entitlement": gross,
-        "factor": factor,
-        "factor_label": label,
-        "net_entitlement": net,
-        "notes": (
-            f"Oman Indemnity (Art. 39–40)\nYears: {years:.2f}\nBasic: {basic:,.2f} OMR/month\n"
-            f"Gross: {gross:,.2f}\n{label}\nNet: {net:,.2f}"
         ),
     }
 

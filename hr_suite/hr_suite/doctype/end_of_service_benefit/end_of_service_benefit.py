@@ -25,54 +25,47 @@ class EndofServiceBenefit(Document):
 		from hr_suite.hr_suite.utils import get_employee_work_country
 		country = get_employee_work_country(self.employee)
 
-		# calculate_eosb_components() below is the Saudi EOSB formula only. Employees
-		# in other countries need their own country's formula (Gratuity-AE/IN,
-		# Indemnity-BH/OM) — this used to always run the Saudi formula regardless of
-		# country, silently overwriting whatever a country-aware caller (e.g. the
-		# Employee Separation auto-create flow) had already computed correctly.
-		if country and country != "SA":
-			self._calculate_eosb_non_sa(country, salary_base)
+		if country == "IN":
+			self._calculate_eosb_india(salary_base)
 			return
 
-		details = calculate_eosb_components(
-			self.joining_date,
+		# Every other country is the slab engine, reading the employee's own Country Config.
+		# This used to run the Saudi formula for any country it did not recognise, which is
+		# how Qatar and Kuwait employees silently got a Saudi gratuity.
+		from hr_suite.hr_suite.gratuity import calculate_for_employee
+
+		result = calculate_for_employee(
+			self.employee,
 			self.termination_date,
-			salary_base,
 			self.termination_reason,
-			self.eosb_deductions,
+			deductions=self.eosb_deductions,
+			base_override=salary_base,
 		)
-		self.years_of_service = details["years_of_service"]
-		self.eosb_years_1_5 = details["eosb_years_1_5"]
-		self.eosb_years_above_5 = details["eosb_years_above_5"]
-		self.eosb_gross = details["eosb_gross"]
-		self.resignation_factor = details["resignation_factor"]
-		self.resignation_factor_label = details["resignation_factor_label"]
-		self.net_eosb = details["net_eosb"]
-		self.calculation_notes = details["calculation_notes"]
+		self.years_of_service = result.years_of_service
+		self.eosb_years_1_5 = result.eosb_years_1_5
+		self.eosb_years_above_5 = result.eosb_years_above_5
+		self.eosb_gross = result.gross_entitlement
+		self.resignation_factor = result.factor
+		self.resignation_factor_label = result.factor_label
+		self.net_eosb = result.net_entitlement
+		self.calendar_days = result.calendar_days
+		self.unpaid_days = result.unpaid_days
+		self.qualifying_days = result.qualifying_days
+		self.gratuity_base_amount = result.base_amount
+		self.gross_before_cap = result.gross_before_cap
+		self.cap_amount = result.cap_amount
+		self.is_partial_settlement = result.is_partial
+		self.set("gratuity_breakdown", [])
+		for row in result.breakdown:
+			self.append("gratuity_breakdown", {k: row[k] for k in ("slab", "years_in_slab", "rate", "rate_unit", "amount")})
+		self.calculation_notes = result.notes
 		self._append_wage_basis_note(salary_base)
 
-	def _calculate_eosb_non_sa(self, country, salary_base):
-		from hr_suite.hr_suite.utils import (
-			_calculate_uae_gratuity, _calculate_india_gratuity,
-			_calculate_bh_indemnity, _calculate_om_indemnity,
-		)
+	def _calculate_eosb_india(self, salary_base):
+		from hr_suite.hr_suite.utils import _calculate_india_gratuity
 
 		years = date_diff(getdate(self.termination_date), getdate(self.joining_date)) / 365.0
-		basic = flt(salary_base)
-		reason = self.termination_reason or ""
-		deductions = flt(self.eosb_deductions)
-
-		if country == "AE":
-			result = _calculate_uae_gratuity(self.employee, years, basic, reason, deductions)
-		elif country == "IN":
-			result = _calculate_india_gratuity(years, basic, reason, deductions)
-		elif country == "BH":
-			result = _calculate_bh_indemnity(years, basic, reason, deductions)
-		elif country == "OM":
-			result = _calculate_om_indemnity(years, basic, reason, deductions)
-		else:
-			return
-
+		result = _calculate_india_gratuity(years, flt(salary_base), self.termination_reason or "", flt(self.eosb_deductions))
 		self.years_of_service = round(years, 2)
 		self.eosb_years_1_5 = 0
 		self.eosb_years_above_5 = 0
@@ -103,8 +96,10 @@ class EndofServiceBenefit(Document):
 		self.calculation_notes = f"{self.calculation_notes}\n{review_note}" if self.calculation_notes else review_note
 
 	def on_submit(self):
-		"""Update employee status on approval — always set to 'Left'."""
-		frappe.db.set_value("Employee", self.employee, "status", "Left")
+		"""Mark the employee Left on approval — unless this is a partial settlement, which is
+		gratuity accrued to date paid while the employee stays."""
+		if not self.is_partial_settlement:
+			frappe.db.set_value("Employee", self.employee, "status", "Left")
 
 
 @frappe.whitelist()
@@ -123,24 +118,65 @@ def get_last_salary_components(employee):
 
 @frappe.whitelist()
 def calculate_eosb_preview(joining_date, termination_date, last_basic_salary,
-		termination_reason, eosb_deductions=0, eosb_wage_basis=None, last_total_salary=0):
+		termination_reason, eosb_deductions=0, eosb_wage_basis=None, last_total_salary=0,
+		employee=None, country=None):
 	"""
-	Standalone EOSB calculation for JS preview (mirrors _calculate_eosb logic).
+	Gratuity calculation for the form preview. With an `employee` the figures come from that
+	employee's own country policy, unpaid leave and nationality (the same call validate() makes);
+	without one, from the explicit figures under `country` (Saudi Arabia when blank).
 	Returns a dict with all computed fields.
 	"""
 	salary_base = last_basic_salary
 	if eosb_wage_basis == "Total Contract Wage" and last_total_salary:
 		salary_base = last_total_salary
-	details = calculate_eosb_components(
-		joining_date,
-		termination_date,
-		salary_base,
-		termination_reason,
-		eosb_deductions,
-	)
+
+	if employee:
+		assert_employee_access(employee)
+		from hr_suite.hr_suite.gratuity import calculate_for_employee
+		from hr_suite.hr_suite.utils import get_employee_work_country
+
+		if get_employee_work_country(employee) != "IN":
+			result = calculate_for_employee(
+				employee, termination_date, termination_reason,
+				deductions=eosb_deductions, base_override=salary_base,
+			)
+			details = {
+				"years_of_service": result.years_of_service,
+				"eosb_years_1_5": result.eosb_years_1_5,
+				"eosb_years_above_5": result.eosb_years_above_5,
+				"eosb_gross": result.gross_entitlement,
+				"resignation_factor": result.factor,
+				"resignation_factor_label": result.factor_label,
+				"net_eosb": result.net_entitlement,
+				"calculation_notes": result.notes,
+				"calendar_days": result.calendar_days,
+				"unpaid_days": result.unpaid_days,
+				"qualifying_days": result.qualifying_days,
+				"gratuity_base_amount": result.base_amount,
+				"gross_before_cap": result.gross_before_cap,
+				"cap_amount": result.cap_amount,
+				"is_partial_settlement": result.is_partial,
+				"gratuity_breakdown": result.breakdown,
+			}
+		else:
+			details = _preview_from_figures(joining_date, termination_date, salary_base, termination_reason, eosb_deductions, "SA")
+	else:
+		details = _preview_from_figures(joining_date, termination_date, salary_base, termination_reason, eosb_deductions, country)
+
 	if eosb_wage_basis:
 		details["calculation_notes"] = (
 			f"{details.get('calculation_notes') or ''}\n"
 			f"EOSB wage basis used: {eosb_wage_basis}. Salary base: {salary_base}."
 		)
 	return details
+
+
+def _preview_from_figures(joining_date, termination_date, salary_base, termination_reason, eosb_deductions, country):
+	return calculate_eosb_components(
+		joining_date,
+		termination_date,
+		salary_base,
+		termination_reason,
+		eosb_deductions,
+		country=country or "SA",
+	)

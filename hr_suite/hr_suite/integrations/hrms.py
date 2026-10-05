@@ -795,6 +795,12 @@ def on_employee_separation_submit(doc, method=None):
         )
     except Exception:
         frappe.log_error(frappe.get_traceback(), f"HR Suite: Settlement calc failed for {employee}")
+        frappe.msgprint(
+            _("The end-of-service benefit for {0} could not be calculated, so none was created. "
+              "Create it by hand once the country policy is fixed. Details are in the Error Log.").format(employee),
+            title=_("End of Service Benefit not created"),
+            indicator="orange",
+        )
         return
 
     if not frappe.db.exists("DocType", "End of Service Benefit"):
@@ -825,6 +831,12 @@ def on_employee_separation_submit(doc, method=None):
         )
     except Exception:
         frappe.log_error(frappe.get_traceback(), f"HR Suite: EOSB auto-create failed for {employee}")
+        frappe.msgprint(
+            _("The End of Service Benefit for {0} could not be created. Create it by hand. "
+              "Details are in the Error Log.").format(employee),
+            title=_("End of Service Benefit not created"),
+            indicator="orange",
+        )
 
 
 # End of Service Benefit.termination_reason is a Select field with a fixed set of

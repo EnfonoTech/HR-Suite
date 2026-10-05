@@ -1,0 +1,49 @@
+{
+ "name": "EOSB Breakdown Row",
+ "module": "Hr Suite",
+ "doctype": "DocType",
+ "istable": 1,
+ "editable_grid": 1,
+ "fields": [
+  {
+   "fieldname": "slab",
+   "fieldtype": "Data",
+   "label": "Service (Years)",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "years_in_slab",
+   "fieldtype": "Float",
+   "label": "Years In Slab",
+   "precision": "2",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Float",
+   "label": "Rate",
+   "precision": "3",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "rate_unit",
+   "fieldtype": "Data",
+   "label": "Unit",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Float",
+   "label": "Amount",
+   "precision": "3",
+   "in_list_view": 1,
+   "read_only": 1
+  }
+ ],
+ "permissions": [],
+ "modified": "2026-10-05 12:00:00.000000"
+}

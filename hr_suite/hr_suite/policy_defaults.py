@@ -48,7 +48,7 @@ POLICY_DEFAULTS = {
 			{"from_years": 5, "to_years": 10, "payable_percent": 66.67},
 			{"from_years": 10, "to_years": 0, "payable_percent": 100},
 		],
-		"checks": {"gratuity_nationals_also_entitled": 1},
+		"checks": {"gratuity_nationals_also_entitled": 1, "gratuity_forfeited_on_dismissal": 1},
 	},
 	"BH": {
 		"scalars": {
@@ -117,6 +117,7 @@ POLICY_DEFAULTS = {
 			"sick_leave_days_per_year": 90,
 			"gratuity_base": "Basic Salary",
 			"gratuity_cap_months": 24,
+			"gratuity_min_service_years": 1,
 			"nationals_pension_scheme": "GPSSA",
 			"leave_salary_min_earned_days": 30,
 			"leave_salary_min_service_days": 365,
@@ -144,6 +145,7 @@ POLICY_DEFAULTS = {
 			"sick_leave_days_per_year": 84,
 			"sick_leave_eligible_after_months": 3,
 			"gratuity_base": "Basic Salary",
+			"gratuity_min_service_years": 1,
 			"nationals_pension_scheme": "GRSIA",
 			"leave_salary_min_earned_days": 30,
 			"leave_salary_min_service_days": 365,
@@ -239,7 +241,7 @@ def apply_policy_defaults(country_code: str, config_name: str) -> bool:
 	for field, value in seed.get("scalars", {}).items():
 		current = doc.get(field)
 		if isinstance(value, (int, float)):
-			if not flt(current):
+			if flt(value) and not flt(current):
 				doc.set(field, value)
 				changed = True
 		elif current in (None, ""):
