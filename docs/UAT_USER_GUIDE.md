@@ -51,12 +51,12 @@ bench --site <site> execute hr_suite.hr_suite.leave_accrual.run_accrual --kwargs
 
 **How to test**
 1. Open **Country Config → SA**. Check the sections: *Annual Leave Policy*, *Leave Salary Settlement*, *Sick Leave Policy*, *Gratuity Policy*.
-   - Expect annual bands **21 days from 0 months, 30 days from 60 months**; sick tiers **30 @100%, 60 @75%, 30 @0%** (120 days); gratuity slabs **0–5 yrs ½ month, 5+ yrs 1 month**; resignation factors **0% (<2y), 33.33% (2–5y), 66.67% (5–10y), 100% (10y+)**.
-   - Also open BH, OM, AE, QA, KW and compare with `GCC_LEAVE_GRATUITY_GUIDE.md`.
+    - Expect annual bands **21 days from 0 months, 30 days from 60 months**; sick tiers **30 @100%, 60 @75%, 30 @0%** (120 days); gratuity slabs **0–5 yrs ½ month, 5+ yrs 1 month**; resignation factors **0% (<2y), 33.33% (2–5y), 66.67% (5–10y), 100% (10y+)**.
+    - Also open BH, OM, AE, QA, KW and compare with `GCC_LEAVE_GRATUITY_GUIDE.md`.
 2. **Validation:** on a test copy, try (each must be refused with a clear message):
-   - two bands starting at the same month;
-   - sick tiers that don't add up to *Sick Days / Year*;
-   - overlapping gratuity slabs; a percentage of 150.
+    - two bands starting at the same month;
+    - sick tiers that don't add up to *Sick Days / Year*;
+    - overlapping gratuity slabs; a percentage of 150.
 3. Open an **Employee** → section *Leave & End-of-Service Policy*. The read-only panel must show country, service months, band, leave days/yr, barrier, sick tiers, gratuity.
 4. **Override:** on the Employee, set *Leave Days / Year = 30*, *Leave-Salary Days / Year = 21*. The panel shows "Override: leave days per year, salary days per year" and the monthly rates become **2.5 leave days and 1.75 salary days**.
 
@@ -144,9 +144,9 @@ Salary **4,000/month**, employee with 40 earned salary days and > 1 year service
 1. *Leave Application* (submitted, Approved) → button **Create → Leave Salary Settlement**.
 2. Expect on the draft: Worked-days salary **1,333.33** (10 days), Leave salary **4,000.00**, **Total 5,333.33**, barrier met.
 3. Submit. Expect:
-   - Leave Accrual Ledger: a **Settlement** row **−30 salary days** (balance 40 → 10).
-   - **Additional Salary** rows: **4,000 dated 10 Nov** (worked 1,333.33 + 20 leave days) and **1,333.33 dated 1 Dec** (10 leave days).
-   - Button **Create → Payment Advice** raises the advice for 5,333.33.
+    - Leave Accrual Ledger: a **Settlement** row **−30 salary days** (balance 40 → 10).
+    - **Additional Salary** rows: **4,000 dated 10 Nov** (worked 1,333.33 + 20 leave days) and **1,333.33 dated 1 Dec** (10 leave days).
+    - Button **Create → Payment Advice** raises the advice for 5,333.33.
 4. Set **Pay Worked Days In Settlement = off** in Country Config and repeat with another employee: total **4,000**; deductions **2,666.67** (Nov) and **1,333.33** (Dec).
 
 ### 4.2 Tests
