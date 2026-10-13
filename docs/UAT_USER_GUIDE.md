@@ -135,7 +135,9 @@ Month rules: a full month earns exactly the monthly rate (2.5 or 1.75) whatever 
 - **Leave salary** — (sum of the policy's salary components ÷ 30) × **earned salary days**.
 - **Air ticket** (if the employee has the ticket override and it is due), less anything an old Annual Leave Disbursement already paid.
 
-**Barrier:** leave salary is paid only if **earned salary days ≥ 30** *and* **service ≥ 365 days** (both editable per country). Otherwise the shortfall is shown, no leave salary is paid (worked days still are). Only **HR Leave Override** can tick *Pay Below The Barrier* (with a reason). Only **earned** days are paid; the part not yet earned stays as *Salary Days Still Due* for a later settlement.
+**Minimum service:** leave salary is paid only once the employee has **365 days (12 months) of service from the joining date** — editable per country (*Minimum Service From Joining*). Before that the settlement is **refused with the reason** ("service 334 of the 365 days needed"). Once met, **every day accrued since joining is paid**: the first 12 months' days are not lost. An optional second barrier, *Minimum Earned Leave-Salary Days*, is **0 (off)** by default. Only **HR Leave Override** can tick *Pay Below The Barrier* (with a reason). Only **earned** days are paid; the part not yet earned stays as *Salary Days Still Due* for a later settlement.
+
+**On exit:** create the settlement with **Settlement Type = Final Settlement** and the last working day. It pays the leave days accrued and unused **whatever the service** (Country Config *Pay Accrued Leave On Exit Below Minimum Service*, ticked by default; untick to apply the minimum on exit too). Worked days and gratuity are paid by the Salary Settlement and the gratuity calculation, not here.
 
 **Payroll:** month-end payroll must not pay the same days. Submitting books **Additional Salary deductions** (component *Leave Salary Recovery*), one per month, each capped at one month's pay. HR records no accounting; the settlement goes to a **Payment Advice**.
 
@@ -153,9 +155,11 @@ Salary **4,000/month**, employee with 40 earned salary days and > 1 year service
 | # | Do | Expect |
 |---|---|---|
 | S1 | Example above | As stated. |
-| S2 | Employee with only 20 earned days | Barrier **not met**: leave salary 0, "20 of 30 earned days" shown, total = worked days only, *Salary Days Still Due 30*. Submit still allowed; no salary days spent. |
-| S3 | Same employee, ordinary HR user ticks *Pay Below The Barrier* | Refused (needs HR Leave Override). |
-| S4 | As HR Leave Override, tick it, **leave the reason blank** | Refused; with a reason: pays 20 days, **10 still due**. |
+| S2 | Employee with **11 months'** service (joined 11 May 2025, last working day 10 Apr 2026) | Settlement **refused** at save: "service 334 of the 365 days needed". Nothing is spent from the ledger. |
+| S2b | Employee joined 10 Apr 2025 (exactly 12 months), 21 earned days, salary 6,000, 21 days of leave | Allowed. Leave salary **4,200** (6,000 ÷ 30 × 21). Ledger −21. |
+| S2c | **Final Settlement** for an employee with 6 months' service and **10.5** earned days, salary 6,000 | Allowed: leave salary **2,100**, no worked days. Untick *Pay Accrued Leave On Exit…* and it is refused. |
+| S3 | An employee short of service; ordinary HR user ticks *Pay Below The Barrier* | Refused (needs HR Leave Override). |
+| S4 | As HR Leave Override, tick it, **leave the reason blank** | Refused; with a reason: pays what is earned, the rest stays due. |
 | S5 | After more days are earned (≥ 30) create a second settlement for the same leave | Pays the remaining days; **no worked days, no ticket, no new payroll deductions**. |
 | S6 | Try a second *draft* settlement for the same leave | Refused. |
 | S7 | **Cancel** a submitted settlement | Salary days returned (balance back to 40), Additional Salary rows cancelled. |
@@ -178,7 +182,9 @@ Salary **4,000/month**, employee with 40 earned salary days and > 1 year service
 **How it works.** The employee applies for plain **Sick Leave**. The days are laid along the country's tiers starting from what they already used **in the leave year** (KSA: day 31 is the first at 75%). HRMS still pays the leave in full; payroll takes the unpaid share back with a **Sick Leave Deduction** per month. Sick leave never touches the annual balance.
 
 - **Before eligibility** (Bahrain/Qatar 3 months; UAE after probation): days are unpaid and use no tier. **Past the last tier:** unpaid.
-- Tiers are used **in date order**: submitting or cancelling a leave re-splits the whole year and re-books only what changed.
+- Tiers are used **in date order**: submitting or cancelling a leave re-splits **every sick leave from that date onward** and re-books only what changed. Tiers apply **per day**, so one leave can be part full pay and part 75%.
+- **Window:** Country Config → *Sick Leave Pay Window* sets the span in which sick days count: **Leave Period** (default; calendar year if the company has none), **Calendar Year**, **Rolling 12 Months** (looks back 12 months from each leave) or **Service Year** (joining anniversary).
+- **A month already paid is never edited.** If a recalculation changes the amount for a month whose Salary Slip is submitted, the difference is booked on the **next open payroll date**: an extra *Sick Leave Deduction* if more is unpaid, or a *Sick Leave Adjustment* earning if less. Open months are simply re-booked.
 - **Medical certificate** field: required to submit (HR Leave Override can submit without).
 
 **Tests** (Saudi employee, salary 3,000 → daily 100, sick allocation 120; Holiday List without weekly offs, or use days that skip them)
@@ -193,6 +199,9 @@ Salary **4,000/month**, employee with 40 earned salary days and > 1 year service
 | K7 | Submit with no certificate as an ordinary HR user | Refused; with HR Leave Override allowed. |
 | K8 | Annual leave application | **No** sick table, no deduction. |
 | K9 | Country with the switch **off** | Nothing is split or deducted (existing sick-leave set-up untouched). |
+| K10 | Saudi employee, 100 a day. Submit **20 days** (3–22 Aug), then **10 days** (12–21 Nov, "0010"), then **40 days** (15 Sep–24 Oct, "0008") | 0008: **10 Full + 30 at 75%**, deduction **750**. 0010 first showed **10 Full pay**; after 0008 it shows **10 at 75%** (previous days = 60), deduction **250**. |
+| K11 | Repeat K10 with November's Salary Slip already submitted | 0010's November is untouched; an **extra deduction of 250** appears on the next open payroll date. Cancel 0008: a **Sick Leave Adjustment earning of 250** is booked. |
+| K12 | Set *Sick Leave Pay Window* = Service Year; employee joined 1 Jul 2025; 30 days in May 2026, 11 days in July 2026 | The July leave is **Full pay** (a new service year starts 1 Jul). With the default window it is 75%. |
 
 The legacy **Sick Leave** document: new ones are refused where the split is on; where it is off it now prices from the country's tiers (KSA 40 days at salary 3,000 → **3,750**) and the yearly limit is the country's, not a fixed 120.
 
@@ -240,6 +249,39 @@ Switch **Route Expense Claims Through A Payment Advice** on (Hr Suite Settings).
 | X4 | Cancel the Expense Claim | Its unpaid advice is withdrawn; a **paid** advice blocks the cancel. |
 | X5 | A claim submitted **before** routing was switched on | Not affected. |
 
+## 6A. Annual leave: minimum service, linked leave types, approval, currency
+
+### 6A.1 Annual leave before the minimum service
+Country Config → *Annual Leave Before Minimum Service*:
+- **Allow** (default): leave may be taken; no leave salary is paid until the minimum service is met.
+- **Block:** a Leave Application for annual leave starting before the minimum service is **refused**.
+- **Unpaid:** the application goes through and payroll **deducts those days** (Additional Salary, component *Leave Before Minimum Service Deduction*, one per month).
+
+### 6A.2 "Can Be Taken From Leave" (Leave Policy)
+On a **Leave Policy** row, the column **Can Be Taken From Leave** names the leave type whose balance this type uses. Example: *Emergency Leave* → *Annual Leave*.
+| # | Do | Expect |
+|---|---|---|
+| L1 | Open a Leave Policy | The column is in the grid. |
+| L2 | Policy row: Emergency Leave, 5 days, **Can Be Taken From = Annual Leave**; save | Message that Emergency Leave now allows a negative balance of its own. A type cannot name itself. |
+| L3 | Employee with 7 days of Annual Leave applies for **2 days of Emergency Leave**; approve | **Annual Leave balance 5**; Emergency Leave balance unchanged. |
+| L4 | Apply for more days than Annual Leave holds | Refused ("…is taken from Annual Leave, which has 5 day(s) left"). Annual leave on the ledger engine may go negative only for **HR Leave Override**. |
+| L5 | Cancel the leave | The days return to Annual Leave. |
+
+### 6A.3 Leave approval (Approve / Reject)
+A workflow **Leave Application Approval** is installed on the Leave Application (inactive if the site already runs another active workflow on it — the log says so). States **Open → Approved / Rejected**.
+| # | Do | Expect |
+|---|---|---|
+| W1 | Employee (with a user) applies, naming a **Leave Approver** | Status **Open**. |
+| W2 | The named approver opens it | Buttons **Approve** and **Reject** (also in the Workflow Action list). Another Leave Approver sees none. |
+| W3 | Approve | Submitted, **Approved**, balance reduced. |
+| W4 | Reject another | Submitted, **Rejected**, balance **unchanged**. |
+| W5 | The employee (even with HR Manager) opens their own leave | **No** approve / reject buttons: nobody approves their own leave. |
+| W6 | If buttons are missing on a site | Run `bench --site SITE execute hr_suite.hr_suite.leave_workflow.diagnose --kwargs "{'application': 'HR-LAP-…', 'user': 'approver@…'}"`: it lists the cause (no active workflow, role missing, condition false, permission, self-approval). |
+No alert e-mail is sent by this workflow on purpose (a PDF failure would undo the approval); approvers use the Workflow Action list and HRMS leave notifications.
+
+### 6A.4 Salary Structure currency
+A new **Salary Structure** takes the **company's default currency** (SAR for a Saudi company, BHD for a Bahrain one) when the company is chosen, whatever the user's own default is. Choosing another currency shows a warning. To find structures already in the wrong currency: `bench --site SITE execute hr_suite.hr_suite.salary_currency.mismatches`; draft ones can be edited, submitted ones are replaced by amending or creating a new structure and assignment.
+
 ---
 
 ## 7. Reports (HR Suite workspace → Employee & Leave Reports)
@@ -247,7 +289,8 @@ Switch **Route Expense Claims Through A Payment Advice** on (Hr Suite Settings).
 | Report | Check |
 |---|---|
 | **Leave and Salary Days Balance** | One row per employee: country, engine, band, leave days/yr, salary days/yr, **leave balance**, salary days earned / settled / balance, "Leave Salary Payable" Yes/No with the shortfall. Filter *Ledger Engine Only*. Non-ledger employees show no salary-day figures. |
-| **Leave Accrual Ledger Report** | Every ledger row with **running** leave and salary balances; filter by source and period; a settlement shows as negative salary days with its reference. |
+| **Leave Accrual Ledger Report** | One row per transaction: date, employee, leave type, **transaction** (Opening, Accrual, Adjustment, Settlement, **Leave Taken**, Leave Encashment), **days in / days out**, **running** leave and salary balance, and a **link to the source document**. The leave running balance agrees with the Leave Balance Report. Filter by source and period. |
+| **Leave Balance Report** | **Annual Entitlement**, **Accrued To Date**, **Accruing This Month** (earned so far, credited at month end) and **Balance** (accrued − taken). A 4-month employee shows 7.00, not 21. |
 | **Leave Salary Settlements Due** | Approved annual leave starting in the next N days with **no settlement**, and part-paid leave with **salary days still due**; shows earned days today, whether the barrier is met, days **payable now**. |
 | **Gratuity Liability** | Per active employee as of a date: **if the company ends it** and **if the employee resigns** (e.g. KSA 7 years: resignation ≈ ⅔ of the other). An employee that cannot be calculated is **listed with the reason**, not dropped. Totals row. |
 | **HR Payment Advice Queue** | §6.3. |
