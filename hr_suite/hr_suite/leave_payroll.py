@@ -14,7 +14,7 @@ when the settlement is. Nothing here builds SQL from strings.
 
 import frappe
 from frappe import _
-from frappe.utils import cstr, flt, formatdate, getdate
+from frappe.utils import add_days, cstr, flt, formatdate, getdate, today
 
 from hr_suite.hr_suite.utils import get_leave_salary_recovery_component, get_leave_salary_terms
 
@@ -22,18 +22,35 @@ ERROR_TITLE = "HR Suite: leave salary payroll adjustment"
 MONEY_PRECISION = 3
 
 
-def refuse_if_payroll_already_ran(employee, payroll_date, amount, currency):
-	"""A month already paid can never read this deduction, so do not book one."""
-	slip = frappe.db.get_value(
+def slip_covering(employee, on_date):
+	"""The submitted Salary Slip whose period holds the date, or None: that month is closed."""
+	return frappe.db.get_value(
 		"Salary Slip",
 		{
 			"employee": employee,
 			"docstatus": 1,
-			"start_date": ["<=", payroll_date],
-			"end_date": [">=", payroll_date],
+			"start_date": ["<=", getdate(on_date)],
+			"end_date": [">=", getdate(on_date)],
 		},
 		"name",
 	)
+
+
+def next_open_date(employee):
+	"""The first day no submitted Salary Slip covers: where an adjustment to a closed month goes.
+
+	Never earlier than today, so a back-dated correction lands on the next payslip to be run
+	rather than in a period that may already have been paid outside the system.
+	"""
+	last_end = frappe.db.get_value(
+		"Salary Slip", {"employee": employee, "docstatus": 1}, "end_date", order_by="end_date desc"
+	)
+	return max(add_days(getdate(last_end), 1), getdate(today())) if last_end else getdate(today())
+
+
+def refuse_if_payroll_already_ran(employee, payroll_date, amount, currency):
+	"""A month already paid can never read this deduction, so do not book one."""
+	slip = slip_covering(employee, payroll_date)
 	if not slip:
 		return
 	frappe.throw(
@@ -45,25 +62,30 @@ def refuse_if_payroll_already_ran(employee, payroll_date, amount, currency):
 	)
 
 
-def ensure_deduction_component(name, abbr, description):
-	"""A Deduction salary component that does not depend on payment days, created once."""
+def ensure_component(name, abbr, component_type, description):
+	"""A salary component of the given type that does not depend on payment days, created once."""
 	if not frappe.db.exists("Salary Component", name):
 		frappe.get_doc(
 			{
 				"doctype": "Salary Component",
 				"salary_component": name,
 				"salary_component_abbr": abbr,
-				"type": "Deduction",
+				"type": component_type,
 				"depends_on_payment_days": 0,
 				"description": description,
 			}
 		).insert(ignore_permissions=True)
-	if cstr(frappe.db.get_value("Salary Component", name, "type")) != "Deduction":
-		frappe.throw(_("Salary Component {0} must be a Deduction.").format(name))
+	if cstr(frappe.db.get_value("Salary Component", name, "type")) != component_type:
+		frappe.throw(_("Salary Component {0} must be an {1}.").format(name, component_type))
 	return name
 
 
-def prepare_component(employee, company, expense_account, component=None):
+def ensure_deduction_component(name, abbr, description):
+	"""A Deduction salary component that does not depend on payment days, created once."""
+	return ensure_component(name, abbr, "Deduction", description)
+
+
+def prepare_component(employee, company, expense_account, component=None, component_type="Deduction"):
 	"""(component name, currency) for the deductions, or throws with a finished sentence.
 
 	`component` names a specific Deduction (sick pay uses its own); by default it is the Leave
@@ -77,7 +99,7 @@ def prepare_component(employee, company, expense_account, component=None):
 	ok, reason = ensure_salary_component_account(
 		component,
 		company,
-		component_type="Deduction",
+		component_type=component_type,
 		fallback_account=expense_account,
 		depends_on_payment_days=0,
 		error_title=ERROR_TITLE,
@@ -98,10 +120,19 @@ def prepare_component(employee, company, expense_account, component=None):
 
 def book_deduction(doc, component, currency, payroll_date, amount):
 	"""One submitted Additional Salary deduction tied to `doc`. Returns its name."""
+	return book_additional_salary(doc, component, currency, payroll_date, amount)
+
+
+def book_additional_salary(doc, component, currency, payroll_date, amount, check_closed=True):
+	"""One submitted Additional Salary (a deduction or an earning, by the component) tied to `doc`.
+
+	`check_closed=False` is for an adjustment whose date the caller already chose in an open period.
+	"""
 	amount = flt(amount, MONEY_PRECISION)
 	if amount <= 0:
 		return None
-	refuse_if_payroll_already_ran(doc.employee, payroll_date, amount, currency)
+	if check_closed:
+		refuse_if_payroll_already_ran(doc.employee, payroll_date, amount, currency)
 	row = frappe.get_doc(
 		{
 			"doctype": "Additional Salary",

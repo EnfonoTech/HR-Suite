@@ -107,6 +107,8 @@ class SettlementTestBase(LedgerTestBase):
 		for p in patches:
 			p.start()
 			self.addCleanup(p.stop)
+		# The optional second barrier (earned days) is off by default; most tests here exercise it.
+		self.set_country(leave_salary_min_earned_days=30)
 
 	def staff(self, name, opening=40, ctc=4000, joined="2020-01-01"):
 		emp = self.employee(name, "SA", joined)
@@ -181,13 +183,12 @@ class TestSettlementDocument(SettlementTestBase):
 		self.assertEqual(get_salary_days_balance(emp), 40)
 		self.assertEqual(doc.status, "Cancelled")
 
-	def test_below_the_barrier_pays_only_the_worked_days_and_keeps_the_rest_due(self):
+	def test_below_the_barrier_the_settlement_is_refused_with_the_reason(self):
 		emp = self.staff("Short", opening=20)
-		doc = self.settle(emp, self.leave(emp))
-		self.assertFalse(doc.eligible)
-		self.assertEqual(doc.leave_salary_amount, 0)
-		self.assertEqual(doc.salary_days_unpaid, 30)
-		self.assertEqual(doc.total_payable, 1333.333)
+		la = self.leave(emp)
+		with self.assertRaises(frappe.ValidationError) as caught:
+			self.settle(emp, la)
+		self.assertIn("earned salary days", str(caught.exception))
 		self.assertEqual(get_salary_days_balance(emp), 20)  # nothing spent
 
 	def test_only_hr_with_the_override_role_may_pay_below_the_barrier(self):

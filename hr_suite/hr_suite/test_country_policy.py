@@ -113,7 +113,7 @@ class TestSeedAgainstSpec(FrappeTestCase):
 		self.assertEqual(get_country_policy("KW").gratuity_cap_months, 18)
 		self.assertEqual(get_country_policy("BH").annual_leave_eligible_after_months, 12)
 		self.assertEqual(get_country_policy("KW").annual_leave_eligible_after_months, 9)
-		self.assertEqual(get_country_policy("SA").leave_salary_min_earned_days, 30)
+		self.assertEqual(get_country_policy("SA").leave_salary_min_earned_days, 0)
 		self.assertEqual(get_country_policy("SA").leave_salary_min_service_days, 365)
 
 	def test_every_slab_set_is_valid(self):
@@ -195,7 +195,7 @@ class TestResolution(FrappeTestCase):
 		self.assertEqual(policy.service_months, 69)
 		self.assertEqual(policy.annual.leave_days_per_year, 30)  # past the 5-year step
 		self.assertEqual(policy.annual.leave_days_per_month, 2.5)
-		self.assertEqual(policy.leave_salary_min_earned_days, 30)
+		self.assertEqual(policy.leave_salary_min_earned_days, 0)
 		self.assertEqual(policy.leave_can_be_taken, 1)
 
 	def test_override_wins_over_the_band(self):

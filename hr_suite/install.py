@@ -10,6 +10,8 @@ import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from frappe.utils import cstr, flt
 
+from hr_suite.hr_suite.leave_workflow import ensure_workflow as ensure_leave_application_workflow
+
 from hr_suite.hr_suite.leave_setup import setup_leave_management
 from hr_suite.hr_suite.performance_setup import setup_performance_management
 from hr_suite.hr_suite.policy_defaults import apply_policy_defaults
@@ -32,6 +34,7 @@ def after_install():
 	# still missing, and the workflow is then never created.
 	sync_compliance_controls()
 	sync_workflow_configs()
+	ensure_leave_application_workflow()
 	ensure_department_approver_role()
 	ensure_leave_override_role()
 	sync_department_approver_role_assignments()
@@ -64,6 +67,7 @@ def after_migrate():
 	# same ordering requirement as after_install(), see the note there
 	sync_compliance_controls()
 	sync_workflow_configs()
+	ensure_leave_application_workflow()
 	ensure_department_approver_role()
 	ensure_leave_override_role()
 	sync_department_approver_role_assignments()
@@ -767,7 +771,30 @@ LEAVE_APPLICATION_FIELDS = {
 			"allow_on_submit": 1,
 			"module": "Hr Suite",
 		},
-	]
+		{
+			"fieldname": "unpaid_deduction_rows",
+			"label": "Unpaid Leave Deductions",
+			"fieldtype": "Long Text",
+			"insert_after": "sick_deduction_rows",
+			"hidden": 1,
+			"read_only": 1,
+			"allow_on_submit": 1,
+			"module": "Hr Suite",
+		},
+	],
+	"Leave Policy Detail": [
+		{
+			"fieldname": "can_be_taken_from_leave",
+			"label": "Can Be Taken From Leave",
+			"fieldtype": "Link",
+			"options": "Leave Type",
+			"insert_after": "annual_allocation",
+			"in_list_view": 1,
+			"columns": 2,
+			"module": "Hr Suite",
+			"description": "Leave of this type is deducted from the balance of the leave type chosen here.",
+		},
+	],
 }
 
 
@@ -814,7 +841,7 @@ _COUNTRY_CONFIGS = [
 		"settlement_formula": "EOSB-SA",
 		"settlement_basis": "Basic Salary",
 		"years_threshold": 5,
-		"days_per_year_below_threshold": 21,
+		"days_per_year_below_threshold": 15,
 		"days_per_year_above_threshold": 30,
 		"gratuity_eligibility_years": 2,
 		"settlement_ceiling_applicable": 0,

@@ -197,10 +197,24 @@ doc_events = {
 		"validate": [
 			"hr_suite.hr_suite.integrations.hrms.on_leave_application_validate",
 			"hr_suite.hr_suite.sick_leave_tiers.preview_split",
+			"hr_suite.hr_suite.leave_application_rules.validate",
 		],
 		"before_submit": "hr_suite.hr_suite.sick_leave_tiers.require_certificate",
-		"on_submit": "hr_suite.hr_suite.sick_leave_tiers.on_submit",
-		"on_cancel": "hr_suite.hr_suite.sick_leave_tiers.on_cancel",
+		"on_submit": [
+			"hr_suite.hr_suite.leave_application_rules.on_submit",
+			"hr_suite.hr_suite.sick_leave_tiers.on_submit",
+		],
+		"on_cancel": [
+			"hr_suite.hr_suite.leave_application_rules.on_cancel",
+			"hr_suite.hr_suite.sick_leave_tiers.on_cancel",
+		],
+	},
+	"Salary Structure": {
+		"before_validate": "hr_suite.hr_suite.salary_currency.default_from_company",
+		"validate": "hr_suite.hr_suite.salary_currency.warn_if_not_company_currency",
+	},
+	"Leave Policy": {
+		"validate": "hr_suite.hr_suite.leave_application_rules.validate_policy_rows",
 	},
 	"Leave Allocation": {
 		"on_submit": "hr_suite.hr_suite.integrations.hrms.on_leave_allocation_submit",
@@ -233,6 +247,7 @@ doctype_js = {
 	"Appraisal": "public/js/appraisal.js",
 	"Payroll Preview": "public/js/payroll_preview.js",
 	"Leave Application": "public/js/leave_application.js",
+	"Salary Structure": "public/js/salary_structure.js",
 }
 
 # ─── Jinja ──────────────────────────────────────────────────────────────────────

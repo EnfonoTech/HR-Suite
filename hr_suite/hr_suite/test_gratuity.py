@@ -44,8 +44,8 @@ class TestKSA(FrappeTestCase):
 
 	def test_resignation_bands(self):
 		self.assertEqual(run("SA", 1.5, 10000, "Resignation").net_entitlement, 0)  # under 2 yrs
-		self.assertEqual(run("SA", 3, 10000, "Resignation").net_entitlement, 4999.5)  # 15,000 x 33.33%
-		self.assertEqual(run("SA", 8, 10000, "Resignation").net_entitlement, 36668.5)  # 55,000 x 66.67%
+		self.assertEqual(run("SA", 3, 10000, "Resignation").net_entitlement, 5000)  # 15,000 x one third
+		self.assertEqual(run("SA", 8, 10000, "Resignation").net_entitlement, 36666.67)  # 55,000 x two thirds
 		self.assertEqual(run("SA", 12, 10000, "Resignation").net_entitlement, 95000)  # 9.5 months, full
 
 	def test_dismissal_forfeits(self):
@@ -117,7 +117,7 @@ class TestKuwait(FrappeTestCase):
 		self.assertEqual(result.gross_entitlement, 1800)
 
 	def test_resignation_after_seven_years_is_two_thirds(self):
-		self.assertEqual(run("KW", 7, 400, "Resignation", precision=3).net_entitlement, 1200.06)
+		self.assertEqual(run("KW", 7, 400, "Resignation", precision=3).net_entitlement, 1200)
 
 	def test_cap_is_eighteen_months(self):
 		result = run("KW", 40, 400, precision=3)

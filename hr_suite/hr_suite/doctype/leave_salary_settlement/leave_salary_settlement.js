@@ -28,6 +28,8 @@ frappe.ui.form.on("Leave Salary Settlement", {
 			}, __("Create"));
 		}
 
+		if (frm.doc.settlement_type === "Final Settlement") return;
+
 		frm.add_custom_button(__("Record Rejoin"), function () {
 			frappe.prompt(
 				[{ fieldname: "rejoin_date", fieldtype: "Date", label: __("Rejoin Date"), reqd: 1,

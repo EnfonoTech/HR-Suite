@@ -28,7 +28,7 @@ Nothing here builds SQL from strings. Every f-string or .format() produces displ
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import add_days, cint, date_diff, flt, get_first_day, getdate
+from frappe.utils import add_days, cint, date_diff, flt, formatdate, get_first_day, getdate
 
 from hr_suite.hr_suite import leave_payroll as payroll
 from hr_suite.hr_suite.leave_accrual import OVERRIDE_ROLE, get_salary_days_balance
@@ -42,6 +42,8 @@ from hr_suite.hr_suite.utils import (
 
 MONEY = 3
 STANDARD_MONTH = 30.0
+ANNUAL = "Annual Leave"
+FINAL = "Final Settlement"
 
 
 # ── pure pricing ──────────────────────────────────────────────────────────────
@@ -113,7 +115,11 @@ def price_settlement(
 
 class LeaveSalarySettlement(Document):
 	def validate(self):
-		self._pull_leave_application()
+		self.settlement_type = self.settlement_type or ANNUAL
+		if self._is_final():
+			self._prepare_final()
+		else:
+			self._pull_leave_application()
 		self._require_ledger_engine()
 		self._guard_one_open_draft()
 		self._price()
@@ -129,7 +135,7 @@ class LeaveSalarySettlement(Document):
 		self.status = "Approved"
 		self.db_set("status", "Approved")
 		self._post_ledger_row()
-		if self._is_first(exclude_self=True):
+		if not self._is_final() and self._is_first(exclude_self=True):
 			self._sync_exclusions()
 
 	def before_cancel(self):
@@ -143,6 +149,23 @@ class LeaveSalarySettlement(Document):
 		self.db_set({"status": "Cancelled", "exclusion_rows": "", "rejoin_rows": ""}, update_modified=False)
 
 	# ── inputs ────────────────────────────────────────────────────────────────
+
+	def _is_final(self) -> bool:
+		return self.settlement_type == FINAL
+
+	def _prepare_final(self):
+		"""A Final Settlement has no leave: it pays what is accrued and unused on the last day."""
+		for field in ("leave_application", "leave_type", "leave_from_date", "leave_to_date"):
+			self.set(field, None)
+		if not self.last_working_day:
+			self.last_working_day = frappe.db.get_value("Employee", self.employee, "relieving_date")
+		if not self.last_working_day:
+			frappe.throw(
+				_("Enter the last working day: {0} has no relieving date on the Employee.").format(
+					self.employee_name or self.employee
+				),
+				title=_("Last Working Day"),
+			)
 
 	def _pull_leave_application(self):
 		application = frappe.db.get_value(
@@ -188,17 +211,19 @@ class LeaveSalarySettlement(Document):
 		self.country = self._policy.country_code
 
 	def _guard_one_open_draft(self):
+		if self._is_final():
+			scope = {"employee": self.employee, "settlement_type": FINAL}
+		else:
+			scope = {"leave_application": self.leave_application}
 		other = frappe.db.exists(
 			"Leave Salary Settlement",
-			{
-				"leave_application": self.leave_application,
-				"docstatus": 0,
-				"name": ["!=", self.name or ""],
-			},
+			{**scope, "docstatus": 0, "name": ["!=", self.name or ""]},
 		)
 		if other:
 			frappe.throw(
-				_("{0} is already a draft settlement for this leave. Submit or delete it first.").format(other),
+				_("{0} is already a draft settlement for this {1}. Submit or delete it first.").format(
+					other, _("final settlement") if self._is_final() else _("leave")
+				),
 				title=_("Draft Exists"),
 			)
 
@@ -213,7 +238,8 @@ class LeaveSalarySettlement(Document):
 
 	def _price(self):
 		policy = self._policy
-		first = self._is_first(exclude_self=True)
+		final = self._is_final()
+		first = False if final else self._is_first(exclude_self=True)
 		last_day = getdate(self.last_working_day)
 		joining = frappe.db.get_value("Employee", self.employee, "date_of_joining")
 
@@ -227,11 +253,16 @@ class LeaveSalarySettlement(Document):
 			max(date_diff(last_day, month_start) + 1 - get_unpaid_days(self.employee, month_start, last_day), 0), 2
 		)
 
-		self.pay_worked_days_in_settlement = cint(policy.pay_worked_days_in_settlement)
+		self.pay_worked_days_in_settlement = 0 if final else cint(policy.pay_worked_days_in_settlement)
 		self.min_earned_days = flt(policy.leave_salary_min_earned_days)
 		self.min_service_days = cint(policy.leave_salary_min_service_days)
 		self.earned_salary_days = get_salary_days_balance(self.employee)
 		self.service_days = date_diff(last_day, getdate(joining)) if joining else 0
+
+		# On exit the accrued days are paid whatever the service, unless the country says otherwise.
+		waived = final and cint(policy.leave_salary_pay_on_exit)
+		if final:
+			self.leave_days = flt(max(self.earned_salary_days, 0.0), 2)
 
 		per_month = flt(policy.leave_salary_days_per_month) or STANDARD_MONTH
 		monthly = compute_leave_salary(self.employee, per_month)
@@ -244,11 +275,11 @@ class LeaveSalarySettlement(Document):
 		below_ok = self._below_barrier_allowed()
 		result = price_settlement(
 			leave_days=self.leave_days,
-			paid_days_before=self._salary_days_paid_before(),
+			paid_days_before=0.0 if final else self._salary_days_paid_before(),
 			earned_balance=self.earned_salary_days,
-			min_earned=self.min_earned_days,
+			min_earned=0 if waived else self.min_earned_days,
 			service_days=self.service_days,
-			min_service=self.min_service_days,
+			min_service=0 if waived else self.min_service_days,
 			below_barrier_allowed=below_ok,
 			monthly_gross=self.monthly_gross,
 			days_worked=self.days_worked,
@@ -258,8 +289,19 @@ class LeaveSalarySettlement(Document):
 			days_per_month=per_month,
 			ticket_due=cint(self.ticket_entitled),
 			ticket_amount=self.ticket_amount,
-			previously_paid=self._previously_paid_by_disbursement(),
+			previously_paid=0.0 if final else self._previously_paid_by_disbursement(),
 		)
+
+		if not result.eligible and not below_ok:
+			frappe.throw(
+				_("Leave salary cannot be settled for {0} yet: {1}. It is paid once the minimum service is met"
+				  "{2}.").format(
+					self.employee_name or self.employee,
+					result.shortfall,
+					"" if final else _(", or by a user with the {0} role who records a reason").format(OVERRIDE_ROLE),
+				),
+				title=_("Minimum Service Not Met"),
+			)
 
 		self.eligible = result.eligible
 		self.shortfall_note = result.shortfall
@@ -341,7 +383,12 @@ class LeaveSalarySettlement(Document):
 	def _post_ledger_row(self):
 		if not flt(self.salary_days_paid):
 			return
-		self._ledger(-flt(self.salary_days_paid), _("Leave salary settled for leave {0}").format(self.leave_application))
+		remark = (
+			_("Accrued leave paid on exit on {0}").format(formatdate(self.last_working_day))
+			if self._is_final()
+			else _("Leave salary settled for leave {0}").format(self.leave_application)
+		)
+		self._ledger(-flt(self.salary_days_paid), remark)
 
 	def _ledger(self, salary_days, remarks, on_date=None):
 		row = frappe.get_doc(
@@ -440,6 +487,8 @@ def record_rejoin(name, rejoin_date):
 	doc = frappe.get_doc("Leave Salary Settlement", name)
 	if doc.docstatus != 1:
 		frappe.throw(_("Submit the settlement before recording the return."), title=_("Not Submitted"))
+	if doc.settlement_type == FINAL:
+		frappe.throw(_("A final settlement has no leave to return from."), title=_("Final Settlement"))
 
 	first = frappe.get_all(
 		"Leave Salary Settlement",

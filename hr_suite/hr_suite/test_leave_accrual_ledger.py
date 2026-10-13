@@ -61,10 +61,25 @@ class TestMonthArithmetic(FrappeTestCase):
 		self.assertEqual(result.leave_days, 0)
 
 
+def set_leave_workflow(active):
+	"""Switch the Leave Application approval workflow; returns what it was."""
+	from hr_suite.hr_suite.leave_workflow import WORKFLOW
+
+	was = frappe.db.get_value("Workflow", WORKFLOW, "is_active")
+	if was is not None and int(was) != int(active):
+		doc = frappe.get_doc("Workflow", WORKFLOW)
+		doc.is_active = int(active)
+		doc.save(ignore_permissions=True)
+	return was
+
+
 class LedgerTestBase(FrappeTestCase):
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
+		# These tests insert already-approved Leave Applications, which an active approval
+		# workflow refuses (a new document may only start in its first state).
+		cls._workflow_was = set_leave_workflow(0)
 		for code in ("SA", "BH"):
 			doc = frappe.get_doc("Country Config", code)
 			doc.leave_accrual_engine = "HR Suite Ledger"
@@ -81,6 +96,7 @@ class LedgerTestBase(FrappeTestCase):
 	@classmethod
 	def tearDownClass(cls):
 		super().tearDownClass()
+		set_leave_workflow(cls._workflow_was)
 		for code in ("SA", "BH"):
 			frappe.clear_document_cache("Country Config", code)
 

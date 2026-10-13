@@ -25,6 +25,7 @@
    "fieldname": "payable_percent",
    "fieldtype": "Percent",
    "label": "Payable On Resignation (%)",
+   "precision": "6",
    "reqd": 1,
    "in_list_view": 1,
    "description": "Share of the gratuity paid when the employee resigns in this service range."

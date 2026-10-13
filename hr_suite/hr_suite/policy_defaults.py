@@ -26,7 +26,7 @@ POLICY_DEFAULTS = {
 			"sick_leave_eligible_after_months": 0,
 			"gratuity_base": "Basic Salary",
 			"nationals_pension_scheme": "GOSI",
-			"leave_salary_min_earned_days": 30,
+			"leave_salary_min_earned_days": 0,
 			"leave_salary_min_service_days": 365,
 		},
 		"annual_leave_bands": [
@@ -44,8 +44,8 @@ POLICY_DEFAULTS = {
 		],
 		"gratuity_resignation_factors": [
 			{"from_years": 0, "to_years": 2, "payable_percent": 0},
-			{"from_years": 2, "to_years": 5, "payable_percent": 33.33},
-			{"from_years": 5, "to_years": 10, "payable_percent": 66.67},
+			{"from_years": 2, "to_years": 5, "payable_percent": 33.333333},
+			{"from_years": 5, "to_years": 10, "payable_percent": 66.666667},
 			{"from_years": 10, "to_years": 0, "payable_percent": 100},
 		],
 		"checks": {"gratuity_nationals_also_entitled": 1, "gratuity_forfeited_on_dismissal": 1},
@@ -60,7 +60,7 @@ POLICY_DEFAULTS = {
 			"gratuity_base": "Basic Salary",
 			"gratuity_scheme_end_date": "2024-03-01",
 			"nationals_pension_scheme": "SIO",
-			"leave_salary_min_earned_days": 30,
+			"leave_salary_min_earned_days": 0,
 			"leave_salary_min_service_days": 365,
 		},
 		"annual_leave_bands": [
@@ -93,7 +93,7 @@ POLICY_DEFAULTS = {
 			"sick_leave_eligible_after_months": 0,
 			"gratuity_base": "Basic Salary",
 			"nationals_pension_scheme": "SPF",
-			"leave_salary_min_earned_days": 30,
+			"leave_salary_min_earned_days": 0,
 			"leave_salary_min_service_days": 365,
 		},
 		"annual_leave_bands": [
@@ -119,7 +119,7 @@ POLICY_DEFAULTS = {
 			"gratuity_cap_months": 24,
 			"gratuity_min_service_years": 1,
 			"nationals_pension_scheme": "GPSSA",
-			"leave_salary_min_earned_days": 30,
+			"leave_salary_min_earned_days": 0,
 			"leave_salary_min_service_days": 365,
 		},
 		"annual_leave_bands": [
@@ -147,7 +147,7 @@ POLICY_DEFAULTS = {
 			"gratuity_base": "Basic Salary",
 			"gratuity_min_service_years": 1,
 			"nationals_pension_scheme": "GRSIA",
-			"leave_salary_min_earned_days": 30,
+			"leave_salary_min_earned_days": 0,
 			"leave_salary_min_service_days": 365,
 		},
 		"annual_leave_bands": [
@@ -174,7 +174,7 @@ POLICY_DEFAULTS = {
 			"gratuity_base": "Basic Salary",
 			"gratuity_cap_months": 18,
 			"nationals_pension_scheme": "PIFSS",
-			"leave_salary_min_earned_days": 30,
+			"leave_salary_min_earned_days": 0,
 			"leave_salary_min_service_days": 365,
 		},
 		"annual_leave_bands": [
@@ -194,7 +194,7 @@ POLICY_DEFAULTS = {
 		"gratuity_resignation_factors": [
 			{"from_years": 0, "to_years": 3, "payable_percent": 0},
 			{"from_years": 3, "to_years": 5, "payable_percent": 50},
-			{"from_years": 5, "to_years": 10, "payable_percent": 66.67},
+			{"from_years": 5, "to_years": 10, "payable_percent": 66.666667},
 			{"from_years": 10, "to_years": 0, "payable_percent": 100},
 		],
 		"notes": {

@@ -255,6 +255,15 @@ def get_annual_leave_entitlement(employee: str, date: str = None) -> int:
 	Return annual leave days for the employee based on their work country's Country Config.
 	Falls back to Hr Suite Settings for SA or when no Country Config is found.
 	"""
+	# The country policy (annual leave bands, with the employee's overrides) is the single source of
+	# the entitlement. The Country Config leave-type rows and the Hr Suite Settings figures below are
+	# only for a country that has no bands, so no 21 / 30 is ever assumed for a country that has them.
+	from hr_suite.hr_suite.policy import get_policy
+
+	policy = get_policy(employee, on_date=date)
+	if policy.get("has_policy") and policy.get("annual_band") and flt(policy.annual.leave_days_per_year) > 0:
+		return int(round(flt(policy.annual.leave_days_per_year)))
+
 	emp = frappe.get_doc("Employee", employee)
 	joining_date = getdate(emp.date_of_joining)
 	ref_date = getdate(date) if date else getdate()

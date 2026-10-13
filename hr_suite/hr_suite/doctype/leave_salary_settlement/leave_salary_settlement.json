@@ -19,6 +19,7 @@
   "department",
   "country",
   "status",
+  "settlement_type",
   "leave_section",
   "leave_application",
   "leave_type",
@@ -136,6 +137,17 @@
    "allow_on_submit": 1
   },
   {
+   "fieldname": "settlement_type",
+   "fieldtype": "Select",
+   "label": "Settlement Type",
+   "options": "Annual Leave\nFinal Settlement",
+   "default": "Annual Leave",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Annual Leave pays an employee going on leave. Final Settlement pays the leave days accrued and unused when the employee leaves; worked days and gratuity are paid by the Salary Settlement and the gratuity calculation."
+  },
+  {
    "fieldname": "leave_section",
    "fieldtype": "Section Break",
    "label": "Leave"
@@ -145,35 +157,41 @@
    "fieldtype": "Link",
    "label": "Leave Application",
    "options": "Leave Application",
-   "reqd": 1,
-   "in_standard_filter": 1
+   "reqd": 0,
+   "in_standard_filter": 1,
+   "mandatory_depends_on": "eval:doc.settlement_type=='Annual Leave'",
+   "depends_on": "eval:doc.settlement_type=='Annual Leave'"
   },
   {
    "fieldname": "leave_type",
    "fieldtype": "Link",
    "label": "Leave Type",
    "options": "Leave Type",
-   "read_only": 1
+   "read_only": 1,
+   "depends_on": "eval:doc.settlement_type=='Annual Leave'"
   },
   {
    "fieldname": "leave_from_date",
    "fieldtype": "Date",
    "label": "Leave From",
    "read_only": 1,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "depends_on": "eval:doc.settlement_type=='Annual Leave'"
   },
   {
    "fieldname": "leave_to_date",
    "fieldtype": "Date",
    "label": "Leave To",
-   "read_only": 1
+   "read_only": 1,
+   "depends_on": "eval:doc.settlement_type=='Annual Leave'"
   },
   {
    "fieldname": "leave_days",
    "fieldtype": "Float",
    "label": "Leave Days",
    "read_only": 1,
-   "precision": "2"
+   "precision": "2",
+   "depends_on": "eval:doc.settlement_type=='Annual Leave'"
   },
   {
    "fieldname": "column_break_2",
@@ -184,7 +202,8 @@
    "fieldtype": "Date",
    "label": "Last Working Day",
    "reqd": 1,
-   "description": "Defaults to the day before the leave starts. The worked-days salary runs from the 1st of this month to this day."
+   "description": "Annual Leave: defaults to the day before the leave. Final Settlement: the last day worked.",
+   "mandatory_depends_on": "eval:doc.settlement_type=='Final Settlement'"
   },
   {
    "fieldname": "eligibility_section",

@@ -12,8 +12,14 @@ Automatically": a site that already models tiers as separate part-pay Leave Type
 otherwise have the pay reduced twice.
 
 Because tiers are consumed in date order, an application submitted late can change the split
-of ones after it. Every submit and cancel therefore re-splits the whole year in date order and
-re-books only the deductions that changed.
+of ones after it. Every submit and cancel therefore re-splits every sick leave from the affected
+date onward, in date order, and re-books only what changed. A month whose payslip is already
+submitted is never touched: the difference is booked as an adjustment on the next open payroll
+date, a further deduction when more is unpaid or an earning when less is.
+
+The span in which sick days count towards the tiers is Country Config > Sick Leave Pay Window:
+the company Leave Period (the default), the calendar year, a rolling 12 months looking back from
+each leave, or the service year from the joining anniversary.
 
 Days before the employee is eligible (3 months in Bahrain and Qatar, after probation in the
 UAE) are unpaid and do not use up any tier. Days past the last tier are unpaid too.
@@ -27,10 +33,11 @@ from frappe.utils import add_days, add_months, cint, flt, get_first_day, getdate
 
 from hr_suite.hr_suite import leave_payroll as payroll
 from hr_suite.hr_suite.leave_accrual import OVERRIDE_ROLE
-from hr_suite.hr_suite.policy import get_policy
+from hr_suite.hr_suite.policy import get_policy, months_of_service
 from hr_suite.hr_suite.utils import get_employee_salary_components
 
 SICK_COMPONENT = "Sick Leave Deduction"
+ADJUSTMENT_COMPONENT = "Sick Leave Adjustment"
 BEFORE_ELIGIBLE = "Before eligibility"
 BEYOND_TIERS = "Beyond annual entitlement"
 
@@ -135,6 +142,21 @@ def leave_year_bounds(company, on_date):
 	return getdate("{0}-01-01".format(year)), getdate("{0}-12-31".format(year))
 
 
+def window_start(policy, employee, company, on_date):
+	"""First day whose sick leave counts towards the tiers of a leave starting on `on_date`."""
+	mode = policy.get("sick_leave_window") or "Leave Period"
+	on_date = getdate(on_date)
+	if mode == "Rolling 12 Months":
+		return add_days(add_months(on_date, -12), 1)
+	if mode == "Calendar Year":
+		return getdate("{0}-01-01".format(on_date.year))
+	if mode == "Service Year" and policy.get("date_of_joining"):
+		joining = getdate(policy.date_of_joining)
+		years = max(months_of_service(joining, on_date) // 12, 0)
+		return add_months(joining, 12 * years)
+	return leave_year_bounds(company, on_date)[0]
+
+
 def countable_days(employee, leave_type, from_date, to_date, half_day=0, half_day_date=None):
 	"""[(date, weight)] the application counts: holidays skipped unless the type includes them."""
 	from hrms.hr.utils import get_holiday_dates_for_employee
@@ -180,18 +202,42 @@ def _daily_rate(policy, employee):
 	return gross / (flt(policy.leave_salary_days_per_month) or 30.0)
 
 
-def _year_applications(employee, company, sick_type, on_date, exclude=None):
-	start, end = leave_year_bounds(company, on_date)
+def _applications_from(employee, sick_type, lower, exclude=None):
+	"""Submitted, approved sick leave dated on or after `lower`, in the order tiers are consumed."""
 	filters = {
 		"employee": employee,
 		"leave_type": sick_type,
 		"docstatus": 1,
 		"status": "Approved",
-		"from_date": ["between", [start, end]],
+		"from_date": [">=", lower],
 	}
 	if exclude:
 		filters["name"] = ["!=", exclude]
-	return frappe.get_all("Leave Application", filters=filters, fields=["name"], order_by="from_date asc, creation asc")
+	names = frappe.get_all("Leave Application", filters=filters, pluck="name", order_by="from_date asc, creation asc")
+	return [frappe.get_doc("Leave Application", name) for name in names]
+
+
+def _order_key(doc):
+	from datetime import datetime
+
+	return (getdate(doc.from_date), doc.creation or datetime.max)
+
+
+def walk(policy, apps):
+	"""[(application, segments, consumed)] with each leave starting from what earlier ones used.
+
+	`apps` are Leave Application documents (a draft may be among them). Earlier leave counts only
+	when it falls inside the window of the one being split, so a new leave in a later window
+	starts afresh and a rolling window drops what is more than 12 months old.
+	"""
+	history, out = [], []
+	for app in sorted(apps, key=_order_key):
+		start = window_start(policy, app.employee, app.company, app.from_date)
+		used = sum(consumed for day, consumed in history if day >= start)
+		segments, consumed = _split_application(app, policy, used)
+		history.append((getdate(app.from_date), consumed))
+		out.append((app, segments, consumed))
+	return out
 
 
 def _split_application(doc, policy, used_before):
@@ -208,16 +254,13 @@ def preview_split(doc, method=None):
 	if not _is_sick(doc, policy) or doc.docstatus != 0 or not (doc.from_date and doc.to_date):
 		return
 
-	used = 0.0
-	for app in _year_applications(doc.employee, doc.company, doc.leave_type, doc.from_date):
-		other = frappe.get_doc("Leave Application", app.name)
-		if (getdate(other.from_date), other.creation) < (getdate(doc.from_date), doc.creation or other.creation):
-			used += _split_application(other, policy, used)[1]
-
-	segments, _used = _split_application(doc, policy, used)
-	doc.set("sick_tier_split", summarise(segments))
-	doc.sick_unpaid_equivalent = unpaid_equivalent(segments)
-	doc.sick_split_note = _note(segments)
+	lower = window_start(policy, doc.employee, doc.company, doc.from_date)
+	others = _applications_from(doc.employee, doc.leave_type, lower, exclude=doc.name if not doc.is_new() else None)
+	for app, segments, _consumed in walk(policy, others + [doc]):
+		if app is doc:
+			doc.set("sick_tier_split", summarise(segments))
+			doc.sick_unpaid_equivalent = unpaid_equivalent(segments)
+			doc.sick_split_note = _note(segments)
 
 
 def require_certificate(doc, method=None):
@@ -240,8 +283,16 @@ def on_submit(doc, method=None):
 
 
 def on_cancel(doc, method=None):
-	"""Take back this application's deductions, then re-split the year without it."""
-	payroll.cancel_deductions([row["name"] for row in payroll.load_json(doc.get("sick_deduction_rows"))])
+	"""Take back this application's pay effect, then re-split what came after it."""
+	try:
+		_reconcile_payroll(doc, {})
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "HR Suite: sick leave pay reversal failed for " + doc.name)
+		frappe.msgprint(
+			_("The payroll deductions of {0} could not all be taken back. See the Error Log.").format(doc.name),
+			title=_("Sick Pay Not Reversed"),
+			indicator="orange",
+		)
 	policy = get_policy(doc.employee, on_date=doc.from_date)
 	if policy.get("has_policy") and cint(policy.sick_leave_auto_split) and doc.leave_type == policy.sick_leave_type:
 		resync_year(doc.employee, doc.from_date)
@@ -251,19 +302,21 @@ def on_cancel(doc, method=None):
 
 
 def resync_year(employee, on_date):
-	"""Re-split every submitted sick leave of the leave year in date order; re-book what changed."""
+	"""Re-split every submitted sick leave from the affected date onward, in date order.
+
+	Despite the name it covers every window the date can reach: a leave in one window can only
+	shift the ones after it, and a rolling window reaches 12 months back. Re-books only what changed.
+	"""
 	policy = get_policy(employee, on_date=on_date)
 	if not policy.get("has_policy") or not cint(policy.sick_leave_auto_split):
 		return []
 
 	company = frappe.db.get_value("Employee", employee, "company")
 	daily = _daily_rate(policy, employee)
-	changed, used = [], 0.0
+	lower = window_start(policy, employee, company, on_date)
+	changed = []
 
-	for app in _year_applications(employee, company, policy.sick_leave_type, on_date):
-		doc = frappe.get_doc("Leave Application", app.name)
-		segments, consumed = _split_application(doc, policy, used)
-		used += consumed
+	for doc, segments, _consumed in walk(policy, _applications_from(employee, policy.sick_leave_type, lower)):
 		try:
 			if _apply(doc, segments, monthly_deductions(segments, daily)):
 				changed.append(doc.name)
@@ -279,9 +332,8 @@ def resync_year(employee, on_date):
 
 
 def _apply(doc, segments, desired):
-	"""Bring one application's split table and payroll deductions in line. True if anything changed."""
+	"""Bring one application's split table and payroll in line. True if anything changed."""
 	rows = summarise(segments)
-	existing = {row["month"]: row for row in payroll.load_json(doc.get("sick_deduction_rows"))}
 	changed = False
 
 	if _table_differs(doc, rows):
@@ -303,26 +355,67 @@ def _apply(doc, segments, desired):
 		update_modified=False,
 	)
 
-	kept = []
-	book = dict(desired)
-	for month, row in existing.items():
-		want = book.get(getdate(month))
-		if want and abs(flt(want[1]) - flt(row["amount"])) < 0.0005:
-			kept.append(row)
-			book.pop(getdate(month))
-		else:
-			payroll.cancel_deductions([row["name"]])
-			changed = True
+	if _reconcile_payroll(doc, desired):
+		changed = True
+	return changed
 
-	if book:
-		component, currency = payroll.prepare_component(
-			doc.employee, doc.company, _expense_account(doc.company), component=_component()
+
+def _reconcile_payroll(doc, desired):
+	"""Make the Additional Salary rows booked for `doc` add up to `desired`, month by month.
+
+	`desired` is {month_start: [payroll_date, amount]} of deductions. An open month's rows are
+	cancelled and re-booked. A month whose payslip is already submitted is left alone and the
+	difference is booked on the next open payroll date: a deduction for more, an earning for less.
+	Rows are kept signed (an earning refund is negative) in `sick_deduction_rows`.
+	"""
+	rows = payroll.load_json(doc.get("sick_deduction_rows"))
+	by_month = {}
+	for row in rows:
+		by_month.setdefault(row["month"], []).append(row)
+	wanted = {str(month): entry for month, entry in (desired or {}).items()}
+
+	kept, changed = [], False
+	deduction = adjustment = None  # (component, currency), resolved only when needed
+
+	def resolve(component, component_type):
+		return payroll.prepare_component(
+			doc.employee, doc.company, _expense_account(doc.company), component=component, component_type=component_type
 		)
-		for month, (payroll_date, amount) in sorted(book.items()):
-			name = payroll.book_deduction(doc, component, currency, payroll_date, amount)
-			if name:
-				kept.append({"name": name, "month": str(month), "amount": flt(amount, payroll.MONEY_PRECISION)})
-				changed = True
+
+	for month in sorted(set(by_month) | set(wanted)):
+		existing = by_month.get(month, [])
+		booked = flt(sum(flt(r["amount"]) for r in existing), payroll.MONEY_PRECISION)
+		originals = [r for r in existing if not r.get("adjustment")]
+		payroll_date = getdate(
+			wanted[month][0] if month in wanted else (originals[0].get("date") if originals else None) or month
+		)
+		want = flt(wanted[month][1], payroll.MONEY_PRECISION) if month in wanted else 0.0
+
+		if abs(want - booked) < 0.0005:
+			kept.extend(existing)
+			continue
+		changed = True
+
+		if not payroll.slip_covering(doc.employee, payroll_date):
+			payroll.cancel_deductions([r["name"] for r in existing])
+			if want > 0:
+				deduction = deduction or resolve(_component(), "Deduction")
+				name = payroll.book_deduction(doc, deduction[0], deduction[1], payroll_date, want)
+				if name:
+					kept.append({"name": name, "month": month, "date": str(payroll_date), "amount": want})
+			continue
+
+		kept.extend(existing)
+		delta = flt(want - booked, payroll.MONEY_PRECISION)
+		when = payroll.next_open_date(doc.employee)
+		if delta > 0:
+			deduction = deduction or resolve(_component(), "Deduction")
+			name = payroll.book_additional_salary(doc, deduction[0], deduction[1], when, delta, check_closed=False)
+		else:
+			adjustment = adjustment or resolve(_adjustment_component(), "Earning")
+			name = payroll.book_additional_salary(doc, adjustment[0], adjustment[1], when, -delta, check_closed=False)
+		if name:
+			kept.append({"name": name, "month": month, "date": str(when), "amount": delta, "adjustment": 1})
 
 	doc.db_set("sick_deduction_rows", payroll.dump_json(kept), update_modified=False)
 	return changed
@@ -358,6 +451,16 @@ def _component():
 		SICK_COMPONENT,
 		"SLD",
 		"Takes back the unpaid share of sick leave that HRMS paid in full. Created by HR Suite.",
+	)
+
+
+def _adjustment_component():
+	return payroll.ensure_component(
+		ADJUSTMENT_COMPONENT,
+		"SLA",
+		"Earning",
+		"Gives back sick-leave pay that was deducted in a closed month and later turned out to be due. "
+		"Created by HR Suite.",
 	)
 
 
