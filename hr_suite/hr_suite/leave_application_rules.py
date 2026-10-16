@@ -29,8 +29,26 @@ UNPAID_COMPONENT = "Leave Before Minimum Service Deduction"
 
 
 def validate(doc, method=None):
+	_refuse_hand_set_decision(doc)
 	_check_minimum_service(doc)
 	_check_source_balance(doc)
+
+
+def _refuse_hand_set_decision(doc):
+	"""With an approval workflow, Approved / Rejected is reached by its buttons, never by editing Status.
+
+	Editing Status on a draft leaves it reading "Approved" but not submitted: no Submit button, no
+	leave ledger entry, invisible to the sick-pay tiers and to the Leave Salary Settlement. The
+	buttons submit the document, and at that point docstatus is already 1, so they pass.
+	"""
+	from frappe.model.workflow import get_workflow_name
+
+	if doc.docstatus == 0 and doc.get("status") in ("Approved", "Rejected") and get_workflow_name(doc.doctype):
+		frappe.throw(
+			_("Leave cannot be approved or rejected by changing the Status field. Save it as Open and use the "
+			  "Approve or Reject button (the Approval menu at the top)."),
+			title=_("Use The Approval Buttons"),
+		)
 
 
 def on_submit(doc, method=None):

@@ -109,6 +109,8 @@ Month rules: a full month earns exactly the monthly rate (2.5 or 1.75) whatever 
 3. Country Config → **Leave Accrual Engine = HR Suite Ledger**. Leave **Ledger Accrues From** as the first of the month after the opening date.
 4. The daily leave-type sync (or ask the developer to run it) turns **off** HRMS earned-leave for Annual Leave and allows a negative balance. Check *Leave Type → Annual Leave*: **Is Earned Leave unticked, Allow Negative Balance ticked.**
 
+**Check before you switch a country on.** Annual leave allocated some other way (an old Leave Policy Assignment, or by hand) sits *under* the ledger, so the balance becomes that allocation **plus** everything accrued. On the Country Config of a ledger country, **Actions → Run Accrual Now** accrues every month still owed (safe to repeat) and lists any allocation the ledger did not make: cancel it, or enter it as the opening balance. The monthly job itself runs at 03:00 on the 1st, so a country switched on mid-month shows nothing until then unless you use this button.
+
 ### 3.2 Tests
 | # | Do | Expect |
 |---|---|---|
@@ -277,6 +279,8 @@ A workflow **Leave Application Approval** is installed on the Leave Application 
 | W4 | Reject another | Submitted, **Rejected**, balance **unchanged**. |
 | W5 | The employee (even with HR Manager) opens their own leave | **No** approve / reject buttons: nobody approves their own leave. |
 | W6 | If buttons are missing on a site | Run `bench --site SITE execute hr_suite.hr_suite.leave_workflow.diagnose --kwargs "{'application': 'HR-LAP-…', 'user': 'approver@…'}"`: it lists the cause (no active workflow, role missing, condition false, permission, self-approval). |
+**Do not set Status to Approved by hand.** That leaves the leave *not submitted*: no Submit button, no balance deduction, and it is missing from the Leave Salary Settlement list and from the sick-pay tiers. The system now refuses it; always use the **Approval** menu. HR may create a leave for an employee and approve it as the named approver or HR Manager; only an employee approving their *own* leave is blocked. A leave left stuck by hand is put back to *Open* on deployment.
+
 No alert e-mail is sent by this workflow on purpose (a PDF failure would undo the approval); approvers use the Workflow Action list and HRMS leave notifications.
 
 ### 6A.4 Salary Structure currency

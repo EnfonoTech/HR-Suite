@@ -37,7 +37,12 @@ def _definition():
 			"next_state": next_state,
 			"allowed": role,
 			"condition": condition,
-			"allow_self_approval": 0,
+			# Frappe's own self-approval test compares the approver with the user who CREATED the
+			# document. HR routinely creates a leave for an employee and then approves it, so that
+			# test would lock them out (the UAT testers fell back to editing Status by hand and left
+			# the leave stuck unsubmitted). The real rule, an employee never approves their own leave,
+			# is the NOT_SELF condition on every transition.
+			"allow_self_approval": 1,
 		}
 
 	return {

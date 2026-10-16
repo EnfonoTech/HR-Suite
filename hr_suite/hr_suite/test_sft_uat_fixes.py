@@ -369,6 +369,40 @@ class TestApprovalWorkflow(LeaveTestBase):
 		name = self.apply("2026-05-04", "2026-05-05")
 		self.assertEqual(self.actions(name, other), [])
 
+	def test_hr_who_created_the_leave_for_the_employee_can_approve_it(self):
+		# the UAT testers created leave for the employee and approved it as the same user
+		from frappe.model.workflow import apply_workflow
+
+		hr = self.user("sft.hr@example.com", ["HR Manager", "Leave Approver"])
+		frappe.db.set_value("Employee", self.emp, "leave_approver", hr)
+		frappe.set_user(hr)
+		la = frappe.get_doc(
+			doctype="Leave Application", employee=self.emp, leave_type="Annual Leave", from_date="2026-05-04",
+			to_date="2026-05-05", company=COMPANY, leave_approver=hr,
+		)
+		la.insert(ignore_permissions=True)
+		self.assertEqual(self.actions(la.name, hr), ["Approve", "Reject"])
+		apply_workflow(frappe.get_doc("Leave Application", la.name), "Approve")
+		frappe.set_user("Administrator")
+		self.assertEqual(frappe.db.get_value("Leave Application", la.name, ["status", "docstatus"]), ("Approved", 1))
+
+	def test_status_cannot_be_set_to_approved_by_hand(self):
+		name = self.apply("2026-05-04", "2026-05-05")
+		la = frappe.get_doc("Leave Application", name)
+		la.status = "Approved"
+		with self.assertRaises(frappe.ValidationError) as caught:
+			la.save(ignore_permissions=True)
+		self.assertIn("Approve or Reject button", str(caught.exception))
+		self.assertEqual(frappe.db.get_value("Leave Application", name, "status"), "Open")
+
+	def test_the_patch_reopens_leaves_stuck_before_submit(self):
+		from hr_suite.patches.reopen_leave_applications_stuck_before_submit import execute
+
+		stuck = self.apply("2026-05-04", "2026-05-05")
+		frappe.db.set_value("Leave Application", stuck, "status", "Approved")  # as the testers left it
+		execute()
+		self.assertEqual(frappe.db.get_value("Leave Application", stuck, ["status", "docstatus"]), ("Open", 0))
+
 	def test_the_doctor_names_what_is_wrong(self):
 		from hr_suite.hr_suite.leave_workflow import diagnose
 
@@ -493,3 +527,27 @@ class TestSickAcceptance(SickTestBase):
 		self.sick(emp, "2026-05-01", "2026-05-30")
 		july = self.sick(emp, "2026-07-10", "2026-07-20")
 		self.assertEqual(self.split(july), [("75% pay", 11)])
+
+
+# ── allocations outside the ledger ────────────────────────────────────────────
+
+
+class TestLegacyAllocations(LeaveTestBase):
+	def test_an_allocation_the_ledger_did_not_make_is_reported(self):
+		from hr_suite.hr_suite.leave_accrual import legacy_annual_allocations
+
+		emp = self.employee("Legacy", "SA", "2026-01-01")
+		alloc = frappe.get_doc(
+			doctype="Leave Allocation", employee=emp, leave_type="Annual Leave", from_date="2026-01-01",
+			to_date="2026-12-31", new_leaves_allocated=30,
+		)
+		alloc.insert(ignore_permissions=True)
+		alloc.submit()
+		self.assertIn((emp, alloc.name, 30), [(r["employee"], r["allocation"], r["days"]) for r in legacy_annual_allocations("2026-06-01")])
+
+	def test_the_ledgers_own_allocation_is_not(self):
+		from hr_suite.hr_suite.leave_accrual import legacy_annual_allocations
+
+		emp = self.employee("Mine", "SA", "2026-01-01")
+		accrue_employee(emp, "2026-02-28")
+		self.assertNotIn(emp, [r["employee"] for r in legacy_annual_allocations("2026-06-01")])

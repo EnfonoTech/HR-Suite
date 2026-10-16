@@ -331,13 +331,46 @@ def run_monthly_accrual(through=None):
 	return summary
 
 
+def legacy_annual_allocations(on_date=None):
+	"""Annual-leave allocations that cover the date but that the ledger did not make.
+
+	On the ledger engine the HRMS allocation is the ledger's own running total. An allocation
+	made some other way (a Leave Policy Assignment of the old set-up, or by hand) sits underneath
+	it, so the balance is that allocation PLUS everything accrued. Returned so HR can cancel it or
+	fold it into the opening balance. [{"employee", "allocation", "leave_type", "days"}]
+	"""
+	on_date = getdate(on_date or today())
+	allocations = frappe.get_all(
+		"Leave Allocation",
+		filters={"docstatus": 1, "from_date": ["<=", on_date], "to_date": [">=", on_date], "new_leaves_allocated": [">", 0]},
+		fields=["name", "employee", "leave_type", "new_leaves_allocated"],
+	)
+	made = {r.leave_allocation for r in frappe.get_all("Leave Accrual Ledger", fields=["leave_allocation"]) if r.leave_allocation}
+	policies, out = {}, []
+	for row in allocations:
+		if row.name in made:
+			continue
+		if row.employee not in policies:
+			policies[row.employee] = get_policy(row.employee, on_date=on_date)
+		policy = policies[row.employee]
+		if policy.get("has_policy") and policy.leave_accrual_engine == LEDGER_ENGINE and row.leave_type == policy.annual_leave_type:
+			out.append({"employee": row.employee, "allocation": row.name, "leave_type": row.leave_type, "days": flt(row.new_leaves_allocated, 2)})
+	return out
+
+
 @frappe.whitelist()
 def run_accrual(employee=None, through=None):
-	"""Run (or catch up) the accrual by hand, for one employee or everyone. HR Manager only."""
+	"""Run (or catch up) the accrual by hand, for one employee or everyone. HR Manager only.
+
+	Also reports the annual-leave allocations the ledger did not make, which would add to the balance.
+	"""
 	frappe.only_for(("HR Manager", "System Manager"))
 	if employee:
-		return {"employees": 1, "rows": len(accrue_employee(employee, through)), "failed": []}
-	return run_monthly_accrual(through)
+		result = {"employees": 1, "rows": len(accrue_employee(employee, through)), "failed": []}
+	else:
+		result = run_monthly_accrual(through)
+	result["legacy_allocations"] = legacy_annual_allocations()
+	return result
 
 
 # ── annual-leave rules on a Leave Application ────────────────────────────────
