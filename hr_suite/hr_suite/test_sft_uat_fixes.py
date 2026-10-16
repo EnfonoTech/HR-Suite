@@ -626,3 +626,25 @@ class TestAutomaticPaymentAdvice(FrappeTestCase):
 	def test_a_failure_is_logged_never_raised(self):
 		_send, log = self.run_job(boom=True)
 		log.assert_called_once()
+
+
+# ── accrual before an existing carry-forward allocation ───────────────────────
+
+
+class TestAccrualBeforeCarryForward(LeaveTestBase):
+	def test_a_month_before_a_carry_forward_allocation_is_credited_to_it(self):
+		self.start_ledger("2025-12-01")
+		emp = self.employee("Carried", "SA", "2024-01-01")
+		alloc = frappe.get_doc(
+			doctype="Leave Allocation", employee=emp, leave_type="Annual Leave", from_date="2026-01-01",
+			to_date="2026-12-31", new_leaves_allocated=1, carry_forward=1,
+		)
+		alloc.insert(ignore_permissions=True)
+		alloc.submit()
+
+		created = accrue_employee(emp, "2026-01-31")  # December 2025 and January 2026
+		self.assertEqual(len(created), 2)  # no BackDatedAllocationError, nothing lost
+		self.assertEqual(self.balance(emp, "2026-01-31"), 4.5)  # the 1 day held + 1.75 + 1.75
+		self.assertEqual(
+			frappe.get_all("Leave Accrual Ledger", filters={"employee": emp}, pluck="leave_allocation"), [alloc.name] * 2
+		)

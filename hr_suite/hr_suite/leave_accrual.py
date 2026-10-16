@@ -182,6 +182,39 @@ def _create_allocation(employee, leave_type, on_date, days):
 	return allocation.name
 
 
+def _credit_new_or_later_allocation(employee, leave_type, on_date, days):
+	"""No allocation covers the month: open one, or, if HRMS refuses to back-date it, use the next.
+
+	HRMS will not create an allocation that starts before an existing one that carries leave
+	forward (BackDatedAllocationError), which is the case when the ledger starts accruing in
+	December of a year whose following year's allocation already exists. The days are then
+	credited to the earliest later allocation instead, dated on its first day, so the balance is
+	right from then on and the accrual is not lost.
+	"""
+	from hrms.hr.doctype.leave_allocation.leave_allocation import BackDatedAllocationError
+	from hrms.hr.utils import create_additional_leave_ledger_entry
+
+	frappe.db.savepoint("hrs_new_allocation")
+	try:
+		return _create_allocation(employee, leave_type, on_date, days)
+	except BackDatedAllocationError:
+		# only the refused insert is undone, never the ledger rows already written this run
+		frappe.db.rollback(save_point="hrs_new_allocation")
+		later = frappe.get_all(
+			"Leave Allocation",
+			filters={"employee": employee, "leave_type": leave_type, "docstatus": 1, "from_date": [">", getdate(on_date)]},
+			fields=["name", "from_date"],
+			order_by="from_date asc",
+			limit=1,
+		)
+		if not later:
+			raise
+		allocation = frappe.get_doc("Leave Allocation", later[0].name)
+		allocation.db_set("total_leaves_allocated", flt(allocation.total_leaves_allocated) + days, update_modified=False)
+		create_additional_leave_ledger_entry(allocation, days, getdate(allocation.from_date))
+		return allocation.name
+
+
 def post_to_hrms(employee, leave_type, days, on_date):
 	"""Add `days` (negative to take off) to the employee's HRMS annual-leave balance.
 
@@ -205,7 +238,7 @@ def post_to_hrms(employee, leave_type, days, on_date):
 				indicator="orange",
 			)
 			return None
-		return _create_allocation(employee, leave_type, on_date, days)
+		return _credit_new_or_later_allocation(employee, leave_type, on_date, days)
 
 	allocation = frappe.get_doc("Leave Allocation", name)
 	allocation.db_set("total_leaves_allocated", flt(allocation.total_leaves_allocated) + days, update_modified=False)
