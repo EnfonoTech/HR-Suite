@@ -283,7 +283,15 @@ A workflow **Leave Application Approval** is installed on the Leave Application 
 
 No alert e-mail is sent by this workflow on purpose (a PDF failure would undo the approval); approvers use the Workflow Action list and HRMS leave notifications.
 
-### 6A.4 Salary Structure currency
+### 6A.4 Payment Advice approval, automatic
+- **Approvers are set per company** in *Hr Suite Settings → HR Payment Advice Approval* (level 1, optionally level 2). A company with **none** keeps the old behaviour, where submitting the advice is the approval, and *Send for Approval* answers "No Approver". Add the approvers first.
+- With approvers set, a bare **Submit is refused** ("Approval Required"); the last approver's *Approve* submits it.
+- **A submitted Leave Salary Settlement now raises its Payment Advice by itself** (within seconds, in the background) and, where approvers are set, sends it for approval, so level 1 is assigned with no clicks. If anything stops it, the **Create → Payment Advice** button still works and the Error Log says why.
+
+### 6A.5 Saudi Arabia gratuity in the standard Gratuity form
+The HRMS **Gratuity Rule** list now contains **Saudi Arabia - Termination / End Of Contract** (also Oman and Qatar), built from the Country Config slabs: 15 days a year for 5 years, then 30, with part years pro-rated (7 years on 6,000 = 27,000). **Resignation** reductions, caps and the Bahrain scheme cannot be written as HRMS rules, so those cases are calculated in HR Suite (Gratuity Liability report, end-of-service benefit), not in the standard Gratuity form.
+
+### 6A.6 Salary Structure currency
 A new **Salary Structure** takes the **company's default currency** (SAR for a Saudi company, BHD for a Bahrain one) when the company is chosen, whatever the user's own default is. Choosing another currency shows a warning. To find structures already in the wrong currency: `bench --site SITE execute hr_suite.hr_suite.salary_currency.mismatches`; draft ones can be edited, submitted ones are replaced by amending or creating a new structure and assignment.
 
 ---

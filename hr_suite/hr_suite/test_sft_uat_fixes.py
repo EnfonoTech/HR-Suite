@@ -551,3 +551,78 @@ class TestLegacyAllocations(LeaveTestBase):
 		emp = self.employee("Mine", "SA", "2026-01-01")
 		accrue_employee(emp, "2026-02-28")
 		self.assertNotIn(emp, [r["employee"] for r in legacy_annual_allocations("2026-06-01")])
+
+
+# ── Saudi gratuity rule in the HRMS list ──────────────────────────────────────
+
+
+class TestGratuityRules(FrappeTestCase):
+	NAME = "Saudi Arabia - Termination / End Of Contract"
+
+	def test_the_saudi_rule_is_in_the_hrms_list_with_the_country_slabs(self):
+		rule = frappe.get_doc("Gratuity Rule", self.NAME)
+		self.assertEqual(rule.calculate_gratuity_amount_based_on, "Sum of all previous slabs")
+		self.assertEqual(
+			[(s.from_year, s.to_year, s.fraction_of_applicable_earnings) for s in rule.gratuity_rule_slabs],
+			[(0, 5, 0.5), (5, 0, 1.0)],  # 15 days = half a month a year, then a month a year
+		)
+
+	def test_the_hrms_gratuity_form_pays_the_same_as_the_spec(self):
+		from unittest.mock import patch
+
+		doc = frappe.new_doc("Gratuity")
+		doc.gratuity_rule = self.NAME
+		with patch.object(type(doc), "get_total_component_amount", return_value=6000):
+			self.assertEqual(doc.get_gratuity_amount(7), 27000)  # (5 x 15 + 2 x 30) days at 200
+			self.assertEqual(doc.get_gratuity_amount(7.5), 30000)  # 2.5 + 2.5 months of 6,000: the half year is pro-rated
+			self.assertEqual(doc.get_gratuity_amount(3), 9000)
+
+	def test_countries_hrms_cannot_express_are_left_out(self):
+		from hr_suite.hr_suite.gratuity_rules import _expressible
+		from hr_suite.hr_suite.policy import get_country_policy
+
+		self.assertFalse(_expressible(get_country_policy("SA")))
+		self.assertIn("cap", str(_expressible(get_country_policy("KW"))))
+		self.assertIn("ends", str(_expressible(get_country_policy("BH"))))
+
+	def test_an_edited_rule_is_not_overwritten(self):
+		from hr_suite.hr_suite.gratuity_rules import sync_gratuity_rules
+
+		frappe.db.set_value("Gratuity Rule", self.NAME, "minimum_year_for_gratuity", 3)
+		sync_gratuity_rules()
+		self.assertEqual(frappe.db.get_value("Gratuity Rule", self.NAME, "minimum_year_for_gratuity"), 3)
+
+
+# ── payment advice: automatic ─────────────────────────────────────────────────
+
+
+class TestAutomaticPaymentAdvice(FrappeTestCase):
+	def run_job(self, created=True, configured=True, boom=False):
+		from unittest.mock import patch
+
+		from hr_suite.hr_suite import payment_advice as pa
+
+		result = {"advice": "ADV-1", "doctype": pa.ADVICE_DOCTYPE, "created": created}
+		with patch.object(pa, "raise_for_document", side_effect=RuntimeError("x") if boom else None, return_value=result), patch(
+			"hr_suite.hr_suite.payment_advice_flow.approvals_configured", return_value=configured
+		), patch("hr_suite.hr_suite.payment_advice_flow.submit_for_approval") as send, patch.object(
+			pa.frappe.db, "get_value", return_value="Steel Force Trading WLL"
+		), patch.object(pa.frappe.db, "commit"), patch.object(pa.frappe.db, "rollback"), patch.object(pa.frappe, "log_error") as log:
+			pa.raise_after_submit("Leave Salary Settlement", "LSS-1")
+		return send, log
+
+	def test_with_approvers_the_advice_is_sent_for_approval(self):
+		send, _log = self.run_job()
+		send.assert_called_once_with("ADV-1")
+
+	def test_without_approvers_it_stays_a_draft(self):
+		send, _log = self.run_job(configured=False)
+		send.assert_not_called()
+
+	def test_an_advice_that_already_existed_is_not_sent_again(self):
+		send, _log = self.run_job(created=False)
+		send.assert_not_called()
+
+	def test_a_failure_is_logged_never_raised(self):
+		_send, log = self.run_job(boom=True)
+		log.assert_called_once()

@@ -573,6 +573,28 @@ def raise_for_document(doctype: str, name: str) -> dict:
 	return {"advice": advice.name, "doctype": target_doctype, "created": True}
 
 
+def raise_after_submit(doctype: str, name: str) -> None:
+	"""Background job: raise the advice for a just-submitted document and, where approvers are
+	configured, send it for approval, so the whole route runs without a click.
+
+	Runs after the source document's transaction has committed, never inside it, and never raises:
+	whatever it cannot do is logged and the "Create > Payment Advice" button still works.
+	"""
+	try:
+		result = raise_for_document(doctype, name)
+		if not result.get("created") or result.get("doctype") != ADVICE_DOCTYPE:
+			return
+		from hr_suite.hr_suite.payment_advice_flow import approvals_configured, submit_for_approval
+
+		company = frappe.db.get_value(ADVICE_DOCTYPE, result["advice"], "company")
+		if approvals_configured(company):
+			submit_for_approval(result["advice"])
+		frappe.db.commit()
+	except Exception:
+		frappe.db.rollback()
+		frappe.log_error(frappe.get_traceback(), "HR Suite: automatic payment advice failed for {0} {1}".format(doctype, name))
+
+
 def _write_back_advice_link(doc, spec: dict, advice_name: str, advice_doctype: str = None) -> None:
 	"""Record the advice on the source document, where the document has a field for it.
 

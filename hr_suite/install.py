@@ -10,6 +10,7 @@ import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from frappe.utils import cstr, flt
 
+from hr_suite.hr_suite.gratuity_rules import sync_gratuity_rules
 from hr_suite.hr_suite.leave_workflow import ensure_workflow as ensure_leave_application_workflow
 
 from hr_suite.hr_suite.leave_setup import setup_leave_management
@@ -50,6 +51,7 @@ def after_install():
 	# Appraisal custom fields + the seeded criteria / appraisal template.
 	setup_performance_management()
 	seed_country_configs()
+	sync_gratuity_rules()  # after the configs it reads
 	# Leave: Country Config declares the entitlements, this turns them into Leave
 	# Periods / Leave Types / a Leave Policy, and gives payroll something to read.
 	# Must run AFTER seed_country_configs() — it reads what that seeds.
@@ -84,6 +86,7 @@ def after_migrate():
 	# Appraisal custom fields + the seeded criteria / appraisal template.
 	setup_performance_management()
 	seed_country_configs()
+	sync_gratuity_rules()  # after the configs it reads
 	# Leave: Country Config declares the entitlements, this turns them into Leave
 	# Periods / Leave Types / a Leave Policy, and gives payroll something to read.
 	# Must run AFTER seed_country_configs() — it reads what that seeds.

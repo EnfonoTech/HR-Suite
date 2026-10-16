@@ -137,6 +137,18 @@ class LeaveSalarySettlement(Document):
 		self._post_ledger_row()
 		if not self._is_final() and self._is_first(exclude_self=True):
 			self._sync_exclusions()
+		# The payment advice follows on its own, once this submit has committed: raising a second
+		# submittable document inside this transaction is how a payroll run died once.
+		if flt(self.total_payable) > 0:
+			frappe.enqueue(
+				"hr_suite.hr_suite.payment_advice.raise_after_submit",
+				queue="short",
+				enqueue_after_commit=True,
+				job_id="hrs_advice_{0}".format(self.name),
+				deduplicate=True,
+				doctype=self.doctype,
+				name=self.name,
+			)
 
 	def before_cancel(self):
 		assert_no_live_advice(self)
