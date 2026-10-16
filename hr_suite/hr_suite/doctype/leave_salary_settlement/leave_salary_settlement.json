@@ -1,0 +1,537 @@
+{
+ "name": "Leave Salary Settlement",
+ "module": "Hr Suite",
+ "doctype": "DocType",
+ "autoname": "naming_series:",
+ "is_submittable": 1,
+ "track_changes": 1,
+ "title_field": "employee_name",
+ "sort_field": "leave_from_date",
+ "sort_order": "DESC",
+ "engine": "InnoDB",
+ "allow_import": 0,
+ "field_order": [
+  "naming_series",
+  "employee",
+  "employee_name",
+  "column_break_1",
+  "company",
+  "department",
+  "country",
+  "status",
+  "settlement_type",
+  "leave_section",
+  "leave_application",
+  "leave_type",
+  "leave_from_date",
+  "leave_to_date",
+  "leave_days",
+  "column_break_2",
+  "last_working_day",
+  "eligibility_section",
+  "policy_basis",
+  "pay_worked_days_in_settlement",
+  "earned_salary_days",
+  "min_earned_days",
+  "column_break_3",
+  "service_days",
+  "min_service_days",
+  "eligible",
+  "shortfall_note",
+  "pay_below_barrier",
+  "barrier_override_reason",
+  "pay_section",
+  "monthly_gross",
+  "days_worked",
+  "worked_days_pay",
+  "daily_leave_rate",
+  "column_break_4",
+  "salary_days_due",
+  "salary_days_paid",
+  "salary_days_unpaid",
+  "leave_salary_amount",
+  "ticket_section",
+  "ticket_entitled",
+  "ticket_amount",
+  "total_section",
+  "pay_lines",
+  "previously_paid",
+  "total_payable",
+  "rejoin_section",
+  "rejoin_date",
+  "actual_leave_days",
+  "unused_days",
+  "recovery_amount",
+  "column_break_5",
+  "extra_days",
+  "extension_days_covered",
+  "extra_days_unpaid",
+  "rejoin_note",
+  "links_section",
+  "payment_advice_type",
+  "payment_advice",
+  "exclusion_rows",
+  "rejoin_rows",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "LSS-.YYYY.-.####",
+   "reqd": 1,
+   "default": "LSS-.YYYY.-.####"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "fetch_from": "employee.employee_name",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "fetch_from": "employee.company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department",
+   "fetch_from": "employee.department"
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Data",
+   "label": "Country",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nApproved\nPaid\nCancelled",
+   "default": "Draft",
+   "read_only": 1,
+   "in_list_view": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "settlement_type",
+   "fieldtype": "Select",
+   "label": "Settlement Type",
+   "options": "Annual Leave\nFinal Settlement",
+   "default": "Annual Leave",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Annual Leave pays an employee going on leave. Final Settlement pays the leave days accrued and unused when the employee leaves; worked days and gratuity are paid by the Salary Settlement and the gratuity calculation."
+  },
+  {
+   "fieldname": "leave_section",
+   "fieldtype": "Section Break",
+   "label": "Leave"
+  },
+  {
+   "fieldname": "leave_application",
+   "fieldtype": "Link",
+   "label": "Leave Application",
+   "options": "Leave Application",
+   "reqd": 0,
+   "in_standard_filter": 1,
+   "mandatory_depends_on": "eval:doc.settlement_type=='Annual Leave'",
+   "depends_on": "eval:doc.settlement_type=='Annual Leave'"
+  },
+  {
+   "fieldname": "leave_type",
+   "fieldtype": "Link",
+   "label": "Leave Type",
+   "options": "Leave Type",
+   "read_only": 1,
+   "depends_on": "eval:doc.settlement_type=='Annual Leave'"
+  },
+  {
+   "fieldname": "leave_from_date",
+   "fieldtype": "Date",
+   "label": "Leave From",
+   "read_only": 1,
+   "in_list_view": 1,
+   "depends_on": "eval:doc.settlement_type=='Annual Leave'"
+  },
+  {
+   "fieldname": "leave_to_date",
+   "fieldtype": "Date",
+   "label": "Leave To",
+   "read_only": 1,
+   "depends_on": "eval:doc.settlement_type=='Annual Leave'"
+  },
+  {
+   "fieldname": "leave_days",
+   "fieldtype": "Float",
+   "label": "Leave Days",
+   "read_only": 1,
+   "precision": "2",
+   "depends_on": "eval:doc.settlement_type=='Annual Leave'"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "last_working_day",
+   "fieldtype": "Date",
+   "label": "Last Working Day",
+   "reqd": 1,
+   "description": "Annual Leave: defaults to the day before the leave. Final Settlement: the last day worked.",
+   "mandatory_depends_on": "eval:doc.settlement_type=='Final Settlement'"
+  },
+  {
+   "fieldname": "eligibility_section",
+   "fieldtype": "Section Break",
+   "label": "Policy & Eligibility"
+  },
+  {
+   "fieldname": "policy_basis",
+   "fieldtype": "Small Text",
+   "label": "Basis",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pay_worked_days_in_settlement",
+   "fieldtype": "Check",
+   "label": "Pays Worked Days",
+   "read_only": 1,
+   "description": "From the country policy. Ticked: this settlement pays the days worked this month and payroll skips the employee for the month."
+  },
+  {
+   "fieldname": "earned_salary_days",
+   "fieldtype": "Float",
+   "label": "Earned Leave-Salary Days",
+   "read_only": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "min_earned_days",
+   "fieldtype": "Float",
+   "label": "Minimum Earned Days",
+   "read_only": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "service_days",
+   "fieldtype": "Int",
+   "label": "Service From Joining (Days)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "min_service_days",
+   "fieldtype": "Int",
+   "label": "Minimum Service (Days)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "eligible",
+   "fieldtype": "Check",
+   "label": "Barrier Met",
+   "read_only": 1
+  },
+  {
+   "fieldname": "shortfall_note",
+   "fieldtype": "Small Text",
+   "label": "Shortfall",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pay_below_barrier",
+   "fieldtype": "Check",
+   "label": "Pay Below The Barrier",
+   "description": "Only users with the HR Leave Override role. A reason is required."
+  },
+  {
+   "fieldname": "barrier_override_reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "depends_on": "pay_below_barrier",
+   "mandatory_depends_on": "pay_below_barrier"
+  },
+  {
+   "fieldname": "pay_section",
+   "fieldtype": "Section Break",
+   "label": "Pay"
+  },
+  {
+   "fieldname": "monthly_gross",
+   "fieldtype": "Currency",
+   "label": "Monthly Salary (All Earnings)",
+   "read_only": 1,
+   "precision": "3"
+  },
+  {
+   "fieldname": "days_worked",
+   "fieldtype": "Float",
+   "label": "Days Worked This Month",
+   "read_only": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "worked_days_pay",
+   "fieldtype": "Currency",
+   "label": "Worked-Days Salary",
+   "read_only": 1,
+   "precision": "3"
+  },
+  {
+   "fieldname": "daily_leave_rate",
+   "fieldtype": "Currency",
+   "label": "Leave-Salary Daily Rate",
+   "read_only": 1,
+   "precision": "4"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "salary_days_due",
+   "fieldtype": "Float",
+   "label": "Leave Days Not Yet Paid",
+   "read_only": 1,
+   "precision": "2",
+   "description": "Leave days of this application not covered by an earlier settlement."
+  },
+  {
+   "fieldname": "salary_days_paid",
+   "fieldtype": "Float",
+   "label": "Salary Days Paid Now",
+   "read_only": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "salary_days_unpaid",
+   "fieldtype": "Float",
+   "label": "Salary Days Still Due",
+   "read_only": 1,
+   "precision": "2",
+   "description": "Earned later; released by a further settlement."
+  },
+  {
+   "fieldname": "leave_salary_amount",
+   "fieldtype": "Currency",
+   "label": "Leave Salary",
+   "read_only": 1,
+   "precision": "3"
+  },
+  {
+   "fieldname": "ticket_section",
+   "fieldtype": "Section Break",
+   "label": "Air Ticket"
+  },
+  {
+   "fieldname": "ticket_entitled",
+   "fieldtype": "Check",
+   "label": "Ticket Due"
+  },
+  {
+   "fieldname": "ticket_amount",
+   "fieldtype": "Currency",
+   "label": "Ticket Amount",
+   "depends_on": "ticket_entitled",
+   "precision": "3"
+  },
+  {
+   "fieldname": "total_section",
+   "fieldtype": "Section Break",
+   "label": "Payable"
+  },
+  {
+   "fieldname": "pay_lines",
+   "fieldtype": "Table",
+   "label": "Breakdown",
+   "options": "Leave Salary Settlement Line",
+   "read_only": 1
+  },
+  {
+   "fieldname": "previously_paid",
+   "fieldtype": "Currency",
+   "label": "Already Paid (Annual Leave Disbursement)",
+   "read_only": 1,
+   "precision": "3"
+  },
+  {
+   "fieldname": "total_payable",
+   "fieldtype": "Currency",
+   "label": "Total Payable",
+   "read_only": 1,
+   "precision": "3",
+   "bold": 1
+  },
+  {
+   "fieldname": "rejoin_section",
+   "fieldtype": "Section Break",
+   "label": "Return From Leave",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "rejoin_date",
+   "fieldtype": "Date",
+   "label": "Rejoin Date",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "description": "Recorded with the Record Rejoin button."
+  },
+  {
+   "fieldname": "actual_leave_days",
+   "fieldtype": "Float",
+   "label": "Leave Actually Taken",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "unused_days",
+   "fieldtype": "Float",
+   "label": "Unused Leave Days (Early Return)",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "recovery_amount",
+   "fieldtype": "Currency",
+   "label": "Leave Salary Recovered",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "precision": "3"
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "extra_days",
+   "fieldtype": "Float",
+   "label": "Days Over (Late Return)",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "extension_days_covered",
+   "fieldtype": "Float",
+   "label": "Covered By Leave Balance",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "extra_days_unpaid",
+   "fieldtype": "Float",
+   "label": "Unpaid Days",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "rejoin_note",
+   "fieldtype": "Small Text",
+   "label": "Note",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "links_section",
+   "fieldtype": "Section Break",
+   "label": "Links",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "payment_advice_type",
+   "fieldtype": "Link",
+   "label": "Advice Type",
+   "options": "DocType",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "payment_advice",
+   "fieldtype": "Dynamic Link",
+   "label": "Payment Advice",
+   "options": "payment_advice_type",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "exclusion_rows",
+   "fieldtype": "Long Text",
+   "label": "Payroll Exclusions",
+   "hidden": 1,
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "rejoin_rows",
+   "fieldtype": "Long Text",
+   "label": "Rejoin Adjustments",
+   "hidden": 1,
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Leave Salary Settlement",
+   "read_only": 1,
+   "no_copy": 1
+  }
+ ],
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "write": 1,
+   "role": "HR User"
+  }
+ ],
+ "modified": "2026-10-05 12:00:00.000000"
+}

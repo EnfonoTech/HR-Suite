@@ -1,0 +1,36 @@
+{
+ "name": "Country Resignation Factor",
+ "module": "Hr Suite",
+ "doctype": "DocType",
+ "istable": 1,
+ "editable_grid": 1,
+ "description": "Share of gratuity payable on resignation, by years of service.",
+ "fields": [
+  {
+   "fieldname": "from_years",
+   "fieldtype": "Float",
+   "label": "From (Years)",
+   "precision": "2",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "to_years",
+   "fieldtype": "Float",
+   "label": "To (Years)",
+   "precision": "2",
+   "in_list_view": 1,
+   "description": "0 = no upper limit (last row only)."
+  },
+  {
+   "fieldname": "payable_percent",
+   "fieldtype": "Percent",
+   "label": "Payable On Resignation (%)",
+   "precision": "6",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Share of the gratuity paid when the employee resigns in this service range."
+  }
+ ],
+ "permissions": [],
+ "modified": "2026-10-05 12:00:00.000000"
+}

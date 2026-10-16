@@ -3,6 +3,8 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 
+from hr_suite.hr_suite.policy_validation import validate_policy
+
 
 class CountryConfig(Document):
     def validate(self):
@@ -10,23 +12,37 @@ class CountryConfig(Document):
         if self.settlement_ceiling_applicable and not self.settlement_ceiling_amount:
             frappe.throw("Settlement ceiling amount is required when ceiling applies.")
         self._validate_overtime()
+        validate_policy(self)
 
     def _validate_overtime(self):
         """A night window that prices nothing is the failure this doctype keeps producing.
 
         The rate columns are NOT NULL DEFAULT 0, so a record can end up carrying a
         perfectly good 19:00-07:00 window next to a rate of zero — and overtime then
-        quietly falls back to the weekday rate with nothing on screen to say so. Refuse
-        the combination rather than let it sit there looking configured.
+        quietly falls back to the weekday rate with nothing on screen to say so. A saved window
+        without a rate is refused (a new one has simply not been given a window), and a
+        rate without a complete window is refused.
         """
-        if self.overtime_night_start or self.overtime_night_end:
-            if not flt(self.overtime_night_rate):
+        if not flt(self.overtime_night_rate):
+            if self.is_new():
+                # A NEW Country Config with no night rate has no night window. Frappe stamps
+                # an unset Time field with the current time on a new document, so "a window
+                # is set" is true of every country that simply has none — and both window
+                # fields are hidden (depends_on night rate) in exactly that state, so the
+                # administrator could neither see nor clear what a throw would ask for.
+                # That refused to seed Saudi Arabia and India on a fresh install.
+                self.overtime_night_start = None
+                self.overtime_night_end = None
+            elif self.overtime_night_start or self.overtime_night_end:
+                # A SAVED config genuinely carrying a window next to a zero rate is the
+                # failure this guard exists for.
                 frappe.throw(
                     _("A night window is set for {0} but the Night Rate is 0, so the window "
                       "would price nothing and overtime would fall back to the weekday rate. "
                       "Enter the night rate, or clear the window.").format(self.country_code or _("this country")),
                     title=_("Night rate missing"),
                 )
+        else:
             if not (self.overtime_night_start and self.overtime_night_end):
                 frappe.throw(
                     _("The night window needs both a start and an end time."),

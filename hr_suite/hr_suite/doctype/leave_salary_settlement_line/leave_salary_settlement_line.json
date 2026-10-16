@@ -1,0 +1,34 @@
+{
+ "name": "Leave Salary Settlement Line",
+ "module": "Hr Suite",
+ "doctype": "DocType",
+ "istable": 1,
+ "editable_grid": 1,
+ "fields": [
+  {
+   "fieldname": "line_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Worked Days Salary\nLeave Salary\nAir Ticket\nPreviously Paid",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "label": "Description",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "precision": "3",
+   "in_list_view": 1,
+   "read_only": 1
+  }
+ ],
+ "permissions": [],
+ "modified": "2026-10-05 12:00:00.000000"
+}

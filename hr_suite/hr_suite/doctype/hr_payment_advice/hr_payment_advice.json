@@ -12,9 +12,11 @@
   "naming_series",
   "employee",
   "employee_name",
+  "department",
   "column_break_main",
   "company",
   "posting_date",
+  "payment_type",
   "status",
   "source_section",
   "source_doctype",
@@ -23,7 +25,22 @@
   "auto_generated",
   "references_section",
   "references",
+  "approval_section",
+  "approver_l1",
+  "l1_approved_by",
+  "l1_approved_on",
+  "approval_level",
+  "column_break_approval",
+  "approver_l2",
+  "l2_approved_by",
+  "l2_approved_on",
+  "sent_to_finance_on",
+  "rejection_section",
+  "rejection_reason",
+  "rejected_by",
+  "rejected_on",
   "amounts_section",
+  "total_claimed",
   "total_amount",
   "amount_in_words",
   "column_break_amounts",
@@ -36,6 +53,7 @@
   "paid_by",
   "remarks_section",
   "remarks",
+  "signed_copy",
   "amended_from"
  ],
  "fields": [
@@ -68,6 +86,14 @@
    "read_only": 1
   },
   {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department",
+   "fetch_from": "employee.department",
+   "read_only": 1
+  },
+  {
    "fieldname": "column_break_main",
    "fieldtype": "Column Break"
   },
@@ -89,6 +115,16 @@
    "reqd": 1
   },
   {
+   "fieldname": "payment_type",
+   "fieldtype": "Select",
+   "label": "Payment Type",
+   "options": "Expense Claim\nLeave Salary\nLeave Encashment\nGratuity\nTicket\nOther",
+   "default": "Other",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
    "allow_on_submit": 1,
    "default": "Draft",
    "description": "Draft while HR is still preparing it, Pending Approval once raised under an approval workflow, Approved when it is with finance, Paid when finance has confirmed the money left.",
@@ -98,7 +134,7 @@
    "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
-   "options": "Draft\nPending Approval\nApproved\nPaid\nCancelled",
+   "options": "Draft\nPending Approval\nApproved\nSent to Finance\nPaid\nRejected\nCancelled",
    "read_only": 1
   },
   {
@@ -151,15 +187,110 @@
    "reqd": 1
   },
   {
+   "fieldname": "approval_section",
+   "fieldtype": "Section Break",
+   "label": "Approval",
+   "collapsible": 0
+  },
+  {
+   "fieldname": "approver_l1",
+   "fieldtype": "Link",
+   "label": "Level 1 Approver",
+   "options": "User"
+  },
+  {
+   "fieldname": "l1_approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By (L1)",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "l1_approved_on",
+   "fieldtype": "Datetime",
+   "label": "Approved On (L1)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approval_level",
+   "fieldtype": "Int",
+   "label": "Awaiting Level",
+   "read_only": 1,
+   "description": "0 = not awaiting an approval."
+  },
+  {
+   "fieldname": "column_break_approval",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "approver_l2",
+   "fieldtype": "Link",
+   "label": "Level 2 Approver",
+   "options": "User"
+  },
+  {
+   "fieldname": "l2_approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By (L2)",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "l2_approved_on",
+   "fieldtype": "Datetime",
+   "label": "Approved On (L2)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sent_to_finance_on",
+   "fieldtype": "Datetime",
+   "label": "Sent To Finance On",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "rejection_section",
+   "fieldtype": "Section Break",
+   "label": "Rejection",
+   "collapsible": 1,
+   "depends_on": "eval:doc.rejection_reason"
+  },
+  {
+   "fieldname": "rejection_reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rejected_by",
+   "fieldtype": "Link",
+   "label": "Rejected By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rejected_on",
+   "fieldtype": "Datetime",
+   "label": "Rejected On",
+   "read_only": 1
+  },
+  {
    "fieldname": "amounts_section",
    "fieldtype": "Section Break",
    "label": "Amounts"
   },
   {
+   "fieldname": "total_claimed",
+   "fieldtype": "Currency",
+   "label": "Total Claimed",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
    "fieldname": "total_amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Total Amount",
+   "label": "Total Sanctioned (Finance Pays)",
    "options": "Company:company:default_currency",
    "read_only": 1
   },
@@ -234,6 +365,13 @@
    "fieldname": "remarks",
    "fieldtype": "Small Text",
    "label": "Remarks"
+  },
+  {
+   "fieldname": "signed_copy",
+   "fieldtype": "Attach",
+   "label": "Signed Copy",
+   "allow_on_submit": 1,
+   "description": "The printed Payment Approval Sheet, signed."
   },
   {
    "fieldname": "amended_from",
@@ -320,7 +458,7 @@
    "write": 1
   }
  ],
- "search_fields": "employee_name,status,total_amount",
+ "search_fields": "employee_name,status,payment_type,total_amount",
  "show_title_field_in_link": 1,
  "sort_field": "posting_date",
  "sort_order": "DESC",

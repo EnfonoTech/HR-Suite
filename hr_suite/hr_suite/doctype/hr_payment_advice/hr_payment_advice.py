@@ -20,9 +20,24 @@ class HRPaymentAdvice(Document):
 
 	def validate(self):
 		self._set_company()
+		self._set_defaults()
 		self._validate_references()
 		self._set_totals()
+		self._lock_amounts_while_pending()
 		self._set_draft_status()
+
+	def before_submit(self):
+		"""Where approvers are configured the only way in is the approval, never a bare Submit."""
+		from hr_suite.hr_suite.payment_advice_flow import approvals_configured
+
+		if approvals_configured(self.company) and not self.flags.approval_complete:
+			frappe.throw(
+				_("This company's payment advices need approval. Use Send for Approval; the advice is "
+				  "submitted automatically by the last approver."),
+				title=_("Approval Required"),
+			)
+		if flt(self.total_amount) <= 0:
+			frappe.throw(_("Nothing is sanctioned, so there is nothing for finance to pay."), title=_("Nothing Sanctioned"))
 
 	def on_submit(self):
 		"""Submitting IS the approval — from here the advice is finance's to pay.
@@ -59,6 +74,33 @@ class HRPaymentAdvice(Document):
 		if not self.company:
 			frappe.throw(_("Company is required before a payment advice can be raised."))
 
+	def _set_defaults(self):
+		"""Payment type from the source document, and the approvers from the settings."""
+		from hr_suite.hr_suite.payment_advice import PAYMENT_TYPE_BY_SOURCE
+		from hr_suite.hr_suite.payment_advice_flow import get_approvers
+
+		# A document built in code gets no field defaults, so a blank type is filled here, before the
+		# mandatory check, rather than relying on the DocType default.
+		if not self.payment_type or self.payment_type == "Other":
+			self.payment_type = PAYMENT_TYPE_BY_SOURCE.get(self.source_doctype, self.payment_type or "Other")
+		if self.is_new() and not (self.approver_l1 and self.approver_l2):
+			l1, l2 = get_approvers(self.company)
+			self.approver_l1 = self.approver_l1 or l1
+			self.approver_l2 = self.approver_l2 or l2
+
+	def _lock_amounts_while_pending(self):
+		"""An approver signs a figure; changing it underneath them is how a control is bypassed."""
+		if self.status != "Pending Approval" or self.flags.approval_action or self.is_new():
+			return
+		before = self.get_doc_before_save()
+		if before and (
+			flt(before.total_amount) != flt(self.total_amount) or flt(before.total_claimed) != flt(self.total_claimed)
+		):
+			frappe.throw(
+				_("The amounts cannot change while the advice waits for approval. Recall it, correct it and send it again."),
+				title=_("Locked For Approval"),
+			)
+
 	def _validate_references(self):
 		if not self.references:
 			frappe.throw(
@@ -83,6 +125,17 @@ class HRPaymentAdvice(Document):
 				frappe.throw(
 					_("Row #{0}: amount must be greater than zero.").format(row.idx),
 					title=_("Nothing to Pay"),
+				)
+
+			# Unset means "sanction what was claimed". HR may sanction less, down to nothing.
+			if row.sanctioned_amount is None:
+				row.sanctioned_amount = row.amount
+			if flt(row.sanctioned_amount) < 0 or flt(row.sanctioned_amount) > flt(row.amount):
+				frappe.throw(
+					_("Row #{0}: the sanctioned amount must be between 0 and the claimed {1}.").format(
+						row.idx, flt(row.amount)
+					),
+					title=_("Invalid Sanctioned Amount"),
 				)
 
 			key = (row.reference_doctype, row.reference_name)
@@ -141,7 +194,9 @@ class HRPaymentAdvice(Document):
 					)
 
 	def _set_totals(self):
-		self.total_amount = flt(sum(flt(row.amount) for row in self.references), self.precision("total_amount"))
+		# total_amount is what Finance pays: the SANCTIONED total.
+		self.total_claimed = flt(sum(flt(row.amount) for row in self.references), self.precision("total_claimed"))
+		self.total_amount = flt(sum(flt(row.sanctioned_amount) for row in self.references), self.precision("total_amount"))
 
 		currency = frappe.get_cached_value("Company", self.company, "default_currency")
 		self.amount_in_words = money_in_words(self.total_amount, currency)
@@ -154,5 +209,5 @@ class HRPaymentAdvice(Document):
 		# workflow covers this doctype waits, unsubmitted, for its approver. Resetting
 		# that to Draft on the approver's first save would erase the one signal telling
 		# them the document is theirs to act on.
-		if self.docstatus == 0 and self.status != "Pending Approval":
+		if self.docstatus == 0 and self.status not in ("Pending Approval", "Rejected"):
 			self.status = "Draft"

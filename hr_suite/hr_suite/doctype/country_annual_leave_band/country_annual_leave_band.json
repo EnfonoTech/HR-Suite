@@ -1,0 +1,45 @@
+{
+ "name": "Country Annual Leave Band",
+ "module": "Hr Suite",
+ "doctype": "DocType",
+ "istable": 1,
+ "editable_grid": 1,
+ "description": "Annual leave entitlement bands by length of service. One row per step-up.",
+ "fields": [
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "label": "Band",
+   "in_list_view": 1,
+   "description": "For example: Up to 5 years."
+  },
+  {
+   "fieldname": "service_from_months",
+   "fieldtype": "Int",
+   "label": "From Service (Months)",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "The band applies once the employee has completed this many months of service. 0 = from joining; 60 = after 5 years."
+  },
+  {
+   "fieldname": "leave_days_per_year",
+   "fieldtype": "Float",
+   "label": "Leave Days / Year",
+   "precision": "2",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Annual leave entitlement. The monthly accrual is this divided by 12 (30 -> 2.5, 21 -> 1.75)."
+  },
+  {
+   "fieldname": "salary_days_per_year",
+   "fieldtype": "Float",
+   "label": "Leave-Salary Days / Year",
+   "precision": "2",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Days of leave salary earned per year. Equal to leave days unless the country or the company says otherwise."
+  }
+ ],
+ "permissions": [],
+ "modified": "2026-10-05 12:00:00.000000"
+}

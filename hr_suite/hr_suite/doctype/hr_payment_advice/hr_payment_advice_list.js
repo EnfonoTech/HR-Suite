@@ -2,13 +2,15 @@
 // HR Payment Advice list: colour by status, and surface what finance still owes someone.
 
 frappe.listview_settings["HR Payment Advice"] = {
-	add_fields: ["status", "total_amount", "employee_name", "payment_date", "auto_generated"],
+	add_fields: ["status", "total_amount", "employee_name", "payment_date", "auto_generated", "payment_type"],
 
 	get_indicator(doc) {
 		const map = {
 			Draft: ["Draft", "gray", "status,=,Draft"],
 			"Pending Approval": ["Pending Approval", "orange", "status,=,Pending Approval"],
-			Approved: ["Awaiting Payment", "blue", "status,=,Approved"],
+			Approved: ["Approved", "blue", "status,=,Approved"],
+			"Sent to Finance": ["Awaiting Payment", "purple", "status,=,Sent to Finance"],
+			Rejected: ["Rejected", "red", "status,=,Rejected"],
 			Paid: ["Paid", "green", "status,=,Paid"],
 			Cancelled: ["Cancelled", "red", "status,=,Cancelled"],
 		};
@@ -31,7 +33,7 @@ frappe.listview_settings["HR Payment Advice"] = {
 			// clear() is async — it resets each standard filter through a promise chain —
 			// so a filter added on the next line is blanked by the clear that follows it.
 			listview.filter_area.clear().then(() => {
-				listview.filter_area.add([["HR Payment Advice", "status", "=", "Approved"]]);
+				listview.filter_area.add([["HR Payment Advice", "status", "in", ["Approved", "Sent to Finance"]]]);
 			});
 		});
 	},

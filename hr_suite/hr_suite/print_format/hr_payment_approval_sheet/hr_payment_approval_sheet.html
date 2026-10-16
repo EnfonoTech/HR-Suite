@@ -1,0 +1,101 @@
+{%- set currency = frappe.db.get_value("Company", doc.company, "default_currency") -%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  .pas { font-family: Arial, sans-serif; font-size: 12px; color: #1a1a1a; }
+  .pas h1 { font-size: 20px; margin: 0; color: #14532d; }
+  .pas .head { border-bottom: 3px double #14532d; padding-bottom: 10px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .pas table { width: 100%; border-collapse: collapse; margin: 8px 0 14px 0; }
+  .pas th { background: #14532d; color: #fff; padding: 6px 8px; text-align: left; font-size: 11px; }
+  .pas td { padding: 6px 8px; border-bottom: 1px solid #ddd; vertical-align: top; }
+  .pas td.num, .pas th.num { text-align: right; white-space: nowrap; }
+  .pas .meta td { border: 0; padding: 3px 8px; }
+  .pas .meta td.k { color: #555; width: 22%; }
+  .pas .total td { font-weight: bold; background: #ecfdf3; border-top: 2px solid #14532d; }
+  .pas .words { margin: 4px 0 14px 0; font-style: italic; }
+  .pas .sigs { display: flex; gap: 18px; margin-top: 46px; }
+  .pas .sig { flex: 1; text-align: center; }
+  .pas .line { border-top: 1px solid #333; margin-top: 42px; padding-top: 5px; font-size: 11px; }
+  .pas .done { color: #14532d; font-size: 10px; margin-top: 2px; }
+  .pas .rejected { border: 2px solid #b91c1c; color: #b91c1c; padding: 6px 10px; margin-bottom: 10px; }
+  .pas .foot { margin-top: 22px; font-size: 10px; color: #777; border-top: 1px solid #ddd; padding-top: 6px; }
+</style>
+</head>
+<body>
+<div class="pas">
+  <div class="head">
+    <div>
+      <div style="font-size:13px;font-weight:bold">{{ doc.company }}</div>
+      <h1>{{ _("Payment Approval Sheet") }}</h1>
+    </div>
+    <div style="text-align:right">
+      <div><b>{{ doc.name }}</b></div>
+      <div>{{ frappe.format(doc.posting_date, {"fieldtype": "Date"}) }}</div>
+      <div>{{ _(doc.status) }}</div>
+    </div>
+  </div>
+
+  {% if doc.status == "Rejected" %}
+  <div class="rejected"><b>{{ _("Rejected") }}</b> — {{ doc.rejection_reason }}</div>
+  {% endif %}
+
+  <table class="meta">
+    <tr><td class="k">{{ _("Employee") }}</td><td>{{ doc.employee_name }} ({{ doc.employee }})</td>
+        <td class="k">{{ _("Payment Type") }}</td><td>{{ _(doc.payment_type) }}</td></tr>
+    <tr><td class="k">{{ _("Department") }}</td><td>{{ doc.department or "—" }}</td>
+        <td class="k">{{ _("Source") }}</td><td>{% if doc.source_doctype %}{{ _(doc.source_doctype) }} {{ doc.source_name }}{% else %}—{% endif %}</td></tr>
+  </table>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:4%">#</th>
+        <th>{{ _("Description") }}</th>
+        <th>{{ _("Reference") }}</th>
+        <th class="num">{{ _("Claimed") }}</th>
+        <th class="num">{{ _("Sanctioned") }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in doc.references %}
+      <tr>
+        <td>{{ loop.idx }}</td>
+        <td>{{ row.description or "" }}</td>
+        <td>{{ _(row.reference_doctype) }} {{ row.reference_name }}</td>
+        <td class="num">{{ frappe.utils.fmt_money(row.amount, currency=currency) }}</td>
+        <td class="num">{{ frappe.utils.fmt_money(row.sanctioned_amount, currency=currency) }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="total">
+        <td colspan="3">{{ _("Total") }}</td>
+        <td class="num">{{ frappe.utils.fmt_money(doc.total_claimed, currency=currency) }}</td>
+        <td class="num">{{ frappe.utils.fmt_money(doc.total_amount, currency=currency) }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="words">{{ doc.amount_in_words }}</div>
+
+  {% if doc.remarks %}<div><b>{{ _("Remarks") }}:</b> {{ doc.remarks }}</div>{% endif %}
+
+  <div class="sigs">
+    <div class="sig"><div class="line">{{ _("Claimant") }}<br>{{ doc.employee_name }}</div></div>
+    <div class="sig"><div class="line">{{ _("Prepared by HR") }}</div></div>
+    <div class="sig">
+      <div class="line">{{ _("Level 1 Approver") }}<br>{{ doc.l1_approved_by or doc.approver_l1 or "" }}</div>
+      {% if doc.l1_approved_on %}<div class="done">{{ _("Approved") }} {{ frappe.format(doc.l1_approved_on, {"fieldtype": "Datetime"}) }}</div>{% endif %}
+    </div>
+    {% if doc.approver_l2 %}
+    <div class="sig">
+      <div class="line">{{ _("Level 2 Approver") }}<br>{{ doc.l2_approved_by or doc.approver_l2 or "" }}</div>
+      {% if doc.l2_approved_on %}<div class="done">{{ _("Approved") }} {{ frappe.format(doc.l2_approved_on, {"fieldtype": "Datetime"}) }}</div>{% endif %}
+    </div>
+    {% endif %}
+    <div class="sig"><div class="line">{{ _("Finance") }}</div></div>
+  </div>
+
+  <div class="foot">{{ _("Finance books and pays from this approved sheet. HR records no accounting entries.") }}</div>
+</div>
+</body>
+</html>

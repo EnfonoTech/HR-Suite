@@ -522,7 +522,13 @@ def on_leave_application_validate(doc, method=None):
     Validate leave against country-specific rules from Country Config.
     Warns on mismatched leave types and sick leave pay thresholds.
     """
+    from hr_suite.hr_suite.leave_accrual import check_annual_leave_rules
     from hr_suite.hr_suite.utils import get_employee_work_country, get_country_config, get_sick_leave_pay
+
+    # Annual leave on the ledger engine: balance and waiting-period rules. Runs first so a
+    # refusal is not buried under the advisory warnings below.
+    check_annual_leave_rules(doc)
+
     employee = doc.employee
     country = get_employee_work_country(employee)
     cfg = get_country_config(country)
@@ -795,6 +801,12 @@ def on_employee_separation_submit(doc, method=None):
         )
     except Exception:
         frappe.log_error(frappe.get_traceback(), f"HR Suite: Settlement calc failed for {employee}")
+        frappe.msgprint(
+            _("The end-of-service benefit for {0} could not be calculated, so none was created. "
+              "Create it by hand once the country policy is fixed. Details are in the Error Log.").format(employee),
+            title=_("End of Service Benefit not created"),
+            indicator="orange",
+        )
         return
 
     if not frappe.db.exists("DocType", "End of Service Benefit"):
@@ -825,6 +837,12 @@ def on_employee_separation_submit(doc, method=None):
         )
     except Exception:
         frappe.log_error(frappe.get_traceback(), f"HR Suite: EOSB auto-create failed for {employee}")
+        frappe.msgprint(
+            _("The End of Service Benefit for {0} could not be created. Create it by hand. "
+              "Details are in the Error Log.").format(employee),
+            title=_("End of Service Benefit not created"),
+            indicator="orange",
+        )
 
 
 # End of Service Benefit.termination_reason is a Select field with a fixed set of

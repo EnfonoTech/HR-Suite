@@ -414,6 +414,7 @@ def _declared_rows(country_code: str) -> list:
 	)
 
 	accrual = _country_accrual_defaults(country_code)
+	ledger_engine = cstr(accrual.get("leave_accrual_engine")) == "HR Suite Ledger"
 
 	normalised = []
 	for row in rows:
@@ -450,6 +451,9 @@ def _declared_rows(country_code: str) -> list:
 					"accrual_on_day": cstr(accrual.leave_accrual_on_day or "").strip(),
 					"accrual_rounding": cstr(accrual.leave_accrual_rounding or "").strip(),
 					"carry_forward_expiry_days": cint(accrual.carry_forward_expiry_days),
+					# True when the Leave Accrual Ledger, not HRMS earned leave, accrues this
+					# country's annual leave. See hr_suite.leave_accrual.
+					"ledger_engine": ledger_engine,
 				}
 			)
 		)
@@ -469,6 +473,7 @@ def _country_accrual_defaults(country_code: str) -> frappe._dict:
 		"leave_accrual_on_day",
 		"leave_accrual_rounding",
 		"carry_forward_expiry_days",
+		"leave_accrual_engine",
 	)
 	defaults = frappe._dict({field: "" for field in wanted})
 
@@ -504,6 +509,13 @@ def _accrual_fields(row) -> dict:
 
 	if frequency == ACCRUAL_NONE:
 		return {"is_earned_leave": 0}
+
+	if row.get("ledger_engine") and frequency == "Monthly":
+		# The Leave Accrual Ledger accrues this leave, so HRMS must not: leaving
+		# is_earned_leave on would credit every employee twice. allow_negative lets an
+		# HR-approved advance leave through HRMS; hr_suite.leave_accrual.
+		# check_annual_leave_rules keeps everyone else inside the balance.
+		return {"is_earned_leave": 0, "allow_negative": 1}
 
 	if frequency not in ACCRUAL_FREQUENCIES:
 		return {}
@@ -614,6 +626,15 @@ def _resolve_declared_values(leave_type: str, rows: list, result: dict) -> dict 
 	case nothing is written and the conflict is reported, because picking one
 	country's number over another's would be inventing law for the loser.
 	"""
+	# On the ledger engine the day counts do not belong to the Leave Type at all: the
+	# Leave Accrual Ledger takes them from each country's Entitlement Bands. So the same
+	# type declared twice by one country (Saudi Arabia's 21 days, then 30 after five
+	# years) or once each by two countries (Saudi 21/30, Bahrain 30) is not a conflict.
+	# The Leave Type only needs the largest figure, to cap the allocation. Mixed
+	# engines still conflict: a legacy country's figures do shape the Leave Type.
+	if len(rows) > 1 and all(row.get("ledger_engine") for row in rows):
+		rows = [max(rows, key=lambda row: row.days_per_year)]
+
 	distinct = {
 		(
 			row.days_per_year,
@@ -1025,7 +1046,10 @@ def _policy_details(country_code: str, gender: str) -> list:
 		if row.leave_type in seen:
 			continue
 		seen.add(row.leave_type)
-		details.append({"leave_type": row.leave_type, "annual_allocation": row.days_per_year})
+		# Ledger-accrued leave is not granted up front: the Leave Accrual Ledger tops the
+		# allocation up month by month, so the policy carries 0 and HRMS skips the grant.
+		ledger_managed = row.get("ledger_engine") and row.accrual_frequency == "Monthly"
+		details.append({"leave_type": row.leave_type, "annual_allocation": 0 if ledger_managed else row.days_per_year})
 
 	return details
 
