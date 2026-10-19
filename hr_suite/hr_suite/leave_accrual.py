@@ -19,6 +19,7 @@ the user or the log.
 
 import frappe
 from frappe import _
+from frappe.query_builder.functions import Sum
 from frappe.utils import (
 	add_days,
 	add_months,
@@ -31,6 +32,7 @@ from frappe.utils import (
 	today,
 )
 
+from hr_suite.hr_suite.doctype.leave_accrual_ledger.leave_accrual_ledger import HRMS_SOURCES
 from hr_suite.hr_suite.policy import LEDGER_ENGINE, get_policy, months_of_service
 
 OVERRIDE_ROLE = "HR Leave Override"
@@ -365,29 +367,67 @@ def run_monthly_accrual(through=None):
 
 
 def legacy_annual_allocations(on_date=None):
-	"""Annual-leave allocations that cover the date but that the ledger did not make.
+	"""Annual-leave days that sit in a live allocation without the ledger having put them there.
 
-	On the ledger engine the HRMS allocation is the ledger's own running total. An allocation
-	made some other way (a Leave Policy Assignment of the old set-up, or by hand) sits underneath
-	it, so the balance is that allocation PLUS everything accrued. Returned so HR can cancel it or
-	fold it into the opening balance. [{"employee", "allocation", "leave_type", "days"}]
+	On the ledger engine the HRMS allocation is the ledger's own running total. Days granted
+	some other way (a Leave Policy Assignment of the old set-up, or an allocation made by hand)
+	sit underneath it, so the balance is those days PLUS everything accrued. Returned so HR can
+	cancel them or fold them into the opening balance.
+
+	Measured per allocation as the days HRMS holds for it (Leave Ledger Entries, carry-forward
+	and expired entries left out) less the days the Leave Accrual Ledger posted to it. That also
+	catches an up-front grant on the very allocation the ledger later topped up, which the ledger
+	then lists as its own: the allocation looks "made by the ledger" but holds 30 days it never
+	posted. [{"employee", "allocation", "leave_type", "days"}]
 	"""
 	on_date = getdate(on_date or today())
 	allocations = frappe.get_all(
 		"Leave Allocation",
-		filters={"docstatus": 1, "from_date": ["<=", on_date], "to_date": [">=", on_date], "new_leaves_allocated": [">", 0]},
-		fields=["name", "employee", "leave_type", "new_leaves_allocated"],
+		filters={"docstatus": 1, "from_date": ["<=", on_date], "to_date": [">=", on_date]},
+		fields=["name", "employee", "leave_type"],
 	)
-	made = {r.leave_allocation for r in frappe.get_all("Leave Accrual Ledger", fields=["leave_allocation"]) if r.leave_allocation}
+	if not allocations:
+		return []
+	names = [r.name for r in allocations]
+
+	entry = frappe.qb.DocType("Leave Ledger Entry")
+	held = {
+		r.transaction_name: flt(r.days)
+		for r in (
+			frappe.qb.from_(entry)
+			.select(entry.transaction_name, Sum(entry.leaves).as_("days"))
+			.where(
+				(entry.transaction_type == "Leave Allocation")
+				& (entry.transaction_name.isin(names))
+				& (entry.docstatus == 1)
+				& (entry.is_carry_forward == 0)
+				& (entry.is_expired == 0)
+			)
+			.groupby(entry.transaction_name)
+		).run(as_dict=True)
+	}
+
+	ledger = frappe.qb.DocType("Leave Accrual Ledger")
+	posted = {
+		r.leave_allocation: flt(r.days)
+		for r in (
+			frappe.qb.from_(ledger)
+			.select(ledger.leave_allocation, Sum(ledger.leave_days).as_("days"))
+			.where(ledger.leave_allocation.isin(names) & ledger.source.isin(list(HRMS_SOURCES)))
+			.groupby(ledger.leave_allocation)
+		).run(as_dict=True)
+	}
+
 	policies, out = {}, []
 	for row in allocations:
-		if row.name in made:
+		outside = flt(held.get(row.name, 0) - posted.get(row.name, 0), 2)
+		if outside <= 0:
 			continue
 		if row.employee not in policies:
 			policies[row.employee] = get_policy(row.employee, on_date=on_date)
 		policy = policies[row.employee]
 		if policy.get("has_policy") and policy.leave_accrual_engine == LEDGER_ENGINE and row.leave_type == policy.annual_leave_type:
-			out.append({"employee": row.employee, "allocation": row.name, "leave_type": row.leave_type, "days": flt(row.new_leaves_allocated, 2)})
+			out.append({"employee": row.employee, "allocation": row.name, "leave_type": row.leave_type, "days": outside})
 	return out
 
 

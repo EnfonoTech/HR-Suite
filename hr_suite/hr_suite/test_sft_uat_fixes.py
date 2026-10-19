@@ -552,6 +552,22 @@ class TestLegacyAllocations(LeaveTestBase):
 		accrue_employee(emp, "2026-02-28")
 		self.assertNotIn(emp, [r["employee"] for r in legacy_annual_allocations("2026-06-01")])
 
+	def test_an_upfront_grant_the_ledger_later_topped_up_is_still_reported(self):
+		"""The UAT case (TT33): a 30-day grant exists first, the ledger then accrues onto that same allocation."""
+		from hr_suite.hr_suite.leave_accrual import legacy_annual_allocations
+
+		emp = self.employee("Topped", "SA", "2026-01-01")
+		alloc = frappe.get_doc(
+			doctype="Leave Allocation", employee=emp, leave_type="Annual Leave", from_date="2026-01-01",
+			to_date="2026-12-31", new_leaves_allocated=30,
+		)
+		alloc.insert(ignore_permissions=True)
+		alloc.submit()
+		accrue_employee(emp, "2026-02-28")  # 2 x 1.75 posted onto the same allocation
+
+		found = [(r["employee"], r["allocation"], r["days"]) for r in legacy_annual_allocations("2026-06-01")]
+		self.assertIn((emp, alloc.name, 30), found)  # the 30 only, never the 3.5 the ledger posted
+
 
 # ── Saudi gratuity rule in the HRMS list ──────────────────────────────────────
 
