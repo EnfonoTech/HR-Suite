@@ -155,6 +155,7 @@ def setup_leave_management() -> dict:
 		ensure_leave_periods,
 		sync_leave_types_from_country_config,
 		ensure_leave_policies,
+		ensure_once_in_employment_allocations,
 		# Last, because it reads the Leave Types and Policies the steps above wrote.
 		report_double_allocation_risk,
 	):
@@ -414,6 +415,7 @@ def _declared_rows(country_code: str) -> list:
 	)
 
 	accrual = _country_accrual_defaults(country_code)
+	ledger_engine = cstr(accrual.get("leave_accrual_engine")) == "HR Suite Ledger"
 
 	normalised = []
 	for row in rows:
@@ -450,6 +452,9 @@ def _declared_rows(country_code: str) -> list:
 					"accrual_on_day": cstr(accrual.leave_accrual_on_day or "").strip(),
 					"accrual_rounding": cstr(accrual.leave_accrual_rounding or "").strip(),
 					"carry_forward_expiry_days": cint(accrual.carry_forward_expiry_days),
+					# True when the Leave Accrual Ledger, not HRMS earned leave, accrues this
+					# country's annual leave. See hr_suite.leave_accrual.
+					"ledger_engine": ledger_engine,
 				}
 			)
 		)
@@ -469,6 +474,7 @@ def _country_accrual_defaults(country_code: str) -> frappe._dict:
 		"leave_accrual_on_day",
 		"leave_accrual_rounding",
 		"carry_forward_expiry_days",
+		"leave_accrual_engine",
 	)
 	defaults = frappe._dict({field: "" for field in wanted})
 
@@ -504,6 +510,13 @@ def _accrual_fields(row) -> dict:
 
 	if frequency == ACCRUAL_NONE:
 		return {"is_earned_leave": 0}
+
+	if row.get("ledger_engine") and frequency == "Monthly":
+		# The Leave Accrual Ledger accrues this leave, so HRMS must not: leaving
+		# is_earned_leave on would credit every employee twice. allow_negative lets an
+		# HR-approved advance leave through HRMS; hr_suite.leave_accrual.
+		# check_annual_leave_rules keeps everyone else inside the balance.
+		return {"is_earned_leave": 0, "allow_negative": 1}
 
 	if frequency not in ACCRUAL_FREQUENCIES:
 		return {}
@@ -614,6 +627,15 @@ def _resolve_declared_values(leave_type: str, rows: list, result: dict) -> dict 
 	case nothing is written and the conflict is reported, because picking one
 	country's number over another's would be inventing law for the loser.
 	"""
+	# On the ledger engine the day counts do not belong to the Leave Type at all: the
+	# Leave Accrual Ledger takes them from each country's Entitlement Bands. So the same
+	# type declared twice by one country (Saudi Arabia's 21 days, then 30 after five
+	# years) or once each by two countries (Saudi 21/30, Bahrain 30) is not a conflict.
+	# The Leave Type only needs the largest figure, to cap the allocation. Mixed
+	# engines still conflict: a legacy country's figures do shape the Leave Type.
+	if len(rows) > 1 and all(row.get("ledger_engine") for row in rows):
+		rows = [max(rows, key=lambda row: row.days_per_year)]
+
 	distinct = {
 		(
 			row.days_per_year,
@@ -1025,7 +1047,10 @@ def _policy_details(country_code: str, gender: str) -> list:
 		if row.leave_type in seen:
 			continue
 		seen.add(row.leave_type)
-		details.append({"leave_type": row.leave_type, "annual_allocation": row.days_per_year})
+		# Ledger-accrued leave is not granted up front: the Leave Accrual Ledger tops the
+		# allocation up month by month, so the policy carries 0 and HRMS skips the grant.
+		ledger_managed = row.get("ledger_engine") and row.accrual_frequency == "Monthly"
+		details.append({"leave_type": row.leave_type, "annual_allocation": 0 if ledger_managed else row.days_per_year})
 
 	return details
 
@@ -1176,6 +1201,71 @@ def assign_leave_policy(
 			result["skipped"].append({"employee": employee, "reason": outcome["skipped"]})
 		else:
 			result["assigned"].append(outcome)
+
+	return result
+
+
+def ensure_once_in_employment_allocations(employee: str | None = None) -> dict:
+	"""One allocation spanning the whole employment for each once-in-employment leave.
+
+	Those rows (Hajj Leave) are kept out of the annual Leave Policy so they are not granted
+	again every year, which left them with no allocation at all — and a Leave Application
+	only lists the types the employee holds an allocation for, so nobody could apply for
+	one. A single allocation from joining to retirement makes the type selectable, and once
+	its days are used it is never granted again. Idempotent.
+	"""
+	from hr_suite.hr_suite.utils import get_employee_work_country
+
+	result = {"created": [], "failed": []}
+	employees = frappe.get_all(
+		"Employee",
+		filters={"status": "Active", **({"name": employee} if employee else {})},
+		fields=["name", "gender", "date_of_joining", "relieving_date", "date_of_retirement"],
+	)
+
+	rows_by_country = {}
+	for emp in employees:
+		if not emp.date_of_joining:
+			continue
+		code = get_employee_work_country(emp.name)
+		if code not in rows_by_country:
+			rows_by_country[code] = [
+				row for row in _declared_rows(code) if row.once_in_employment and row.days_per_year > 0
+				and row.pay_treatment != PAY_UNPAID and frappe.db.exists("Leave Type", row.leave_type)
+			] if code else []
+
+		for row in rows_by_country[code]:
+			if row.gender_specific not in ("All", "{0} Only".format(emp.gender)):
+				continue
+			# Once granted it is never granted again, even after it is used up or expired.
+			if frappe.db.exists("Leave Allocation", {"employee": emp.name, "leave_type": row.leave_type, "docstatus": 1}):
+				continue
+
+			to_date = emp.relieving_date or emp.date_of_retirement or add_years(emp.date_of_joining, 40)
+			savepoint = "before_hr_suite_once_in_employment"
+			frappe.db.savepoint(savepoint)
+			try:
+				allocation = frappe.get_doc(
+					{
+						"doctype": "Leave Allocation",
+						"employee": emp.name,
+						"leave_type": row.leave_type,
+						"from_date": emp.date_of_joining,
+						"to_date": to_date,
+						"new_leaves_allocated": row.days_per_year,
+						"description": _("Once in employment, from Country Config {0}").format(code),
+					}
+				)
+				allocation.insert(ignore_permissions=True)
+				allocation.submit()
+				result["created"].append({"employee": emp.name, "leave_type": row.leave_type, "allocation": allocation.name})
+			except Exception:
+				frappe.db.rollback(save_point=savepoint)
+				result["failed"].append({"employee": emp.name, "leave_type": row.leave_type})
+				frappe.log_error(
+					frappe.get_traceback(),
+					"HR Suite: once-in-employment allocation failed for {0}".format(emp.name),
+				)
 
 	return result
 

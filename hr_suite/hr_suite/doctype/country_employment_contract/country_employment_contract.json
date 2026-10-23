@@ -44,7 +44,7 @@
    "fieldname": "work_country",
    "fieldtype": "Select",
    "label": "Work Country",
-   "options": "\nSA\nAE\nBH\nIN\nOM",
+   "options": "\nSA\nAE\nBH\nIN\nOM\nQA\nKW",
    "reqd": 1,
    "in_list_view": 1
   },

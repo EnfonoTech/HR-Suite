@@ -28,6 +28,16 @@
   "resignation_factor_label",
   "eosb_deductions",
   "net_eosb",
+  "breakdown_section",
+  "calendar_days",
+  "unpaid_days",
+  "qualifying_days",
+  "breakdown_column",
+  "gratuity_base_amount",
+  "gross_before_cap",
+  "cap_amount",
+  "is_partial_settlement",
+  "gratuity_breakdown",
   "payment_section",
   "payment_status",
   "payment_date",
@@ -115,7 +125,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Termination Reason",
-   "options": "Resignation\nTermination by Employer\nEnd of Fixed Term\nDismissal\nDeath\nTotal Disability\nRetirement",
+   "options": "Resignation\nTermination by Employer\nEnd of Fixed Term\nDismissal\nDeath\nTotal Disability\nRetirement\nPartial Settlement",
    "reqd": 1
   },
   {
@@ -231,6 +241,67 @@
    "no_copy": 1,
    "options": "End of Service Benefit",
    "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "breakdown_section",
+   "fieldtype": "Section Break",
+   "label": "Gratuity Breakdown"
+  },
+  {
+   "fieldname": "calendar_days",
+   "fieldtype": "Int",
+   "label": "Calendar Days",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unpaid_days",
+   "fieldtype": "Float",
+   "label": "Unpaid Leave / Absence Days",
+   "read_only": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "qualifying_days",
+   "fieldtype": "Float",
+   "label": "Qualifying Days",
+   "read_only": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "breakdown_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gratuity_base_amount",
+   "fieldtype": "Currency",
+   "label": "Wage Base Used",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gross_before_cap",
+   "fieldtype": "Currency",
+   "label": "Gross Before Cap",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cap_amount",
+   "fieldtype": "Currency",
+   "label": "Cap Amount (0 = none)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "is_partial_settlement",
+   "fieldtype": "Check",
+   "label": "Partial Settlement",
+   "read_only": 1,
+   "description": "Gratuity accrued to date, paid while the employee stays. The employee is not marked Left."
+  },
+  {
+   "fieldname": "gratuity_breakdown",
+   "fieldtype": "Table",
+   "label": "Slab Breakdown",
+   "options": "EOSB Breakdown Row",
    "read_only": 1
   }
  ],

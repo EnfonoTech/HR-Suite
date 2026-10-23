@@ -18,7 +18,9 @@ MODULE_ROOT = APP_ROOT / "hr_suite"
 
 # Endpoints that legitimately take an `employee` argument without guarding it: they only
 # return configuration for the caller's own country, never another employee's data.
-UNGUARDED_BY_DESIGN = {"get_country_config_for_employee"}
+# get_leave_details is guarded by the HRMS method it wraps, which it calls first
+# (validate_leave_access: the employee, their approver, or a reader of the Employee).
+UNGUARDED_BY_DESIGN = {"get_country_config_for_employee", "get_leave_details"}
 
 
 class TestAppIntegrity(FrappeTestCase):

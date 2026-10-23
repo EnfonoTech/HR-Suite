@@ -97,7 +97,10 @@
   "mudad_bank_code",
   "mudad_api_base_url",
   "col_break_mudad",
-  "mudad_api_key"
+  "mudad_api_key",
+  "payment_advice_section",
+  "payment_advice_approvers",
+  "route_expense_claims_via_advice"
  ],
  "fields": [
   {
@@ -180,7 +183,7 @@
   },
   {
    "default": "30",
-   "description": "Days after reaching threshold (\u2265 5 years service)",
+   "description": "Days after reaching threshold (≥ 5 years service)",
    "fieldname": "annual_leave_after_threshold",
    "fieldtype": "Int",
    "label": "Days After Threshold"
@@ -227,14 +230,14 @@
    "fieldtype": "Check",
    "read_only": 1,
    "label": "Enable Monthly Leave Allocation (retired)",
-   "description": "Retired. This used to create one Leave Allocation per employee per month, windowed to that month, so the days expired at month end and could never be carried. Leave accrues through HRMS earned leave now \u2014 see Leave Type \u2192 Is Earned Leave, switched on for you from Country Config \u2192 leave-type rows."
+   "description": "Retired. This used to create one Leave Allocation per employee per month, windowed to that month, so the days expired at month end and could never be carried. Leave accrues through HRMS earned leave now — see Leave Type → Is Earned Leave, switched on for you from Country Config → leave-type rows."
   },
   {
    "default": "0",
    "fieldname": "accrual_switch_over_now",
    "fieldtype": "Check",
    "label": "Switch Leave Types to Accrual Immediately",
-   "description": "Off (the recommended setting): a leave type is only switched to monthly accrual once no employee still holds a live allocation for it, i.e. from the next Leave Period \u2014 otherwise HRMS would credit accrued days ON TOP of an entitlement that has already been granted for this year. Tick this only on a test site, or after you have adjusted the existing allocations by hand."
+   "description": "Off (the recommended setting): a leave type is only switched to monthly accrual once no employee still holds a live allocation for it, i.e. from the next Leave Period — otherwise HRMS would credit accrued days ON TOP of an entitlement that has already been granted for this year. Tick this only on a test site, or after you have adjusted the existing allocations by hand."
   },
   {
    "fieldname": "monthly_leave_alloc_help",
@@ -245,7 +248,7 @@
    "fieldname": "leave_salary_accounts_section",
    "fieldtype": "Section Break",
    "label": "Leave Salary & Settlement Accounts",
-   "description": "Where leave salary and mid-month settlements post, per company. An account belongs to one company, so this has to be a row per company \u2014 a single account cannot serve a site running more than one. With no row for a company, HR Suite falls back to matching account NAMES in that company's Chart of Accounts, which picks the wrong account on any chart that does not use the English words it looks for."
+   "description": "Where leave salary and mid-month settlements post, per company. An account belongs to one company, so this has to be a row per company — a single account cannot serve a site running more than one. With no row for a company, HR Suite falls back to matching account NAMES in that company's Chart of Accounts, which picks the wrong account on any chart that does not use the English words it looks for."
   },
   {
    "fieldname": "hr_account_mappings",
@@ -277,17 +280,17 @@
   },
   {
    "default": "60",
-   "description": "Default \u2014 overridden by Country Config per jurisdiction",
+   "description": "Default — overridden by Country Config per jurisdiction",
    "fieldname": "notice_period_monthly_days",
    "fieldtype": "Int",
-   "label": "Notice Period \u2014 Monthly (Days)"
+   "label": "Notice Period — Monthly (Days)"
   },
   {
    "default": "30",
-   "description": "Default \u2014 overridden by Country Config per jurisdiction",
+   "description": "Default — overridden by Country Config per jurisdiction",
    "fieldname": "notice_period_non_monthly_days",
    "fieldtype": "Int",
-   "label": "Notice Period \u2014 Non-Monthly (Days)"
+   "label": "Notice Period — Non-Monthly (Days)"
   },
   {
    "fieldname": "penalty_section",
@@ -320,7 +323,7 @@
   {
    "fieldname": "statutory_accounts_help",
    "fieldtype": "HTML",
-   "options": "<p class=\"text-muted\" style=\"font-size:0.85rem;\">HR Suite posts three kinds of deduction onto the Salary Slip: the country statutory contribution (GOSI / GPSSA / SIO / PASI / EPF / ESI), an <b>Employee Loan</b> instalment and an <b>Employee Penalty</b>. A Salary Component that has no <b>Salary Component Account</b> for the company makes Payroll Entry\u2019s accrual Journal Entry fail, which rolls the whole payroll run back. Map the accounts here: a row with no Salary Component is the default for the company, a row naming one overrides it for that component. Without a mapping HR Suite refuses to post the deduction instead of breaking payroll, and says so on Payroll Preview.</p>"
+   "options": "<p class=\"text-muted\" style=\"font-size:0.85rem;\">HR Suite posts three kinds of deduction onto the Salary Slip: the country statutory contribution (GOSI / GPSSA / SIO / PASI / EPF / ESI), an <b>Employee Loan</b> instalment and an <b>Employee Penalty</b>. A Salary Component that has no <b>Salary Component Account</b> for the company makes Payroll Entry’s accrual Journal Entry fail, which rolls the whole payroll run back. Map the accounts here: a row with no Salary Component is the default for the company, a row naming one overrides it for that component. Without a mapping HR Suite refuses to post the deduction instead of breaking payroll, and says so on Payroll Preview.</p>"
   },
   {
    "fieldname": "statutory_deduction_accounts",
@@ -416,7 +419,7 @@
    "default": "90",
    "fieldname": "iqama_expiry_alert_days",
    "fieldtype": "Int",
-   "label": "Work Permit Alert \u2014 SA Iqama (Days Before)"
+   "label": "Work Permit Alert — SA Iqama (Days Before)"
   },
   {
    "default": "60",
@@ -498,7 +501,7 @@
   {
    "fieldname": "muqeem_section",
    "fieldtype": "Section Break",
-   "label": "Muqeem Integration (MOI \u2014 Saudi Arabia)"
+   "label": "Muqeem Integration (MOI — Saudi Arabia)"
   },
   {
    "default": "0",
@@ -539,7 +542,7 @@
   {
    "fieldname": "qiwa_section",
    "fieldtype": "Section Break",
-   "label": "Qiwa Integration (HRSD \u2014 Saudi Arabia)"
+   "label": "Qiwa Integration (HRSD — Saudi Arabia)"
   },
   {
    "default": "0",
@@ -552,7 +555,7 @@
    "fieldtype": "Data",
    "label": "Establishment ID",
    "depends_on": "eval:doc.qiwa_enabled",
-   "description": "10-digit Saudi establishment ID (\u0631\u0642\u0645 \u0627\u0644\u0645\u0646\u0634\u0623\u0629)"
+   "description": "10-digit Saudi establishment ID (رقم المنشأة)"
   },
   {
    "default": "https://api.qiwa.info/v1",
@@ -580,7 +583,7 @@
   {
    "fieldname": "gosi_api_section",
    "fieldtype": "Section Break",
-   "label": "GOSI \u2014 API Integration"
+   "label": "GOSI — API Integration"
   },
   {
    "fieldname": "gosi_api_enabled",
@@ -615,7 +618,7 @@
   {
    "fieldname": "mudad_section",
    "fieldtype": "Section Break",
-   "label": "Mudad \u2014 Wage Protection System (WPS)"
+   "label": "Mudad — Wage Protection System (WPS)"
   },
   {
    "fieldname": "mudad_enabled",
@@ -659,6 +662,25 @@
    "fieldtype": "Password",
    "label": "API Key / Bearer Token",
    "depends_on": "eval:doc.mudad_enabled"
+  },
+  {
+   "fieldname": "payment_advice_section",
+   "fieldtype": "Section Break",
+   "label": "HR Payment Advice Approval"
+  },
+  {
+   "fieldname": "payment_advice_approvers",
+   "fieldtype": "Table",
+   "label": "Approvers",
+   "options": "Payment Advice Approver",
+   "description": "Level 1 and level 2 approver per company. With none configured for a company, an advice is approved by submitting it, as before. With a level 1 row, every advice for that company needs the approvals here before it reaches Finance."
+  },
+  {
+   "fieldname": "route_expense_claims_via_advice",
+   "fieldtype": "Check",
+   "label": "Route Expense Claims Through A Payment Advice",
+   "default": "0",
+   "description": "Ticked: a submitted Expense Claim raises an HR Payment Advice, and the claim cannot be paid until that advice is approved."
   }
  ],
  "issingle": 1,

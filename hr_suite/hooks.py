@@ -23,6 +23,12 @@ app_include_css = ["/assets/hr_suite/css/hr_suite.css"]
 
 # ─── Scheduled Tasks ───────────────────────────────────────────────────────────
 scheduler_events = {
+	"cron": {
+		# 03:00 on the 1st: accrue the month that has just ended. Catches up any missed month.
+		"0 3 1 * *": [
+			"hr_suite.hr_suite.leave_accrual.run_monthly_accrual",
+		],
+	},
 	"daily": [
 		"hr_suite.hr_suite.salary_override_api.apply_pending_salary_overrides",
 		# ORDER MATTERS between these two. The leave-type sync switches a type to monthly
@@ -149,8 +155,21 @@ doc_events = {
 	# stamps the advice with db_set(update_modified=False), which fires no document event at
 	# all, so an advice hook would never run.
 	"Payment Entry": {
-		"on_submit": "hr_suite.hr_suite.payment_advice.on_employee_payment_entry",
-		"on_cancel": "hr_suite.hr_suite.payment_advice.on_employee_payment_entry",
+		"validate": "hr_suite.hr_suite.payment_advice_flow.guard_expense_claim_payment",
+		"on_submit": [
+			"hr_suite.hr_suite.payment_advice.on_employee_payment_entry",
+			"hr_suite.hr_suite.payment_advice_flow.on_expense_claim_payment",
+		],
+		"on_cancel": [
+			"hr_suite.hr_suite.payment_advice.on_employee_payment_entry",
+			"hr_suite.hr_suite.payment_advice_flow.on_expense_claim_payment",
+		],
+	},
+	# With routing switched on in Hr Suite Settings, a submitted claim raises an HR Payment Advice and
+	# cannot be paid until HR approves it. Cancelling the claim withdraws an unpaid advice.
+	"Expense Claim": {
+		"on_submit": "hr_suite.hr_suite.payment_advice_flow.route_expense_claim",
+		"on_cancel": "hr_suite.hr_suite.payment_advice_flow.withdraw_expense_claim_advice",
 	},
 	"Journal Entry": {
 		# A leave disbursement or a settlement books its payroll recovery at the same
@@ -175,7 +194,27 @@ doc_events = {
 		"validate": "hr_suite.hr_suite.performance.validate_appraisal",
 	},
 	"Leave Application": {
-		"validate": "hr_suite.hr_suite.integrations.hrms.on_leave_application_validate",
+		"validate": [
+			"hr_suite.hr_suite.integrations.hrms.on_leave_application_validate",
+			"hr_suite.hr_suite.sick_leave_tiers.preview_split",
+			"hr_suite.hr_suite.leave_application_rules.validate",
+		],
+		"before_submit": "hr_suite.hr_suite.sick_leave_tiers.require_certificate",
+		"on_submit": [
+			"hr_suite.hr_suite.leave_application_rules.on_submit",
+			"hr_suite.hr_suite.sick_leave_tiers.on_submit",
+		],
+		"on_cancel": [
+			"hr_suite.hr_suite.leave_application_rules.on_cancel",
+			"hr_suite.hr_suite.sick_leave_tiers.on_cancel",
+		],
+	},
+	"Salary Structure": {
+		"before_validate": "hr_suite.hr_suite.salary_currency.default_from_company",
+		"validate": "hr_suite.hr_suite.salary_currency.warn_if_not_company_currency",
+	},
+	"Leave Policy": {
+		"validate": "hr_suite.hr_suite.leave_application_rules.validate_policy_rows",
 	},
 	"Leave Allocation": {
 		"on_submit": "hr_suite.hr_suite.integrations.hrms.on_leave_allocation_submit",
@@ -189,6 +228,9 @@ doc_events = {
 	"Exit Interview": {
 		"on_update": "hr_suite.hr_suite.integrations.hrms.on_exit_interview_update",
 		"on_trash": "hr_suite.hr_suite.integrations.hrms.on_exit_interview_trash",
+	},
+	"Gratuity": {
+		"before_submit": "hr_suite.hr_suite.gratuity_rules.validate_one_gratuity_per_employee",
 	},
 	"Salary Structure Assignment": {
 		"before_submit": "hr_suite.hr_suite.integrations.hrms.validate_minimum_wage",
@@ -207,6 +249,8 @@ doctype_js = {
 	"Payroll Entry": "public/js/wps_payroll.js",
 	"Appraisal": "public/js/appraisal.js",
 	"Payroll Preview": "public/js/payroll_preview.js",
+	"Leave Application": "public/js/leave_application.js",
+	"Salary Structure": "public/js/salary_structure.js",
 }
 
 # ─── Jinja ──────────────────────────────────────────────────────────────────────
@@ -218,7 +262,11 @@ jinja = {
 	]
 }
 
-override_whitelisted_methods = {}
+override_whitelisted_methods = {
+	# the Leave Application form lists every leave type the employee's country declares,
+	# not only the allocated ones
+	"hrms.hr.doctype.leave_application.leave_application.get_leave_details": "hr_suite.hr_suite.leave_application_rules.get_leave_details",
+}
 
 # hrms submits the payroll accrual Journal Entry inline. Where that entry needs
 # approval, the refusal aborts the whole run and leaves the payslips in draft —
@@ -260,6 +308,7 @@ payment_advice_reference_doctypes = {
 		"Annual Leave Disbursement",
 		"Salary Settlement",
 		"End of Service Benefit",
+		"Leave Salary Settlement",
 	],
 }
 
@@ -267,6 +316,7 @@ payment_advice_reference_amount_fields = {
 	"Annual Leave Disbursement": ["total_leave_pay"],
 	"Salary Settlement": ["net_payable"],
 	"End of Service Benefit": ["net_eosb"],
+	"Leave Salary Settlement": ["total_payable"],
 }
 
 payment_advice_party_account = [

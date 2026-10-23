@@ -1,0 +1,47 @@
+{
+ "name": "Leave Application Sick Tier",
+ "module": "Hr Suite",
+ "doctype": "DocType",
+ "istable": 1,
+ "editable_grid": 1,
+ "fields": [
+  {
+   "fieldname": "tier_label",
+   "fieldtype": "Data",
+   "label": "Tier",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "days",
+   "fieldtype": "Float",
+   "label": "Days",
+   "precision": "2",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "pay_percent",
+   "fieldtype": "Percent",
+   "label": "Paid At (%)",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "From",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To",
+   "in_list_view": 1,
+   "read_only": 1
+  }
+ ],
+ "permissions": [],
+ "modified": "2026-10-05 12:00:00.000000"
+}

@@ -32,12 +32,14 @@ def get_columns():
 		{"fieldname": "department", "label": _("Department"), "fieldtype": "Link", "options": "Department", "width": 140},
 		{"fieldname": "date_of_joining", "label": _("Joining Date"), "fieldtype": "Date", "width": 130},
 		{"fieldname": "years_of_service", "label": _("Years"), "fieldtype": "Float", "precision": 2, "width": 100},
-		{"fieldname": "entitlement", "label": _("Entitlement"), "fieldtype": "Int", "width": 110},
+		{"fieldname": "entitlement", "label": _("Annual Entitlement"), "fieldtype": "Int", "width": 130},
+		{"fieldname": "accrued_to_date", "label": _("Accrued To Date"), "fieldtype": "Float", "precision": 2, "width": 130},
+		{"fieldname": "accruing_now", "label": _("Accruing This Month"), "fieldtype": "Float", "precision": 2, "width": 130},
 		{"fieldname": "leave_allocated", "label": _("Allocated (Leave Ledger)"), "fieldtype": "Float", "precision": 1, "width": 170},
 		{"fieldname": "suite_leave_taken", "label": _("Taken (Annual Leave)"), "fieldtype": "Float", "precision": 1, "width": 160},
 		{"fieldname": "ledger_leave_taken", "label": _("Taken (Leave Ledger)"), "fieldtype": "Float", "precision": 1, "width": 160},
 		{"fieldname": "leave_taken", "label": _("Total Taken"), "fieldtype": "Float", "precision": 1, "width": 120},
-		{"fieldname": "leave_balance", "label": _("Balance"), "fieldtype": "Float", "precision": 1, "width": 110},
+		{"fieldname": "leave_balance", "label": _("Balance"), "fieldtype": "Float", "precision": 2, "width": 110},
 	]
 
 
@@ -95,6 +97,17 @@ def get_data(filters):
 
 		total_taken = suite_taken + ledger_taken
 
+		# The balance is what has been ACCRUED less what was taken, never the year's full
+		# entitlement less what was taken: a monthly-accrual policy holds 1.75 days after one
+		# month, not 21. Accrual is credited to the Leave Ledger (by the HR Suite ledger engine
+		# or by HRMS earned leave), so its allocation is the accrued figure. Only an employee
+		# with no ledger at all (leave recorded on the Annual Leave doctype alone) falls back to
+		# the entitlement.
+		accrued = ledger_allocated if emp_ledger else flt(entitlement)
+		accrued = _accrued_since_joining(emp.employee, accrued)
+		balance = accrued - total_taken
+		balance = _ledger_engine_balance(emp.employee, balance, min(getdate(today()), getdate("{0}-12-31".format(year))))
+
 		result.append(
 			{
 				"employee": emp.employee,
@@ -103,15 +116,63 @@ def get_data(filters):
 				"date_of_joining": emp.date_of_joining,
 				"years_of_service": flt(years, 2),
 				"entitlement": entitlement,
+				"accrued_to_date": flt(accrued, 2),
+				"accruing_now": _accruing_this_month(emp.employee, year),
 				"leave_allocated": ledger_allocated,
 				"suite_leave_taken": suite_taken,
 				"ledger_leave_taken": ledger_taken,
 				"leave_taken": total_taken,
-				"leave_balance": flt(entitlement) - total_taken,
+				"leave_balance": flt(balance, 2),
 			}
 		)
 
 	return result
+
+
+def _ledger_engine_balance(employee, default, as_on):
+	"""On the HR Suite ledger engine the balance is HRMS's own, so this report and the Leave Accrual
+	Ledger report cannot disagree (it also handles carry-forward and expiry)."""
+	from hr_suite.hr_suite.policy import LEDGER_ENGINE, get_policy
+
+	policy = get_policy(employee)
+	if not policy.get("has_policy") or policy.leave_accrual_engine != LEDGER_ENGINE:
+		return default
+
+	from hrms.hr.doctype.leave_application.leave_application import get_leave_balance_on
+
+	return flt(get_leave_balance_on(employee, policy.annual_leave_type, as_on))
+
+
+def _accrued_since_joining(employee, default):
+	"""On the ledger engine the days earned since joining (opening balance plus every month), which is what
+	the policy means by "21 days x years of service", not just the part of it that falls in the report year."""
+	from hr_suite.hr_suite.policy import LEDGER_ENGINE, get_policy
+
+	policy = get_policy(employee)
+	if not policy.get("has_policy") or policy.leave_accrual_engine != LEDGER_ENGINE:
+		return default
+	row = frappe.db.sql(
+		"SELECT SUM(leave_days) FROM `tabLeave Accrual Ledger` WHERE employee = %s AND source != 'Settlement'",
+		(employee,),
+	)
+	return flt(row[0][0]) if row and row[0][0] is not None else default
+
+
+def _accruing_this_month(employee, year):
+	"""Days earned so far in the current month but not yet credited: the monthly job credits at month end.
+
+	Pro-rata over a 30-day month, so 1.75 a month at day 12 is 0.70. Added to Accrued To Date it gives
+	the earned-to-date figure (21 days a year x 1.45 years of service = 30.45). Blank outside the
+	current year or off the ledger engine.
+	"""
+	from hr_suite.hr_suite.policy import LEDGER_ENGINE, get_policy
+
+	if cint(year) != getdate(today()).year:
+		return None
+	policy = get_policy(employee)
+	if not policy.get("has_policy") or policy.leave_accrual_engine != LEDGER_ENGINE:
+		return None
+	return flt(flt(policy.annual.leave_days_per_month) * min(getdate(today()).day, 30) / 30.0, 2)
 
 
 def get_ledger_totals(employees, leave_type, year):

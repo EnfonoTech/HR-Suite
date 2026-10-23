@@ -175,7 +175,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Leave & Overtime",
-   "link_count": 15,
+   "link_count": 17,
    "link_type": "DocType",
    "onboard": 1,
    "type": "Card Break"
@@ -326,6 +326,26 @@
    "label": "Holiday List",
    "link_count": 0,
    "link_to": "Holiday List",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Leave Accrual Ledger",
+   "link_count": 0,
+   "link_to": "Leave Accrual Ledger",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Leave Salary Settlement",
+   "link_count": 0,
+   "link_to": "Leave Salary Settlement",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -1328,7 +1348,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Employee & Leave Reports",
-   "link_count": 3,
+   "link_count": 8,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -1359,6 +1379,56 @@
    "label": "Compliance Case Tracker",
    "link_count": 0,
    "link_to": "Compliance Case Tracker",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Leave and Salary Days Balance",
+   "link_count": 0,
+   "link_to": "Leave and Salary Days Balance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Leave Accrual Ledger Report",
+   "link_count": 0,
+   "link_to": "Leave Accrual Ledger Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Leave Salary Settlements Due",
+   "link_count": 0,
+   "link_to": "Leave Salary Settlements Due",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Gratuity Liability",
+   "link_count": 0,
+   "link_to": "Gratuity Liability",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "HR Payment Advice Queue",
+   "link_count": 0,
+   "link_to": "HR Payment Advice Queue",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"

@@ -61,6 +61,7 @@ function _trigger_calculation(frm) {
             eosb_wage_basis: frm.doc.eosb_wage_basis || 'Basic Salary',
             termination_reason: frm.doc.termination_reason || '',
             eosb_deductions: frm.doc.eosb_deductions || 0,
+            employee: frm.doc.employee || null,
         },
         callback(r) {
             if (!r.message) return;
@@ -73,6 +74,15 @@ function _trigger_calculation(frm) {
             frm.set_value('resignation_factor_label',d.resignation_factor_label);
             frm.set_value('net_eosb',                d.net_eosb);
             frm.set_value('calculation_notes',       d.calculation_notes);
+            ['calendar_days', 'unpaid_days', 'qualifying_days', 'gratuity_base_amount',
+             'gross_before_cap', 'cap_amount', 'is_partial_settlement'].forEach((f) => {
+                if (d[f] !== undefined) frm.set_value(f, d[f]);
+            });
+            if (d.gratuity_breakdown) {
+                frm.clear_table('gratuity_breakdown');
+                d.gratuity_breakdown.forEach((row) => frm.add_child('gratuity_breakdown', row));
+                frm.refresh_field('gratuity_breakdown');
+            }
         }
     });
 }

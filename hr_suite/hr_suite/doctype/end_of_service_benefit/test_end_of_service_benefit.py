@@ -35,6 +35,7 @@ class TestEndOfServiceBenefit(FrappeTestCase):
 			"Resignation",
 		)
 
-		self.assertEqual(result["resignation_factor"], round(2 / 3, 4))
-		self.assertIn("2/3 EOSB", result["resignation_factor_label"])
+		# 16 years is past the 10-year line, where the policy spec pays resignation in full
+		self.assertEqual(result["resignation_factor"], 1.0)
+		self.assertIn("100%", result["resignation_factor_label"])
 		self.assertGreater(result["net_eosb"], 0)
