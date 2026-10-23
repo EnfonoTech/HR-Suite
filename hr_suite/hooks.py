@@ -278,7 +278,11 @@ jinja = {
 	]
 }
 
-override_whitelisted_methods = {}
+override_whitelisted_methods = {
+	# the Leave Application form lists every leave type the employee's country declares,
+	# not only the allocated ones
+	"hrms.hr.doctype.leave_application.leave_application.get_leave_details": "hr_suite.hr_suite.leave_application_rules.get_leave_details",
+}
 
 # hrms submits the payroll accrual Journal Entry inline. Where that entry needs
 # approval, the refusal aborts the whole run and leaves the payslips in draft —
