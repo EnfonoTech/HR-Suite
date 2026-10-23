@@ -245,6 +245,9 @@ doc_events = {
 		"on_update": "hr_suite.hr_suite.integrations.hrms.on_exit_interview_update",
 		"on_trash": "hr_suite.hr_suite.integrations.hrms.on_exit_interview_trash",
 	},
+	"Gratuity": {
+		"before_submit": "hr_suite.hr_suite.gratuity_rules.validate_one_gratuity_per_employee",
+	},
 	"Salary Structure Assignment": {
 		"before_submit": "hr_suite.hr_suite.integrations.hrms.validate_minimum_wage",
 		# The Employee Salary tab mirrors whatever assignment is currently in force,
