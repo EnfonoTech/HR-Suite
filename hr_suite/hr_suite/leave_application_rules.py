@@ -219,3 +219,35 @@ def _book_unpaid_deductions(doc):
 		if name:
 			booked.append({"name": name, "month": str(month_start), "amount": flt(amount, payroll.MONEY_PRECISION)})
 	doc.db_set("unpaid_deduction_rows", payroll.dump_json(booked), update_modified=False)
+
+
+@frappe.whitelist()
+def get_leave_details(employee, date, for_salary_slip=False, leave_application=None):
+	"""HRMS's leave details, plus every leave type the employee's country declares.
+
+	The Leave Application form offers only the types in this answer, and HRMS answers with
+	the allocated ones, so a type the country grants but that is not allocated yet (Annual
+	Leave before the first monthly accrual) could not even be chosen. The missing ones are
+	added with a zero balance; HRMS still decides on save whether the days can be taken.
+	"""
+	from hrms.hr.doctype.leave_application.leave_application import get_leave_details as hrms_leave_details
+
+	from hr_suite.hr_suite.leave_setup import _declared_rows
+	from hr_suite.hr_suite.utils import get_employee_work_country
+
+	details = hrms_leave_details(employee, date, for_salary_slip=for_salary_slip, leave_application=leave_application)
+	if cint(for_salary_slip):
+		return details
+
+	gender = frappe.db.get_value("Employee", employee, "gender")
+	for row in _declared_rows(get_employee_work_country(employee)):
+		if row.leave_type in details["leave_allocation"] or row.gender_specific not in ("All", "{0} Only".format(gender)):
+			continue
+		details["leave_allocation"][row.leave_type] = {
+			"total_leaves": 0,
+			"expired_leaves": 0,
+			"leaves_taken": 0,
+			"leaves_pending_approval": 0,
+			"remaining_leaves": 0,
+		}
+	return details
