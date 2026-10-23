@@ -99,11 +99,14 @@ def on_employee_insert(doc, method=None):
 
 
 def _seed_leave_allocations(emp_doc):
+    from hr_suite.hr_suite.leave_setup import ensure_once_in_employment_allocations
     from hr_suite.hr_suite.utils import seed_country_leave_types
     try:
         seed_country_leave_types(emp_doc.name)
     except Exception:
         frappe.log_error(frappe.get_traceback(), f"HR Suite: Leave seed failed for {emp_doc.name}")
+    # outside the try above, so a policy that cannot be assigned still leaves Hajj selectable
+    ensure_once_in_employment_allocations(emp_doc.name)
 
 
 # ── Salary Slip → inject statutory deductions ────────────────────────────────
