@@ -423,8 +423,34 @@ class TestHandOff(SettlementTestBase):
 		self.assertIsNone(get_advice_state("Leave Salary Settlement", doc.name)["advice"])
 		self.assertTrue(raise_for_document("Leave Salary Settlement", doc.name)["created"])
 
-	def test_hr_can_raise_the_finance_advice_without_create_rights_on_it(self):
-		"""sf_trading's Payment Advice gives create to accounts roles only; HR raises it from the settlement."""
+	def test_the_settlement_raises_the_hr_payment_advice_even_where_finance_advice_exists(self):
+		"""Leave salary is approved by HR first (level 1 / 2), so it never goes straight to sf_trading's advice."""
+		from hr_suite.hr_suite import payment_advice as pa
+
+		emp = self.staff("HrFirst")
+		doc = self.settle(emp, self.leave(emp))
+		with patch.object(pa, "finance_advice_available", return_value=True), patch.object(
+			pa, "get_finance_advice_for", return_value=None
+		), patch.object(pa, "create_finance_advice_for", side_effect=AssertionError("finance advice raised")):
+			self.assertEqual(pa.get_advice_state("Leave Salary Settlement", doc.name)["target"], "HR Payment Advice")
+			result = pa.raise_for_document("Leave Salary Settlement", doc.name)
+		self.assertEqual((result["doctype"], result["created"]), ("HR Payment Advice", True))
+		self.assertEqual(frappe.db.get_value("Leave Salary Settlement", doc.name, "payment_advice_type"), "HR Payment Advice")
+
+	def test_a_finance_advice_raised_earlier_is_not_doubled_by_an_hr_advice(self):
+		from hr_suite.hr_suite import payment_advice as pa
+
+		emp = self.staff("NoDouble")
+		doc = self.settle(emp, self.leave(emp))
+		with patch.object(pa, "finance_advice_available", return_value=True), patch.object(
+			pa, "get_finance_advice_for", return_value="PA-OLD"
+		):
+			result = pa.raise_for_document("Leave Salary Settlement", doc.name)
+		self.assertEqual((result["advice"], result["doctype"], result["created"]), ("PA-OLD", "Payment Advice", False))
+		self.assertFalse(frappe.db.exists("HR Payment Advice", {"source_name": doc.name}))
+
+	def test_hr_can_raise_a_finance_advice_without_create_rights_on_it(self):
+		"""sf_trading's Payment Advice gives create to accounts roles only; HR raises it from its own document."""
 		from types import SimpleNamespace
 
 		from hr_suite.hr_suite import payment_advice as pa
@@ -437,17 +463,18 @@ class TestHandOff(SettlementTestBase):
 			asked.append((doctype, ptype))
 			return True
 
-		with patch.object(pa, "finance_advice_available", return_value=True), patch.object(
-			pa, "get_finance_advice_for", return_value=None
-		), patch.object(pa, "create_finance_advice_for", return_value=SimpleNamespace(name="PA-X")), patch.object(
-			pa, "_write_back_advice_link"
-		), patch.object(pa, "assert_doctype_permissions", side_effect=AssertionError("create on the finance advice")), patch(
-			"frappe.has_permission", side_effect=has_permission
-		):
+		spec = {**pa.SOURCE_DOCUMENTS["Leave Salary Settlement"], "hr_advice": False}
+		with patch.dict(pa.SOURCE_DOCUMENTS, {"Leave Salary Settlement": spec}), patch.object(
+			pa, "finance_advice_available", return_value=True
+		), patch.object(pa, "get_finance_advice_for", return_value=None), patch.object(
+			pa, "create_finance_advice_for", return_value=SimpleNamespace(name="PA-X")
+		), patch.object(pa, "_write_back_advice_link"), patch.object(
+			pa, "assert_doctype_permissions", side_effect=AssertionError("create on the finance advice")
+		), patch("frappe.has_permission", side_effect=has_permission):
 			result = pa.raise_for_document("Leave Salary Settlement", doc.name)
 
 		self.assertEqual((result["advice"], result["doctype"], result["created"]), ("PA-X", "Payment Advice", True))
-		self.assertIn(("Leave Salary Settlement", "write"), asked)  # the right to edit the settlement is what counts
+		self.assertIn(("Leave Salary Settlement", "write"), asked)
 		self.assertNotIn(("Payment Advice", "create"), asked)
 
 	def test_the_old_disbursement_is_refused_for_a_ledger_country(self):

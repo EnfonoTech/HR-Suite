@@ -251,6 +251,9 @@ SOURCE_DOCUMENTS = {
 		"lines": (("total_payable", "Leave salary settlement"),),
 		"link_field": "payment_advice",
 		"link_type_field": "payment_advice_type",
+		# Always HR's own advice (level 1 / level 2 approval, then Finance), even where sf_trading's
+		# Payment Advice is installed: the leave salary is approved by HR before Finance sees it.
+		"hr_advice": True,
 	},
 }
 
@@ -517,6 +520,15 @@ def _sync_paid_state(advice) -> None:
 			frappe.db.set_value(row.reference_doctype, row.reference_record, field, "Approved")
 
 
+def advice_doctype_for(source_doctype: str) -> str:
+	"""The advice DocType a source document raises: HR's own where its spec says so, else
+	sf_trading's finance Payment Advice where that is installed, else HR's own."""
+	spec = SOURCE_DOCUMENTS.get(source_doctype) or {}
+	if spec.get("hr_advice") or not finance_advice_available():
+		return ADVICE_DOCTYPE
+	return FINANCE_ADVICE_DOCTYPE
+
+
 @frappe.whitelist()
 def raise_for_document(doctype: str, name: str) -> dict:
 	"""Raise the payment advice for one submitted HR document, on request.
@@ -531,9 +543,10 @@ def raise_for_document(doctype: str, name: str) -> dict:
 			_("{0} does not raise payment advices.").format(_(doctype)), title=_("Payment Advice")
 		)
 
-	# One finance queue where sf_trading provides one, hr_suite's own where it does not.
-	use_finance_advice = finance_advice_available()
-	target_doctype = FINANCE_ADVICE_DOCTYPE if use_finance_advice else ADVICE_DOCTYPE
+	# One finance queue where sf_trading provides one, hr_suite's own where it does not, and
+	# always hr_suite's own for the documents whose spec asks for HR approval first.
+	target_doctype = advice_doctype_for(doctype)
+	use_finance_advice = target_doctype == FINANCE_ADVICE_DOCTYPE
 
 	frappe.has_permission(doctype, "read", doc=name, throw=True)
 	if use_finance_advice:
@@ -554,11 +567,14 @@ def raise_for_document(doctype: str, name: str) -> dict:
 			title=_("Not Submitted"),
 		)
 
-	existing = (
-		get_finance_advice_for(doctype, name) if use_finance_advice else get_payment_advice_for(doctype, name)
-	)
+	# One live claim per document, whichever kind: an advice raised earlier on the other route (a
+	# finance advice from before settlements went through HR) must be cancelled before a new one.
+	existing = get_payment_advice_for(doctype, name)
 	if existing:
-		return {"advice": existing, "doctype": target_doctype, "created": False}
+		return {"advice": existing, "doctype": ADVICE_DOCTYPE, "created": False}
+	existing = get_finance_advice_for(doctype, name)
+	if existing:
+		return {"advice": existing, "doctype": FINANCE_ADVICE_DOCTYPE, "created": False}
 
 	lines = _claim_lines(doc, spec)
 	if not lines:
@@ -593,7 +609,7 @@ def get_advice_state(doctype: str, name: str) -> dict:
 		frappe.throw(_("{0} does not raise payment advices.").format(_(doctype)), title=_("Payment Advice"))
 	frappe.has_permission(doctype, "read", doc=name, throw=True)
 
-	target = FINANCE_ADVICE_DOCTYPE if finance_advice_available() else ADVICE_DOCTYPE
+	target = advice_doctype_for(doctype)
 	for advice_doctype, finder in (
 		(FINANCE_ADVICE_DOCTYPE, get_finance_advice_for),
 		(ADVICE_DOCTYPE, get_payment_advice_for),
