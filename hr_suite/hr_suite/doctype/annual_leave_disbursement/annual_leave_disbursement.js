@@ -13,12 +13,32 @@ frappe.ui.form.on("Annual Leave Disbursement", {
 					employee: frm.doc.employee,
 					docstatus: 1,
 					status: "Approved",
+					leave_type: ["in", frm.advanceable_leave_types || []],
 				},
 			};
+		});
+		// Only leave whose salary may be paid in advance (Annual Leave), as the save enforces.
+		frm.set_query("leave_type", function () {
+			return { filters: { name: ["in", frm.advanceable_leave_types || []] } };
+		});
+	},
+
+	load_advanceable_leave_types: function (frm) {
+		if (!frm.doc.employee) return;
+		frappe.call({
+			method: ALD_METHOD + ".get_advanceable_leave_types",
+			args: { employee: frm.doc.employee },
+			callback: function (r) {
+				frm.advanceable_leave_types = r.message || [];
+				if (frm.is_new() && !frm.doc.leave_type && frm.advanceable_leave_types.length === 1) {
+					frm.set_value("leave_type", frm.advanceable_leave_types[0]);
+				}
+			},
 		});
 	},
 
 	employee: function (frm) {
+		frm.trigger("load_advanceable_leave_types");
 		if (!frm.doc.employee) return;
 		frappe.db.get_value("Employee", frm.doc.employee, ["employee_name", "company", "department"], (r) => {
 			if (r) {
@@ -122,6 +142,7 @@ frappe.ui.form.on("Annual Leave Disbursement", {
 	},
 
 	refresh: function (frm) {
+		frm.trigger("load_advanceable_leave_types");
 		frm.set_intro(
 			__("Leave salary is an advance of the salary for the same days. On submit this posts a " +
 			   "Journal Entry for the total and books one deduction per payroll month, so the days " +

@@ -921,6 +921,34 @@ def get_leave_balance(employee, leave_type, on_date=None):
 
 
 @frappe.whitelist()
+def get_advanceable_leave_types(employee):
+	"""The Leave Types the form offers: those whose salary may be paid in advance for this employee.
+
+	The same declaration the save enforces (_validate_leave_may_be_advanced): the country's
+	rows paid in full and ticked May Be Paid In Advance, which is Annual Leave on a seeded
+	config. A country that declares no leave types falls back to the earned-leave types.
+	"""
+	from hr_suite.hr_suite.utils import get_employee_work_country
+
+	assert_employee_access(employee)
+
+	config = frappe.db.get_value("Country Config", {"country_code": get_employee_work_country(employee)}, "name")
+	rows = frappe.get_all(
+		"Country Leave Type Row",
+		filters={"parent": config, "parenttype": "Country Config"},
+		fields=["frappe_leave_type_name", "leave_type_name", "pay_treatment", "leave_salary_in_advance"],
+	) if config else []
+	if not rows:
+		return frappe.get_all("Leave Type", filters={"is_earned_leave": 1}, pluck="name")
+
+	return sorted({
+		row.frappe_leave_type_name or row.leave_type_name
+		for row in rows
+		if cint(row.leave_salary_in_advance) and cstr(row.pay_treatment or "Full Pay") == "Full Pay"
+	})
+
+
+@frappe.whitelist()
 def get_leave_salary_preview(employee, days):
 	"""Priced breakdown for the form: which components, over how long a month, and why."""
 	assert_employee_access(employee)
