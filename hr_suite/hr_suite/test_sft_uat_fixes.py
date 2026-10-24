@@ -569,6 +569,62 @@ class TestLegacyAllocations(LeaveTestBase):
 		self.assertIn((emp, alloc.name, 30), found)  # the 30 only, never the 3.5 the ledger posted
 
 
+# ── accrual runs from the joining date ────────────────────────────────────────
+
+
+class TestAccrualFromJoining(LeaveTestBase):
+	"""UAT: an employee who joined in 2020 only had accruals from 2023 (a 36-month catch-up cap)."""
+
+	def start_date(self, value):
+		doc = frappe.get_doc("Country Config", "SA")
+		doc.leave_ledger_start_date = value
+		doc.save(ignore_permissions=True)
+
+	def periods(self, emp):
+		return [
+			str(r.period_start)
+			for r in frappe.get_all(
+				"Leave Accrual Ledger", filters={"employee": emp, "source": "Accrual"}, fields=["period_start"], order_by="period_start"
+			)
+		]
+
+	def test_a_long_serving_employee_accrues_from_the_joining_month(self):
+		self.addCleanup(self.start_date, "2026-01-01")
+		self.start_date(None)
+		emp = self.employee("Veteran", "SA", "2020-01-01")
+		created = accrue_employee(emp, "2026-09-30")
+
+		periods = self.periods(emp)
+		self.assertEqual(len(created), 81)  # Jan 2020 .. Sep 2026, nothing dropped
+		self.assertEqual(periods[0], "2020-01-01")
+		self.assertEqual(periods[-1], "2026-09-01")
+		self.assertTrue(frappe.db.exists("Leave Allocation", {"employee": emp, "from_date": "2020-01-01", "docstatus": 1}))
+
+	def test_months_an_older_run_left_out_behind_the_first_row_are_filled(self):
+		self.addCleanup(self.start_date, "2026-01-01")
+		self.start_date("2023-10-01")  # what the 36-month cap used to produce
+		emp = self.employee("Capped", "SA", "2020-01-01")
+		self.assertEqual(len(accrue_employee(emp, "2026-09-30")), 36)
+
+		self.start_date(None)
+		filled = accrue_employee(emp, "2026-09-30")
+		self.assertEqual(len(filled), 45)  # Jan 2020 .. Sep 2023
+		self.assertEqual(self.periods(emp)[0], "2020-01-01")
+		self.assertEqual(len(self.periods(emp)), 81)
+		self.assertEqual(accrue_employee(emp, "2026-09-30"), [])  # and it is repeatable
+
+	def test_an_opening_balance_still_stops_earlier_months_accruing(self):
+		self.addCleanup(self.start_date, "2026-01-01")
+		self.start_date(None)
+		emp = self.employee("Opened", "SA", "2020-01-01")
+		frappe.get_doc(
+			doctype="Leave Accrual Ledger", employee=emp, source="Opening", period_end="2025-12-31", leave_days=20, salary_days=20
+		).insert(ignore_permissions=True)
+		created = accrue_employee(emp, "2026-03-31")
+		self.assertEqual(self.periods(emp), ["2026-01-01", "2026-02-01", "2026-03-01"])
+		self.assertEqual(len(created), 3)
+
+
 # ── Saudi gratuity rule in the HRMS list ──────────────────────────────────────
 
 

@@ -36,7 +36,8 @@ from hr_suite.hr_suite.doctype.leave_accrual_ledger.leave_accrual_ledger import 
 from hr_suite.hr_suite.policy import LEDGER_ENGINE, get_policy, months_of_service
 
 OVERRIDE_ROLE = "HR Leave Override"
-MAX_CATCH_UP_MONTHS = 36
+# Sanity guard against a mistyped joining date (1900), not a business limit: 50 years of service.
+MAX_CATCH_UP_MONTHS = 600
 STANDARD_MONTH = 30.0
 
 
@@ -251,17 +252,29 @@ def post_to_hrms(employee, leave_type, days, on_date):
 # ── the job ───────────────────────────────────────────────────────────────────
 
 
-def _first_period_start(policy, joining, employee):
-	"""The first month this employee still has to accrue, or None when none is due."""
+def _periods_owed(policy, joining, employee, last_period_start):
+	"""Every month from the start of accrual to `last_period_start` that has no Accrual row yet.
+
+	Accrual starts at the joining month, or the ledger start date when that is later, and never
+	covers a month an Opening balance already stands for. Months already in the ledger are
+	skipped wherever they fall, so a run also fills a hole behind the first row (the months an
+	older version of this job left out) and not only the months after the last one.
+	"""
 	start = get_first_day(getdate(joining))
 	if policy.leave_ledger_start_date:
 		start = max(start, get_first_day(getdate(policy.leave_ledger_start_date)))
 
-	done = _ledger_rows(employee, ("Accrual", "Opening"))
-	if done:
-		last_end = max(getdate(r.period_end) for r in done)
-		start = max(start, get_first_day(add_months(last_end, 1)))
-	return start
+	opening = _ledger_rows(employee, ("Opening",))
+	if opening:
+		start = max(start, get_first_day(add_months(max(getdate(r.period_end) for r in opening), 1)))
+
+	have = {getdate(r.period_start) for r in _ledger_rows(employee, ("Accrual",))}
+	owed, period_start = [], start
+	while period_start <= last_period_start:
+		if period_start not in have:
+			owed.append(period_start)
+		period_start = get_first_day(add_months(period_start, 1))
+	return owed
 
 
 def accrue_employee(employee, through=None):
@@ -283,15 +296,17 @@ def accrue_employee(employee, through=None):
 	from hr_suite.hr_suite.gratuity import get_unpaid_days
 
 	created = []
-	period_start = _first_period_start(policy, joining, employee)
-	if date_diff(last_period_start, period_start) > MAX_CATCH_UP_MONTHS * 31:
+	owed = _periods_owed(policy, joining, employee, last_period_start)
+	if len(owed) > MAX_CATCH_UP_MONTHS:
 		frappe.log_error(
-			"{0} is more than {1} months behind; accruing the most recent {1}.".format(employee, MAX_CATCH_UP_MONTHS),
+			"{0} is more than {1} months behind (joining date {2}); accruing the most recent {1}.".format(
+				employee, MAX_CATCH_UP_MONTHS, joining
+			),
 			"HR Suite: leave accrual catch-up capped",
 		)
-		period_start = add_months(last_period_start, -(MAX_CATCH_UP_MONTHS - 1))
+		owed = owed[-MAX_CATCH_UP_MONTHS:]
 
-	while period_start <= last_period_start:
+	for period_start in owed:
 		period_end = get_last_day(period_start)
 		month_policy = get_policy(employee, on_date=period_end)
 		annual = month_policy.get("annual") or frappe._dict()
@@ -327,8 +342,6 @@ def accrue_employee(employee, through=None):
 			)
 			row.insert(ignore_permissions=True)
 			created.append(row.name)
-
-		period_start = get_first_day(add_months(period_start, 1))
 
 	return created
 
