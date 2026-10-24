@@ -130,6 +130,8 @@ class LeaveSalarySettlement(Document):
 		else:
 			self._pull_leave_application()
 		self._require_ledger_engine()
+		if not self._is_final():
+			self._require_annual_leave()
 		self._guard_one_open_draft()
 		self._price()
 
@@ -245,6 +247,16 @@ class LeaveSalarySettlement(Document):
 			frappe.throw(
 				_("A Leave Salary Settlement is for annual leave ({0}). {1} is {2}, which does not advance leave salary.").format(
 					self._policy.annual_leave_type, self.leave_application, self.leave_type
+				),
+				title=_("Not Annual Leave"),
+			)
+
+	def _require_annual_leave(self):
+		"""Leave salary is paid in advance of annual leave only, never of sick, Hajj or other leave."""
+		if self.leave_type != self._policy.annual_leave_type:
+			frappe.throw(
+				_("{0} is {1}. A Leave Salary Settlement is only for {2}.").format(
+					self.leave_application, self.leave_type, self._policy.annual_leave_type
 				),
 				title=_("Not Annual Leave"),
 			)
@@ -846,3 +858,11 @@ def make_from_leave_application(leave_application):
 		"leave_application": leave_application,
 		"last_working_day": add_days(la.from_date, -1),
 	}
+
+
+def set_leave_application_onload(doc, method=None):
+	"""Tell the Leave Application form whether it may start a settlement: approved annual leave only."""
+	if doc.docstatus != 1 or doc.status != "Approved":
+		return
+	policy = get_policy(doc.employee, on_date=doc.from_date)
+	doc.set_onload("hrs_can_settle_leave_salary", int(bool(policy.get("has_policy")) and doc.leave_type == policy.annual_leave_type))

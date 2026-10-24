@@ -209,6 +209,7 @@ doc_events = {
 		"validate": "hr_suite.hr_suite.performance.validate_appraisal",
 	},
 	"Leave Application": {
+		"onload": "hr_suite.hr_suite.doctype.leave_salary_settlement.leave_salary_settlement.set_leave_application_onload",
 		"validate": [
 			"hr_suite.hr_suite.integrations.hrms.on_leave_application_validate",
 			"hr_suite.hr_suite.sick_leave_tiers.preview_split",

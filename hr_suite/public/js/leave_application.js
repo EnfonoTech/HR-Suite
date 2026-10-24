@@ -1,5 +1,5 @@
 // HR Suite — Leave Application: the employee's leave position since joining, and start a Leave Salary
-// Settlement from an approved leave.
+// Settlement from an approved annual leave.
 frappe.ui.form.on("Leave Application", {
 	employee: function (frm) {
 		hr_suite_leave_summary(frm);
@@ -10,6 +10,8 @@ frappe.ui.form.on("Leave Application", {
 		if (frappe.user.has_role("HR Manager")) {
 			frm.add_custom_button(__("Change Dates"), () => hr_suite_change_dates(frm), __("Actions"));
 		}
+		// set by the server: approved, and the employee's annual leave type
+		if (!(frm.doc.__onload || {}).hrs_can_settle_leave_salary) return;
 		if (!frappe.model.can_create("Leave Salary Settlement")) return;
 
 		frm.add_custom_button(
