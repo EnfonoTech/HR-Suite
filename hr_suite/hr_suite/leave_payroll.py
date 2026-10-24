@@ -16,9 +16,16 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, cstr, flt, formatdate, getdate, today
 
-from hr_suite.hr_suite.utils import get_leave_salary_recovery_component, get_leave_salary_terms
+from hr_suite.hr_suite.utils import (
+	get_leave_salary_earning_component,
+	get_leave_salary_recovery_component,
+	get_leave_salary_terms,
+)
 
 ERROR_TITLE = "HR Suite: leave salary payroll adjustment"
+# Keeps the normal pay of the leave days off the payslip. It is NOT the recovery: the recovery is
+# booked only once the advance has been paid (Leave Salary Recovery), the exclusion at submit.
+LEAVE_DAYS_EXCLUSION = "Leave Days Exclusion"
 MONEY_PRECISION = 3
 
 
@@ -116,6 +123,32 @@ def prepare_component(employee, company, expense_account, component=None, compon
 			title=_("No Salary Structure"),
 		)
 	return component, currency
+
+
+def exclusion_component():
+	"""The Deduction that keeps settled leave days' normal pay out of the payslip, created once."""
+	return ensure_deduction_component(
+		LEAVE_DAYS_EXCLUSION,
+		"LDX",
+		"Keeps the normal pay of leave days that a Leave Salary Settlement already covers off the payslip. "
+		"Created by HR Suite.",
+	)
+
+
+def earning_component_for(employee, company):
+	"""The Earning component of the employee's country (Country Config), created once when blank."""
+	terms = get_leave_salary_terms(employee)
+	return get_leave_salary_earning_component(company, terms.get("earning_component"))
+
+
+def payroll_date_or_next_open(employee, on_date):
+	"""on_date, or the next date no submitted payslip covers when that month is already closed."""
+	return next_open_date(employee) if slip_covering(employee, on_date) else getdate(on_date)
+
+
+def book_earning(doc, component, currency, payroll_date, amount):
+	"""One submitted Additional Salary EARNING tied to `doc`. The caller has already chosen an open date."""
+	return book_additional_salary(doc, component, currency, payroll_date, amount, check_closed=False)
 
 
 def book_deduction(doc, component, currency, payroll_date, amount):

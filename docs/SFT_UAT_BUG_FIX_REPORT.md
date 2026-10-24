@@ -84,3 +84,24 @@ Kept as they were (spec section 9): `Leave Salary Recovery` stays a Deduction an
 **Tests** (`test_leave_salary_settlement.py`, class `TestCompletedMonthAndLeaveDays`, all failing on the old code and passing now): TC01 completed month stays in payroll; same-month leave still pays worked days; exclusion in leave days (18) not calendar days (21); holidays counted as leave (21); two-month leave split in leave days; TC06 second settlement of a fully paid leave and two open drafts refused; TC13 repeated sync books nothing new.
 
 **Existing records on `sft-uat` (not changed).** LSS-2026-0002 is submitted, so it was not edited. Safe correction: cancel its Payment Advice if one is live, cancel the settlement (this cancels HR-ADS-26-10-00003 and -00004, the September slip is still a draft), re-create it from HR-LAP-2026-00011 with last working day 30 Sep. After the fix it pays 420 (no worked days), and books a single 420 deduction on 1 Oct. Then re-run the September slip: gross 700, no recovery, net 700.
+
+### Round 3 addendum: leave salary earning, HR Payment Advice, recovery after payment (24 Oct 2026)
+
+Spec: *SFT-UAT Leave Salary Settlement, Final Developer Specification with Flow and Test Cases*.
+
+Flow now: Leave Application > Leave Salary Settlement > **Leave Salary earning** (Additional Salary, Earning) > **HR Payment Advice** (L1/L2 approval, then Finance) > payment completed > **Leave Salary Recovery** (Additional Salary, Deduction, equal to the earning) > normal payroll. Stage shown on the settlement: Approved > Earning Created > Payment Advice Created > Payment Completed > Recovery Created.
+
+| Spec item | Done as |
+|---|---|
+| Country Config earning component, Earning-type validation (TC-12), recovery stays Deduction (TC-11) | New field `leave_salary_earning_component` (blank = HR Suite creates "Leave Salary", fixed amount, not payment-day dependent). Country Config refuses an earning component that is not an Earning and a recovery that is not a Deduction at save. |
+| LSS creates the earning automatically, linked to the LSS | On submit: one Additional Salary earning per leave month (leave salary spread by leave days), `ref_doctype = Leave Salary Settlement`. Closed month: goes to the next open date. |
+| HR Payment Advice is the advance payment | A settlement raises the **HR Payment Advice** (not sf_trading's Payment Advice) and, where approvers are set, sends it for approval. One live claim per settlement. |
+| NO PAYMENT, NO RECOVERY (TC-05) | The recovery is booked only when the advice is fully **Paid**. Until then the payslip pays the earning. Partial payment: no recovery until paid in full (your decision). |
+| Payment cancelled (TC-06) | The recovery is cancelled; one a payslip already took is offset by an earning on the next open date. Re-paying books it again, once. |
+| Exclude settled leave days from normal salary | Kept as an Additional Salary deduction, now on its own component **Leave Days Exclusion** (your decision), separate from the recovery. Net pay is right in every payment state. |
+| Duplicates (TC-08) | Earning, exclusion and recovery are idempotent; advice is raised once. |
+| Sick leave (TC-09) | A settlement for a leave that is not the country's annual leave type is refused. |
+| Leave encashment (TC-10) | Not touched; separate doctype. |
+| Early rejoin | The earning shrinks to the days taken, so the unused days come back through the payslip once (no second deduction). |
+
+Not changed: settlements made before this release have no earning, so their payment adds no recovery (their exclusion deduction is unchanged). Recovery equals the earning booked, which for a settlement that also pays worked-days salary or a ticket is smaller than the advice total: worked days are kept off the payslip by the exclusion, and the ticket is not in payroll at all.

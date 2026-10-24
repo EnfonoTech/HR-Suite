@@ -485,12 +485,64 @@
    "allow_on_submit": 1
   },
   {
+   "fieldname": "payroll_stage",
+   "fieldtype": "Data",
+   "label": "Payroll Stage",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1,
+   "description": "Approved > Earning Created > Payment Advice Created > Payment Completed > Recovery Created"
+  },
+  {
+   "fieldname": "earning_amount",
+   "fieldtype": "Currency",
+   "label": "Leave Salary Earning Booked",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "advance_recovery_amount",
+   "fieldtype": "Currency",
+   "label": "Recovery Booked After Payment",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
    "fieldname": "exclusion_rows",
    "fieldtype": "Long Text",
    "label": "Payroll Exclusions",
    "hidden": 1,
    "read_only": 1,
    "allow_on_submit": 1
+  },
+  {
+   "fieldname": "earning_rows",
+   "fieldtype": "Long Text",
+   "label": "Leave Salary Earnings",
+   "hidden": 1,
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "recovery_rows",
+   "fieldtype": "Long Text",
+   "label": "Leave Salary Recoveries",
+   "hidden": 1,
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "reversal_rows",
+   "fieldtype": "Long Text",
+   "label": "Recovery Reversals",
+   "hidden": 1,
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
   },
   {
    "fieldname": "rejoin_rows",

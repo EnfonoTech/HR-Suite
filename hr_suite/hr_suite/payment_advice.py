@@ -505,6 +505,7 @@ def on_employee_payment_entry(doc, method=None):
 
 def _sync_paid_state(advice) -> None:
 	paid = advice.get("status") == "Paid"
+	changed = []
 
 	for row in advice.get("payment_advice_reference") or []:
 		field = paid_status_field(row.reference_doctype)
@@ -514,10 +515,14 @@ def _sync_paid_state(advice) -> None:
 		current = frappe.db.get_value(row.reference_doctype, row.reference_record, field)
 		if paid and current != "Paid":
 			frappe.db.set_value(row.reference_doctype, row.reference_record, field, "Paid")
+			changed.append((row.reference_doctype, row.reference_record))
 		elif not paid and current == "Paid":
 			# The payment was cancelled: the document is owed again. "Approved" is the state
 			# every one of these reaches on submit.
 			frappe.db.set_value(row.reference_doctype, row.reference_record, field, "Approved")
+			changed.append((row.reference_doctype, row.reference_record))
+
+	_notify_settlements(changed)
 
 
 def advice_doctype_for(source_doctype: str) -> str:
@@ -667,6 +672,10 @@ def _write_back_advice_link(doc, spec: dict, advice_name: str, advice_doctype: s
 		values[type_field] = advice_doctype or ADVICE_DOCTYPE
 
 	frappe.db.set_value(doc.doctype, doc.name, values, update_modified=False)
+	if doc.doctype == "Leave Salary Settlement":
+		from hr_suite.hr_suite.doctype.leave_salary_settlement.leave_salary_settlement import refresh_stage
+
+		refresh_stage(doc.name)
 
 
 def _normalise_lines(doc, lines, description) -> list:
@@ -811,11 +820,30 @@ def _write_back_payment_status(advice) -> list:
 		updated.append(
 			{"reference_doctype": reference_doctype, "reference_name": reference_name, "fieldname": fieldname}
 		)
+		_notify_settlements([(reference_doctype, reference_name)])
 
 		if row_name:
 			frappe.db.set_value(REFERENCE_DOCTYPE, row_name, "reference_status", "Paid")
 
 	return updated
+
+
+def _notify_settlements(pairs) -> None:
+	"""A Leave Salary Settlement's recovery follows its payment: book it once the advice is Paid, withdraw
+	it when that payment is reversed. Never lets a payroll problem undo the payment's own record."""
+	for doctype, name in pairs:
+		if doctype != "Leave Salary Settlement":
+			continue
+		frappe.db.savepoint("lss_recovery_sync")
+		try:
+			from hr_suite.hr_suite.doctype.leave_salary_settlement.leave_salary_settlement import sync_recovery
+
+			sync_recovery(name)
+		except Exception:
+			frappe.db.rollback(save_point="lss_recovery_sync")
+			frappe.log_error(
+				frappe.get_traceback(), "HR Suite: leave salary recovery not synced for {0}".format(name)
+			)
 
 
 def paid_status_field(doctype: str) -> str | None:

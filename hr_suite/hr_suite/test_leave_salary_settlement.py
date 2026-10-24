@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
-from frappe.utils import flt
+from frappe.utils import flt, getdate
 
 from hr_suite.hr_suite.doctype.leave_salary_settlement.leave_salary_settlement import (
 	price_settlement,
@@ -88,17 +88,27 @@ class SettlementTestBase(LedgerTestBase):
 		frappe.db.set_value("Company", COMPANY, "default_holiday_list", hl.name)
 
 	def setUp(self):
-		self.booked = []
+		self.booked = []  # deductions: the exclusion at submit, the recovery after payment
+		self.earned = []  # the leave salary earning
 		counter = iter(range(1, 100))
 
 		def fake_book(doc, component, currency, payroll_date, amount):
 			name = "AS-FAKE-%s" % next(counter)
-			self.booked.append({"name": name, "date": str(payroll_date), "amount": flt(amount, 3)})
+			self.booked.append({"name": name, "date": str(payroll_date), "amount": flt(amount, 3), "component": component})
 			return name
 
+		def fake_earn(doc, component, currency, payroll_date, amount):
+			name = "AS-FAKE-%s" % next(counter)
+			self.earned.append({"name": name, "date": str(payroll_date), "amount": flt(amount, 3), "component": component})
+			return name
+
+		def fake_component(employee, company, expense_account, component=None, component_type="Deduction"):
+			return (component or "Leave Salary Recovery"), "SAR"
+
 		patches = [
-			patch("hr_suite.hr_suite.leave_payroll.prepare_component", return_value=("Leave Salary Recovery", "SAR")),
+			patch("hr_suite.hr_suite.leave_payroll.prepare_component", side_effect=fake_component),
 			patch("hr_suite.hr_suite.leave_payroll.book_deduction", side_effect=fake_book),
+			patch("hr_suite.hr_suite.leave_payroll.book_earning", side_effect=fake_earn),
 			patch(
 				"hr_suite.hr_suite.doctype.leave_salary_settlement.leave_salary_settlement.LeaveSalarySettlement._expense_account",
 				return_value="",
@@ -326,6 +336,147 @@ class TestCompletedMonthAndLeaveDays(SettlementTestBase):
 		self.assertEqual(len(self.booked), booked)
 
 
+class TestEarningAndRecovery(SettlementTestBase):
+	"""Spec 'Final Developer Spec with Flow': earning at submit, recovery only after payment."""
+
+	def paid(self, name, value):
+		"""What the advice's paid state does to the settlement (HR advice marked paid, or its payment cancelled)."""
+		from hr_suite.hr_suite.doctype.leave_salary_settlement.leave_salary_settlement import sync_recovery
+
+		frappe.db.set_value("Leave Salary Settlement", name, "status", "Paid" if value else "Approved")
+		return sync_recovery(name)
+
+	def settle_g1(self, name="Earned"):
+		self.set_pays_worked_days(0)
+		emp = self.staff(name)
+		return emp, self.settle(emp, self.leave(emp, "2026-10-01", "2026-10-21"), last_working_day="2026-09-30")
+
+	def test_submit_books_the_earning_and_the_exclusion_on_their_own_components(self):
+		emp, doc = self.settle_g1()
+		# 21 leave days x 133.333 = 2,800 (staff() has no holiday list, so calendar days count)
+		self.assertEqual([(e["date"], e["amount"]) for e in self.earned], [("2026-10-01", 2800)])
+		self.assertEqual([(b["date"], b["amount"], b["component"]) for b in self.booked], [("2026-10-01", 2800, "Leave Days Exclusion")])
+		doc.reload()
+		self.assertEqual(doc.earning_amount, 2800)
+		self.assertEqual(doc.payroll_stage, "Earning Created")
+		self.assertFalse(doc.recovery_rows)  # no payment, no recovery
+
+	def test_the_earning_is_the_configured_earning_component(self):
+		from hr_suite.hr_suite.leave_payroll import earning_component_for
+
+		emp = self.staff("Component")
+		self.assertEqual(earning_component_for(emp, COMPANY), "Leave Salary")
+		self.assertEqual(frappe.db.get_value("Salary Component", "Leave Salary", "type"), "Earning")
+
+	def test_no_payment_no_recovery(self):
+		emp, doc = self.settle_g1("Unpaid")
+		self.paid(doc.name, False)
+		self.assertEqual([b for b in self.booked if b["component"] != "Leave Days Exclusion"], [])
+		self.assertEqual(frappe.db.get_value("Leave Salary Settlement", doc.name, "payroll_stage"), "Earning Created")
+
+	def test_the_recovery_is_booked_when_the_advice_is_paid_and_equals_the_earning(self):
+		emp, doc = self.settle_g1("Paid")
+		stage = self.paid(doc.name, True)
+		recoveries = [b for b in self.booked if b["component"] == "Leave Salary Recovery"]
+		self.assertEqual([(r["date"], r["amount"]) for r in recoveries], [("2026-10-01", 2800)])
+		self.assertEqual(stage, "Recovery Created")
+		self.assertEqual(frappe.db.get_value("Leave Salary Settlement", doc.name, "advance_recovery_amount"), 2800)
+
+	def test_syncing_a_paid_settlement_again_books_no_second_recovery(self):
+		emp, doc = self.settle_g1("Twice")
+		self.paid(doc.name, True)
+		before = len(self.booked)
+		self.paid(doc.name, True)
+		self.assertEqual(len(self.booked), before)
+
+	def test_a_cancelled_payment_withdraws_the_recovery(self):
+		emp, doc = self.settle_g1("Reversed")
+		self.paid(doc.name, True)
+		stage = self.paid(doc.name, False)
+		self.assertEqual(stage, "Earning Created")
+		self.assertEqual(frappe.db.get_value("Leave Salary Settlement", doc.name, "recovery_rows") or "", "")
+		self.assertEqual(frappe.db.get_value("Leave Salary Settlement", doc.name, "advance_recovery_amount"), 0)
+		# paid again: one recovery again
+		self.paid(doc.name, True)
+		self.assertEqual(len([b for b in self.booked if b["component"] == "Leave Salary Recovery"]), 2)
+
+	def test_a_recovery_a_payslip_already_took_is_offset_by_an_earning(self):
+		emp, doc = self.settle_g1("Offset")
+		self.paid(doc.name, True)
+		earned_before = len(self.earned)
+		with patch("hr_suite.hr_suite.leave_payroll.cancel_deductions", side_effect=frappe.ValidationError("on a submitted slip")), patch(
+			"hr_suite.hr_suite.leave_payroll.next_open_date", return_value=getdate("2026-12-01")
+		):
+			self.paid(doc.name, False)
+		self.assertEqual([(e["date"], e["amount"]) for e in self.earned[earned_before:]], [("2026-12-01", 2800)])
+		self.assertTrue(frappe.db.get_value("Leave Salary Settlement", doc.name, "reversal_rows"))
+
+	def test_the_real_hr_payment_advice_drives_the_recovery(self):
+		"""Raise the HR advice, submit it, mark it paid: the settlement becomes Paid and the recovery follows."""
+		from hr_suite.hr_suite.payment_advice import mark_paid, raise_for_document
+
+		emp, doc = self.settle_g1("EndToEnd")
+		result = raise_for_document("Leave Salary Settlement", doc.name)
+		self.assertEqual(result["doctype"], "HR Payment Advice")
+		self.assertEqual(frappe.db.get_value("Leave Salary Settlement", doc.name, "payroll_stage"), "Payment Advice Created")
+		self.assertEqual([b for b in self.booked if b["component"] == "Leave Salary Recovery"], [])  # advice raised, not paid
+
+		advice = frappe.get_doc("HR Payment Advice", result["advice"])
+		advice.submit()
+		self.assertEqual([b for b in self.booked if b["component"] == "Leave Salary Recovery"], [])  # approved, still not paid
+
+		mark_paid(advice.name, payment_reference="TRF-1")
+		self.assertEqual(frappe.db.get_value("Leave Salary Settlement", doc.name, "status"), "Paid")
+		self.assertEqual(frappe.db.get_value("Leave Salary Settlement", doc.name, "payroll_stage"), "Recovery Created")
+		self.assertEqual(
+			[(b["date"], b["amount"]) for b in self.booked if b["component"] == "Leave Salary Recovery"], [("2026-10-01", 2800)]
+		)
+
+	def test_a_settlement_from_before_earnings_existed_gets_no_recovery(self):
+		emp, doc = self.settle_g1("Legacy")
+		frappe.db.set_value("Leave Salary Settlement", doc.name, "earning_rows", "")
+		self.paid(doc.name, True)
+		self.assertEqual([b for b in self.booked if b["component"] == "Leave Salary Recovery"], [])
+
+	def test_cancelling_the_settlement_cancels_every_payroll_row(self):
+		emp, doc = self.settle_g1("Cancel")
+		self.paid(doc.name, True)
+		with patch("hr_suite.hr_suite.leave_payroll.cancel_deductions") as cancel:
+			doc.reload().cancel()
+		cancelled = [name for call in cancel.call_args_list for name in (call.args[0] or [])]
+		self.assertEqual(len(cancelled), 3)  # exclusion, earning, recovery
+
+	def test_an_earning_in_a_closed_month_goes_to_the_next_open_date(self):
+		self.set_pays_worked_days(0)
+		emp = self.staff("Closed")
+		la = self.leave(emp, "2026-10-01", "2026-10-21")
+		with patch("hr_suite.hr_suite.leave_payroll.slip_covering", return_value="SLIP-OCT"), patch(
+			"hr_suite.hr_suite.leave_payroll.next_open_date", return_value=getdate("2026-12-01")
+		):
+			self.settle(emp, la, last_working_day="2026-09-30")
+		self.assertEqual([e["date"] for e in self.earned], ["2026-12-01"])
+
+	def test_sick_leave_is_not_settled_as_annual_leave(self):
+		emp = self.staff("Sick")
+		la = self.leave(emp, "2026-10-01", "2026-10-05")
+		frappe.db.set_value("Leave Application", la, "leave_type", "Sick Leave")  # an approved sick leave
+		self.assertRaises(frappe.ValidationError, self.settle, emp, la, last_working_day="2026-09-30")
+		self.assertEqual(self.earned, [])
+
+	def test_country_config_refuses_swapped_salary_components(self):
+		cfg = frappe.get_doc("Country Config", "SA")
+		original = (cfg.leave_salary_earning_component, cfg.leave_salary_recovery_component)
+		self.addCleanup(lambda: frappe.db.set_value("Country Config", "SA", {"leave_salary_earning_component": original[0], "leave_salary_recovery_component": original[1]}))
+		earning = frappe.get_doc(doctype="Salary Component", salary_component="TEST LSS Earn", salary_component_abbr="TLE", type="Earning").insert(ignore_permissions=True)
+		deduction = frappe.get_doc(doctype="Salary Component", salary_component="TEST LSS Ded", salary_component_abbr="TLD", type="Deduction").insert(ignore_permissions=True)
+
+		cfg.leave_salary_earning_component = deduction.name  # a Deduction as the earning
+		self.assertRaises(frappe.ValidationError, cfg.save, ignore_permissions=True)
+		cfg.reload()
+		cfg.leave_salary_recovery_component = earning.name  # an Earning as the recovery
+		self.assertRaises(frappe.ValidationError, cfg.save, ignore_permissions=True)
+
+
 class TestReturnFromLeave(SettlementTestBase):
 	def test_early_return_recovers_unused_days_and_frees_payroll(self):
 		self.set_pays_worked_days(1)
@@ -333,10 +484,12 @@ class TestReturnFromLeave(SettlementTestBase):
 		doc = self.settle(emp, self.leave(emp))
 		self.booked.clear()
 		result = record_rejoin(doc.name, "2026-05-01")
-		# leave 11 Apr - 10 May, back 1 May: 10 unused days x 133.3333 = 1,333.333 recovered
+		# leave 11 Apr - 10 May, back 1 May: 10 unused days x 133.3333 = 1,333.333 of the advance comes back
 		self.assertEqual(result["unused_days"], 10)
 		self.assertEqual(result["recovery_amount"], 1333.333)
-		self.assertEqual([(b["date"], b["amount"]) for b in self.booked], [("2026-05-01", 1333.333)])
+		# ... not by a second deduction but by the earning shrinking to the 20 days taken (April only)
+		self.assertEqual(self.booked, [])
+		self.assertEqual(frappe.db.get_value("Leave Salary Settlement", doc.name, "earning_amount"), 2666.667)
 		self.assertEqual(get_salary_days_balance(emp), 20)  # 40 - 30 + 10 restored
 
 	def test_correcting_the_date_starts_clean(self):
