@@ -536,7 +536,14 @@ def raise_for_document(doctype: str, name: str) -> dict:
 	target_doctype = FINANCE_ADVICE_DOCTYPE if use_finance_advice else ADVICE_DOCTYPE
 
 	frappe.has_permission(doctype, "read", doc=name, throw=True)
-	assert_doctype_permissions(target_doctype, ("create",))
+	if use_finance_advice:
+		# sf_trading's Payment Advice grants create to accounts roles only, never to HR, yet HR is
+		# who raises it from the HR document. The claim is a consequence of that document, which is
+		# why create_finance_advice_for inserts with ignore_permissions: so what is asked of the
+		# user here is the right to edit the document that owes the money.
+		frappe.has_permission(doctype, "write", doc=name, throw=True)
+	else:
+		assert_doctype_permissions(target_doctype, ("create",))
 
 	doc = frappe.get_doc(doctype, name)
 	if doc.docstatus != 1:
@@ -571,6 +578,38 @@ def raise_for_document(doctype: str, name: str) -> dict:
 
 	_write_back_advice_link(doc, spec, advice.name, target_doctype)
 	return {"advice": advice.name, "doctype": target_doctype, "created": True}
+
+
+@frappe.whitelist()
+def get_advice_state(doctype: str, name: str) -> dict:
+	"""Where the payment advice of one HR document stands, for the link on its form.
+
+	{"advice": name or None, "doctype": the advice's DocType, "status", "docstatus", "can_open",
+	"target": the DocType a new advice would be raised as}. A cancelled advice counts as none, so the
+	form offers to raise another. The status is read here, with the right to read the HR document,
+	because HR often cannot read the finance advice itself.
+	"""
+	if doctype not in SOURCE_DOCUMENTS:
+		frappe.throw(_("{0} does not raise payment advices.").format(_(doctype)), title=_("Payment Advice"))
+	frappe.has_permission(doctype, "read", doc=name, throw=True)
+
+	target = FINANCE_ADVICE_DOCTYPE if finance_advice_available() else ADVICE_DOCTYPE
+	for advice_doctype, finder in (
+		(FINANCE_ADVICE_DOCTYPE, get_finance_advice_for),
+		(ADVICE_DOCTYPE, get_payment_advice_for),
+	):
+		advice = finder(doctype, name)
+		if advice:
+			row = frappe.db.get_value(advice_doctype, advice, ["status", "docstatus"], as_dict=True) or {}
+			return {
+				"advice": advice,
+				"doctype": advice_doctype,
+				"status": row.get("status"),
+				"docstatus": row.get("docstatus"),
+				"can_open": bool(frappe.has_permission(advice_doctype, "read", doc=advice)),
+				"target": target,
+			}
+	return {"advice": None, "target": target}
 
 
 def raise_after_submit(doctype: str, name: str) -> None:

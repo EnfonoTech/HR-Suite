@@ -399,6 +399,57 @@ class TestHandOff(SettlementTestBase):
 		doc.reload()
 		self.assertTrue(doc.payment_advice)
 
+	def test_the_form_shows_the_advice_raised_for_the_settlement(self):
+		from hr_suite.hr_suite.payment_advice import get_advice_state, raise_for_document
+
+		emp = self.staff("Shown")
+		doc = self.settle(emp, self.leave(emp))
+		before = get_advice_state("Leave Salary Settlement", doc.name)
+		self.assertIsNone(before["advice"])  # nothing raised yet: the form offers Create
+		self.assertIn(before["target"], ("HR Payment Advice", "Payment Advice"))
+
+		result = raise_for_document("Leave Salary Settlement", doc.name)
+		state = get_advice_state("Leave Salary Settlement", doc.name)
+		self.assertEqual((state["advice"], state["doctype"]), (result["advice"], result["doctype"]))
+		self.assertTrue(state["status"])
+
+	def test_a_cancelled_advice_is_not_shown_and_create_is_offered_again(self):
+		from hr_suite.hr_suite.payment_advice import get_advice_state, raise_for_document
+
+		emp = self.staff("Withdrawn")
+		doc = self.settle(emp, self.leave(emp))
+		first = raise_for_document("Leave Salary Settlement", doc.name)
+		frappe.db.set_value(first["doctype"], first["advice"], "docstatus", 2)
+		self.assertIsNone(get_advice_state("Leave Salary Settlement", doc.name)["advice"])
+		self.assertTrue(raise_for_document("Leave Salary Settlement", doc.name)["created"])
+
+	def test_hr_can_raise_the_finance_advice_without_create_rights_on_it(self):
+		"""sf_trading's Payment Advice gives create to accounts roles only; HR raises it from the settlement."""
+		from types import SimpleNamespace
+
+		from hr_suite.hr_suite import payment_advice as pa
+
+		emp = self.staff("HrRaises")
+		doc = self.settle(emp, self.leave(emp))
+		asked = []
+
+		def has_permission(doctype, ptype="read", doc=None, throw=False, **kwargs):
+			asked.append((doctype, ptype))
+			return True
+
+		with patch.object(pa, "finance_advice_available", return_value=True), patch.object(
+			pa, "get_finance_advice_for", return_value=None
+		), patch.object(pa, "create_finance_advice_for", return_value=SimpleNamespace(name="PA-X")), patch.object(
+			pa, "_write_back_advice_link"
+		), patch.object(pa, "assert_doctype_permissions", side_effect=AssertionError("create on the finance advice")), patch(
+			"frappe.has_permission", side_effect=has_permission
+		):
+			result = pa.raise_for_document("Leave Salary Settlement", doc.name)
+
+		self.assertEqual((result["advice"], result["doctype"], result["created"]), ("PA-X", "Payment Advice", True))
+		self.assertIn(("Leave Salary Settlement", "write"), asked)  # the right to edit the settlement is what counts
+		self.assertNotIn(("Payment Advice", "create"), asked)
+
 	def test_the_old_disbursement_is_refused_for_a_ledger_country(self):
 		emp = self.staff("Old")
 		la = self.leave(emp)

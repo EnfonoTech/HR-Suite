@@ -3,6 +3,51 @@
 
 const LSS = "hr_suite.hr_suite.doctype.leave_salary_settlement.leave_salary_settlement";
 
+// The advice raised for this settlement, shown on the form, or the Create option when there is none.
+// Raising it automatically after submit is left as it is; this only shows the result and covers the
+// case where nothing was raised (or the advice was cancelled).
+function show_payment_advice(frm) {
+	frappe.call({
+		method: "hr_suite.hr_suite.payment_advice.get_advice_state",
+		args: { doctype: frm.doc.doctype, name: frm.doc.name },
+		callback: function (r) {
+			const state = r.message || {};
+			if (state.advice) {
+				if (frm.dashboard.wrapper.find(".hrs-advice-line").length) return;
+				const label = __(state.doctype) + " " + state.advice;
+				const link = state.can_open
+					? frappe.utils.get_form_link(state.doctype, state.advice, true)
+					: frappe.utils.escape_html(state.advice);
+				frm.dashboard.add_comment(
+					'<span class="hrs-advice-line">' +
+						__("{0} {1}: {2}", [__(state.doctype), link, __(state.status || "Draft")]) + "</span>",
+					state.status === "Paid" ? "green" : "blue",
+					true
+				);
+				if (state.can_open) {
+					frm.add_custom_button(label, function () {
+						frappe.set_route("Form", state.doctype, state.advice);
+					}, __("View"));
+				}
+				return;
+			}
+			if (!(frm.doc.total_payable > 0)) return;
+			frm.add_custom_button(__(state.target === "HR Payment Advice" ? "HR Payment Advice" : "Payment Advice"), function () {
+				frappe.call({
+					method: "hr_suite.hr_suite.payment_advice.raise_for_document",
+					args: { doctype: frm.doc.doctype, name: frm.doc.name },
+					freeze: true,
+					callback: function (res) {
+						if (!res.message) return;
+						frappe.show_alert({ message: __("Payment advice {0}", [res.message.advice]), indicator: "green" });
+						frm.reload_doc();
+					},
+				});
+			}, __("Create"));
+		},
+	});
+}
+
 frappe.ui.form.on("Leave Salary Settlement", {
 	setup: function (frm) {
 		frm.set_query("leave_application", function () {
@@ -13,20 +58,7 @@ frappe.ui.form.on("Leave Salary Settlement", {
 	refresh: function (frm) {
 		if (frm.doc.docstatus !== 1 || frm.doc.status === "Cancelled") return;
 
-		if (frm.doc.total_payable > 0 && !frm.doc.payment_advice) {
-			frm.add_custom_button(__("Payment Advice"), function () {
-				frappe.call({
-					method: "hr_suite.hr_suite.payment_advice.raise_for_document",
-					args: { doctype: frm.doc.doctype, name: frm.doc.name },
-					freeze: true,
-					callback: function (r) {
-						if (!r.message) return;
-						frappe.show_alert({ message: __("Payment advice {0}", [r.message.advice]), indicator: "green" });
-						frm.reload_doc();
-					},
-				});
-			}, __("Create"));
-		}
+		show_payment_advice(frm);
 
 		if (frm.doc.settlement_type === "Final Settlement") return;
 
