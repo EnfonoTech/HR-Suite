@@ -133,7 +133,7 @@ Month rules: a full month earns exactly the monthly rate (2.5 or 1.75) whatever 
 ## 4. Leave Salary Settlement
 
 **How it works.** Created from an **approved annual Leave Application** on the last working day. It prices:
-- **Worked-days salary** — from the 1st of the month to the last working day, over 30 days, only when Country Config **Pay Worked Days In Settlement** is ticked (default).
+- **Worked-days salary** — from the 1st of the month to the last working day, over 30 days, only when Country Config **Pay Worked Days In Settlement** is ticked (default) **and the leave starts in the same month as the last working day**. If the leave starts in a later month (last working day 30 Sep, leave from 1 Oct) September is complete and normal payroll pays it: no worked-days line, nothing is taken off the September payslip.
 - **Leave salary** — (sum of the policy's salary components ÷ 30) × **earned salary days**.
 - **Air ticket** (if the employee has the ticket override and it is due), less anything an old Annual Leave Disbursement already paid.
 

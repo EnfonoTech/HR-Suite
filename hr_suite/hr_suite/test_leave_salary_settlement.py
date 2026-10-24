@@ -130,9 +130,8 @@ class SettlementTestBase(LedgerTestBase):
 		return la.name
 
 	def settle(self, emp, la, submit=True, **fields):
-		doc = frappe.get_doc(
-			doctype="Leave Salary Settlement", employee=emp, leave_application=la, last_working_day="2026-04-10", **fields
-		)
+		fields.setdefault("last_working_day", "2026-04-10")
+		doc = frappe.get_doc(doctype="Leave Salary Settlement", employee=emp, leave_application=la, **fields)
 		doc.insert(ignore_permissions=True)
 		if submit:
 			doc.submit()
@@ -247,6 +246,84 @@ class TestPayrollExclusion(SettlementTestBase):
 		).insert(ignore_permissions=True)
 		self.settle(emp, la)
 		self.assertEqual(len(self.booked), first_run)
+
+
+class TestCompletedMonthAndLeaveDays(SettlementTestBase):
+	"""UAT (G1): last working day 30 Sep, leave 1-21 Oct, September net pay 0 and a 490 October exclusion."""
+
+	def friday_staff(self, name, include_holiday):
+		"""An employee whose holiday list has Fridays 2, 9 and 16 Oct, on a leave type that does/doesn't count them."""
+		hl = frappe.get_doc(
+			doctype="Holiday List", holiday_list_name="HRS LSS Fridays " + name, from_date="2026-01-01", to_date="2026-12-31",
+			holidays=[{"holiday_date": d, "description": "Friday"} for d in ("2026-10-02", "2026-10-09", "2026-10-16")],
+		).insert(ignore_permissions=True)
+		before = frappe.db.get_value("Leave Type", "Annual Leave", "include_holiday")
+		frappe.db.set_value("Leave Type", "Annual Leave", "include_holiday", include_holiday)
+		self.addCleanup(frappe.db.set_value, "Leave Type", "Annual Leave", "include_holiday", before)
+		emp = self.staff(name)
+		frappe.db.set_value("Employee", emp, "holiday_list", hl.name)
+		return emp
+
+	def test_a_month_that_is_complete_before_the_leave_stays_in_payroll(self):
+		self.set_pays_worked_days(1)
+		emp = self.staff("Complete")
+		doc = self.settle(emp, self.leave(emp, "2026-10-01", "2026-10-21"), last_working_day="2026-09-30")
+
+		self.assertEqual(doc.pay_worked_days_in_settlement, 0)
+		self.assertEqual(doc.worked_days_pay, 0)
+		self.assertEqual(doc.total_payable, doc.leave_salary_amount)
+		# nothing is taken off the September payslip; only the October leave days are kept out
+		self.assertEqual([(b["date"], b["amount"]) for b in self.booked], [("2026-10-01", 2800)])
+
+	def test_a_leave_that_starts_in_the_same_month_still_pays_the_worked_days(self):
+		self.set_pays_worked_days(1)
+		emp = self.staff("SameMonth")
+		doc = self.settle(emp, self.leave(emp, "2026-10-11", "2026-10-21"), last_working_day="2026-10-10")
+		self.assertEqual(doc.pay_worked_days_in_settlement, 1)
+		self.assertEqual(doc.worked_days_pay, 1333.333)
+
+	def test_payroll_keeps_out_the_leave_days_the_settlement_pays_not_the_calendar_days(self):
+		emp = self.friday_staff("Excluded", include_holiday=0)
+		doc = self.settle(emp, self.leave(emp, "2026-10-01", "2026-10-21"), last_working_day="2026-09-30")
+		self.assertEqual(doc.leave_days, 18)  # three Fridays are not leave days
+		self.assertEqual(doc.leave_salary_amount, 2400)  # 18 x 133.333
+		self.assertEqual([b["amount"] for b in self.booked], [2400])  # excluded: the same 18 days, not 21
+
+	def test_when_holidays_count_as_leave_all_21_days_are_paid_and_excluded(self):
+		emp = self.friday_staff("Counted", include_holiday=1)
+		doc = self.settle(emp, self.leave(emp, "2026-10-01", "2026-10-21"), last_working_day="2026-09-30")
+		self.assertEqual(doc.leave_days, 21)
+		self.assertEqual(doc.leave_salary_amount, 2800)
+		self.assertEqual([b["amount"] for b in self.booked], [2800])
+
+	def test_a_leave_over_two_months_is_excluded_month_by_month_in_leave_days(self):
+		self.set_pays_worked_days(0)
+		emp = self.friday_staff("TwoMonths", include_holiday=0)
+		doc = self.settle(emp, self.leave(emp, "2026-09-28", "2026-10-21"), last_working_day="2026-09-27")
+		by_month = {b["date"]: b["amount"] for b in self.booked}
+		self.assertEqual(round(sum(by_month.values()), 3), round(doc.leave_days * 4000 / 30, 3))
+		self.assertEqual(by_month, {"2026-09-28": 400, "2026-10-01": 2400})  # 3 + 18 leave days
+
+	def test_a_leave_already_settled_in_full_cannot_be_settled_again(self):
+		emp = self.staff("Twice", opening=60)
+		la = self.leave(emp, "2026-10-01", "2026-10-21")
+		self.settle(emp, la, last_working_day="2026-09-30")
+		second = self.settle(emp, la, submit=False, last_working_day="2026-09-30")
+		self.assertEqual(second.salary_days_due, 0)
+		self.assertRaises(frappe.ValidationError, second.submit)
+
+	def test_two_open_drafts_for_one_leave_are_refused(self):
+		emp = self.staff("Drafts")
+		la = self.leave(emp, "2026-10-01", "2026-10-21")
+		self.settle(emp, la, submit=False, last_working_day="2026-09-30")
+		self.assertRaises(frappe.ValidationError, self.settle, emp, la, submit=False, last_working_day="2026-09-30")
+
+	def test_syncing_the_exclusions_again_books_nothing_new(self):
+		emp = self.staff("Repeat")
+		doc = self.settle(emp, self.leave(emp, "2026-10-01", "2026-10-21"), last_working_day="2026-09-30")
+		booked = len(self.booked)
+		doc.reload()._sync_exclusions()
+		self.assertEqual(len(self.booked), booked)
 
 
 class TestReturnFromLeave(SettlementTestBase):

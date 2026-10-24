@@ -19,7 +19,11 @@ stays on the document, released by a further settlement once more days are earne
 
 Month-end payroll must not pay the same days again, so the leave days (and, when this
 settlement pays them, the worked days) are kept out of payroll with Additional Salary
-deductions (hr_suite.leave_payroll). HR does no accounting here: the settlement goes to
+deductions (hr_suite.leave_payroll). The settlement pays the worked days only while the
+month of the last working day is still open, that is when the leave starts in that same
+month: a month that is complete before the leave begins stays in normal payroll untouched.
+The leave days are kept out as LEAVE DAYS (the count on the Leave Application, which the
+leave type's holiday setting decides), the same days the settlement pays, never as calendar days. HR does no accounting here: the settlement goes to
 a Payment Advice for approval, and Finance books and pays from that.
 
 Nothing here builds SQL from strings. Every f-string or .format() produces display text.
@@ -28,7 +32,7 @@ Nothing here builds SQL from strings. Every f-string or .format() produces displ
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import add_days, cint, date_diff, flt, formatdate, get_first_day, getdate
+from frappe.utils import add_days, cint, date_diff, flt, formatdate, get_first_day, get_last_day, getdate
 
 from hr_suite.hr_suite import leave_payroll as payroll
 from hr_suite.hr_suite.leave_accrual import OVERRIDE_ROLE, get_salary_days_balance
@@ -265,7 +269,13 @@ class LeaveSalarySettlement(Document):
 			max(date_diff(last_day, month_start) + 1 - get_unpaid_days(self.employee, month_start, last_day), 0), 2
 		)
 
-		self.pay_worked_days_in_settlement = 0 if final else cint(policy.pay_worked_days_in_settlement)
+		# Worked days are paid here only while the month of the last working day is still open. When
+		# the leave starts in a later month, that month is complete and payroll pays it as usual:
+		# paying it here would zero a payslip (UAT: LWD 30 Sep, leave from 1 Oct, September net 0).
+		month_still_open = (not final) and getdate(self.leave_from_date) and get_first_day(
+			getdate(self.leave_from_date)
+		) == get_first_day(last_day)
+		self.pay_worked_days_in_settlement = cint(policy.pay_worked_days_in_settlement) if month_still_open else 0
 		self.min_earned_days = flt(policy.leave_salary_min_earned_days)
 		self.min_service_days = cint(policy.leave_salary_min_service_days)
 		self.earned_salary_days = get_salary_days_balance(self.employee)
@@ -431,6 +441,31 @@ class LeaveSalarySettlement(Document):
 
 	# ── payroll ───────────────────────────────────────────────────────────────
 
+	def _leave_days_by_month(self, leave_end):
+		"""[(month_start, leave days)] for the leave up to leave_end, counted as the Leave Application counts them.
+
+		The Leave Type's holiday setting decides whether a holiday inside the leave is a leave day, so
+		this is the number of days the settlement pays, not the calendar days of the range. When the
+		whole leave is covered the months add up to the application's own total (a half day included).
+		"""
+		from hrms.hr.doctype.leave_application.leave_application import get_number_of_leave_days
+
+		leave_from, leave_to = getdate(self.leave_from_date), getdate(leave_end)
+		chunks = []
+		for month_start, calendar_days in split_days_by_month(leave_from, leave_to):
+			start = max(getdate(month_start), leave_from)
+			end = min(get_last_day(month_start), leave_to)
+			try:
+				days = flt(get_number_of_leave_days(self.employee, self.leave_type, start, end, 0, None, None))
+			except Exception:
+				# no holiday list to count against: the calendar days are the best count there is
+				days = flt(calendar_days)
+			chunks.append([month_start, days])
+
+		if chunks and getdate(leave_end) >= getdate(self.leave_to_date):
+			chunks[-1][1] = max(flt(chunks[-1][1]) + flt(self.leave_days) - sum(flt(c[1]) for c in chunks), 0.0)
+		return [(month_start, days) for month_start, days in chunks]
+
 	def _desired_exclusions(self, leave_end):
 		"""{month_start: (payroll_date, amount)} payroll must NOT pay, given the leave runs to leave_end."""
 		policy = get_policy(self.employee, on_date=self.last_working_day)
@@ -440,7 +475,7 @@ class LeaveSalarySettlement(Document):
 
 		entries = {}
 		if getdate(leave_end) >= leave_from:
-			chunks = split_days_by_month(leave_from, leave_end)
+			chunks = self._leave_days_by_month(leave_end)
 			for month_start, amount in payroll.month_amounts(gross, per_month, chunks).items():
 				entries[month_start] = [max(getdate(month_start), leave_from), amount]
 
