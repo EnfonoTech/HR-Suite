@@ -16,23 +16,19 @@ class CountryConfig(Document):
         validate_policy(self)
 
     def _validate_leave_salary_components(self):
-        """The earning is an Earning and the recovery a Deduction: swapped, the leave salary would be
-        taken back instead of paid, or paid twice, and nothing on screen says so until a payslip is read."""
-        for fieldname, wanted, label in (
-            ("leave_salary_earning_component", "Earning", _("Earning Salary Component")),
-            ("leave_salary_recovery_component", "Deduction", _("Recovery Salary Component")),
-        ):
-            component = self.get(fieldname)
-            if not component:
-                continue
-            actual = frappe.db.get_value("Salary Component", component, "type")
-            if actual and actual != wanted:
-                frappe.throw(
-                    _("{0}: {1} is a {2} component, but this one has to be an {3}.").format(
-                        label, component, _(actual), _(wanted)
-                    ),
-                    title=_("Wrong Salary Component Type"),
-                )
+        """The recovery component takes money back from a payslip, so it has to be a Deduction: an Earning here would
+        pay it a second time instead."""
+        component = self.get("leave_salary_recovery_component")
+        if not component:
+            return
+        actual = frappe.db.get_value("Salary Component", component, "type")
+        if actual and actual != "Deduction":
+            frappe.throw(
+                _("Recovery Salary Component: {0} is an {1} component, but this one has to be a Deduction.").format(
+                    component, _(actual)
+                ),
+                title=_("Wrong Salary Component Type"),
+            )
 
     def _validate_overtime(self):
         """A night window that prices nothing is the failure this doctype keeps producing.

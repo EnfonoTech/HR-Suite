@@ -10,6 +10,7 @@ frappe.listview_settings["HR Payment Advice"] = {
 			"Pending Approval": ["Pending Approval", "orange", "status,=,Pending Approval"],
 			Approved: ["Approved", "blue", "status,=,Approved"],
 			"Sent to Finance": ["Awaiting Payment", "purple", "status,=,Sent to Finance"],
+			"Partially Paid": ["Partially Paid", "orange", "status,=,Partially Paid"],
 			Rejected: ["Rejected", "red", "status,=,Rejected"],
 			Paid: ["Paid", "green", "status,=,Paid"],
 			Cancelled: ["Cancelled", "red", "status,=,Cancelled"],
@@ -33,7 +34,7 @@ frappe.listview_settings["HR Payment Advice"] = {
 			// clear() is async — it resets each standard filter through a promise chain —
 			// so a filter added on the next line is blanked by the clear that follows it.
 			listview.filter_area.clear().then(() => {
-				listview.filter_area.add([["HR Payment Advice", "status", "in", ["Approved", "Sent to Finance"]]]);
+				listview.filter_area.add([["HR Payment Advice", "status", "in", ["Approved", "Sent to Finance", "Partially Paid"]]]);
 			});
 		});
 	},

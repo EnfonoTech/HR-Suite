@@ -68,8 +68,37 @@ frappe.ui.form.on("HR Payment Advice", {
 
 		// Only a submitted advice that has not been paid can be confirmed. A draft is
 		// still HR's, and a paid one already has a reference that must not be rewritten.
+		const leave_salary = frm.doc.source_doctype === "Leave Salary Settlement"
+			|| (frm.doc.references || []).some((r) => r.reference_doctype === "Leave Salary Settlement");
 		if (frm.doc.docstatus === 1 && !["Paid", "Cancelled"].includes(status)) {
-			frm.add_custom_button(__("Mark as Paid"), () => mark_paid_dialog(frm)).addClass("btn-primary");
+			if (leave_salary) {
+				// Leave salary is paid with a Payment Entry against the employee's payable, never marked paid by hand.
+				if (["Approved", "Sent to Finance", "Partially Paid"].includes(status) && frappe.model.can_create("Payment Entry")) {
+					frm.add_custom_button(__("Create Payment Entry"), function () {
+						frappe.call({
+							method: "hr_suite.hr_suite.payment_advice.make_payment_entry",
+							args: { advice: frm.doc.name },
+							freeze: true,
+							callback: function (r) {
+								if (r.message && r.message.payment_entry) {
+									frappe.set_route("Form", "Payment Entry", r.message.payment_entry);
+								}
+							},
+						});
+					}).addClass("btn-primary");
+				}
+			} else {
+				frm.add_custom_button(__("Mark as Paid"), () => mark_paid_dialog(frm)).addClass("btn-primary");
+			}
+		}
+
+		if (frm.doc.docstatus === 1 && status === "Partially Paid") {
+			frm.dashboard.set_headline(
+				__("Partly paid: {0} of {1}. Create another Payment Entry for the balance.", [
+					format_currency(frm.doc.amount_paid, frm.doc.currency), format_currency(frm.doc.total_amount, frm.doc.currency),
+				]),
+				"orange"
+			);
 		}
 
 		if (frm.doc.docstatus === 1 && frm.doc.status === "Paid") {

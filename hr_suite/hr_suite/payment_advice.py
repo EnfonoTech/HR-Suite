@@ -724,6 +724,13 @@ def mark_paid(advice: str, payment_reference: str = None, payment_date: str = No
 			title=_("Not Submitted"),
 		)
 
+	if "Leave Salary Settlement" in {r.reference_doctype for r in advice_doc.references} | {advice_doc.source_doctype}:
+		frappe.throw(
+			_("Leave salary is paid with a Payment Entry against the employee's leave salary payable, not marked "
+			  "paid by hand. Use Create Payment Entry on this advice; it turns Paid when the entry is submitted."),
+			title=_("Create A Payment Entry"),
+		)
+
 	if advice_doc.status == "Paid":
 		# A second click on Mark as Paid must not overwrite the reference of the
 		# payment that actually happened.
@@ -828,22 +835,183 @@ def _write_back_payment_status(advice) -> list:
 	return updated
 
 
+ADVICE_PAYABLE_STATES = ("Approved", "Sent to Finance", "Partially Paid")
+
+
+def _advice_accrual(advice_doc) -> str:
+	"""The accrual Journal Entry of the settlement an advice pays, or ''."""
+	for row in advice_doc.references:
+		if row.reference_doctype == "Leave Salary Settlement":
+			return cstr(frappe.db.get_value("Leave Salary Settlement", row.reference_name, "accrual_journal_entry"))
+	if advice_doc.source_doctype == "Leave Salary Settlement":
+		return cstr(frappe.db.get_value("Leave Salary Settlement", advice_doc.source_name, "accrual_journal_entry"))
+	return ""
+
+
+@frappe.whitelist()
+def make_payment_entry(advice: str) -> dict:
+	"""Finance: start the Payment Entry for an approved, unpaid leave salary advice.
+
+	Party Type Employee, the party the employee, paying down the employee-tagged payable that the settlement's
+	accrual Journal Entry credited. Created as a DRAFT with the bank/cash account left to Finance to choose and
+	submit: HR owns the request, Finance owns the money. Returns the draft. Never posts a second accrual.
+	"""
+	frappe.has_permission("Payment Entry", "create", throw=True)
+	advice_doc = frappe.get_doc(ADVICE_DOCTYPE, advice)
+	frappe.has_permission(ADVICE_DOCTYPE, "read", doc=advice_doc, throw=True)
+
+	if advice_doc.docstatus != 1 or advice_doc.status not in ADVICE_PAYABLE_STATES:
+		frappe.throw(
+			_("{0} is {1}. A Payment Entry is created for an approved advice that is not yet fully paid.").format(
+				advice_doc.name, _(advice_doc.status)
+			),
+			title=_("Not Ready For Payment"),
+		)
+
+	existing = frappe.db.get_value(
+		"Payment Entry", {"hr_payment_advice": advice_doc.name, "docstatus": 0}, "name"
+	)
+	if existing:
+		return {"payment_entry": existing, "created": False}
+
+	journal_entry = _advice_accrual(advice_doc)
+	if not journal_entry or cint(frappe.db.get_value("Journal Entry", journal_entry, "docstatus")) != 1:
+		frappe.throw(
+			_("The leave salary accrual {0} is not posted yet (it is {1}), so there is no payable to pay. Have the "
+			  "Journal Entry approved first.").format(
+				journal_entry or _("missing"), _("a draft") if journal_entry else _("not created")
+			),
+			title=_("Payable Not Posted"),
+		)
+
+	outstanding = flt(advice_doc.total_amount) - flt(advice_doc.amount_paid)
+	if outstanding <= 0:
+		frappe.throw(_("{0} is already fully paid.").format(advice_doc.name), title=_("Nothing Outstanding"))
+
+	from erpnext.accounts.doctype.payment_entry.payment_entry import get_bank_cash_account
+	from erpnext.accounts.utils import get_account_currency
+
+	accrual = frappe.get_doc("Journal Entry", journal_entry)
+	payable = next(
+		(r for r in accrual.accounts if r.party_type == "Employee" and r.party == advice_doc.employee and flt(r.credit_in_account_currency)),
+		None,
+	)
+	if not payable:
+		frappe.throw(
+			_("The accrual {0} has no employee-tagged payable line for {1}, so a Payment Entry cannot clear it.").format(
+				journal_entry, advice_doc.employee
+			),
+			title=_("Payable Not Tagged"),
+		)
+
+	# The bank or cash account is Finance's to choose: take the company default if there is one, else leave it
+	# empty on the draft. ERPNext's own helper builds entries from invoices and orders, not a journal entry.
+	bank = get_bank_cash_account(frappe._dict(company=advice_doc.company, mode_of_payment=None), None) or frappe._dict()
+	company_currency = frappe.get_cached_value("Company", advice_doc.company, "default_currency")
+	payable_currency = get_account_currency(payable.account)
+
+	entry = frappe.new_doc("Payment Entry")
+	entry.payment_type = "Pay"
+	entry.company = advice_doc.company
+	entry.posting_date = frappe.utils.nowdate()
+	entry.party_type = "Employee"
+	entry.party = advice_doc.employee
+	entry.paid_from = bank.get("account")
+	entry.paid_from_account_currency = bank.get("account_currency") or company_currency
+	entry.paid_to = payable.account
+	entry.paid_to_account_currency = payable_currency
+	entry.paid_amount = entry.received_amount = outstanding
+	entry.hr_payment_advice = advice_doc.name
+	# A bank payment needs a reference and date to save at all: start from the advice so the draft saves, and let
+	# Finance replace them with the transfer or cheque reference before submitting.
+	entry.reference_no = advice_doc.name
+	entry.reference_date = frappe.utils.nowdate()
+	entry.remarks = _("Leave salary {0} - {1}").format(advice_doc.name, advice_doc.employee_name or advice_doc.employee)
+	entry.append(
+		"references",
+		{
+			"reference_doctype": "Journal Entry",
+			"reference_name": journal_entry,
+			"total_amount": flt(payable.credit_in_account_currency),
+			"outstanding_amount": outstanding,
+			"allocated_amount": outstanding,
+		},
+	)
+	entry.setup_party_account_field()
+	entry.set_missing_values()
+	entry.insert(ignore_mandatory=True)  # a draft: Finance picks the bank account and submits
+	return {"payment_entry": entry.name, "created": True, "amount": outstanding}
+
+
+def on_hr_advice_payment_entry(doc, method=None) -> None:
+	"""A Payment Entry made from an HR Payment Advice was submitted or cancelled: reconcile the advice."""
+	advice = doc.get("hr_payment_advice")
+	if advice and frappe.db.exists(ADVICE_DOCTYPE, advice):
+		sync_hr_advice_payment(advice)
+
+
+def sync_hr_advice_payment(advice: str) -> None:
+	"""Amount paid, status and the documents the advice settles, from the submitted Payment Entries on it.
+
+	Paid only when the entries cover the advice; part-paid stays Partially Paid with the balance outstanding;
+	a reversed payment takes the status and the settlement back. Safe to repeat.
+	"""
+	advice_doc = frappe.get_doc(ADVICE_DOCTYPE, advice)
+	if advice_doc.docstatus != 1:
+		return
+
+	entries = frappe.get_all(
+		"Payment Entry",
+		filters={"hr_payment_advice": advice, "docstatus": 1},
+		fields=["name", "paid_amount", "posting_date", "bank_account"],
+		order_by="posting_date asc, creation asc",
+	)
+	paid = flt(sum(flt(e.paid_amount) for e in entries), 3)
+	total = flt(advice_doc.total_amount, 3)
+	was_paid = advice_doc.status == "Paid"
+
+	if paid >= total - 0.0005 and paid > 0:
+		status = "Paid"
+	elif paid > 0:
+		status = "Partially Paid"
+	else:
+		status = "Sent to Finance" if advice_doc.sent_to_finance_on else "Approved"
+
+	values = {"status": status, "amount_paid": paid}
+	values["payment_reference"] = ", ".join(e.name for e in entries) if entries else None
+	values["payment_date"] = entries[-1].posting_date if entries else None
+	if entries and entries[-1].bank_account:
+		values["bank_account"] = entries[-1].bank_account
+	advice_doc.db_set(values)
+
+	if status == "Paid":
+		_write_back_payment_status(advice_doc)
+	elif was_paid:
+		# the payment was reversed: the documents are owed again
+		pairs = []
+		for row in advice_doc.references:
+			field = paid_status_field(row.reference_doctype)
+			if field and frappe.db.get_value(row.reference_doctype, row.reference_name, field) == "Paid":
+				frappe.db.set_value(row.reference_doctype, row.reference_name, field, "Approved")
+				pairs.append((row.reference_doctype, row.reference_name))
+			if row.name:
+				frappe.db.set_value(REFERENCE_DOCTYPE, row.name, "reference_status", "")
+		_notify_settlements(pairs)
+	_notify_settlements([(row.reference_doctype, row.reference_name) for row in advice_doc.references])
+
+
 def _notify_settlements(pairs) -> None:
-	"""A Leave Salary Settlement's recovery follows its payment: book it once the advice is Paid, withdraw
-	it when that payment is reversed. Never lets a payroll problem undo the payment's own record."""
+	"""A Leave Salary Settlement shows where its payment stands: refresh its stage when the advice is paid
+	or the payment is reversed. Never lets that undo the payment's own record."""
 	for doctype, name in pairs:
 		if doctype != "Leave Salary Settlement":
 			continue
-		frappe.db.savepoint("lss_recovery_sync")
 		try:
-			from hr_suite.hr_suite.doctype.leave_salary_settlement.leave_salary_settlement import sync_recovery
+			from hr_suite.hr_suite.doctype.leave_salary_settlement.leave_salary_settlement import refresh_stage
 
-			sync_recovery(name)
+			refresh_stage(name)
 		except Exception:
-			frappe.db.rollback(save_point="lss_recovery_sync")
-			frappe.log_error(
-				frappe.get_traceback(), "HR Suite: leave salary recovery not synced for {0}".format(name)
-			)
+			frappe.log_error(frappe.get_traceback(), "HR Suite: settlement stage not refreshed for {0}".format(name))
 
 
 def paid_status_field(doctype: str) -> str | None:

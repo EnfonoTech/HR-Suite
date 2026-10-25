@@ -68,16 +68,15 @@ frappe.ui.form.on("Leave Salary Settlement", {
 			);
 		}
 
-		// The advice is Paid but the recovery was not booked (the automatic step could not run): do it here.
-		if (frm.doc.status === "Paid" && flt(frm.doc.earning_amount) > 0 && frm.doc.payroll_stage !== "Recovery Created") {
-			frm.add_custom_button(__("Create Recovery"), function () {
-				frappe.call({
-					method: LSS + ".create_recovery",
-					args: { name: frm.doc.name },
-					freeze: true,
-					callback: function () { frm.reload_doc(); },
-				});
-			}, __("Actions"));
+		// The accrual that recognised the leave salary against the employee-tagged payable.
+		if (frm.doc.accrual_journal_entry && !frm.dashboard.wrapper.find(".hrs-accrual-line").length) {
+			frm.dashboard.add_comment(
+				'<span class="hrs-accrual-line">' + __("Accrual Journal Entry: {0}", [
+					frappe.utils.get_form_link("Journal Entry", frm.doc.accrual_journal_entry, true),
+				]) + "</span>",
+				"blue",
+				true
+			);
 		}
 
 		if (frm.doc.settlement_type === "Final Settlement") return;

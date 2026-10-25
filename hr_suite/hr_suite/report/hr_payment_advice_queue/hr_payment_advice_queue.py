@@ -5,10 +5,10 @@ from frappe import _
 from frappe.utils import date_diff, flt, today
 
 STAGES = {
-	"Awaiting Payment": ("Approved", "Sent to Finance"),
+	"Awaiting Payment": ("Approved", "Sent to Finance", "Partially Paid"),
 	"Awaiting Approval": ("Pending Approval",),
 	"Rejected": ("Rejected",),
-	"All Open": ("Draft", "Pending Approval", "Approved", "Sent to Finance", "Rejected"),
+	"All Open": ("Draft", "Pending Approval", "Approved", "Sent to Finance", "Partially Paid", "Rejected"),
 }
 
 

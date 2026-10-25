@@ -1284,7 +1284,6 @@ def resolve_overtime_terms(employee: str, date=None, shift_start=None, shift_end
 
 DEFAULT_LEAVE_SALARY_DAYS_PER_MONTH = 30.0
 LEAVE_SALARY_RECOVERY_COMPONENT = "Leave Salary Recovery"
-LEAVE_SALARY_EARNING_COMPONENT = "Leave Salary"
 
 _LEAVE_SALARY_COMPONENT_SETS = {
 	"Basic Only": ("basic_salary",),
@@ -1316,7 +1315,6 @@ def get_leave_salary_terms(employee: str) -> dict:
 		"covers": covers,
 		"components": _LEAVE_SALARY_COMPONENT_SETS[covers],
 		"recovery_component": cstr(config.get("leave_salary_recovery_component")) if config else "",
-		"earning_component": cstr(config.get("leave_salary_earning_component")) if config else "",
 		# The basis is stamped onto the disbursement and read back months later. Where no
 		# Country Config answers for this employee the figures are hr_suite's own default
 		# rather than a country rule, and the sentence has to say so instead of quietly
@@ -1418,54 +1416,6 @@ def get_leave_salary_recovery_component(company: str, country_component: str = "
 				title=_("Recovery Component Is Prorated"),
 			)
 
-		frappe.db.set_value("Salary Component", name, "depends_on_payment_days", 0)
-
-	return name
-
-
-def get_leave_salary_earning_component(company: str, country_component: str = "") -> str:
-	"""The earning a Leave Salary Settlement books for the leave salary due.
-
-	Created once if it does not exist, and never dependent on payment days: it is a fixed sum, the
-	leave salary the settlement calculated, whatever the month's working days turn out to be. A
-	component that is not an Earning is refused, because a Deduction here would take the leave salary
-	off the payslip instead of putting it on.
-	"""
-	name = LEAVE_SALARY_EARNING_COMPONENT
-	if country_component and frappe.db.exists("Salary Component", country_component):
-		name = country_component
-	elif not frappe.db.exists("Salary Component", name):
-		frappe.get_doc({
-			"doctype": "Salary Component",
-			"salary_component": name,
-			"salary_component_abbr": "LSE",
-			"type": "Earning",
-			"depends_on_payment_days": 0,
-			"description": (
-				"Leave salary calculated by a Leave Salary Settlement, paid in advance through an HR "
-				"Payment Advice and offset by Leave Salary Recovery once that payment is complete. "
-				"Created by HR Suite."
-			),
-		}).insert(ignore_permissions=True)
-
-	component_type = cstr(frappe.db.get_value("Salary Component", name, "type"))
-	if component_type != "Earning":
-		frappe.throw(
-			_("Salary Component {0} is a {1}, so it cannot carry leave salary as an earning. Point Country "
-			  "Config at an earning component, or clear the field and HR Suite will create one.").format(
-				name, _(component_type or "unknown type")
-			),
-			title=_("Leave Salary Earning Is Not An Earning"),
-		)
-
-	if cint(frappe.db.get_value("Salary Component", name, "depends_on_payment_days")):
-		if name != LEAVE_SALARY_EARNING_COMPONENT:
-			frappe.throw(
-				_("Salary Component {0} is scaled by payment days, so it would pay less than the leave salary "
-				  "that was calculated. Untick Depends on Payment Days on it, or point Country Config at a "
-				  "component of its own.").format(name),
-				title=_("Leave Salary Earning Is Prorated"),
-			)
 		frappe.db.set_value("Salary Component", name, "depends_on_payment_days", 0)
 
 	return name

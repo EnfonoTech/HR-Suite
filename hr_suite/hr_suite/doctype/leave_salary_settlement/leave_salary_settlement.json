@@ -491,23 +491,17 @@
    "read_only": 1,
    "allow_on_submit": 1,
    "no_copy": 1,
-   "description": "Approved > Earning Created > Payment Advice Created > Payment Completed > Recovery Created"
+   "description": "Approved > Accrual Posted > Payment Advice Created > Partially Paid > Payment Completed"
   },
   {
-   "fieldname": "earning_amount",
-   "fieldtype": "Currency",
-   "label": "Leave Salary Earning Booked",
+   "fieldname": "accrual_journal_entry",
+   "fieldtype": "Link",
+   "label": "Accrual Journal Entry",
+   "options": "Journal Entry",
    "read_only": 1,
    "allow_on_submit": 1,
-   "no_copy": 1
-  },
-  {
-   "fieldname": "advance_recovery_amount",
-   "fieldtype": "Currency",
-   "label": "Recovery Booked After Payment",
-   "read_only": 1,
-   "allow_on_submit": 1,
-   "no_copy": 1
+   "no_copy": 1,
+   "description": "Leave salary expense against the employee-tagged leave salary payable, posted once on submit."
   },
   {
    "fieldname": "exclusion_rows",

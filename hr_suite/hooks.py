@@ -158,10 +158,12 @@ doc_events = {
 		"validate": "hr_suite.hr_suite.payment_advice_flow.guard_expense_claim_payment",
 		"on_submit": [
 			"hr_suite.hr_suite.payment_advice.on_employee_payment_entry",
+			"hr_suite.hr_suite.payment_advice.on_hr_advice_payment_entry",
 			"hr_suite.hr_suite.payment_advice_flow.on_expense_claim_payment",
 		],
 		"on_cancel": [
 			"hr_suite.hr_suite.payment_advice.on_employee_payment_entry",
+			"hr_suite.hr_suite.payment_advice.on_hr_advice_payment_entry",
 			"hr_suite.hr_suite.payment_advice_flow.on_expense_claim_payment",
 		],
 	},
@@ -266,6 +268,8 @@ override_whitelisted_methods = {}
 # see hr_suite/hr_suite/overrides/payroll_entry.py.
 override_doctype_class = {
 	"Payroll Entry": "hr_suite.hr_suite.overrides.payroll_entry.HRSuitePayrollEntry",
+	# Leaves settled leave days out of the payment days, and holds a slip until the return is confirmed.
+	"Salary Slip": "hr_suite.hr_suite.overrides.salary_slip.HRSuiteSalarySlip",
 }
 
 permission_query_conditions = {

@@ -785,6 +785,20 @@ LEAVE_APPLICATION_FIELDS = {
 			"module": "Hr Suite",
 		},
 	],
+	"Payment Entry": [
+		{
+			"fieldname": "hr_payment_advice",
+			"label": "HR Payment Advice",
+			"fieldtype": "Link",
+			"options": "HR Payment Advice",
+			"insert_after": "remarks",
+			"read_only": 1,
+			"no_copy": 1,
+			"print_hide": 1,
+			"module": "Hr Suite",
+			"description": "The HR Payment Advice this payment settles (leave salary).",
+		},
+	],
 	"Leave Policy Detail": [
 		{
 			"fieldname": "can_be_taken_from_leave",

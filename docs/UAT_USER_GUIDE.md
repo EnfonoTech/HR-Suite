@@ -132,42 +132,49 @@ Month rules: a full month earns exactly the monthly rate (2.5 or 1.75) whatever 
 
 ## 4. Leave Salary Settlement
 
-**How it works.** Created from an **approved annual Leave Application** on the last working day. It prices:
-- **Worked-days salary** — from the 1st of the month to the last working day, over 30 days, only when Country Config **Pay Worked Days In Settlement** is ticked (default) **and the leave starts in the same month as the last working day**. If the leave starts in a later month (last working day 30 Sep, leave from 1 Oct) September is complete and normal payroll pays it: no worked-days line, nothing is taken off the September payslip.
+**How it works.** Created from an **approved annual Leave Application** on the last working day. It pays **only the leave salary**; the salary for the days worked (including the days worked before the leave) stays in normal payroll. It prices:
 - **Leave salary** — (sum of the policy's salary components ÷ 30) × **earned salary days**.
 - **Air ticket** (if the employee has the ticket override and it is due), less anything an old Annual Leave Disbursement already paid.
 
-**Minimum service:** leave salary is paid only once the employee has **365 days (12 months) of service from the joining date** — editable per country (*Minimum Service From Joining*). Before that the settlement is **refused with the reason** ("service 334 of the 365 days needed"). Once met, **every day accrued since joining is paid**: the first 12 months' days are not lost. An optional second barrier, *Minimum Earned Leave-Salary Days*, is **0 (off)** by default. Only **HR Leave Override** can tick *Pay Below The Barrier* (with a reason). Only **earned** days are paid; the part not yet earned stays as *Salary Days Still Due* for a later settlement.
+**Minimum service:** leave salary is paid only once the employee has **365 days (12 months) of service from the joining date** — editable per country (*Minimum Service From Joining*). Before that the settlement is **refused with the reason**; only HR Leave Override can pay below it.
 
-**On exit:** create the settlement with **Settlement Type = Final Settlement** and the last working day. It pays the leave days accrued and unused **whatever the service** (Country Config *Pay Accrued Leave On Exit Below Minimum Service*, ticked by default; untick to apply the minimum on exit too). Worked days and gratuity are paid by the Salary Settlement and the gratuity calculation, not here.
+**On exit:** create the settlement with **Settlement Type = Final Settlement** and the last working day. It pays the leave days accrued and unused **whatever the service** (Country Config *Pay Accrued Leave On Exit Below Minimum Service*, ticked by default).
 
-**Payroll:** month-end payroll must not pay the same days. Submitting books **Additional Salary deductions** (component *Leave Salary Recovery*), one per month, each capped at one month's pay. HR records no accounting; the settlement goes to a **Payment Advice**.
+**The accounts (set once per company).** In **Hr Suite Settings > HR Account Mappings** map, for each company, the **Leave Salary Expense** (an expense account) and the **Leave Salary Payable** (a liability account with Account Type = **Payable**, so the employee can be tagged on it). An unmapped company is refused at submit with exactly what to map; nothing is guessed.
+
+**The flow.**
+1. **Submit** the settlement: ONE Journal Entry is posted, debit Leave Salary Expense, credit Leave Salary Payable **tagged to the employee**. No bank line. (Stage: *Accrual Posted*.)
+2. The **HR Payment Advice** is raised for HR approval (level 1, level 2). It is the request, not a bank transaction. (Stage: *Payment Advice Created*.)
+3. **Finance** opens the approved advice and presses **Create Payment Entry**: a draft Payment Entry (Party Type Employee) that clears the employee's payable. Finance picks the bank/cash account, replaces the reference with the transfer reference, and submits.
+4. The advice shows the **Payment Entry reference** and turns **Paid** only once entries cover it; part-paid shows **Partially Paid** with the balance outstanding. Cancel a Payment Entry and the advice and settlement go back. (Stage: *Partially Paid / Payment Completed*.) "Mark as Paid" by hand is not available for leave salary.
+
+**Payroll.** The Salary Slip leaves the settled leave days out of its **payment days** (annual leave is never leave without pay), so payment-day components scale down; there are no Additional Salary rows and no leave-salary line on the slip. A slip for the days **after** the leave waits until the return is confirmed (**Actions > Record Rejoin** on the settlement) or the employee has attendance after the leave. Settlements made before this release keep the payroll deductions they booked.
 
 ### 4.1 Worked example (use this)
-Salary **4,000/month**, employee with 40 earned salary days and > 1 year service. Leave **11 Nov – 10 Dec 2026** (30 days), last working day **10 Nov**.
-1. *Leave Application* (submitted, Approved) → button **Create → Leave Salary Settlement**.
-2. Expect on the draft: Worked-days salary **1,333.33** (10 days), Leave salary **4,000.00**, **Total 5,333.33**, barrier met.
-3. Submit. Expect:
-    - Leave Accrual Ledger: a **Settlement** row **−30 salary days** (balance 40 → 10).
-    - **Additional Salary** rows: **4,000 dated 10 Nov** (worked 1,333.33 + 20 leave days) and **1,333.33 dated 1 Dec** (10 leave days).
-    - Button **Create → Payment Advice** raises the advice for 5,333.33.
-4. Set **Pay Worked Days In Settlement = off** in Country Config and repeat with another employee: total **4,000**; deductions **2,666.67** (Nov) and **1,333.33** (Dec).
+Monthly package **5,000**, leave **4 Oct – 15 Oct 2026** (12 days), last working day **3 Oct**, leave salary **2,000**, accounts mapped.
+1. *Leave Application* (submitted, Approved) → **Create → Leave Salary Settlement**; expect leave salary **2,000**, worked-days pay **0**, total **2,000**.
+2. Submit. Expect: a **Journal Entry** (Dr leave salary expense 2,000 / Cr leave salary payable 2,000, employee tagged), a ledger row **−12 salary days**, stage *Accrual Posted*, and **no** Additional Salary rows.
+3. The HR Payment Advice (2,000) appears; approve it as level 1 and level 2.
+4. As Finance, **Create Payment Entry**, choose the bank account, submit. Expect the advice **Paid**, the settlement stage *Payment Completed*, and the employee's payable cleared in the ledger.
+5. Before the return is recorded, try to create the October Salary Slip: refused ("Return From Leave Not Confirmed"). **Record Rejoin 16 Oct**, create it again: **19 payment days** of 31 and the structure components scale accordingly; no leave-salary, exclusion or recovery line.
 
 ### 4.2 Tests
 | # | Do | Expect |
 |---|---|---|
 | S1 | Example above | As stated. |
+| S1b | Pay only part (e.g. 800 of 2,000) | Advice *Partially Paid*, balance 1,200 outstanding on the payable; the rest is paid by a second Payment Entry. |
+| S1c | Cancel the Payment Entry | Advice and settlement go back to unpaid; the payable is outstanding again. |
 | S2 | Employee with **11 months'** service (joined 11 May 2025, last working day 10 Apr 2026) | Settlement **refused** at save: "service 334 of the 365 days needed". Nothing is spent from the ledger. |
 | S2b | Employee joined 10 Apr 2025 (exactly 12 months), 21 earned days, salary 6,000, 21 days of leave | Allowed. Leave salary **4,200** (6,000 ÷ 30 × 21). Ledger −21. |
 | S2c | **Final Settlement** for an employee with 6 months' service and **10.5** earned days, salary 6,000 | Allowed: leave salary **2,100**, no worked days. Untick *Pay Accrued Leave On Exit…* and it is refused. |
 | S3 | An employee short of service; ordinary HR user ticks *Pay Below The Barrier* | Refused (needs HR Leave Override). |
 | S4 | As HR Leave Override, tick it, **leave the reason blank** | Refused; with a reason: pays what is earned, the rest stays due. |
-| S5 | After more days are earned (≥ 30) create a second settlement for the same leave | Pays the remaining days; **no worked days, no ticket, no new payroll deductions**. |
+| S5 | After more days are earned (≥ 30) create a second settlement for the same leave | Pays the remaining days; **no ticket**; its own accrual and advice. |
 | S6 | Try a second *draft* settlement for the same leave | Refused. |
-| S7 | **Cancel** a submitted settlement | Salary days returned (balance back to 40), Additional Salary rows cancelled. |
+| S7 | **Cancel** a submitted settlement | Salary days returned (balance back to 40), the accrual Journal Entry cancelled (refused while a Payment Entry still clears it). |
 | S8 | Country not on the Ledger engine | Refused with a message. |
 | S9 | Try to create an **Annual Leave Disbursement** for a ledger country | Refused: "Use Leave Salary Settlement". |
-| S10 | A month's Salary Slip already submitted, then submit a settlement hitting it | Refused ("Payroll Already Run") — cancel and re-run that slip first. |
+| S10 | Submit a settlement for a company whose leave salary accounts are not mapped | Refused, naming the two accounts to map. |
 
 ### 4.3 Record Rejoin (button **Actions → Record Rejoin**, on the first settlement of a leave)
 | # | Rejoin date (leave 11 Nov–10 Dec) | Expect |

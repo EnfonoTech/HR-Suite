@@ -1,38 +1,34 @@
 # Copyright (c) 2026, Enfono and contributors
 # For license information, please see license.txt
 
-"""Leave Salary Settlement: pay an employee going on annual leave, on their last working day.
+"""Leave Salary Settlement: pay an employee going on annual leave, in advance.
 
-Built from the approved Leave Application. It prices, from the country policy and the
-employee's ledger, everything owed on that day:
+Built from the approved Leave Application. It prices, from the country policy and the employee's
+ledger, what is owed before the leave starts:
 
-  * the salary for the days worked this month (when the policy says the settlement pays
-    them), 1st of the month to the last working day, over a 30-day month;
-  * the leave salary for the earned leave-salary days - sum of the policy's salary
-    components / 30 x days - but only once BOTH minimums are met (earned salary days and
-    service from joining). Below the barrier the shortfall is shown and no leave salary
-    is paid; only a user with the HR Leave Override role can pay below it, with a reason;
+  * the leave salary for the earned leave-salary days - sum of the policy's salary components
+    / 30 x days - but only once BOTH minimums are met (earned salary days and service from
+    joining). Below the barrier the shortfall is shown and no leave salary is paid; only a user
+    with the HR Leave Override role can pay below it, with a reason;
   * the air ticket where one is due, less anything an Annual Leave Disbursement already paid.
 
-Only EARNED salary days are paid. A partial payout is allowed and the balance still due
-stays on the document, released by a further settlement once more days are earned.
+Only EARNED salary days are paid. A partial payout is allowed and the balance still due stays on
+the document, released by a further settlement once more days are earned.
 
-Month-end payroll must not pay the same days again, so the leave days (and, when this
-settlement pays them, the worked days) are kept out of payroll with Additional Salary
-deductions (hr_suite.leave_payroll). The settlement pays the worked days only while the
-month of the last working day is still open, that is when the leave starts in that same
-month: a month that is complete before the leave begins stays in normal payroll untouched.
-The leave days are kept out as LEAVE DAYS (the count on the Leave Application, which the
-leave type's holiday setting decides), the same days the settlement pays, never as calendar days.
+Only the leave salary (and ticket) is separate from payroll. The salary for the days the employee
+works, including the days worked in the month before the leave, stays in normal payroll: nothing
+is paid for them here.
 
-The payroll side, in order: submit books the exclusion (Leave Days Exclusion deduction: the normal
-pay of the leave days) and the leave salary EARNING (Country Config's earning component, an
-Additional Salary on the leave month); the HR Payment Advice pays the advance; only once that advice
-is fully Paid is the RECOVERY booked (Leave Salary Recovery deduction, equal to the earning), and it is
-cancelled again if the payment is reversed. No payment, no recovery: until then the payslip simply
-pays the earning. Stage on the form: Approved > Earning Created > Payment Advice Created > Payment
-Completed > Recovery Created. HR does no accounting here: the settlement goes to
-a Payment Advice for approval, and Finance books and pays from that.
+The accounts: submitting posts ONE Journal Entry, debit the company's mapped Leave Salary Expense,
+credit its mapped Leave Salary Payable, tagged to the Employee (Hr Suite Settings > HR Account
+Mappings, per company; nothing is guessed). The HR Payment Advice is the HR request and approval;
+Finance clears that payable with a Payment Entry created from the advice, and the advice turns Paid
+only when the entries cover it. No bank line is posted here.
+
+Payroll: the leave days are not paid again. The Salary Slip leaves them out of its payment days
+(hr_suite.overrides.salary_slip), not as leave without pay and with no Additional Salary rows, and
+pays the days after the leave only once the return is confirmed (Record Rejoin) or attendance
+exists. Settlements made before this design keep the payroll deductions they booked.
 
 Nothing here builds SQL from strings. Every f-string or .format() produces display text.
 """
@@ -49,6 +45,7 @@ from hr_suite.hr_suite.policy import LEDGER_ENGINE, get_policy
 from hr_suite.hr_suite.utils import (
 	compute_leave_salary,
 	get_employee_salary_components,
+	journal_entry_needs_approval,
 	split_days_by_month,
 )
 
@@ -147,10 +144,8 @@ class LeaveSalarySettlement(Document):
 		self.status = "Approved"
 		self.db_set("status", "Approved")
 		self._post_ledger_row()
-		if not self._is_final() and self._is_first(exclude_self=True):
-			self._sync_exclusions()
 		if not self._is_final():
-			self._sync_earnings()
+			self._post_accrual()
 		refresh_stage(self.name)
 		# The payment advice follows on its own, once this submit has committed: raising a second
 		# submittable document inside this transaction is how a payroll run died once.
@@ -174,6 +169,7 @@ class LeaveSalarySettlement(Document):
 		payroll.cancel_deductions([row["name"] for row in payroll.load_json(self.earning_rows)])
 		payroll.cancel_deductions([row["name"] for row in payroll.load_json(self.recovery_rows)])
 		payroll.cancel_deductions(payroll.load_json(self.reversal_rows))
+		self._cancel_accrual()
 		self._reverse_ledger_rows()
 		self.status = "Cancelled"
 		self.db_set(
@@ -296,13 +292,9 @@ class LeaveSalarySettlement(Document):
 			max(date_diff(last_day, month_start) + 1 - get_unpaid_days(self.employee, month_start, last_day), 0), 2
 		)
 
-		# Worked days are paid here only while the month of the last working day is still open. When
-		# the leave starts in a later month, that month is complete and payroll pays it as usual:
-		# paying it here would zero a payslip (UAT: LWD 30 Sep, leave from 1 Oct, September net 0).
-		month_still_open = (not final) and getdate(self.leave_from_date) and get_first_day(
-			getdate(self.leave_from_date)
-		) == get_first_day(last_day)
-		self.pay_worked_days_in_settlement = cint(policy.pay_worked_days_in_settlement) if month_still_open else 0
+		# Nothing for the days worked is paid here: they stay in normal payroll, which also means a month
+		# that is complete before the leave begins is never touched by the settlement.
+		self.pay_worked_days_in_settlement = 0
 		self.min_earned_days = flt(policy.leave_salary_min_earned_days)
 		self.min_service_days = cint(policy.leave_salary_min_service_days)
 		self.earned_salary_days = get_salary_days_balance(self.employee)
@@ -513,9 +505,15 @@ class LeaveSalarySettlement(Document):
 		return entries
 
 	def _sync_exclusions(self, leave_end=None):
-		"""Make the booked payroll deductions match what payroll should skip. Idempotent."""
-		desired = self._desired_exclusions(leave_end or self.leave_to_date)
+		"""Make the booked payroll deductions match what payroll should skip. Idempotent.
+
+		Only for a settlement made before the Salary Slip learned to leave settled leave days out of its
+		payment days: it still carries the deductions it booked. A new one has none, and gets none.
+		"""
 		existing = {row["month"]: row for row in payroll.load_json(self.exclusion_rows)}
+		if not existing:
+			return
+		desired = self._desired_exclusions(leave_end or self.leave_to_date)
 		component, currency = payroll.prepare_component(
 			self.employee, self.company, self._expense_account(), component=payroll.exclusion_component()
 		)
@@ -536,101 +534,101 @@ class LeaveSalarySettlement(Document):
 
 		self.db_set("exclusion_rows", payroll.dump_json(kept), update_modified=False)
 
-	def _desired_earnings(self, leave_end):
-		"""{month_start: (payroll_date, amount)} of leave salary to earn, spread over the leave months by leave days."""
-		amount = flt(self.leave_salary_amount)
-		if amount <= 0 or flt(self.leave_days) <= 0:
-			return {}
-		leave_from = getdate(self.leave_from_date)
-		if getdate(leave_end) < leave_from:
-			return {}
+	def _accrual_accounts(self) -> tuple:
+		"""(expense, payable) mapped for this company in Hr Suite Settings. Nothing is guessed: an unmapped company
+		is told what to map, because a guessed account is a wrong ledger nobody notices."""
+		from hr_suite.hr_suite.utils import (
+			ACCOUNT_PURPOSE_LEAVE_SALARY_EXPENSE,
+			ACCOUNT_PURPOSE_LEAVE_SALARY_PAYABLE,
+			get_mapped_account,
+		)
 
-		rate = amount / flt(self.leave_days)
-		entries = {}
-		for month_start, days in self._leave_days_by_month(leave_end):
-			entries[month_start] = [max(getdate(month_start), leave_from), flt(rate * days, MONEY)]
+		expense = get_mapped_account(self.company, ACCOUNT_PURPOSE_LEAVE_SALARY_EXPENSE, "Expense")
+		payable = get_mapped_account(self.company, ACCOUNT_PURPOSE_LEAVE_SALARY_PAYABLE, "Liability")
+		if not expense or not payable:
+			frappe.throw(
+				_("Map the leave salary accounts for {0} first: Hr Suite Settings > HR Account Mappings, purposes "
+				  "'Leave Salary Expense' (an expense account of {0}) and 'Leave Salary Payable' (a liability account "
+				  "of {0}). Nothing was posted.").format(self.company),
+				title=_("Leave Salary Accounts Not Mapped"),
+			)
+		if frappe.get_cached_value("Account", payable, "account_type") != "Payable":
+			frappe.throw(
+				_("{0} is mapped as the Leave Salary Payable but its Account Type is not Payable, so the employee cannot "
+				  "be tagged on it and the payable could not be tracked per employee. Set Account Type = Payable on it "
+				  "(Chart of Accounts) and submit again.").format(payable),
+				title=_("Payable Account Cannot Carry The Employee"),
+			)
+		return expense, payable
 
-		if entries and getdate(leave_end) >= getdate(self.leave_to_date):
-			last = list(entries)[-1]  # the months add up to exactly the leave salary
-			entries[last][1] = flt(entries[last][1] + amount - sum(v[1] for v in entries.values()), MONEY)
-		return entries
+	def _post_accrual(self):
+		"""Recognise the leave salary once: debit expense, credit the employee-tagged payable. No bank line.
 
-	def _sync_earnings(self, leave_end=None):
-		"""Make the booked leave salary earnings match what is due for the leave up to leave_end. Idempotent."""
-		desired = self._desired_earnings(leave_end or self.leave_to_date)
-		existing = {row["month"]: row for row in payroll.load_json(self.earning_rows)}
-		if not desired and not existing:
+		Idempotent: a settlement that already has its Journal Entry never posts a second one. Left in Draft
+		where an approval workflow covers Journal Entry, so the settlement itself is never blocked.
+		"""
+		amount = flt(self.total_payable, MONEY)
+		if amount <= 0 or self.accrual_journal_entry:
 			return
 
-		component, currency = payroll.prepare_component(
-			self.employee,
-			self.company,
-			self._expense_account(),
-			component=payroll.earning_component_for(self.employee, self.company),
-			component_type="Earning",
+		expense, payable = self._accrual_accounts()
+		currency = frappe.get_cached_value("Company", self.company, "default_currency")
+		cost_center = frappe.get_cached_value("Company", self.company, "cost_center")
+		remark = _("Annual leave salary - {0} - {1} to {2} ({3} leave day(s)) - {4} {5} ({6})").format(
+			self.employee_name or self.employee,
+			formatdate(self.leave_from_date),
+			formatdate(self.leave_to_date),
+			flt(self.leave_days, 2),
+			amount,
+			currency,
+			self.name,
+		)
+		expense_row = {"account": expense, "debit_in_account_currency": amount}
+		if cost_center:
+			expense_row["cost_center"] = cost_center
+		je = frappe.get_doc(
+			{
+				"doctype": "Journal Entry",
+				"voucher_type": "Journal Entry",
+				"company": self.company,
+				"posting_date": frappe.utils.nowdate(),
+				"user_remark": remark,
+				"accounts": [
+					expense_row,
+					{
+						"account": payable,
+						"credit_in_account_currency": amount,
+						# the Employee master ID, so the ledger and the payment follow this employee
+						"party_type": "Employee",
+						"party": self.employee,
+					},
+				],
+			}
+		)
+		needs_approval = journal_entry_needs_approval()
+		je.insert(ignore_permissions=True)
+		if not needs_approval:
+			je.submit()
+		self.db_set("accrual_journal_entry", je.name, update_modified=False)
+		frappe.msgprint(
+			_("Journal Entry <b>{0}</b> recognises the leave salary of {1} {2}{3}.").format(
+				je.name, amount, currency, _(" and is waiting for approval") if needs_approval else ""
+			),
+			title=_("Leave Salary Accrued"),
+			indicator="orange" if needs_approval else "green",
 		)
 
-		kept = []
-		for month, row in existing.items():
-			want = desired.get(getdate(month))
-			if want and abs(flt(want[1]) - flt(row["amount"])) < 0.0005:
-				kept.append(row)
-				desired.pop(getdate(month))
-			else:
-				payroll.cancel_deductions([row["name"]])
-
-		for month_start, (payroll_date, amount) in sorted(desired.items()):
-			date = payroll.payroll_date_or_next_open(self.employee, payroll_date)
-			name = payroll.book_earning(self, component, currency, date, amount)
-			if name:
-				kept.append({"name": name, "month": str(month_start), "date": str(date), "amount": flt(amount, MONEY)})
-
-		self.db_set("earning_rows", payroll.dump_json(kept), update_modified=False)
-		self.db_set("earning_amount", flt(sum(flt(r["amount"]) for r in kept), MONEY), update_modified=False)
-
-	def _book_recovery(self, earnings):
-		"""The advance has been paid: take back exactly what the earnings put on the payslips."""
-		component, currency = payroll.prepare_component(self.employee, self.company, self._expense_account())
-		rows = []
-		for earning in earnings:
-			date = payroll.payroll_date_or_next_open(self.employee, earning.get("date") or earning["month"])
-			amount = flt(earning["amount"], MONEY)
-			# A month whose payslip is already submitted takes it on the next open one, never refused.
-			name = payroll.book_deduction(self, component, currency, date, amount)
-			if name:
-				rows.append({"name": name, "month": earning["month"], "date": str(date), "amount": amount})
-		total = flt(sum(r["amount"] for r in rows), MONEY)
-		self.db_set("recovery_rows", payroll.dump_json(rows), update_modified=False)
-		self.db_set("advance_recovery_amount", total, update_modified=False)
-		self.add_comment("Info", _("Payment completed: leave salary recovery of {0} booked.").format(total))
-
-	def _reverse_recovery(self, rows):
-		"""The payment was cancelled: the recovery goes. One a payslip already took is offset by an earning."""
-		earning_component = None
-		reversed_by = payroll.load_json(self.reversal_rows)
-		for row in rows:
-			frappe.db.savepoint("lss_recovery_reversal")
-			try:
-				payroll.cancel_deductions([row["name"]])
-			except Exception:
-				frappe.db.rollback(save_point="lss_recovery_reversal")
-				if earning_component is None:
-					earning_component = payroll.prepare_component(
-						self.employee,
-						self.company,
-						self._expense_account(),
-						component=payroll.earning_component_for(self.employee, self.company),
-						component_type="Earning",
-					)
-				component, currency = earning_component
-				name = payroll.book_earning(self, component, currency, payroll.next_open_date(self.employee), row["amount"])
-				if name:
-					reversed_by.append(name)
-		self.db_set(
-			{"recovery_rows": "", "advance_recovery_amount": 0, "reversal_rows": payroll.dump_json(reversed_by)},
-			update_modified=False,
-		)
-		self.add_comment("Info", _("Payment reversed: the leave salary recovery was cancelled."))
+	def _cancel_accrual(self):
+		"""The settlement goes, so does its accrual: cancel it, or delete the draft nobody approved."""
+		name = self.accrual_journal_entry
+		if not name or not frappe.db.exists("Journal Entry", name):
+			return
+		docstatus = frappe.db.get_value("Journal Entry", name, "docstatus")
+		if docstatus == 1:
+			frappe.get_doc("Journal Entry", name).cancel()  # refused by ERPNext while a Payment Entry still clears it
+		elif docstatus == 0:
+			self.db_set("accrual_journal_entry", None, update_modified=False)
+			frappe.delete_doc("Journal Entry", name, ignore_permissions=True)
 
 	def _expense_account(self) -> str:
 		from hr_suite.hr_suite.doctype.annual_leave_disbursement.annual_leave_disbursement import (
@@ -704,16 +702,12 @@ def record_rejoin(name, rejoin_date):
 
 		unused_paid = min(flt(unused), paid_total)
 		recovery = flt(unused_paid * flt(doc.daily_leave_rate), MONEY)
-		if payroll.load_json(doc.earning_rows):
-			# The leave salary earning shrinks to the days actually taken. The recovery booked (or still to be
-			# booked) equals what was paid, so the unused days come back through the payslip, once.
-			doc._sync_earnings(leave_end=add_days(rejoin, -1))
-			if recovery > 0:
-				values["recovery_amount"] = recovery
-				notes.append(_("Returned {0} day(s) early: the leave salary earning was reduced by {1}, so that much of the advance is taken back at payroll, and {2} salary day(s) restored to the balance.").format(unused, recovery, flt(unused_paid, 2)))
-				values["_restored"] = flt(unused_paid, 2)
-			else:
-				notes.append(_("Returned {0} day(s) early; no leave salary had been paid for them.").format(unused))
+		if recovery > 0 and cstr(doc.status) != "Paid" and not payroll.load_json(doc.exclusion_rows):
+			# Nothing has left the bank yet, so there is nothing to take back from the payslip: the unused days'
+			# share stays accrued until the advice is reduced or cancelled.
+			values["unused_days"] = flt(unused, 2)
+			notes.append(_("Returned {0} day(s) early. The advance has not been paid, so nothing is recovered at payroll: reduce or cancel the payment advice for the unused {1}.").format(unused, recovery))
+			values["_restored"] = flt(unused_paid, 2)
 		elif recovery > 0:
 			name_ = payroll.book_deduction(doc, component, currency, rejoin, recovery)
 			booked.append(name_)
@@ -726,8 +720,6 @@ def record_rejoin(name, rejoin_date):
 	else:
 		values["actual_leave_days"] = flt(doc.leave_days, 2)
 		doc._sync_exclusions(leave_end=leave_to)
-		if payroll.load_json(doc.earning_rows):
-			doc._sync_earnings(leave_end=leave_to)
 		extra = date_diff(rejoin, leave_to) - 1
 		if extra > 0:
 			from hrms.hr.doctype.leave_application.leave_application import get_leave_balance_on
@@ -773,63 +765,36 @@ def _rejoin_record(doc) -> dict:
 	return record if isinstance(record, dict) else {"deductions": record or [], "restored": 0}
 
 
-# ── payment completed / reversed ──────────────────────────────────────────────
+# ── where the settlement stands ───────────────────────────────────────────────
 
 
 def refresh_stage(name):
-	"""Write where the settlement stands in: Approved > Earning Created > Payment Advice Created >
-	Payment Completed > Recovery Created. Plain column write: the document is submitted."""
+	"""Write where the settlement stands in: Approved > Accrual Posted > Payment Advice Created >
+	Partially Paid > Payment Completed. Plain column write: the document is submitted."""
 	row = frappe.db.get_value(
 		"Leave Salary Settlement",
 		name,
-		["docstatus", "status", "payment_advice", "earning_rows", "recovery_rows"],
+		["docstatus", "status", "payment_advice", "accrual_journal_entry", "payment_advice_type"],
 		as_dict=True,
 	)
 	if not row or row.docstatus == 0:
 		return ""
 	if row.docstatus == 2:
 		stage = "Cancelled"
-	elif payroll.load_json(row.recovery_rows):
-		stage = "Recovery Created"
 	elif row.status == "Paid":
 		stage = "Payment Completed"
+	elif row.payment_advice and row.payment_advice_type == "HR Payment Advice" and flt(
+		frappe.db.get_value("HR Payment Advice", row.payment_advice, "amount_paid")
+	) > 0:
+		stage = "Partially Paid"
 	elif row.payment_advice:
 		stage = "Payment Advice Created"
-	elif payroll.load_json(row.earning_rows):
-		stage = "Earning Created"
+	elif row.accrual_journal_entry:
+		stage = "Accrual Posted"
 	else:
 		stage = "Approved"
 	frappe.db.set_value("Leave Salary Settlement", name, "payroll_stage", stage, update_modified=False)
 	return stage
-
-
-def sync_recovery(name):
-	"""Bring the leave salary recovery in line with the payment: booked once the advice is Paid, withdrawn
-	if that payment is reversed. Called whenever the advice's paid state changes, and safe to repeat.
-
-	A settlement without earnings (made before they existed) has nothing to recover here: its payroll
-	exclusion already did that job. Returns the stage.
-	"""
-	doc = frappe.get_doc("Leave Salary Settlement", name)
-	if doc.docstatus != 1 or doc.settlement_type == FINAL:
-		return refresh_stage(name)
-
-	earnings = payroll.load_json(doc.earning_rows)
-	if earnings:
-		recovered = payroll.load_json(doc.recovery_rows)
-		paid = cstr(frappe.db.get_value("Leave Salary Settlement", name, "status")) == "Paid"
-		if paid and not recovered:
-			doc._book_recovery(earnings)
-		elif not paid and recovered:
-			doc._reverse_recovery(recovered)
-	return refresh_stage(name)
-
-
-@frappe.whitelist()
-def create_recovery(name):
-	"""HR button: book the recovery for a settlement whose advice is Paid, if the automatic step could not."""
-	frappe.has_permission("Leave Salary Settlement", "write", doc=name, throw=True)
-	return sync_recovery(name)
 
 
 # ── helpers for the Leave Application button ──────────────────────────────────

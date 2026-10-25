@@ -134,7 +134,7 @@
    "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
-   "options": "Draft\nPending Approval\nApproved\nSent to Finance\nPaid\nRejected\nCancelled",
+   "options": "Draft\nPending Approval\nApproved\nSent to Finance\nPartially Paid\nPaid\nRejected\nCancelled",
    "read_only": 1
   },
   {

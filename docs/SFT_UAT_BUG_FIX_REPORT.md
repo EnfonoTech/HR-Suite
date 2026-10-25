@@ -85,23 +85,20 @@ Kept as they were (spec section 9): `Leave Salary Recovery` stays a Deduction an
 
 **Existing records on `sft-uat` (not changed).** LSS-2026-0002 is submitted, so it was not edited. Safe correction: cancel its Payment Advice if one is live, cancel the settlement (this cancels HR-ADS-26-10-00003 and -00004, the September slip is still a draft), re-create it from HR-LAP-2026-00011 with last working day 30 Sep. After the fix it pays 420 (no worked days), and books a single 420 deduction on 1 Oct. Then re-run the September slip: gross 700, no recovery, net 700.
 
-### Round 3 addendum: leave salary earning, HR Payment Advice, recovery after payment (24 Oct 2026)
+### Round 3 addendum: the KSA annual leave salary model (25 Oct 2026)
 
-Spec: *SFT-UAT Leave Salary Settlement, Final Developer Specification with Flow and Test Cases*.
+Spec: *SFT KSA Annual Leave Salary - Full Developer Change Specification* (25 Oct 2026), with the answers given for it. This replaces the earning / exclusion / recovery rows built on 24 Oct, which the spec rules out.
 
-Flow now: Leave Application > Leave Salary Settlement > **Leave Salary earning** (Additional Salary, Earning) > **HR Payment Advice** (L1/L2 approval, then Finance) > payment completed > **Leave Salary Recovery** (Additional Salary, Deduction, equal to the earning) > normal payroll. Stage shown on the settlement: Approved > Earning Created > Payment Advice Created > Payment Completed > Recovery Created.
-
-| Spec item | Done as |
+| Spec point | Done as |
 |---|---|
-| Country Config earning component, Earning-type validation (TC-12), recovery stays Deduction (TC-11) | New field `leave_salary_earning_component` (blank = HR Suite creates "Leave Salary", fixed amount, not payment-day dependent). Country Config refuses an earning component that is not an Earning and a recovery that is not a Deduction at save. |
-| LSS creates the earning automatically, linked to the LSS | On submit: one Additional Salary earning per leave month (leave salary spread by leave days), `ref_doctype = Leave Salary Settlement`. Closed month: goes to the next open date. |
-| HR Payment Advice is the advance payment | A settlement raises the **HR Payment Advice** (not sf_trading's Payment Advice) and, where approvers are set, sends it for approval. One live claim per settlement. |
-| NO PAYMENT, NO RECOVERY (TC-05) | The recovery is booked only when the advice is fully **Paid**. Until then the payslip pays the earning. Partial payment: no recovery until paid in full (your decision). |
-| Payment cancelled (TC-06) | The recovery is cancelled; one a payslip already took is offset by an earning on the next open date. Re-paying books it again, once. |
-| Exclude settled leave days from normal salary | Kept as an Additional Salary deduction, now on its own component **Leave Days Exclusion** (your decision), separate from the recovery. Net pay is right in every payment state. |
-| Duplicates (TC-08) | Earning, exclusion and recovery are idempotent; advice is raised once. |
-| Sick leave (TC-09) | A settlement for a leave that is not the country's annual leave type is refused. |
-| Leave encashment (TC-10) | Not touched; separate doctype. |
-| Early rejoin | The earning shrinks to the days taken, so the unused days come back through the payslip once (no second deduction). |
+| Accrual once, employee-tagged payable, existing mappings kept | Submit posts ONE Journal Entry: debit the company's mapped *Leave Salary Expense*, credit its mapped *Leave Salary Payable* with Party Type Employee / the Employee ID. The mapping is the existing Hr Suite Settings > HR Account Mappings table, per company; nothing is guessed (an unmapped company, or a payable whose Account Type is not Payable, is refused with the fix). Idempotent; left in Draft where a Journal Entry approval workflow applies. |
+| HR Payment Advice = request/approval, not a bank transaction | Unchanged route (settlement raises the HR advice; approvers L1/L2). *Mark as Paid* by hand is refused for leave salary. |
+| Finance creates the Payment Entry from the advice | New **Create Payment Entry** on the approved advice: a draft Payment Entry, Party Type Employee, clearing the employee's payable (reference: the accrual Journal Entry), bank/cash left to Finance. The Payment Entry carries a link to the advice (custom field `hr_payment_advice`). |
+| Paid only after posting; cancel/reverse follows; partial payment | On Payment Entry submit/cancel the advice recomputes `amount_paid` from its submitted entries: **Paid** when covered, **Partially Paid** (new status) with the balance outstanding, back to Approved/Sent to Finance when reversed; the settlement's status and *Payroll Stage* follow. Partial payments are allowed. |
+| No earning / Leave Days Exclusion / Leave Salary Recovery rows | Gone for new settlements. Settlements made before keep what they booked (they have no accrual Journal Entry, which is what marks the new model). |
+| Normal payroll pays only the remaining salary; annual leave is not LWP | **Salary Slip override** (`overrides/salary_slip.py`): settled leave days are taken out of the *payment days* (holidays handled as payroll does), `leave_without_pay` untouched, no Additional Salary rows, no extra slip line. A real-slip test: October 31 days, 12 settled -> 19 payment days, gross 3,100 x 19 / 31 = 1,900. |
+| Days after the leave only once the return is confirmed | A slip with days after a settled leave is refused until the return is confirmed (*Record Rejoin* on the settlement) or the employee has attendance after the leave. |
+| SAR 500 worked-days pay | Per your answer it is normal payroll: the settlement pays leave salary only (worked-days pay is 0 for annual leave). |
+| Early return | The days after the return are paid by payroll again; if the advance was already paid, the unused days' share is taken back by a payroll deduction (Leave Salary Recovery), otherwise nothing is recovered and the advice is reduced by hand. |
 
-Not changed: settlements made before this release have no earning, so their payment adds no recovery (their exclusion deduction is unchanged). Recovery equals the earning booked, which for a settlement that also pays worked-days salary or a ticket is smaller than the advice total: worked days are kept off the payslip by the exclusion, and the ticket is not in payroll at all.
+Not covered by this change: the GOSI basis (not touched, as the spec says), the optional payment statement, and reconciliation reports beyond the stage on the settlement and the advice queue.
