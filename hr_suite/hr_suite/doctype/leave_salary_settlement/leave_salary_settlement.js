@@ -13,7 +13,7 @@ function show_payment_advice(frm) {
 		callback: function (r) {
 			const state = r.message || {};
 			if (state.advice) {
-				if (frm.dashboard.wrapper.find(".hrs-advice-line").length) return;
+				if (frm.layout.message.find(".hrs-advice-line").length) return;
 				const label = __(state.doctype) + " " + state.advice;
 				const link = state.can_open
 					? frappe.utils.get_form_link(state.doctype, state.advice, true)
@@ -60,7 +60,7 @@ frappe.ui.form.on("Leave Salary Settlement", {
 
 		show_payment_advice(frm);
 
-		if (frm.doc.payroll_stage && !frm.dashboard.wrapper.find(".hrs-stage-line").length) {
+		if (frm.doc.payroll_stage && !frm.layout.message.find(".hrs-stage-line").length) {
 			frm.dashboard.add_comment(
 				'<span class="hrs-stage-line">' + __("Payroll stage: {0}", [__(frm.doc.payroll_stage)]) + "</span>",
 				"blue",
@@ -69,7 +69,7 @@ frappe.ui.form.on("Leave Salary Settlement", {
 		}
 
 		// The accrual that recognised the leave salary against the employee-tagged payable.
-		if (frm.doc.accrual_journal_entry && !frm.dashboard.wrapper.find(".hrs-accrual-line").length) {
+		if (frm.doc.accrual_journal_entry && !frm.layout.message.find(".hrs-accrual-line").length) {
 			frm.dashboard.add_comment(
 				'<span class="hrs-accrual-line">' + __("Accrual Journal Entry: {0}", [
 					frappe.utils.get_form_link("Journal Entry", frm.doc.accrual_journal_entry, true),
