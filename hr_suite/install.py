@@ -407,28 +407,42 @@ def migrate_legacy_annual_leave():
 		if frappe.db.exists("Annual Leave", {"legacy_reference": row.name}):
 			continue
 
-		doc = frappe.get_doc(
-			{
-				"doctype": "Annual Leave",
-				"employee": row.employee,
-				"employee_name": row.employee_name,
-				"company": row.company,
-				"department": row.department,
-				"leave_start_date": row.from_date,
-				"leave_end_date": row.to_date,
-				"half_day": row.half_day,
-				"description": row.description,
-				"legacy_reference": row.name,
-			}
-		)
-		doc.insert(ignore_permissions=True)
-		if row.docstatus == 1:
-			doc.submit()
-		elif row.docstatus == 2:
-			doc.submit()
-			doc.cancel()
-		elif row.status:
-			doc.db_set("status", row.status)
+		# A copy is a convenience, never a reason to stop a migrate: Annual Leave runs its own balance
+		# check, which refuses leave the HRMS ledger allowed (seen on sft-uat 27 Oct 2026, six leaves).
+		frappe.db.savepoint("legacy_annual_leave")
+		try:
+			_copy_legacy_annual_leave(row)
+		except Exception:
+			frappe.db.rollback(save_point="legacy_annual_leave")
+			frappe.log_error(
+				title="HR Suite: legacy Annual Leave copy skipped",
+				message=f"Leave Application {row.name} was not copied to Annual Leave.\n\n{frappe.get_traceback()}",
+			)
+
+
+def _copy_legacy_annual_leave(row):
+	doc = frappe.get_doc(
+		{
+			"doctype": "Annual Leave",
+			"employee": row.employee,
+			"employee_name": row.employee_name,
+			"company": row.company,
+			"department": row.department,
+			"leave_start_date": row.from_date,
+			"leave_end_date": row.to_date,
+			"half_day": row.half_day,
+			"description": row.description,
+			"legacy_reference": row.name,
+		}
+	)
+	doc.insert(ignore_permissions=True)
+	if row.docstatus == 1:
+		doc.submit()
+	elif row.docstatus == 2:
+		doc.submit()
+		doc.cancel()
+	elif row.status:
+		doc.db_set("status", row.status)
 
 
 def migrate_legacy_employee_loans():

@@ -720,3 +720,20 @@ class TestAccrualBeforeCarryForward(LeaveTestBase):
 		self.assertEqual(
 			frappe.get_all("Leave Accrual Ledger", filters={"employee": emp}, pluck="leave_allocation"), [alloc.name] * 2
 		)
+
+
+class TestLegacyAnnualLeaveCopyNeverStopsMigrate(FrappeTestCase):
+	"""27 Oct: six leaves the legacy Annual Leave balance check refused made every migrate on sft-uat fail."""
+
+	def test_a_row_that_cannot_be_copied_is_skipped_and_logged(self):
+		from hr_suite import install
+
+		row = frappe._dict(name="HR-LAP-TEST-LEGACY", employee="X")
+		with (
+			patch.object(install.frappe, "get_all", return_value=[row]),
+			patch.object(install, "_copy_legacy_annual_leave", side_effect=frappe.ValidationError("refused")),
+			patch.object(install.frappe, "log_error") as logged,
+		):
+			install.migrate_legacy_annual_leave()  # must not raise
+		self.assertEqual(logged.call_count, 1)
+		self.assertIn("HR-LAP-TEST-LEGACY", logged.call_args.kwargs["message"])
