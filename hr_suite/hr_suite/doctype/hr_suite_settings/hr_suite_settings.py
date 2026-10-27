@@ -10,7 +10,7 @@ from frappe.model.document import Document
 from frappe.utils.file_manager import save_file
 from openpyxl import Workbook, load_workbook
 
-from hr_suite.hr_suite.utils import assert_doctype_permissions
+from hr_suite.hr_suite.utils import ACCOUNT_PURPOSE_ROOT_TYPE, PAYABLE_PURPOSES, assert_doctype_permissions
 
 
 ALLOWED_IMPORT_EXTENSIONS = {".xlsx", ".xlsm", ".xls"}
@@ -20,6 +20,7 @@ MAX_IMPORT_FILE_SIZE_BYTES = 10 * 1024 * 1024
 class HrSuiteSettings(Document):
 	def validate(self):
 		self._validate_account_mappings()
+		self._validate_deduction_accounts()
 
 	def _validate_account_mappings(self):
 		"""Catch a bad mapping here, not at submit time on somebody's payroll.
@@ -29,11 +30,6 @@ class HrSuiteSettings(Document):
 		silently skipped at that point and the name-matching fallback takes over — so
 		the administrator would never learn the row was useless. Refuse it on save.
 		"""
-		expected_root = {
-			"Leave Salary Expense": "Expense",
-			"Leave Salary Payable": "Liability",
-			"Settlement Advance": "Asset",
-		}
 		seen = {}
 
 		for row in self.get("hr_account_mappings") or []:
@@ -51,7 +47,7 @@ class HrSuiteSettings(Document):
 			seen[key] = row.idx
 
 			detail = frappe.db.get_value(
-				"Account", row.account, ["company", "is_group", "root_type"], as_dict=True
+				"Account", row.account, ["company", "is_group", "root_type", "account_type"], as_dict=True
 			)
 			if not detail:
 				continue
@@ -71,13 +67,43 @@ class HrSuiteSettings(Document):
 					title=_("Group account"),
 				)
 
-			wanted = expected_root.get(row.purpose)
+			wanted = ACCOUNT_PURPOSE_ROOT_TYPE.get(row.purpose)
 			if wanted and detail.root_type != wanted:
 				frappe.throw(
 					_("Row #{0}: {1} is written for {2}, but {3} is {4}. Check the "
 					  "account before payroll uses it.").format(
 						row.idx, _(row.purpose), _(wanted), row.account, _(detail.root_type)),
 					title=_("Wrong kind of account"),
+				)
+
+			if row.purpose in PAYABLE_PURPOSES and detail.account_type != "Payable":
+				frappe.throw(
+					_("Row #{0}: {1} is mapped as {2}, but its Account Type is not Payable. Every line on it "
+					  "carries the employee, and ERPNext accepts an employee only on a Payable account. Set "
+					  "Account Type = Payable on it in the Chart of Accounts, or pick another account.").format(
+						row.idx, row.account, _(row.purpose)),
+					title=_("Account Cannot Carry The Employee"),
+				)
+
+	def _validate_deduction_accounts(self):
+		"""A deduction account from another company would fail the payroll Journal Entry. Refuse it on save."""
+		for row in self.get("statutory_deduction_accounts") or []:
+			if not (row.company and row.account):
+				continue
+			detail = frappe.db.get_value("Account", row.account, ["company", "is_group"], as_dict=True)
+			if not detail:
+				continue
+			if detail.company != row.company:
+				frappe.throw(
+					_("Deduction Accounts row #{0}: account {1} belongs to {2}, not {3}.").format(
+						row.idx, row.account, detail.company, row.company),
+					title=_("Account is in another company"),
+				)
+			if detail.is_group:
+				frappe.throw(
+					_("Deduction Accounts row #{0}: {1} is a group account. Pick one of its children.").format(
+						row.idx, row.account),
+					title=_("Group account"),
 				)
 
 

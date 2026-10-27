@@ -52,12 +52,14 @@ def classify_exit(termination_reason: str) -> str:
 	return TERMINATION
 
 
-def _months_of_wage_per_year(unit: str, rate: float) -> float:
-	"""Express a slab rate as months of wage per year of service. A month is 30 days, a week 7."""
+def _months_of_wage_per_year(unit: str, rate: float, days_per_month: float = 30) -> float:
+	"""Express a slab rate as months of wage per year of service. A week is 7 days; a month is
+	Country Config > Days per Month (Gratuity), 30 unless set. The service year stays 365 days."""
+	days_per_month = flt(days_per_month) or 30
 	if unit == DAYS:
-		return rate / 30.0
+		return rate / days_per_month
 	if unit == WEEKS:
-		return rate * 7.0 / 30.0
+		return rate * 7.0 / days_per_month
 	return rate
 
 
@@ -212,7 +214,7 @@ def compute_gratuity(
 			if in_slab <= 0:
 				continue
 			unit = slab.get("rate_unit") or MONTHS
-			amount = flt(in_slab * _months_of_wage_per_year(unit, flt(slab.get("rate_value"))) * base, precision)
+			amount = flt(in_slab * _months_of_wage_per_year(unit, flt(slab.get("rate_value")), policy.get("gratuity_days_per_month")) * base, precision)
 			gross_before_cap += amount
 			breakdown.append(
 				{

@@ -24,7 +24,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Purpose",
-   "options": "\nLeave Salary Expense\nLeave Salary Payable\nSettlement Advance",
+   "options": "\nLeave Salary Expense\nLeave Salary Payable\nSettlement Advance\nAir Ticket Expense\nAir Ticket Payable\nGratuity Expense\nGratuity Payable\nGratuity Provision\nTraffic Violation Expense\nBonus Expense\nBonus Payable",
    "reqd": 1,
    "description": "What HR Suite is posting when it uses this account."
   },
@@ -41,7 +41,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-09-27 00:00:00.000000",
+ "modified": "2026-10-27 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hr Suite",
  "name": "HR Suite Account Row",

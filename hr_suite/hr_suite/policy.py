@@ -114,6 +114,7 @@ def get_country_policy(country_code: str):
 		sick_leave_requires_certificate=cint(cfg.sick_leave_requires_certificate),
 		sick_leave_tiers=_rows(cfg, "sick_leave_tiers", ("tier_days", "pay_percent")),
 		gratuity_base=cfg.gratuity_base or "Basic Salary",
+		gratuity_days_per_month=flt(cfg.get("gratuity_days_per_month")) or 30,
 		gratuity_cap_months=flt(cfg.gratuity_cap_months),
 		gratuity_min_service_years=flt(cfg.gratuity_min_service_years),
 		gratuity_forfeited_on_dismissal=cint(cfg.gratuity_forfeited_on_dismissal),

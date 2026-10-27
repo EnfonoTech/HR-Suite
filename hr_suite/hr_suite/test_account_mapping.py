@@ -132,3 +132,78 @@ class TestAccountMappingIsPerCompany(FrappeTestCase):
 			"An unmapped purpose must return empty so the caller's fallback runs; raising "
 			"here would break a disbursement mid-submit.",
 		)
+
+
+class TestPayableAndCompanyChecksOnSave(FrappeTestCase):
+	"""Issue B: the mistakes that used to surface only at settlement submit are refused when the settings are saved."""
+
+	def setUp(self):
+		self.settings = frappe.get_doc("Hr Suite Settings")
+		self.settings.flags.ignore_permissions = True
+		self.company = frappe.get_all("Company", pluck="name", limit=1)
+		if not self.company:
+			self.skipTest("Needs a company")
+		self.company = self.company[0]
+		# Start from empty tables, so a row already on the site cannot be what a test sees refused.
+		self.settings.set("hr_account_mappings", [])
+		self.settings.set("statutory_deduction_accounts", [])
+
+	def tearDown(self):
+		frappe.db.rollback()
+		frappe.clear_cache(doctype="Hr Suite Settings")
+
+	def _liability(self, payable: bool):
+		filters = {"company": self.company, "root_type": "Liability", "is_group": 0}
+		filters["account_type"] = "Payable" if payable else ["not in", ["Payable", "Receivable"]]
+		return frappe.db.get_value("Account", filters, "name")
+
+	def test_every_employee_tagged_purpose_needs_a_payable_account(self):
+		from hr_suite.hr_suite.utils import PAYABLE_PURPOSES
+
+		account = self._liability(payable=False)
+		if not account:
+			self.skipTest("No liability account without an account type")
+		for purpose in sorted(PAYABLE_PURPOSES):
+			# A fresh copy each time: a refused save leaves the in-memory timestamp ahead of the database.
+			settings = frappe.get_doc("Hr Suite Settings")
+			settings.flags.ignore_permissions = True
+			settings.set("statutory_deduction_accounts", [])
+			settings.set("hr_account_mappings", [])
+			settings.append("hr_account_mappings", {"company": self.company, "purpose": purpose, "account": account})
+			with self.assertRaises(frappe.ValidationError, msg=purpose) as caught:
+				settings.save()
+			self.assertIn("Payable", str(caught.exception))
+
+	def test_a_payable_account_is_accepted_for_the_new_purposes(self):
+		from hr_suite.hr_suite.utils import ACCOUNT_PURPOSE_BONUS_PAYABLE, ACCOUNT_PURPOSE_GRATUITY_PROVISION
+
+		account = self._liability(payable=True)
+		if not account:
+			self.skipTest("No payable account")
+		self.settings.set("hr_account_mappings", [])
+		for purpose in (ACCOUNT_PURPOSE_BONUS_PAYABLE, ACCOUNT_PURPOSE_GRATUITY_PROVISION):
+			self.settings.append("hr_account_mappings", {"company": self.company, "purpose": purpose, "account": account})
+		self.settings.save()
+
+	def test_a_new_expense_purpose_refuses_a_liability(self):
+		from hr_suite.hr_suite.utils import ACCOUNT_PURPOSE_AIR_TICKET_EXPENSE
+
+		account = self._liability(payable=True)
+		if not account:
+			self.skipTest("No payable account")
+		self.settings.set("hr_account_mappings", [])
+		self.settings.append(
+			"hr_account_mappings", {"company": self.company, "purpose": ACCOUNT_PURPOSE_AIR_TICKET_EXPENSE, "account": account}
+		)
+		self.assertRaises(frappe.ValidationError, self.settings.save)
+
+	def test_a_deduction_account_from_another_company_is_refused(self):
+		companies = frappe.get_all("Company", pluck="name", limit=2)
+		if len(companies) < 2:
+			self.skipTest("Needs two companies")
+		foreign = _an_account(companies[1], "Liability")
+		if not foreign:
+			self.skipTest(f"No liability account in {companies[1]}")
+		self.settings.set("statutory_deduction_accounts", [])
+		self.settings.append("statutory_deduction_accounts", {"company": companies[0], "account": foreign})
+		self.assertRaises(frappe.ValidationError, self.settings.save)

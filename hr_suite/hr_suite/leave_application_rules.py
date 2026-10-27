@@ -58,6 +58,28 @@ def on_submit(doc, method=None):
 	_book_unpaid_deductions(doc)
 
 
+def before_cancel(doc, method=None):
+	"""A leave whose salary is settled cannot be cancelled (or, through cancel and amend, edited) on its own.
+
+	The settlement priced these exact dates, posted the accrual and may already be paid. Cancelling it first
+	reverses its Journal Entry (Finance reverses any payment), and only then may the leave change. Frappe's own
+	linked-document check would also stop this, but with a message that does not say what to do.
+	"""
+	settled = frappe.get_all(
+		"Leave Salary Settlement",
+		filters={"leave_application": doc.name, "docstatus": 1},
+		pluck="name",
+	)
+	if settled:
+		frappe.throw(
+			_("The leave salary for {0} is already settled ({1}). Cancel the settlement first: its Journal Entry "
+			  "reverses, and Finance reverses any payment made against it. Then cancel or amend this leave.").format(
+				doc.name, ", ".join(settled)
+			),
+			title=_("Leave Salary Already Settled"),
+		)
+
+
 def on_cancel(doc, method=None):
 	payroll.cancel_deductions([row["name"] for row in payroll.load_json(doc.get("unpaid_deduction_rows"))])
 	doc.db_set("unpaid_deduction_rows", "", update_modified=False)

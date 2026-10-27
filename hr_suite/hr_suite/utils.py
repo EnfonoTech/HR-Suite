@@ -1453,6 +1453,41 @@ def split_days_by_month(from_date, to_date) -> list:
 ACCOUNT_PURPOSE_LEAVE_SALARY_EXPENSE = "Leave Salary Expense"
 ACCOUNT_PURPOSE_LEAVE_SALARY_PAYABLE = "Leave Salary Payable"
 ACCOUNT_PURPOSE_SETTLEMENT_ADVANCE = "Settlement Advance"
+ACCOUNT_PURPOSE_AIR_TICKET_EXPENSE = "Air Ticket Expense"
+ACCOUNT_PURPOSE_AIR_TICKET_PAYABLE = "Air Ticket Payable"
+ACCOUNT_PURPOSE_GRATUITY_EXPENSE = "Gratuity Expense"
+ACCOUNT_PURPOSE_GRATUITY_PAYABLE = "Gratuity Payable"
+ACCOUNT_PURPOSE_GRATUITY_PROVISION = "Gratuity Provision"
+ACCOUNT_PURPOSE_TRAFFIC_VIOLATION_EXPENSE = "Traffic Violation Expense"
+ACCOUNT_PURPOSE_BONUS_EXPENSE = "Bonus Expense"
+ACCOUNT_PURPOSE_BONUS_PAYABLE = "Bonus Payable"
+
+# The side of the balance sheet each purpose must sit on. Recoveries (air ticket excess,
+# traffic fines, penalties) are not purposes: they post through the salary component's own
+# account, mapped by Finance on the component (Payroll Deduction Components).
+ACCOUNT_PURPOSE_ROOT_TYPE = {
+	ACCOUNT_PURPOSE_LEAVE_SALARY_EXPENSE: "Expense",
+	ACCOUNT_PURPOSE_LEAVE_SALARY_PAYABLE: "Liability",
+	ACCOUNT_PURPOSE_SETTLEMENT_ADVANCE: "Asset",
+	ACCOUNT_PURPOSE_AIR_TICKET_EXPENSE: "Expense",
+	ACCOUNT_PURPOSE_AIR_TICKET_PAYABLE: "Liability",
+	ACCOUNT_PURPOSE_GRATUITY_EXPENSE: "Expense",
+	ACCOUNT_PURPOSE_GRATUITY_PAYABLE: "Liability",
+	ACCOUNT_PURPOSE_GRATUITY_PROVISION: "Liability",
+	ACCOUNT_PURPOSE_TRAFFIC_VIOLATION_EXPENSE: "Expense",
+	ACCOUNT_PURPOSE_BONUS_EXPENSE: "Expense",
+	ACCOUNT_PURPOSE_BONUS_PAYABLE: "Liability",
+}
+
+# Every line on these is tagged to the employee, and ERPNext only accepts a party on a
+# Payable or Receivable account, so the mapped account must have Account Type = Payable.
+PAYABLE_PURPOSES = frozenset({
+	ACCOUNT_PURPOSE_LEAVE_SALARY_PAYABLE,
+	ACCOUNT_PURPOSE_AIR_TICKET_PAYABLE,
+	ACCOUNT_PURPOSE_GRATUITY_PAYABLE,
+	ACCOUNT_PURPOSE_GRATUITY_PROVISION,
+	ACCOUNT_PURPOSE_BONUS_PAYABLE,
+})
 
 
 def get_mapped_account(company: str, purpose: str, root_type: str = "") -> str:

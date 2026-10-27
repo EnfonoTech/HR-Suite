@@ -315,6 +315,21 @@ class TestAccrual(SettlementTestBase):
 		doc.cancel()
 		self.assertEqual(frappe.db.get_value("Journal Entry", je, "docstatus"), 2)
 
+	def test_a_settled_leave_cannot_be_cancelled_until_the_settlement_is(self):
+		emp = self.staff("Locked")
+		la = self.leave(emp, "2026-10-01", "2026-10-21")
+		doc = self.settle(emp, la, last_working_day="2026-09-30")
+		leave = frappe.get_doc("Leave Application", la)
+		with self.assertRaises(frappe.ValidationError) as caught:
+			leave.cancel()
+		self.assertIn(doc.name, str(caught.exception))
+
+		doc.reload()
+		doc.cancel()
+		leave.reload()
+		leave.cancel()  # settlement reversed: the leave may now be cancelled and amended
+		self.assertEqual(leave.docstatus, 2)
+
 	def test_a_leave_already_settled_in_full_cannot_be_settled_again(self):
 		emp = self.staff("Twice", opening=60)
 		la = self.leave(emp, "2026-10-01", "2026-10-21")
@@ -437,6 +452,35 @@ class TestPayrollDays(SettlementTestBase):
 	def test_no_confirmation_is_needed_when_the_leave_covers_the_rest_of_the_period(self):
 		emp, doc = self.settled("Covers", start="2026-10-20", end="2026-11-10", lwd="2026-10-19")
 		self.slip(emp)._hrs_require_confirmed_return()  # October ends inside the leave: nothing after it to pay
+
+	def test_a_later_month_waits_for_a_return_never_confirmed(self):
+		emp, doc = self.settled("Gone")  # leave 4-15 October, no rejoin recorded
+		with self.assertRaises(frappe.ValidationError) as caught:
+			self.slip(emp, "2026-11-01", "2026-11-30")._hrs_require_confirmed_return()
+		self.assertIn(doc.name, str(caught.exception))
+
+		record_rejoin(doc.name, "2026-10-16")
+		self.slip(emp, "2026-11-01", "2026-11-30")._hrs_require_confirmed_return()  # recorded: November may run
+
+	def test_a_leave_already_followed_by_paid_payroll_does_not_hold(self):
+		emp, doc = self.settled("Paid")  # leave 4-15 October, no rejoin recorded
+		slip = self.slip(emp, "2026-12-01", "2026-12-31")
+		# November was already paid: the employee was back, so the October leave is not checked again.
+		with patch("hr_suite.hr_suite.overrides.salary_slip.last_paid_slip_end", return_value=getdate("2026-11-30")):
+			slip._hrs_require_confirmed_return()
+		# A slip that ends on the leave's last day proves nothing: the leave is still checked.
+		with patch("hr_suite.hr_suite.overrides.salary_slip.last_paid_slip_end", return_value=getdate("2026-10-15")):
+			self.assertRaises(frappe.ValidationError, slip._hrs_require_confirmed_return)
+
+	def test_a_later_month_is_not_held_by_a_cancelled_settlement(self):
+		emp, doc = self.settled("Undone")
+		doc.reload()
+		doc.cancel()
+		self.slip(emp, "2026-11-01", "2026-11-30")._hrs_require_confirmed_return()
+
+	def test_a_later_month_is_not_held_before_the_leave_has_ended(self):
+		emp, doc = self.settled("Away", start="2026-10-20", end="2026-12-10", lwd="2026-10-19")
+		self.slip(emp, "2026-11-01", "2026-11-30")._hrs_require_confirmed_return()  # still on leave all November
 
 	def test_attendance_after_the_leave_confirms_the_return(self):
 		from hr_suite.hr_suite.overrides.salary_slip import return_confirmed

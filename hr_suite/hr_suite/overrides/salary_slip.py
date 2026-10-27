@@ -9,7 +9,8 @@ for any other day not paid by payroll. It is not leave without pay, adds no Addi
 on the slip, and changes nothing for an employee without such a settlement.
 
 A slip for the days AFTER the leave is held until the return is confirmed (Record Rejoin on the settlement) or
-the employee has attendance after the leave: salary is not paid for days nobody has confirmed were worked.
+the employee has attendance after the leave: salary is not paid for days nobody has confirmed were worked. The
+hold also covers every later month, not only the month the leave ends in.
 
 Settlements made before this design carry their own payroll deductions and are not touched here (they have no
 accrual Journal Entry, which is what marks a settlement as using this mechanism).
@@ -82,6 +83,50 @@ def return_confirmed(employee, settlement: dict) -> bool:
 	)
 
 
+def unconfirmed_earlier_leaves(employee, before) -> list:
+	"""Settled leave that ended before `before` with no return on record: [{"name", "leave_to", "rejoin_date"}].
+
+	A slip for a later month must wait for these too. Without this, the month after the leave would
+	pay an employee nobody has confirmed came back, because that month's period never touches the leave.
+
+	Only leave that ended on or after the employee's last submitted slip before `before` is checked (SFT's
+	choice, 27 Oct 2026): a slip already paid for a period after the leave shows the employee came back, so an
+	old leave with no rejoin recorded does not hold payroll for good.
+	"""
+	filters = {
+		"employee": employee,
+		"docstatus": 1,
+		"settlement_type": ["!=", "Final Settlement"],
+		"accrual_journal_entry": ["is", "set"],
+		"leave_to_date": ["<", getdate(before)],
+	}
+	last_paid = last_paid_slip_end(employee, before)
+	if last_paid:
+		filters["leave_to_date"] = ["between", [last_paid, add_days(getdate(before), -1)]]
+	rows = frappe.get_all(
+		"Leave Salary Settlement", filters=filters, fields=["name", "leave_to_date", "rejoin_date"],
+		order_by="leave_to_date asc",
+	)
+	out = []
+	for row in rows:
+		settlement = {"name": row.name, "leave_to": getdate(row.leave_to_date), "rejoin_date": row.rejoin_date}
+		if not return_confirmed(employee, settlement):
+			out.append(settlement)
+	return out
+
+
+def last_paid_slip_end(employee, before):
+	"""End date of the employee's latest submitted Salary Slip that ends before `before`, or None."""
+	ends = frappe.get_all(
+		"Salary Slip",
+		filters={"employee": employee, "docstatus": 1, "end_date": ["<", getdate(before)]},
+		pluck="end_date",
+		order_by="end_date desc",
+		limit=1,
+	)
+	return getdate(ends[0]) if ends else None
+
+
 class HRSuiteSalarySlip(SalarySlip):
 	def validate(self):
 		self._hrs_require_confirmed_return()
@@ -118,6 +163,15 @@ class HRSuiteSalarySlip(SalarySlip):
 				_("{0} was on annual leave until {1} (settlement {2}). Payroll for the days after it waits until the "
 				  "return is confirmed: record it on the settlement (Actions > Record Rejoin) or add the employee's "
 				  "attendance, then run payroll again.").format(
+					self.employee_name or self.employee, formatdate(settlement["leave_to"]), settlement["name"]
+				),
+				title=_("Return From Leave Not Confirmed"),
+			)
+		for settlement in unconfirmed_earlier_leaves(self.employee, start):
+			frappe.throw(
+				_("{0} was on annual leave until {1} (settlement {2}) and the return was never confirmed. No payroll "
+				  "runs for {0} until it is: record it on the settlement (Actions > Record Rejoin) or add the "
+				  "employee's attendance after the leave, then run payroll again.").format(
 					self.employee_name or self.employee, formatdate(settlement["leave_to"]), settlement["name"]
 				),
 				title=_("Return From Leave Not Confirmed"),

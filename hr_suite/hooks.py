@@ -202,6 +202,7 @@ doc_events = {
 			"hr_suite.hr_suite.leave_application_rules.validate",
 		],
 		"before_submit": "hr_suite.hr_suite.sick_leave_tiers.require_certificate",
+		"before_cancel": "hr_suite.hr_suite.leave_application_rules.before_cancel",
 		"on_submit": [
 			"hr_suite.hr_suite.leave_application_rules.on_submit",
 			"hr_suite.hr_suite.sick_leave_tiers.on_submit",

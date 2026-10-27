@@ -40,6 +40,8 @@
   "penalty_salary_component",
   "column_break_penalty",
   "loan_salary_component",
+  "air_ticket_recovery_component",
+  "traffic_violation_recovery_component",
   "statutory_accounts_section",
   "statutory_accounts_help",
   "statutory_deduction_accounts",
@@ -314,6 +316,20 @@
    "label": "Loan Repayment Salary Component",
    "options": "Salary Component",
    "description": "Deduction component that carries an Employee Loan instalment onto the Salary Slip. Leave blank to use 'Loan Repayment', which HR Suite creates on first use - but only once it can map an account for the company."
+  },
+  {
+   "fieldname": "air_ticket_recovery_component",
+   "fieldtype": "Link",
+   "label": "Air Ticket Recovery Salary Component",
+   "options": "Salary Component",
+   "description": "Deduction that recovers an air ticket cost above the allowance. Map it to the Air Ticket Expense account of each company, so the recovery reduces the expense."
+  },
+  {
+   "fieldname": "traffic_violation_recovery_component",
+   "fieldtype": "Link",
+   "label": "Traffic Violation Recovery Salary Component",
+   "options": "Salary Component",
+   "description": "Deduction that recovers a traffic fine from the employee. Map it to the Traffic Violation Expense account of each company."
   },
   {
    "fieldname": "statutory_accounts_section",
@@ -685,7 +701,7 @@
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-09-06 12:00:00.000000",
+ "modified": "2026-10-27 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hr Suite",
  "name": "Hr Suite Settings",

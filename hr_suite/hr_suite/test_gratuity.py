@@ -162,3 +162,29 @@ class TestLegacyWrapper(FrappeTestCase):
 	def test_other_countries_through_the_wrapper(self):
 		qa = calculate_eosb_components("2021-01-01", add_days("2021-01-01", 730), 5000, "Termination", country="QA")
 		self.assertEqual(qa["eosb_gross"], 7000)
+
+
+class TestDaysPerMonth(FrappeTestCase):
+	"""Country Config > Days per Month (Gratuity) turns a days-a-year slab into months. Default 30."""
+
+	def test_days_and_weeks_follow_the_setting(self):
+		from hr_suite.hr_suite.gratuity import DAYS, WEEKS, _months_of_wage_per_year
+
+		self.assertAlmostEqual(_months_of_wage_per_year(DAYS, 21), 0.7)  # 21 / 30
+		self.assertAlmostEqual(_months_of_wage_per_year(DAYS, 21, 0), 0.7)  # unset falls back to 30
+		self.assertAlmostEqual(_months_of_wage_per_year(DAYS, 21, 28), 0.75)  # 21 / 28
+		self.assertAlmostEqual(_months_of_wage_per_year(WEEKS, 3, 28), 0.75)  # 3 x 7 / 28
+
+	def test_the_policy_carries_the_setting_and_defaults_to_30(self):
+		policy = get_country_policy("AE")
+		if not policy:
+			self.skipTest("No Country Config for AE")
+		self.assertEqual(policy.gratuity_days_per_month, 30)
+
+	def test_the_slab_amount_uses_the_policy_value(self):
+		policy = get_country_policy("AE")
+		if not policy:
+			self.skipTest("No Country Config for AE")
+		policy = frappe._dict(policy, gratuity_days_per_month=28)
+		result = compute_gratuity(policy, JOINED, add_days(JOINED, 3 * 365), 10000, "Termination by Employer")
+		self.assertEqual(result.gross_entitlement, 22500)  # 3 yrs x 21/28 x 10,000

@@ -266,7 +266,67 @@ async function refreshAttendanceApiReference(frm) {
 	return result;
 }
 
+// Mirrors ACCOUNT_PURPOSE_ROOT_TYPE and PAYABLE_PURPOSES in hr_suite/hr_suite/utils.py; the server
+// enforces the same rules on save, this only keeps the wrong accounts out of the picker.
+const PURPOSE_ROOT_TYPE = {
+	"Leave Salary Expense": "Expense",
+	"Leave Salary Payable": "Liability",
+	"Settlement Advance": "Asset",
+	"Air Ticket Expense": "Expense",
+	"Air Ticket Payable": "Liability",
+	"Gratuity Expense": "Expense",
+	"Gratuity Payable": "Liability",
+	"Gratuity Provision": "Liability",
+	"Traffic Violation Expense": "Expense",
+	"Bonus Expense": "Expense",
+	"Bonus Payable": "Liability",
+};
+const PAYABLE_PURPOSES = new Set([
+	"Leave Salary Payable",
+	"Air Ticket Payable",
+	"Gratuity Payable",
+	"Gratuity Provision",
+	"Bonus Payable",
+]);
+
+function mappingAccountQuery(doc, cdt, cdn) {
+	const row = locals[cdt][cdn];
+	const filters = { is_group: 0 };
+	if (row.company) filters.company = row.company;
+	if (PURPOSE_ROOT_TYPE[row.purpose]) filters.root_type = PURPOSE_ROOT_TYPE[row.purpose];
+	if (PAYABLE_PURPOSES.has(row.purpose)) filters.account_type = "Payable";
+	return { filters };
+}
+
+function deductionAccountQuery(doc, cdt, cdn) {
+	const row = locals[cdt][cdn];
+	const filters = { is_group: 0 };
+	if (row.company) filters.company = row.company;
+	return { filters };
+}
+
+frappe.ui.form.on("HR Suite Account Row", {
+	// A changed company or purpose can leave an account the picker would no longer offer.
+	company(frm, cdt, cdn) {
+		frappe.model.set_value(cdt, cdn, "account", "");
+	},
+	purpose(frm, cdt, cdn) {
+		frappe.model.set_value(cdt, cdn, "account", "");
+	},
+});
+
+frappe.ui.form.on("Statutory Deduction Account Row", {
+	company(frm, cdt, cdn) {
+		frappe.model.set_value(cdt, cdn, "account", "");
+	},
+});
+
 frappe.ui.form.on("Hr Suite Settings", {
+	setup(frm) {
+		frm.set_query("account", "hr_account_mappings", mappingAccountQuery);
+		frm.set_query("account", "statutory_deduction_accounts", deductionAccountQuery);
+	},
+
 	async refresh(frm) {
 		frm.add_custom_button(__("Refresh Employee Branches"), async () => {
 			const rows = await syncDirectoryTable(frm, { save: true });

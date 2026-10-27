@@ -74,7 +74,10 @@ def sync_gratuity_rules():
 							"from_year": cint(slab.get("from_years")),
 							"to_year": cint(slab.get("to_years")),
 							"fraction_of_applicable_earnings": flt(
-								_months_of_wage_per_year(slab.get("rate_unit"), flt(slab.get("rate_value"))), 6
+								_months_of_wage_per_year(
+									slab.get("rate_unit"), flt(slab.get("rate_value")), policy.get("gratuity_days_per_month")
+								),
+								6,
 							),
 						}
 						for slab in sorted(policy.gratuity_slabs, key=lambda s: flt(s.get("from_years")))
