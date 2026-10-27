@@ -154,6 +154,11 @@ def sync_employee_salary(employee: str, as_on=None) -> dict:
 			).insert(ignore_permissions=True)
 
 	_write_header(employee, assignment, earnings, deductions, earnings - deductions)
+	if earnings:
+		# CTC follows the assignment too (SFT, 27 Oct 2026): the monthly package, which is how HR Suite reads
+		# it wherever a structure is missing. Only a successful sync writes it, so a CTC typed by hand for an
+		# employee with no assignment is left alone.
+		frappe.db.set_value("Employee", employee, "ctc", flt(earnings), update_modified=False)
 	return {"employee": employee, "synced": True, "components": idx, "net": earnings - deductions}
 
 

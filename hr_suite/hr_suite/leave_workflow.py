@@ -54,7 +54,12 @@ def _definition():
 		"send_email_alert": 0,
 		"override_status": 0,
 		"states": [
+			# A pending leave stays editable: by the employee, and by HR and the approver who often raise
+			# and correct it for them (SFT, 27 Oct 2026). Every save is validated again and stays Open.
 			{"state": "Open", "doc_status": "0", "allow_edit": "Employee", "style": "Warning"},
+			{"state": "Open", "doc_status": "0", "allow_edit": "HR Manager", "style": "Warning"},
+			{"state": "Open", "doc_status": "0", "allow_edit": "HR User", "style": "Warning"},
+			{"state": "Open", "doc_status": "0", "allow_edit": "Leave Approver", "style": "Warning"},
 			{"state": "Approved", "doc_status": "1", "allow_edit": "Leave Approver", "style": "Success"},
 			{"state": "Rejected", "doc_status": "1", "allow_edit": "Leave Approver", "style": "Danger"},
 			{"state": "Cancelled", "doc_status": "2", "allow_edit": "HR Manager", "style": "Danger"},

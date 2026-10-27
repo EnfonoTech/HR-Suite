@@ -80,7 +80,12 @@ frappe.ui.form.on("HR Payment Advice", {
 							args: { advice: frm.doc.name },
 							freeze: true,
 							callback: function (r) {
-								if (r.message && r.message.payment_entry) {
+								const entries = (r.message && r.message.payment_entries) || [];
+								if (entries.length > 1) {
+									// leave salary and air ticket sit on two payables: one Payment Entry each
+									frappe.msgprint(__("Payment Entries {0} are ready as drafts: one for the leave salary payable, one for the air ticket payable.", [entries.join(", ")]));
+									frappe.set_route("List", "Payment Entry", { hr_payment_advice: frm.doc.name });
+								} else if (r.message && r.message.payment_entry) {
 									frappe.set_route("Form", "Payment Entry", r.message.payment_entry);
 								}
 							},

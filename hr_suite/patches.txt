@@ -19,3 +19,4 @@ hr_suite.patches.ksa_forfeits_gratuity_on_dismissal
 hr_suite.patches.exact_resignation_thirds_and_ksa_legacy_days
 hr_suite.patches.relax_leave_salary_earned_days_barrier
 hr_suite.patches.reopen_leave_applications_stuck_before_submit
+hr_suite.patches.fill_ctc_from_salary_assignment

@@ -733,3 +733,127 @@ class TestHandOff(SettlementTestBase):
 			leave_type="Annual Leave", leave_from_date="2026-04-11", leave_to_date="2026-05-10", leave_days_to_pay=30,
 		)
 		self.assertRaises(frappe.ValidationError, disbursement.insert, ignore_permissions=True)
+
+
+class TestAirTicketAccrual(SettlementTestBase):
+	"""The air ticket goes to its own expense and payable, never into the leave salary expense."""
+
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		cls.ticket_expense = frappe.db.get_value(
+			"Account",
+			{"company": COMPANY, "root_type": "Expense", "is_group": 0, "name": ["!=", cls.expense_account]},
+			"name",
+		)
+		parent = frappe.db.get_value(
+			"Account", {"company": COMPANY, "root_type": "Liability", "is_group": 1, "account_type": ["in", ["Payable", ""]]}, "name"
+		)
+		cls.ticket_payable = frappe.db.get_value("Account", {"company": COMPANY, "account_name": "HRS Air Ticket Payable"}, "name")
+		if not cls.ticket_payable:
+			cls.ticket_payable = frappe.get_doc(
+				doctype="Account", account_name="HRS Air Ticket Payable", company=COMPANY, parent_account=parent,
+				account_type="Payable", root_type="Liability",
+			).insert(ignore_permissions=True).name
+		cls.map_ticket(cls.ticket_expense, cls.ticket_payable)
+
+	@classmethod
+	def map_ticket(cls, expense, payable):
+		settings = frappe.get_doc("Hr Suite Settings")
+		settings.set("hr_account_mappings", [
+			row for row in (settings.get("hr_account_mappings") or [])
+			if row.company != COMPANY or row.purpose not in ("Air Ticket Expense", "Air Ticket Payable")
+		])
+		if expense:
+			settings.append("hr_account_mappings", {"company": COMPANY, "purpose": "Air Ticket Expense", "account": expense})
+		if payable:
+			settings.append("hr_account_mappings", {"company": COMPANY, "purpose": "Air Ticket Payable", "account": payable})
+		settings.save(ignore_permissions=True)
+		frappe.clear_document_cache("Hr Suite Settings", "Hr Suite Settings")
+
+	def with_ticket(self, name):
+		emp = self.staff(name)
+		doc = self.settle(
+			emp, self.leave(emp, "2026-10-01", "2026-10-21"), last_working_day="2026-09-30",
+			ticket_entitled=1, ticket_amount=500,
+		)
+		return emp, doc
+
+	def test_the_ticket_is_booked_to_the_air_ticket_accounts(self):
+		emp, doc = self.with_ticket("Ticketed")
+		self.assertEqual(flt(doc.total_payable), 3300)  # 2,800 leave salary + 500 ticket
+		je = frappe.get_doc("Journal Entry", doc.reload().accrual_journal_entry)
+		debit = {r.account: flt(r.debit_in_account_currency) for r in je.accounts if flt(r.debit_in_account_currency)}
+		credit = {r.account: r for r in je.accounts if flt(r.credit_in_account_currency)}
+		self.assertEqual(debit, {self.expense_account: 2800, self.ticket_expense: 500})
+		self.assertEqual(flt(credit[self.payable_account].credit_in_account_currency), 2800)
+		self.assertEqual(flt(credit[self.ticket_payable].credit_in_account_currency), 500)
+		for row in credit.values():
+			self.assertEqual((row.party_type, row.party), ("Employee", emp))
+
+	def test_without_air_ticket_accounts_the_settlement_says_what_to_map(self):
+		self.map_ticket(None, None)
+		self.addCleanup(self.map_ticket, self.ticket_expense, self.ticket_payable)
+		emp = self.staff("NoTicketMap")
+		la = self.leave(emp, "2026-10-01", "2026-10-21")
+		with self.assertRaises(frappe.ValidationError) as caught:
+			self.settle(emp, la, last_working_day="2026-09-30", ticket_entitled=1, ticket_amount=500)
+		self.assertIn("Air Ticket Payable", str(caught.exception))
+
+	def test_a_settlement_without_a_ticket_needs_no_air_ticket_accounts(self):
+		self.map_ticket(None, None)
+		self.addCleanup(self.map_ticket, self.ticket_expense, self.ticket_payable)
+		emp = self.staff("NoTicket")
+		doc = self.settle(emp, self.leave(emp, "2026-10-01", "2026-10-21"), last_working_day="2026-09-30")
+		self.assertTrue(doc.reload().accrual_journal_entry)
+
+	def test_what_was_paid_before_comes_off_the_leave_salary_not_the_ticket(self):
+		doc = frappe.new_doc("Leave Salary Settlement")
+		doc.append("pay_lines", {"line_type": "Air Ticket", "amount": 500})
+		self.assertEqual(doc._accrual_parts(1300), [("leave", 800), ("ticket", 500)])
+		self.assertEqual(doc._accrual_parts(300), [("ticket", 300)])
+
+	def test_finance_gets_one_payment_entry_per_payable(self):
+		from hr_suite.hr_suite.payment_advice import make_payment_entry, raise_for_document
+
+		emp, doc = self.with_ticket("TwoPayables")
+		advice = frappe.get_doc("HR Payment Advice", raise_for_document("Leave Salary Settlement", doc.name)["advice"])
+		advice.submit()
+		result = make_payment_entry(advice.name)
+		self.assertEqual(len(result["payment_entries"]), 2)
+		paid = {
+			frappe.db.get_value("Payment Entry", name, "paid_to"): flt(frappe.db.get_value("Payment Entry", name, "paid_amount"))
+			for name in result["payment_entries"]
+		}
+		self.assertEqual(paid, {self.payable_account: 2800, self.ticket_payable: 500})
+		self.assertEqual(sorted(make_payment_entry(advice.name)["payment_entries"]), sorted(result["payment_entries"]))
+
+
+class TestLeaveSummary(SettlementTestBase):
+	"""The leave position HR sees on the Leave Application: since joining, not only this allocation period."""
+
+	def test_summary_shows_service_leave_taken_history_and_leave_salary_days(self):
+		from hr_suite.hr_suite.leave_summary import get_leave_summary
+
+		emp = self.staff("Summary", opening=40)
+		la = self.leave(emp, "2026-10-01", "2026-10-21")
+		doc = self.settle(emp, la, last_working_day="2026-09-30")
+
+		data = get_leave_summary(emp, as_on="2026-10-27")
+		self.assertEqual(data["employee"]["name"], emp)
+		self.assertEqual((data["service"]["years"], data["service"]["months"]), (6, 9))  # joined 1 Jan 2020
+		annual = next(t for t in data["leave_types"] if t["leave_type"] == "Annual Leave")
+		self.assertEqual(annual["taken"], frappe.db.get_value("Leave Application", la, "total_leave_days"))
+		self.assertIn(la, [h.name for h in data["history"]])
+		ls = data["leave_salary"]
+		self.assertEqual(ls["settled_days"], flt(doc.salary_days_paid, 2))
+		self.assertEqual(ls["balance_days"], flt(ls["earned_days"] - ls["settled_days"], 2))
+		self.assertEqual([s.name for s in ls["settlements"]], [doc.name])
+
+	def test_summary_needs_read_access_to_the_employee(self):
+		from hr_suite.hr_suite.leave_summary import get_leave_summary
+
+		emp = self.staff("SummaryPerm", opening=0)
+		frappe.set_user("Guest")
+		self.addCleanup(frappe.set_user, "Administrator")
+		self.assertRaises(frappe.PermissionError, get_leave_summary, emp)

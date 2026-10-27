@@ -850,11 +850,13 @@ def _advice_accrual(advice_doc) -> str:
 
 @frappe.whitelist()
 def make_payment_entry(advice: str) -> dict:
-	"""Finance: start the Payment Entry for an approved, unpaid leave salary advice.
+	"""Finance: start the Payment Entries for an approved, unpaid leave salary advice.
 
-	Party Type Employee, the party the employee, paying down the employee-tagged payable that the settlement's
-	accrual Journal Entry credited. Created as a DRAFT with the bank/cash account left to Finance to choose and
-	submit: HR owns the request, Finance owns the money. Returns the draft. Never posts a second accrual.
+	Party Type Employee, the party the employee, paying down the employee-tagged payables that the settlement's
+	accrual Journal Entry credited. A Payment Entry pays one party account, so a settlement with an air ticket gets
+	one draft for the Leave Salary Payable and one for the Air Ticket Payable. Created as DRAFTS with the bank/cash
+	account left to Finance to choose and submit: HR owns the request, Finance owns the money. Asking again returns
+	the drafts already open. Never posts a second accrual.
 	"""
 	frappe.has_permission("Payment Entry", "create", throw=True)
 	advice_doc = frappe.get_doc(ADVICE_DOCTYPE, advice)
@@ -868,12 +870,6 @@ def make_payment_entry(advice: str) -> dict:
 			title=_("Not Ready For Payment"),
 		)
 
-	existing = frappe.db.get_value(
-		"Payment Entry", {"hr_payment_advice": advice_doc.name, "docstatus": 0}, "name"
-	)
-	if existing:
-		return {"payment_entry": existing, "created": False}
-
 	journal_entry = _advice_accrual(advice_doc)
 	if not journal_entry or cint(frappe.db.get_value("Journal Entry", journal_entry, "docstatus")) != 1:
 		frappe.throw(
@@ -884,19 +880,12 @@ def make_payment_entry(advice: str) -> dict:
 			title=_("Payable Not Posted"),
 		)
 
-	outstanding = flt(advice_doc.total_amount) - flt(advice_doc.amount_paid)
-	if outstanding <= 0:
-		frappe.throw(_("{0} is already fully paid.").format(advice_doc.name), title=_("Nothing Outstanding"))
-
-	from erpnext.accounts.doctype.payment_entry.payment_entry import get_bank_cash_account
-	from erpnext.accounts.utils import get_account_currency
-
 	accrual = frappe.get_doc("Journal Entry", journal_entry)
-	payable = next(
-		(r for r in accrual.accounts if r.party_type == "Employee" and r.party == advice_doc.employee and flt(r.credit_in_account_currency)),
-		None,
-	)
-	if not payable:
+	payables = [
+		r for r in accrual.accounts
+		if r.party_type == "Employee" and r.party == advice_doc.employee and flt(r.credit_in_account_currency)
+	]
+	if not payables:
 		frappe.throw(
 			_("The accrual {0} has no employee-tagged payable line for {1}, so a Payment Entry cannot clear it.").format(
 				journal_entry, advice_doc.employee
@@ -904,11 +893,40 @@ def make_payment_entry(advice: str) -> dict:
 			title=_("Payable Not Tagged"),
 		)
 
+	entries = frappe.get_all(
+		"Payment Entry",
+		filters={"hr_payment_advice": advice_doc.name, "docstatus": ["<", 2]},
+		fields=["name", "docstatus", "paid_to", "paid_amount"],
+	)
+	remaining = flt(advice_doc.total_amount) - flt(advice_doc.amount_paid)
+	drafts, created, amount = [], False, 0.0
+	for line in payables:
+		mine = [e for e in entries if e.paid_to == line.account]
+		open_draft = next((e.name for e in mine if e.docstatus == 0), None)
+		if open_draft:
+			drafts.append(open_draft)
+			continue
+		paid = sum(flt(e.paid_amount) for e in mine if e.docstatus == 1)
+		outstanding = min(flt(line.credit_in_account_currency) - paid, remaining - amount)
+		if outstanding <= 0:
+			continue
+		drafts.append(_draft_payment_entry(advice_doc, journal_entry, line, outstanding))
+		created, amount = True, amount + outstanding
+
+	if not drafts:
+		frappe.throw(_("{0} is already fully paid.").format(advice_doc.name), title=_("Nothing Outstanding"))
+	return {"payment_entry": drafts[0], "payment_entries": drafts, "created": created, "amount": amount}
+
+
+def _draft_payment_entry(advice_doc, journal_entry, payable, outstanding) -> str:
+	"""One draft Payment Entry paying `outstanding` of one employee-tagged payable line of the accrual."""
+	from erpnext.accounts.doctype.payment_entry.payment_entry import get_bank_cash_account
+	from erpnext.accounts.utils import get_account_currency
+
 	# The bank or cash account is Finance's to choose: take the company default if there is one, else leave it
 	# empty on the draft. ERPNext's own helper builds entries from invoices and orders, not a journal entry.
 	bank = get_bank_cash_account(frappe._dict(company=advice_doc.company, mode_of_payment=None), None) or frappe._dict()
 	company_currency = frappe.get_cached_value("Company", advice_doc.company, "default_currency")
-	payable_currency = get_account_currency(payable.account)
 
 	entry = frappe.new_doc("Payment Entry")
 	entry.payment_type = "Pay"
@@ -919,7 +937,7 @@ def make_payment_entry(advice: str) -> dict:
 	entry.paid_from = bank.get("account")
 	entry.paid_from_account_currency = bank.get("account_currency") or company_currency
 	entry.paid_to = payable.account
-	entry.paid_to_account_currency = payable_currency
+	entry.paid_to_account_currency = get_account_currency(payable.account)
 	entry.paid_amount = entry.received_amount = outstanding
 	entry.hr_payment_advice = advice_doc.name
 	# A bank payment needs a reference and date to save at all: start from the advice so the draft saves, and let
@@ -939,8 +957,10 @@ def make_payment_entry(advice: str) -> dict:
 	)
 	entry.setup_party_account_field()
 	entry.set_missing_values()
+	# set_missing_values picks the party's default payable; this entry pays the line it was made for
+	entry.paid_to = payable.account
 	entry.insert(ignore_mandatory=True)  # a draft: Finance picks the bank account and submits
-	return {"payment_entry": entry.name, "created": True, "amount": outstanding}
+	return entry.name
 
 
 def on_hr_advice_payment_entry(doc, method=None) -> None:

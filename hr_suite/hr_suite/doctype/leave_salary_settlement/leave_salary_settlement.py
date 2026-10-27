@@ -534,44 +534,70 @@ class LeaveSalarySettlement(Document):
 
 		self.db_set("exclusion_rows", payroll.dump_json(kept), update_modified=False)
 
-	def _accrual_accounts(self) -> tuple:
-		"""(expense, payable) mapped for this company in Hr Suite Settings. Nothing is guessed: an unmapped company
-		is told what to map, because a guessed account is a wrong ledger nobody notices."""
+	def _accrual_accounts(self, kind="leave") -> tuple:
+		"""(expense, payable) mapped for this company in Hr Suite Settings, for the leave salary or the air ticket.
+
+		Nothing is guessed: an unmapped company is told what to map, because a guessed account is a wrong ledger
+		nobody notices.
+		"""
 		from hr_suite.hr_suite.utils import (
+			ACCOUNT_PURPOSE_AIR_TICKET_EXPENSE,
+			ACCOUNT_PURPOSE_AIR_TICKET_PAYABLE,
 			ACCOUNT_PURPOSE_LEAVE_SALARY_EXPENSE,
 			ACCOUNT_PURPOSE_LEAVE_SALARY_PAYABLE,
 			get_mapped_account,
 		)
 
-		expense = get_mapped_account(self.company, ACCOUNT_PURPOSE_LEAVE_SALARY_EXPENSE, "Expense")
-		payable = get_mapped_account(self.company, ACCOUNT_PURPOSE_LEAVE_SALARY_PAYABLE, "Liability")
+		if kind == "ticket":
+			expense_purpose, payable_purpose = ACCOUNT_PURPOSE_AIR_TICKET_EXPENSE, ACCOUNT_PURPOSE_AIR_TICKET_PAYABLE
+			title = _("Air Ticket Accounts Not Mapped")
+		else:
+			expense_purpose, payable_purpose = ACCOUNT_PURPOSE_LEAVE_SALARY_EXPENSE, ACCOUNT_PURPOSE_LEAVE_SALARY_PAYABLE
+			title = _("Leave Salary Accounts Not Mapped")
+
+		expense = get_mapped_account(self.company, expense_purpose, "Expense")
+		payable = get_mapped_account(self.company, payable_purpose, "Liability")
 		if not expense or not payable:
 			frappe.throw(
-				_("Map the leave salary accounts for {0} first: Hr Suite Settings > HR Account Mappings, purposes "
-				  "'Leave Salary Expense' (an expense account of {0}) and 'Leave Salary Payable' (a liability account "
-				  "of {0}). Nothing was posted.").format(self.company),
-				title=_("Leave Salary Accounts Not Mapped"),
+				_("Map the accounts for {0} first: Hr Suite Settings > HR Account Mappings, purposes '{1}' (an expense "
+				  "account of {0}) and '{2}' (a liability account of {0}). Nothing was posted.").format(
+					self.company, _(expense_purpose), _(payable_purpose)
+				),
+				title=title,
 			)
 		if frappe.get_cached_value("Account", payable, "account_type") != "Payable":
 			frappe.throw(
-				_("{0} is mapped as the Leave Salary Payable but its Account Type is not Payable, so the employee cannot "
-				  "be tagged on it and the payable could not be tracked per employee. Set Account Type = Payable on it "
-				  "(Chart of Accounts) and submit again.").format(payable),
+				_("{0} is mapped as the {1} but its Account Type is not Payable, so the employee cannot be tagged on "
+				  "it and the payable could not be tracked per employee. Set Account Type = Payable on it (Chart of "
+				  "Accounts) and submit again.").format(payable, _(payable_purpose)),
 				title=_("Payable Account Cannot Carry The Employee"),
 			)
 		return expense, payable
 
-	def _post_accrual(self):
-		"""Recognise the leave salary once: debit expense, credit the employee-tagged payable. No bank line.
+	def _accrual_parts(self, amount) -> list:
+		"""[(kind, amount)] the total splits into: the air ticket on its own accounts, the rest as leave salary.
 
-		Idempotent: a settlement that already has its Journal Entry never posts a second one. Left in Draft
-		where an approval workflow covers Journal Entry, so the settlement itself is never blocked.
+		Anything already paid comes off the leave salary first, so the ticket booked is the ticket the employee gets.
+		"""
+		ticket = sum(flt(row.amount) for row in (self.get("pay_lines") or []) if row.line_type == "Air Ticket")
+		ticket = flt(min(max(ticket, 0.0), amount), MONEY)
+		leave = flt(amount - ticket, MONEY)
+		return [(kind, part) for kind, part in (("leave", leave), ("ticket", ticket)) if part > 0]
+
+	def _post_accrual(self):
+		"""Recognise the settlement once: debit expense, credit the employee-tagged payable. No bank line.
+
+		The leave salary goes to the leave salary accounts and the air ticket to the air ticket accounts, so each
+		expense shows what it really is. Idempotent: a settlement that already has its Journal Entry never posts a
+		second one. Left in Draft where an approval workflow covers Journal Entry, so the settlement itself is never
+		blocked.
 		"""
 		amount = flt(self.total_payable, MONEY)
 		if amount <= 0 or self.accrual_journal_entry:
 			return
 
-		expense, payable = self._accrual_accounts()
+		parts = self._accrual_parts(amount)
+		accounts = {kind: self._accrual_accounts(kind) for kind, _part in parts}
 		currency = frappe.get_cached_value("Company", self.company, "default_currency")
 		cost_center = frappe.get_cached_value("Company", self.company, "cost_center")
 		remark = _("Annual leave salary - {0} - {1} to {2} ({3} leave day(s)) - {4} {5} ({6})").format(
@@ -583,9 +609,22 @@ class LeaveSalarySettlement(Document):
 			currency,
 			self.name,
 		)
-		expense_row = {"account": expense, "debit_in_account_currency": amount}
-		if cost_center:
-			expense_row["cost_center"] = cost_center
+		rows = []
+		for kind, part in parts:
+			expense, payable = accounts[kind]
+			expense_row = {"account": expense, "debit_in_account_currency": part}
+			if cost_center:
+				expense_row["cost_center"] = cost_center
+			rows.append(expense_row)
+			rows.append(
+				{
+					"account": payable,
+					"credit_in_account_currency": part,
+					# the Employee master ID, so the ledger and the payment follow this employee
+					"party_type": "Employee",
+					"party": self.employee,
+				}
+			)
 		je = frappe.get_doc(
 			{
 				"doctype": "Journal Entry",
@@ -593,16 +632,7 @@ class LeaveSalarySettlement(Document):
 				"company": self.company,
 				"posting_date": frappe.utils.nowdate(),
 				"user_remark": remark,
-				"accounts": [
-					expense_row,
-					{
-						"account": payable,
-						"credit_in_account_currency": amount,
-						# the Employee master ID, so the ledger and the payment follow this employee
-						"party_type": "Employee",
-						"party": self.employee,
-					},
-				],
+				"accounts": rows,
 			}
 		)
 		needs_approval = journal_entry_needs_approval()

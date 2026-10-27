@@ -69,6 +69,8 @@ class TestEmployeeSalary(FrappeTestCase):
 		self.assertAlmostEqual(flt(doc.custom_total_deductions), deductions, places=2)
 		self.assertAlmostEqual(flt(doc.custom_net_salary), earnings - deductions, places=2)
 		self.assertTrue(doc.custom_salary_synced_on)
+		if earnings:
+			self.assertAlmostEqual(flt(doc.ctc), earnings, places=2)  # CTC follows the assignment: the monthly package
 
 	def test_sync_is_idempotent(self):
 		"""Running it twice must not duplicate rows — it rebuilds, it does not append."""
@@ -103,3 +105,17 @@ class TestEmployeeSalary(FrappeTestCase):
 		self.assertTrue(result["synced"])
 		self.assertEqual(result["components"], 0)
 		self.assertFalse(frappe.db.get_value("Employee", employee, "custom_salary_structure"))
+
+	def test_submitting_an_assignment_refreshes_the_employee_by_itself(self):
+		"""Nobody has to press Fetch: submit, cancel and delete of an assignment all rebuild the mirror."""
+		from unittest.mock import patch
+
+		from hr_suite.hr_suite.employee_salary import on_salary_structure_assignment_change
+
+		hooks = frappe.get_hooks("doc_events").get("Salary Structure Assignment", {})
+		target = "hr_suite.hr_suite.employee_salary.on_salary_structure_assignment_change"
+		for event in ("on_submit", "on_cancel", "on_trash"):
+			self.assertIn(target, hooks.get(event) or [])
+		with patch("hr_suite.hr_suite.employee_salary.sync_employee_salary") as sync:
+			on_salary_structure_assignment_change(frappe._dict(employee="EMP-X"))
+		sync.assert_called_once_with("EMP-X")
