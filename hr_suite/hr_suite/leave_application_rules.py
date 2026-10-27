@@ -28,8 +28,12 @@ UNPAID_COMPONENT = "Leave Before Minimum Service Deduction"
 # ── hooks ─────────────────────────────────────────────────────────────────────
 
 
+HR_EDITORS = ("HR Manager", "HR User")
+
+
 def validate(doc, method=None):
 	_refuse_hand_set_decision(doc)
+	_only_hr_edits_pending(doc)
 	_check_minimum_service(doc)
 	_check_source_balance(doc)
 
@@ -49,6 +53,27 @@ def _refuse_hand_set_decision(doc):
 			  "Approve or Reject button (the Approval menu at the top)."),
 			title=_("Use The Approval Buttons"),
 		)
+
+
+def _only_hr_edits_pending(doc):
+	"""Pending approval, HR only may edit (SFT reply, section 11).
+
+	The workflow's Open state lists only HR, but that only makes the form read-only in the browser; this
+	refuses the same edit by any other route. Applying (a new document) and the Approve / Reject buttons
+	(which submit it) are not edits and pass.
+	"""
+	if doc.is_new() or doc.docstatus != 0 or frappe.flags.in_patch or frappe.flags.in_migrate:
+		return
+	before = doc.get_doc_before_save()
+	if not before or before.get("status") != "Open":
+		return
+	if set(HR_EDITORS) & set(frappe.get_roles()):
+		return
+	frappe.throw(
+		_("{0} is waiting for approval. Only HR may change it now: ask HR, or ask the approver to reject it "
+		  "and apply again.").format(doc.name),
+		title=_("Only HR May Edit A Pending Leave"),
+	)
 
 
 def on_submit(doc, method=None):

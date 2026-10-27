@@ -324,18 +324,27 @@ class TestApprovalWorkflow(LeaveTestBase):
 		frappe.set_user("Administrator")
 		return la.name
 
-	def test_hr_and_the_approver_can_edit_a_leave_still_pending(self):
+	def test_only_hr_may_edit_a_leave_still_pending(self):
+		# SFT reply, section 11: pending approval, HR only may edit
 		from hr_suite.hr_suite.leave_workflow import WORKFLOW, ensure_workflow
 
 		ensure_workflow()
 		workflow = frappe.get_doc("Workflow", WORKFLOW)
-		editors = {row.allow_edit for row in workflow.states if row.state == "Open"}
-		self.assertTrue({"Employee", "HR Manager", "HR User", "Leave Approver"} <= editors)
+		self.assertEqual({row.allow_edit for row in workflow.states if row.state == "Open"}, {"HR Manager", "HR User"})
 		# once decided, a leave is still not edited in place
 		self.assertEqual({row.allow_edit for row in workflow.states if row.state == "Approved"}, {"Leave Approver"})
 
-		name = self.apply("2026-04-12", "2026-04-13")
-		frappe.set_user(self.approver)
+		name = self.apply("2026-04-12", "2026-04-13")  # the employee still applies
+		for user in (self.staff_user, self.approver):
+			frappe.set_user(user)
+			la = frappe.get_doc("Leave Application", name)
+			la.to_date = "2026-04-14"
+			with self.assertRaises(frappe.ValidationError) as caught:
+				la.save(ignore_permissions=True)
+			frappe.set_user("Administrator")
+			self.assertIn("Only HR may change it", str(caught.exception))
+
+		frappe.set_user(self.user("sft.hruser@example.com", ["HR User"]))
 		la = frappe.get_doc("Leave Application", name)
 		la.to_date = "2026-04-14"
 		la.save(ignore_permissions=True)
