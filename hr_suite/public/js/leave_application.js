@@ -7,6 +7,9 @@ frappe.ui.form.on("Leave Application", {
 	refresh: function (frm) {
 		hr_suite_leave_summary(frm);
 		if (frm.doc.docstatus !== 1 || frm.doc.status !== "Approved") return;
+		if (frappe.user.has_role("HR Manager")) {
+			frm.add_custom_button(__("Change Dates"), () => hr_suite_change_dates(frm), __("Actions"));
+		}
 		if (!frappe.model.can_create("Leave Salary Settlement")) return;
 
 		frm.add_custom_button(
@@ -26,6 +29,50 @@ frappe.ui.form.on("Leave Application", {
 		);
 	},
 });
+
+// ─── Change the dates of an approved leave not yet settled (SFT reply, section 11) ──────────────────────
+// The server cancels the approved leave and creates its amendment with the new dates, back for approval.
+function hr_suite_change_dates(frm) {
+	const d = new frappe.ui.Dialog({
+		title: __("Change Leave Dates"),
+		fields: [
+			{
+				fieldtype: "HTML",
+				options: `<p class="text-muted">${__(
+					"{0} will be cancelled and a copy with the new dates goes back to {1} for approval. A leave whose salary is settled cannot be changed here.",
+					[frm.doc.name, frappe.utils.escape_html(frm.doc.leave_approver || __("the approver"))]
+				)}</p>`,
+			},
+			{ fieldname: "from_date", fieldtype: "Date", label: __("From Date"), reqd: 1, default: frm.doc.from_date },
+			{ fieldname: "to_date", fieldtype: "Date", label: __("To Date"), reqd: 1, default: frm.doc.to_date },
+			{ fieldname: "half_day", fieldtype: "Check", label: __("Half Day"), default: frm.doc.half_day },
+			{
+				fieldname: "half_day_date",
+				fieldtype: "Date",
+				label: __("Half Day Date"),
+				depends_on: "half_day",
+				default: frm.doc.half_day_date,
+			},
+			{ fieldname: "reason", fieldtype: "Small Text", label: __("Reason For The Change") },
+		],
+		primary_action_label: __("Change And Send For Approval"),
+		primary_action(values) {
+			frappe.call({
+				method: "hr_suite.hr_suite.leave_change.change_approved_leave_dates",
+				args: Object.assign({ application: frm.doc.name }, values),
+				freeze: true,
+				freeze_message: __("Changing the leave dates..."),
+				callback(r) {
+					if (!r.message) return;
+					d.hide();
+					frappe.show_alert({ message: __("{0} sent for approval", [r.message]), indicator: "green" });
+					frappe.set_route("Form", "Leave Application", r.message);
+				},
+			});
+		},
+	});
+	d.show();
+}
 
 // ─── Leave position: employee, service, leave per type since joining, history, leave-salary days ──────
 function hr_suite_leave_summary(frm) {

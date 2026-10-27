@@ -342,6 +342,82 @@ class TestApprovalWorkflow(LeaveTestBase):
 		frappe.set_user("Administrator")
 		self.assertEqual(frappe.db.get_value("Leave Application", name, ["status", "total_leave_days"]), ("Open", 3))
 
+	# ── section 11: HR changes the dates of an approved leave not yet settled ──
+
+	def approved(self, start, end):
+		from frappe.model.workflow import apply_workflow
+
+		name = self.apply(start, end)
+		frappe.set_user(self.approver)
+		apply_workflow(frappe.get_doc("Leave Application", name), "Approve")
+		frappe.set_user("Administrator")
+		return name
+
+	def change(self, name, start, end, user=None):
+		from hr_suite.hr_suite.leave_change import change_approved_leave_dates
+
+		frappe.set_user(user or self.user("sft.hrchange@example.com", ["HR Manager"]))
+		try:
+			return change_approved_leave_dates(name, start, end, reason="Flight moved")
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_hr_changes_an_approved_leave_and_it_goes_back_for_approval(self):
+		from frappe.model.workflow import apply_workflow
+
+		name = self.approved("2026-05-04", "2026-05-05")
+		self.assertEqual(self.balance(self.emp, "2026-05-07"), 5.0)  # 7 - 2
+		new = self.change(name, "2026-05-04", "2026-05-06")
+
+		self.assertEqual(new, name + "-1")
+		self.assertEqual(frappe.db.get_value("Leave Application", name, ["status", "docstatus"]), ("Cancelled", 2))
+		amended = frappe.get_doc("Leave Application", new)
+		self.assertEqual((amended.status, amended.docstatus, amended.amended_from), ("Open", 0, name))
+		self.assertEqual((str(amended.to_date), amended.total_leave_days, amended.leave_approver), ("2026-05-06", 3, self.approver))
+		self.assertEqual(self.balance(self.emp, "2026-05-07"), 7.0)  # nothing taken while it waits
+		self.assertTrue(frappe.db.exists("Comment", {"reference_name": new, "content": ["like", "%Flight moved%"]}))
+
+		frappe.set_user(self.approver)
+		apply_workflow(frappe.get_doc("Leave Application", new), "Approve")
+		frappe.set_user("Administrator")
+		self.assertEqual(self.balance(self.emp, "2026-05-07"), 4.0)  # 7 - 3
+
+	def test_only_hr_may_change_an_approved_leave(self):
+		name = self.approved("2026-05-04", "2026-05-05")
+		with self.assertRaises(frappe.PermissionError):
+			self.change(name, "2026-05-04", "2026-05-06", user=self.approver)
+		self.assertEqual(frappe.db.get_value("Leave Application", name, ["status", "docstatus"]), ("Approved", 1))
+
+	def test_a_settled_leave_cannot_be_changed(self):
+		name = self.approved("2026-05-04", "2026-05-05")
+		real_get_all = frappe.get_all
+
+		def get_all(doctype, *args, **kwargs):
+			if doctype == "Leave Salary Settlement":
+				return [frappe._dict(name="LSS-TEST-1", docstatus=1)]
+			return real_get_all(doctype, *args, **kwargs)
+
+		with patch("hr_suite.hr_suite.leave_change.frappe.get_all", side_effect=get_all):
+			with self.assertRaises(frappe.ValidationError) as caught:
+				self.change(name, "2026-05-04", "2026-05-06")
+		self.assertIn("Cancel the settlement first", str(caught.exception))
+		self.assertEqual(frappe.db.get_value("Leave Application", name, ["status", "docstatus"]), ("Approved", 1))
+
+	def test_new_dates_that_fail_leave_the_approved_leave_as_it_was(self):
+		first = self.approved("2026-05-04", "2026-05-05")
+		self.approved("2026-05-11", "2026-05-12")
+		with self.assertRaises(frappe.ValidationError):
+			self.change(first, "2026-05-10", "2026-05-12")  # overlaps the second leave
+		self.assertEqual(frappe.db.get_value("Leave Application", first, ["status", "docstatus"]), ("Approved", 1))
+		self.assertFalse(frappe.db.exists("Leave Application", first + "-1"))
+		self.assertEqual(self.balance(self.emp, "2026-05-13"), 3.0)  # 7 - 2 - 2, still taken
+
+	def test_a_pending_leave_is_not_changed_this_way(self):
+		name = self.apply("2026-05-04", "2026-05-05")
+		with self.assertRaises(frappe.ValidationError) as caught:
+			self.change(name, "2026-05-04", "2026-05-06")
+		self.assertIn("Only an approved leave", str(caught.exception))
+
 	def actions(self, name, user):
 		from frappe.model.workflow import get_transitions
 
