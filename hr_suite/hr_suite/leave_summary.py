@@ -91,7 +91,34 @@ def _by_leave_type(employee, joined, as_on) -> list:
 			row["balance"] = flt(get_leave_balance_on(employee, leave_type, as_on), 2)
 		except Exception:
 			row["balance"] = None  # no allocation period covers today: shown as a dash, never a guess
+
+	_annual_leave_from_ledger(employee, as_on, rows)
 	return sorted(rows.values(), key=lambda r: r["leave_type"])
+
+
+def _annual_leave_from_ledger(employee, as_on, rows):
+	"""Annual leave earned since joining comes from the Leave Accrual Ledger, not from HRMS allocations.
+
+	The yearly allocations only start at the ledger start date, so for anyone who joined earlier they show a
+	fraction of what was earned (SFT reply section 11: accrued - taken = available, counted from joining).
+	The allocation balance is kept as `system_balance`: it is what HRMS checks a new application against.
+	"""
+	from hr_suite.hr_suite.policy import LEDGER_ENGINE, get_policy
+
+	policy = get_policy(employee, on_date=as_on)
+	if not policy.get("has_policy") or policy.leave_accrual_engine != LEDGER_ENGINE or not policy.annual_leave_type:
+		return
+	leave_type = policy.annual_leave_type
+	earned = frappe.get_all(
+		"Leave Accrual Ledger",
+		filters={"employee": employee, "period_start": ["<=", as_on]},
+		pluck="leave_days",
+	)
+	row = rows.setdefault(leave_type, {"leave_type": leave_type, "allocated": 0.0, "taken": 0.0, "pending": 0.0, "balance": None})
+	row["system_balance"] = row.get("balance")
+	row["allocated"] = flt(sum(flt(d) for d in earned), 2)
+	row["balance"] = flt(row["allocated"] - flt(row["taken"]), 2)
+	row["from_ledger"] = 1
 
 
 def _history(employee) -> list:
@@ -114,7 +141,7 @@ def _leave_salary(employee) -> dict:
 		filters={"employee": employee, "docstatus": 1},
 		fields=[
 			"name", "settlement_type", "leave_from_date", "leave_to_date", "salary_days_paid",
-			"leave_salary_amount", "ticket_amount", "total_payable", "status", "rejoin_date",
+			"worked_days_pay", "leave_salary_amount", "ticket_amount", "total_payable", "status", "rejoin_date",
 		],
 		order_by="leave_from_date desc",
 	)

@@ -850,6 +850,20 @@ class TestLeaveSummary(SettlementTestBase):
 		self.assertEqual(ls["balance_days"], flt(ls["earned_days"] - ls["settled_days"], 2))
 		self.assertEqual([s.name for s in ls["settlements"]], [doc.name])
 
+	def test_annual_leave_is_counted_from_the_accrual_ledger_not_the_allocations(self):
+		# SFT, 28 Oct 2026: the panel showed 11.25 allocated against 157.50 earned on the ledger
+		from hr_suite.hr_suite.leave_summary import get_leave_summary
+
+		emp = self.staff("SummaryLedger", opening=40)
+		la = self.leave(emp, "2026-10-01", "2026-10-05")
+		annual = next(t for t in get_leave_summary(emp, as_on="2026-10-27")["leave_types"] if t["leave_type"] == "Annual Leave")
+		earned = sum(flt(d) for d in frappe.get_all("Leave Accrual Ledger", filters={"employee": emp}, pluck="leave_days"))
+		self.assertEqual(annual.get("from_ledger"), 1)
+		self.assertEqual(annual["allocated"], flt(earned, 2))
+		taken = flt(frappe.db.get_value("Leave Application", la, "total_leave_days"), 2)
+		self.assertEqual(annual["balance"], flt(earned - taken, 2))
+		self.assertIn("system_balance", annual)
+
 	def test_summary_needs_read_access_to_the_employee(self):
 		from hr_suite.hr_suite.leave_summary import get_leave_summary
 

@@ -82,8 +82,14 @@ function hr_suite_leave_summary(frm) {
 		args: { employee: frm.doc.employee },
 		callback: function (r) {
 			if (!r.message || frm.doc.employee !== r.message.employee.name) return;
-			$(frm.dashboard.wrapper).find(".hrs-leave-summary").closest(".form-dashboard-section").remove();
-			frm.dashboard.add_section(hr_suite_leave_summary_html(r.message), __("Leave Position Since Joining"));
+			// add_section gives the card the css class passed here; remove the previous card by it, or every
+			// refresh (and the employee + refresh pair on load) adds another copy.
+			frm.$wrapper.find(".hrs-leave-summary-section").remove();
+			frm.dashboard.add_section(
+				hr_suite_leave_summary_html(r.message),
+				__("Leave Position Since Joining"),
+				"hrs-leave-summary-section"
+			);
 			frm.dashboard.show();
 		},
 	});
@@ -112,20 +118,27 @@ function hr_suite_leave_summary_html(data) {
 
 	const types = table(
 		[__("Leave Type"), __("Allocated Since Joining"), __("Taken Since Joining"), __("Pending Approval"), __("Balance Today")],
-		(data.leave_types || []).map((t) => `<tr><td>${esc(t.leave_type)}</td><td>${num(t.allocated)}</td><td>${num(t.taken)}</td><td>${num(t.pending)}</td><td><b>${num(t.balance)}</b></td></tr>`)
+		(data.leave_types || []).map((t) => `<tr><td>${esc(t.leave_type)}${t.from_ledger ? ` <span class="text-muted small">(${__("accrual ledger")})</span>` : ""}</td><td>${num(t.allocated)}</td><td>${num(t.taken)}</td><td>${num(t.pending)}</td><td><b>${num(t.balance)}</b></td></tr>`)
 	);
+	const gaps = (data.leave_types || [])
+		.filter((t) => t.from_ledger && t.system_balance != null && Math.abs(t.system_balance - t.balance) >= 0.01)
+		.map((t) => `<p class="text-muted small">${__(
+			"{0}: the leave allocations show a balance of {1}, because allocations before the accrual ledger started are missing. A new application is checked against that figure.",
+			[esc(t.leave_type), num(t.system_balance)]
+		)}</p>`)
+		.join("");
 	const history = table(
 		[__("Application"), __("Leave Type"), __("From"), __("To"), __("Days"), __("Status")],
 		(data.history || []).map((h) => `<tr><td><a href="/app/leave-application/${encodeURIComponent(h.name)}">${esc(h.name)}</a></td><td>${esc(h.leave_type)}</td><td>${date(h.from_date)}</td><td>${date(h.to_date)}</td><td>${num(h.total_leave_days)}</td><td>${esc(__(h.status))}</td></tr>`)
 	);
 	const settlements = table(
-		[__("Settlement"), __("Leave"), __("Salary Days Paid"), __("Leave Salary"), __("Air Ticket"), __("Total"), __("Rejoined"), __("Status")],
-		(ls.settlements || []).map((s) => `<tr><td><a href="/app/leave-salary-settlement/${encodeURIComponent(s.name)}">${esc(s.name)}</a></td><td>${date(s.leave_from_date)} - ${date(s.leave_to_date)}</td><td>${num(s.salary_days_paid)}</td><td>${format_currency(s.leave_salary_amount)}</td><td>${format_currency(s.ticket_amount)}</td><td>${format_currency(s.total_payable)}</td><td>${date(s.rejoin_date)}</td><td>${esc(__(s.status))}</td></tr>`)
+		[__("Settlement"), __("Leave"), __("Salary Days Paid"), __("Worked Days Salary"), __("Leave Salary"), __("Air Ticket"), __("Total"), __("Rejoined"), __("Status")],
+		(ls.settlements || []).map((s) => `<tr><td><a href="/app/leave-salary-settlement/${encodeURIComponent(s.name)}">${esc(s.name)}</a></td><td>${date(s.leave_from_date)} - ${date(s.leave_to_date)}</td><td>${num(s.salary_days_paid)}</td><td>${format_currency(s.worked_days_pay)}</td><td>${format_currency(s.leave_salary_amount)}</td><td>${format_currency(s.ticket_amount)}</td><td>${format_currency(s.total_payable)}</td><td>${date(s.rejoin_date)}</td><td>${esc(__(s.status))}</td></tr>`)
 	);
 
 	return `<div class="hrs-leave-summary">
 		<div class="row">${info}</div>
-		<h6 style="margin-top:12px">${__("Leave by Type")}</h6>${types}
+		<h6 style="margin-top:12px">${__("Leave by Type")}</h6>${types}${gaps}
 		<h6 style="margin-top:12px">${__("Recent Leave Applications")}</h6>${history}
 		<h6 style="margin-top:12px">${__("Leave Salary Settlements")}</h6>${settlements}
 	</div>`;

@@ -519,6 +519,29 @@ class TestApprovalWorkflow(LeaveTestBase):
 # ── 7. currency ───────────────────────────────────────────────────────────────
 
 
+class TestSalarySource(FrappeTestCase):
+	"""Leave salary and gratuity read the Salary Structure Assignment first (SFT, 28 Oct 2026)."""
+
+	MIRROR = {"basic_salary": 500.0, "housing_allowance": 125.0, "transport_allowance": 50.0, "other_allowances": 145.375, "total_salary": 820.375}
+	CONTRACT = frappe._dict(basic_salary=500.0, housing_allowance=0, transport_allowance=0, other_allowances=0, total_salary=500.0)
+
+	def test_the_assignment_wins_over_an_older_contract(self):
+		from hr_suite.hr_suite import utils
+
+		with patch.object(utils, "_components_from_salary_mirror", return_value=dict(self.MIRROR)), patch.object(
+			utils, "get_active_contract", return_value=self.CONTRACT
+		):
+			self.assertEqual(utils.get_employee_salary_components("X")["total_salary"], 820.375)
+
+	def test_the_contract_is_used_without_an_assignment(self):
+		from hr_suite.hr_suite import utils
+
+		with patch.object(utils, "_components_from_salary_mirror", return_value=None), patch.object(
+			utils, "get_active_contract", return_value=self.CONTRACT
+		):
+			self.assertEqual(utils.get_employee_salary_components("X")["total_salary"], 500.0)
+
+
 class TestCurrency(FrappeTestCase):
 	def test_a_structure_with_no_currency_takes_the_companys(self):
 		from hr_suite.hr_suite.salary_currency import default_from_company

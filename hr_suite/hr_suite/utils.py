@@ -175,7 +175,15 @@ def get_employee_salary_components(employee: str) -> dict:
 	back to CTC for basic alone, so on a site with neither — Steel Force
 	production, every employee — the whole breakdown came back as zeros and every
 	figure built on it was zero too.
+
+	The Salary Structure Assignment comes first (SFT, 28 Oct 2026): it is what payroll pays, and a Country
+	Employment Contract keeps the figures it was made with, so one older than the latest assignment would
+	price leave salary and gratuity on an out-of-date wage. The contract is used only without an assignment.
 	"""
+	from_structure = _components_from_salary_mirror(employee)
+	if from_structure and flt(from_structure.get("total_salary")):
+		return from_structure
+
 	contract = get_active_contract(
 		employee,
 		["basic_salary", "housing_allowance", "transport_allowance", "other_allowances", "total_salary"],
@@ -195,10 +203,6 @@ def get_employee_salary_components(employee: str) -> dict:
 			"other_allowances": other,
 			"total_salary": total,
 		}
-
-	from_structure = _components_from_salary_mirror(employee)
-	if from_structure:
-		return from_structure
 
 	basic = flt(frappe.db.get_value("Employee", employee, "ctc") or 0)
 	return {
