@@ -328,6 +328,8 @@ frappe.ui.form.on("Hr Suite Settings", {
 	},
 
 	async refresh(frm) {
+		frm.add_custom_button(__("Post Gratuity Provision"), () => hr_suite_post_gratuity(), __("Actions"));
+		frm.add_custom_button(__("Gratuity Finalisation"), () => frappe.set_route("gratuity-finalisation"), __("Actions"));
 		frm.add_custom_button(__("Refresh Employee Branches"), async () => {
 			const rows = await syncDirectoryTable(frm, { save: true });
 			frappe.show_alert({
@@ -357,3 +359,51 @@ frappe.ui.form.on("Hr Suite Settings", {
 		}
 	},
 });
+// Section 10: post one month's gratuity provision for a company, after showing what it will post.
+function hr_suite_post_gratuity() {
+	let d = null; // field onchange can fire while the dialog is still being built
+	d = new frappe.ui.Dialog({
+		title: __("Post Gratuity Provision"),
+		fields: [
+			{ fieldname: "company", fieldtype: "Link", options: "Company", label: __("Company"), reqd: 1, default: frappe.defaults.get_user_default("Company"), onchange: () => reset() },
+			{ fieldname: "month_end", fieldtype: "Date", label: __("Month (any date in it)"), reqd: 1, default: frappe.datetime.add_months(frappe.datetime.get_today(), -1), onchange: () => reset() },
+			{ fieldname: "preview", fieldtype: "HTML" },
+		],
+		primary_action_label: __("Preview"),
+		async primary_action(v) {
+			if (!d.previewed) {
+				const r = await frappe.call({
+					method: "hr_suite.hr_suite.gratuity_provision.preview",
+					args: { company: v.company, month_end: v.month_end },
+				});
+				const rows = r.message || [];
+				const esc = (x) => frappe.utils.escape_html(x == null ? "" : String(x));
+				const total = rows.filter((x) => !x.skip).reduce((a, x) => a + (x.amount || 0), 0);
+				d.fields_dict.preview.$wrapper.html(rows.length
+					? `<table class="table table-bordered table-sm"><thead><tr><th>${__("Employee")}</th><th>${__("Days/Year")}</th><th>${__("Wage Base")}</th><th>${__("Amount")}</th></tr></thead><tbody>${rows.map((x) => `<tr><td>${esc(x.employee)}: ${esc(x.employee_name)}</td>${x.skip ? `<td colspan="3" class="text-muted">${esc(x.skip)}</td>` : `<td>${esc(x.days_per_year)}</td><td>${format_number(x.base, null, 2)}</td><td>${format_number(x.amount, null, 2)}</td>`}</tr>`).join("")}</tbody></table><p><b>${__("Total")}: ${format_number(total, null, 2)}</b></p>`
+					: `<p class="text-muted">${__("No employees in service that month.")}</p>`);
+				d.previewed = true;
+				d.set_primary_action(__("Post"), d.primary_action);
+				return;
+			}
+			const r = await frappe.call({
+				method: "hr_suite.hr_suite.gratuity_provision.post_month",
+				args: { company: v.company, month_end: v.month_end },
+				freeze: true,
+			});
+			d.hide();
+			const m = r.message || {};
+			frappe.msgprint(m.journal_entry
+				? __("Journal Entry {0}: {1} employee(s), {2}{3}.", [`<a href="/app/journal-entry/${m.journal_entry}">${m.journal_entry}</a>`, m.employees, format_number(m.amount, null, 2), m.submitted ? "" : " " + __("(waiting for approval)")])
+				: __("Nothing to post for that month."));
+		},
+	});
+	const first_action = d.primary_action;
+	function reset() {
+		if (!d || !d.previewed) return;
+		d.previewed = false;
+		d.fields_dict.preview.$wrapper.empty();
+		d.set_primary_action(__("Preview"), first_action);
+	}
+	d.show();
+}

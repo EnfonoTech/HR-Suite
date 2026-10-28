@@ -45,6 +45,11 @@
   "statutory_accounts_section",
   "statutory_accounts_help",
   "statutory_deduction_accounts",
+  "gratuity_provision_section",
+  "gratuity_provision_start_date",
+  "gratuity_monthly_credit",
+  "col_break_gratuity",
+  "gratuity_auto_post",
   "voice_section",
   "enable_voice_verification",
   "voice_verification_mode",
@@ -185,7 +190,7 @@
   },
   {
    "default": "30",
-   "description": "Days after reaching threshold (≥ 5 years service)",
+   "description": "Days after reaching threshold (\u2265 5 years service)",
    "fieldname": "annual_leave_after_threshold",
    "fieldtype": "Int",
    "label": "Days After Threshold"
@@ -232,14 +237,14 @@
    "fieldtype": "Check",
    "read_only": 1,
    "label": "Enable Monthly Leave Allocation (retired)",
-   "description": "Retired. This used to create one Leave Allocation per employee per month, windowed to that month, so the days expired at month end and could never be carried. Leave accrues through HRMS earned leave now — see Leave Type → Is Earned Leave, switched on for you from Country Config → leave-type rows."
+   "description": "Retired. This used to create one Leave Allocation per employee per month, windowed to that month, so the days expired at month end and could never be carried. Leave accrues through HRMS earned leave now \u2014 see Leave Type \u2192 Is Earned Leave, switched on for you from Country Config \u2192 leave-type rows."
   },
   {
    "default": "0",
    "fieldname": "accrual_switch_over_now",
    "fieldtype": "Check",
    "label": "Switch Leave Types to Accrual Immediately",
-   "description": "Off (the recommended setting): a leave type is only switched to monthly accrual once no employee still holds a live allocation for it, i.e. from the next Leave Period — otherwise HRMS would credit accrued days ON TOP of an entitlement that has already been granted for this year. Tick this only on a test site, or after you have adjusted the existing allocations by hand."
+   "description": "Off (the recommended setting): a leave type is only switched to monthly accrual once no employee still holds a live allocation for it, i.e. from the next Leave Period \u2014 otherwise HRMS would credit accrued days ON TOP of an entitlement that has already been granted for this year. Tick this only on a test site, or after you have adjusted the existing allocations by hand."
   },
   {
    "fieldname": "monthly_leave_alloc_help",
@@ -250,7 +255,7 @@
    "fieldname": "leave_salary_accounts_section",
    "fieldtype": "Section Break",
    "label": "Leave Salary & Settlement Accounts",
-   "description": "Where leave salary and mid-month settlements post, per company. An account belongs to one company, so this has to be a row per company — a single account cannot serve a site running more than one. With no row for a company, HR Suite falls back to matching account NAMES in that company's Chart of Accounts, which picks the wrong account on any chart that does not use the English words it looks for."
+   "description": "Where leave salary and mid-month settlements post, per company. An account belongs to one company, so this has to be a row per company \u2014 a single account cannot serve a site running more than one. With no row for a company, HR Suite falls back to matching account NAMES in that company's Chart of Accounts, which picks the wrong account on any chart that does not use the English words it looks for."
   },
   {
    "fieldname": "hr_account_mappings",
@@ -282,17 +287,17 @@
   },
   {
    "default": "60",
-   "description": "Default — overridden by Country Config per jurisdiction",
+   "description": "Default \u2014 overridden by Country Config per jurisdiction",
    "fieldname": "notice_period_monthly_days",
    "fieldtype": "Int",
-   "label": "Notice Period — Monthly (Days)"
+   "label": "Notice Period \u2014 Monthly (Days)"
   },
   {
    "default": "30",
-   "description": "Default — overridden by Country Config per jurisdiction",
+   "description": "Default \u2014 overridden by Country Config per jurisdiction",
    "fieldname": "notice_period_non_monthly_days",
    "fieldtype": "Int",
-   "label": "Notice Period — Non-Monthly (Days)"
+   "label": "Notice Period \u2014 Non-Monthly (Days)"
   },
   {
    "fieldname": "penalty_section",
@@ -339,7 +344,7 @@
   {
    "fieldname": "statutory_accounts_help",
    "fieldtype": "HTML",
-   "options": "<p class=\"text-muted\" style=\"font-size:0.85rem;\">HR Suite posts three kinds of deduction onto the Salary Slip: the country statutory contribution (GOSI / GPSSA / SIO / PASI / EPF / ESI), an <b>Employee Loan</b> instalment and an <b>Employee Penalty</b>. A Salary Component that has no <b>Salary Component Account</b> for the company makes Payroll Entry’s accrual Journal Entry fail, which rolls the whole payroll run back. Map the accounts here: a row with no Salary Component is the default for the company, a row naming one overrides it for that component. Without a mapping HR Suite refuses to post the deduction instead of breaking payroll, and says so on Payroll Preview.</p>"
+   "options": "<p class=\"text-muted\" style=\"font-size:0.85rem;\">HR Suite posts three kinds of deduction onto the Salary Slip: the country statutory contribution (GOSI / GPSSA / SIO / PASI / EPF / ESI), an <b>Employee Loan</b> instalment and an <b>Employee Penalty</b>. A Salary Component that has no <b>Salary Component Account</b> for the company makes Payroll Entry\u2019s accrual Journal Entry fail, which rolls the whole payroll run back. Map the accounts here: a row with no Salary Component is the default for the company, a row naming one overrides it for that component. Without a mapping HR Suite refuses to post the deduction instead of breaking payroll, and says so on Payroll Preview.</p>"
   },
   {
    "fieldname": "statutory_deduction_accounts",
@@ -435,7 +440,7 @@
    "default": "90",
    "fieldname": "iqama_expiry_alert_days",
    "fieldtype": "Int",
-   "label": "Work Permit Alert — SA Iqama (Days Before)"
+   "label": "Work Permit Alert \u2014 SA Iqama (Days Before)"
   },
   {
    "default": "60",
@@ -517,7 +522,7 @@
   {
    "fieldname": "muqeem_section",
    "fieldtype": "Section Break",
-   "label": "Muqeem Integration (MOI — Saudi Arabia)"
+   "label": "Muqeem Integration (MOI \u2014 Saudi Arabia)"
   },
   {
    "default": "0",
@@ -558,7 +563,7 @@
   {
    "fieldname": "qiwa_section",
    "fieldtype": "Section Break",
-   "label": "Qiwa Integration (HRSD — Saudi Arabia)"
+   "label": "Qiwa Integration (HRSD \u2014 Saudi Arabia)"
   },
   {
    "default": "0",
@@ -571,7 +576,7 @@
    "fieldtype": "Data",
    "label": "Establishment ID",
    "depends_on": "eval:doc.qiwa_enabled",
-   "description": "10-digit Saudi establishment ID (رقم المنشأة)"
+   "description": "10-digit Saudi establishment ID (\u0631\u0642\u0645 \u0627\u0644\u0645\u0646\u0634\u0623\u0629)"
   },
   {
    "default": "https://api.qiwa.info/v1",
@@ -599,7 +604,7 @@
   {
    "fieldname": "gosi_api_section",
    "fieldtype": "Section Break",
-   "label": "GOSI — API Integration"
+   "label": "GOSI \u2014 API Integration"
   },
   {
    "fieldname": "gosi_api_enabled",
@@ -634,7 +639,7 @@
   {
    "fieldname": "mudad_section",
    "fieldtype": "Section Break",
-   "label": "Mudad — Wage Protection System (WPS)"
+   "label": "Mudad \u2014 Wage Protection System (WPS)"
   },
   {
    "fieldname": "mudad_enabled",
@@ -697,11 +702,41 @@
    "label": "Route Expense Claims Through A Payment Advice",
    "default": "0",
    "description": "Ticked: a submitted Expense Claim raises an HR Payment Advice, and the claim cannot be paid until that advice is approved."
+  },
+  {
+   "fieldname": "gratuity_provision_section",
+   "fieldtype": "Section Break",
+   "label": "Gratuity Provision",
+   "description": "Monthly gratuity provision per employee (wage base / 30 x days per year / 12). Accounts come from HR Account Mappings: Gratuity Expense, and Gratuity Payable or Gratuity Provision (Account Type Payable)."
+  },
+  {
+   "fieldname": "gratuity_provision_start_date",
+   "fieldtype": "Date",
+   "label": "Gratuity Provision Start Date",
+   "description": "Provision starts with this month. Amounts Finance booked before it go in as an Opening row per employee (Gratuity Accrual)."
+  },
+  {
+   "fieldname": "gratuity_monthly_credit",
+   "fieldtype": "Select",
+   "label": "Gratuity Monthly Credit",
+   "options": "Gratuity Payable\nGratuity Provision",
+   "default": "Gratuity Payable"
+  },
+  {
+   "fieldname": "col_break_gratuity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gratuity_auto_post",
+   "fieldtype": "Check",
+   "label": "Post Monthly Automatically",
+   "default": "0",
+   "description": "On the 1st of each month, post last month for every company. Off: post it from this form (Actions > Post Gratuity Provision)."
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-10-27 14:00:00.000000",
+ "modified": "2026-10-28 22:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hr Suite",
  "name": "Hr Suite Settings",

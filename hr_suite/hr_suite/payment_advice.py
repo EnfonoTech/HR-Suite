@@ -48,6 +48,7 @@ PAYMENT_TYPE_BY_SOURCE = {
 	"Leave Encashment": "Leave Encashment",
 	"End of Service Benefit": "Gratuity",
 	"Gratuity": "Gratuity",
+	"Gratuity Finalisation": "Gratuity",
 }
 
 
@@ -245,6 +246,13 @@ SOURCE_DOCUMENTS = {
 	},
 	"Leave Encashment": {"lines": (("encashment_amount", "Leave encashment"),)},
 	"Gratuity": {"lines": (("amount", "Gratuity"),)},
+	"Gratuity Finalisation": {
+		# The final gratuity, paid from the employee's Gratuity Payable (section 10): never on the payslip.
+		"lines": (("final_amount", "Final gratuity"),),
+		"link_field": "payment_advice",
+		"link_type_field": "payment_advice_type",
+		"hr_advice": True,
+	},
 	"Leave Salary Settlement": {
 		# One line: the settlement already nets off anything an Annual Leave Disbursement
 		# paid and adds the worked-days salary, the leave salary and the ticket.
@@ -870,6 +878,10 @@ def make_payment_entry(advice: str) -> dict:
 			title=_("Not Ready For Payment"),
 		)
 
+	gratuity = _advice_gratuity(advice_doc)
+	if gratuity:
+		return _gratuity_payment_entry(advice_doc, gratuity)
+
 	journal_entry = _advice_accrual(advice_doc)
 	if not journal_entry or cint(frappe.db.get_value("Journal Entry", journal_entry, "docstatus")) != 1:
 		frappe.throw(
@@ -918,7 +930,36 @@ def make_payment_entry(advice: str) -> dict:
 	return {"payment_entry": drafts[0], "payment_entries": drafts, "created": created, "amount": amount}
 
 
-def _draft_payment_entry(advice_doc, journal_entry, payable, outstanding) -> str:
+def _advice_gratuity(advice_doc) -> str:
+	"""The Gratuity Finalisation an advice pays, or ''."""
+	for row in advice_doc.references:
+		if row.reference_doctype == "Gratuity Finalisation":
+			return row.reference_name
+	return advice_doc.source_name if advice_doc.source_doctype == "Gratuity Finalisation" else ""
+
+
+def _gratuity_payment_entry(advice_doc, finalisation) -> dict:
+	"""Final gratuity: one draft paying the employee's Gratuity Payable, built up over many monthly entries."""
+	fin = frappe.db.get_value("Gratuity Finalisation", finalisation, ["docstatus", "payable_account", "journal_entry"], as_dict=True)
+	if not fin or fin.docstatus != 1 or not fin.payable_account:
+		frappe.throw(_("Gratuity Finalisation {0} is not submitted, so there is no gratuity to pay.").format(finalisation), title=_("Not Finalised"))
+	if fin.journal_entry and cint(frappe.db.get_value("Journal Entry", fin.journal_entry, "docstatus")) != 1:
+		frappe.throw(
+			_("The finalisation entry {0} is not posted yet. Have the Journal Entry approved first.").format(fin.journal_entry),
+			title=_("Payable Not Posted"),
+		)
+	open_draft = frappe.db.get_value("Payment Entry", {"hr_payment_advice": advice_doc.name, "docstatus": 0}, "name")
+	if open_draft:
+		return {"payment_entry": open_draft, "payment_entries": [open_draft], "created": False, "amount": 0}
+	outstanding = flt(advice_doc.total_amount) - flt(advice_doc.amount_paid)
+	if outstanding <= 0:
+		frappe.throw(_("{0} is already fully paid.").format(advice_doc.name), title=_("Nothing Outstanding"))
+	payable = frappe._dict(account=fin.payable_account, credit_in_account_currency=outstanding)
+	name = _draft_payment_entry(advice_doc, None, payable, outstanding, label=_("Gratuity"))
+	return {"payment_entry": name, "payment_entries": [name], "created": True, "amount": outstanding}
+
+
+def _draft_payment_entry(advice_doc, journal_entry, payable, outstanding, label=None) -> str:
 	"""One draft Payment Entry paying `outstanding` of one employee-tagged payable line of the accrual."""
 	from erpnext.accounts.doctype.payment_entry.payment_entry import get_bank_cash_account
 	from erpnext.accounts.utils import get_account_currency
@@ -944,17 +985,18 @@ def _draft_payment_entry(advice_doc, journal_entry, payable, outstanding) -> str
 	# Finance replace them with the transfer or cheque reference before submitting.
 	entry.reference_no = advice_doc.name
 	entry.reference_date = frappe.utils.nowdate()
-	entry.remarks = _("Leave salary {0} - {1}").format(advice_doc.name, advice_doc.employee_name or advice_doc.employee)
-	entry.append(
-		"references",
-		{
-			"reference_doctype": "Journal Entry",
-			"reference_name": journal_entry,
-			"total_amount": flt(payable.credit_in_account_currency),
-			"outstanding_amount": outstanding,
-			"allocated_amount": outstanding,
-		},
-	)
+	entry.remarks = _("{0} {1} - {2}").format(label or _("Leave salary"), advice_doc.name, advice_doc.employee_name or advice_doc.employee)
+	if journal_entry:
+		entry.append(
+			"references",
+			{
+				"reference_doctype": "Journal Entry",
+				"reference_name": journal_entry,
+				"total_amount": flt(payable.credit_in_account_currency),
+				"outstanding_amount": outstanding,
+				"allocated_amount": outstanding,
+			},
+		)
 	entry.setup_party_account_field()
 	entry.set_missing_values()
 	# set_missing_values picks the party's default payable; this entry pays the line it was made for

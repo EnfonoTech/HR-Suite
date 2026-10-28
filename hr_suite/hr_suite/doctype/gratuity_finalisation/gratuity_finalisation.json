@@ -1,0 +1,242 @@
+{
+ "name": "Gratuity Finalisation",
+ "module": "Hr Suite",
+ "doctype": "DocType",
+ "autoname": "GRA-FIN-.YYYY.-.####",
+ "is_submittable": 1,
+ "title_field": "employee_name",
+ "search_fields": "employee,employee_name",
+ "track_changes": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "employee_name",
+  "company",
+  "column_break_1",
+  "date_of_joining",
+  "relieving_date",
+  "exit_reason",
+  "figures_section",
+  "accrued_to_date",
+  "final_amount",
+  "difference",
+  "column_break_2",
+  "years_of_service",
+  "calculation_notes",
+  "pending_section",
+  "pending_items",
+  "accounting_section",
+  "credit_account",
+  "payable_account",
+  "column_break_3",
+  "journal_entry",
+  "payment_advice",
+  "payment_advice_type",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "fetch_from": "employee.employee_name",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "fetch_from": "employee.company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date_of_joining",
+   "fieldtype": "Date",
+   "label": "Date of Joining",
+   "fetch_from": "employee.date_of_joining",
+   "read_only": 1
+  },
+  {
+   "fieldname": "relieving_date",
+   "fieldtype": "Date",
+   "label": "Relieving Date",
+   "fetch_from": "employee.relieving_date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "exit_reason",
+   "fieldtype": "Select",
+   "label": "Exit Reason",
+   "options": "Termination\nEnd of Contract\nResignation\nDismissal",
+   "reqd": 1,
+   "default": "Termination"
+  },
+  {
+   "fieldname": "figures_section",
+   "fieldtype": "Section Break",
+   "label": "Gratuity"
+  },
+  {
+   "fieldname": "accrued_to_date",
+   "fieldtype": "Currency",
+   "label": "Provided To Date",
+   "read_only": 1,
+   "description": "Opening + monthly provision posted for the employee."
+  },
+  {
+   "fieldname": "final_amount",
+   "fieldtype": "Currency",
+   "label": "Final Gratuity",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "difference",
+   "fieldtype": "Currency",
+   "label": "Difference To Post",
+   "read_only": 1,
+   "description": "Final - provided. Only this is posted; a negative difference reverses the excess provision (for example on resignation)."
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "years_of_service",
+   "fieldtype": "Float",
+   "label": "Years of Service",
+   "read_only": 1
+  },
+  {
+   "fieldname": "calculation_notes",
+   "fieldtype": "Small Text",
+   "label": "Calculation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pending_section",
+   "fieldtype": "Section Break",
+   "label": "Pending Items"
+  },
+  {
+   "fieldname": "pending_items",
+   "fieldtype": "Small Text",
+   "label": "Pending Items",
+   "read_only": 1
+  },
+  {
+   "fieldname": "accounting_section",
+   "fieldtype": "Section Break",
+   "label": "Accounting"
+  },
+  {
+   "fieldname": "credit_account",
+   "fieldtype": "Link",
+   "label": "Monthly Credit Account",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payable_account",
+   "fieldtype": "Link",
+   "label": "Gratuity Payable Account",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "journal_entry",
+   "fieldtype": "Link",
+   "label": "Journal Entry",
+   "options": "Journal Entry",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "payment_advice",
+   "fieldtype": "Link",
+   "label": "HR Payment Advice",
+   "options": "HR Payment Advice",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "payment_advice_type",
+   "fieldtype": "Data",
+   "label": "Payment Advice Type",
+   "read_only": 1,
+   "hidden": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Gratuity Finalisation",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "delete": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  }
+ ],
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "modified": "2026-10-28 22:00:00.000000",
+ "creation": "2026-10-28 22:00:00.000000",
+ "istable": 0,
+ "issingle": 0
+}

@@ -67,6 +67,8 @@ scheduler_events = {
 		"hr_suite.hr_suite.integrations.qiwa.sync_nitaqat_monthly",
 		"hr_suite.hr_suite.integrations.mudad.sync_wps_monthly",
 		"hr_suite.hr_suite.integrations.gosi_api.sync_monthly_gosi",
+		# Off unless Hr Suite Settings > Post Monthly Automatically is ticked.
+		"hr_suite.hr_suite.gratuity_provision.post_last_month",
 	],
 	"weekly": [
 		"hr_suite.hr_suite.tasks.send_iqama_expiry_alerts",
@@ -179,8 +181,19 @@ doc_events = {
 		# that entry is left in Draft for an approver. An approver who rejects it — by
 		# cancelling or deleting the entry — must take the recovery with it, or the next
 		# payslip deducts an advance the ledger never posted.
-		"on_cancel": "hr_suite.hr_suite.integrations.hrms.on_journal_entry_cancel",
-		"on_trash": "hr_suite.hr_suite.integrations.hrms.on_journal_entry_cancel",
+		"on_cancel": [
+			"hr_suite.hr_suite.integrations.hrms.on_journal_entry_cancel",
+			# a cancelled gratuity provision gives its months back, so they can be posted again
+			"hr_suite.hr_suite.gratuity_provision.on_journal_entry_cancel",
+		],
+		"on_trash": [
+			"hr_suite.hr_suite.integrations.hrms.on_journal_entry_cancel",
+			"hr_suite.hr_suite.gratuity_provision.on_journal_entry_cancel",
+		],
+	},
+	"Gratuity": {
+		# Section 10: gratuity is paid through the finalisation and an HR Payment Advice, not the payslip.
+		"validate": "hr_suite.hr_suite.gratuity_provision.refuse_pay_via_salary_slip",
 	},
 	"Additional Salary": {
 		# Cancelling or deleting the booking releases the loan instalment, so a later
