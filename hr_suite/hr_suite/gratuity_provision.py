@@ -44,8 +44,11 @@ OPENING, MONTHLY, FINALISATION = "Opening", "Monthly", "Finalisation"
 
 
 def settings():
+	start = frappe.db.get_single_value(SETTINGS, "gratuity_provision_start_date")
+	# an empty Date on a Single can come back as 0001-01-01: that is "not set", not the year 1
+	start = getdate(start) if start and getdate(start).year > 1900 else None
 	return frappe._dict(
-		start_date=frappe.db.get_single_value(SETTINGS, "gratuity_provision_start_date"),
+		start_date=start,
 		credit_purpose=frappe.db.get_single_value(SETTINGS, "gratuity_monthly_credit") or ACCOUNT_PURPOSE_GRATUITY_PAYABLE,
 		auto_post=cint(frappe.db.get_single_value(SETTINGS, "gratuity_auto_post")),
 	)

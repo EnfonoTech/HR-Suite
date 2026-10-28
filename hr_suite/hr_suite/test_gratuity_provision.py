@@ -109,6 +109,11 @@ class TestGratuityProvision(SettlementTestBase):
 			gp.post_month(COMPANY, "2026-09-30")
 		self.assertIn("Account Type is not Payable", str(caught.exception))
 
+	def test_an_empty_start_date_is_not_the_year_one(self):
+		frappe.db.set_single_value("Hr Suite Settings", "gratuity_provision_start_date", "0001-01-01")
+		self.addCleanup(self.configure, "2026-01-01", "Gratuity Payable")
+		self.assertIsNone(gp.settings().start_date)
+
 	# ── opening balance ──
 
 	def test_one_opening_row_by_hand_and_nothing_else(self):
