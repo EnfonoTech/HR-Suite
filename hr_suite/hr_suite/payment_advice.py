@@ -51,6 +51,10 @@ PAYMENT_TYPE_BY_SOURCE = {
 	"Gratuity Finalisation": "Gratuity",
 }
 
+# Sources paid with a Payment Entry against the employee's payable, never marked paid by hand: the entry is the
+# record that can be cancelled to reverse the payment, so the advice and the source can be cancelled after it.
+PAID_BY_PAYMENT_ENTRY = ("Leave Salary Settlement", "Gratuity Finalisation")
+
 
 def payment_advice_needs_approval() -> bool:
 	"""True when an active approval workflow covers HR Payment Advice.
@@ -686,6 +690,30 @@ def _write_back_advice_link(doc, spec: dict, advice_name: str, advice_doctype: s
 		refresh_stage(doc.name)
 
 
+def release_source_links(advice_doc) -> None:
+	"""A cancelled advice no longer claims its source documents: clear the link so they can be cancelled or re-raised."""
+	pairs = {(r.reference_doctype, r.reference_name) for r in advice_doc.references if r.reference_doctype}
+	if advice_doc.source_doctype and advice_doc.source_name:
+		pairs.add((advice_doc.source_doctype, advice_doc.source_name))
+
+	for doctype, name in pairs:
+		spec = SOURCE_DOCUMENTS.get(doctype) or {}
+		link_field = spec.get("link_field")
+		if not link_field or not frappe.get_meta(doctype).has_field(link_field):
+			continue
+		if frappe.db.get_value(doctype, name, link_field) != advice_doc.name:
+			continue
+		values = {link_field: None}
+		type_field = spec.get("link_type_field")
+		if type_field and frappe.get_meta(doctype).has_field(type_field):
+			values[type_field] = None
+		frappe.db.set_value(doctype, name, values, update_modified=False)
+		if doctype == "Leave Salary Settlement":
+			from hr_suite.hr_suite.doctype.leave_salary_settlement.leave_salary_settlement import refresh_stage
+
+			refresh_stage(name)
+
+
 def _normalise_lines(doc, lines, description) -> list:
 	"""Turn whatever the caller passed into reference rows, dropping the empty ones.
 
@@ -732,10 +760,13 @@ def mark_paid(advice: str, payment_reference: str = None, payment_date: str = No
 			title=_("Not Submitted"),
 		)
 
-	if "Leave Salary Settlement" in {r.reference_doctype for r in advice_doc.references} | {advice_doc.source_doctype}:
+	sources = {r.reference_doctype for r in advice_doc.references} | {advice_doc.source_doctype}
+	by_entry = [d for d in PAID_BY_PAYMENT_ENTRY if d in sources]
+	if by_entry:
 		frappe.throw(
-			_("Leave salary is paid with a Payment Entry against the employee's leave salary payable, not marked "
-			  "paid by hand. Use Create Payment Entry on this advice; it turns Paid when the entry is submitted."),
+			_("A {0} is paid with a Payment Entry against the employee's payable, not marked paid by hand. Use "
+			  "Create Payment Entry on this advice; it turns Paid when the entry is submitted, and cancelling "
+			  "that entry reverses it.").format(_(by_entry[0])),
 			title=_("Create A Payment Entry"),
 		)
 

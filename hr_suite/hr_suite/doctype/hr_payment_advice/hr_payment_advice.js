@@ -17,6 +17,11 @@ function flow_call(frm, method, args, message) {
 
 frappe.ui.form.on("HR Payment Advice", {
 	setup(frm) {
+		// The source documents stay submitted when the advice is cancelled: never offer to cancel them with it.
+		frm.ignore_doctypes_on_cancel_all = [
+			"Leave Salary Settlement", "Gratuity Finalisation", "Salary Settlement", "Annual Leave Disbursement",
+			"End of Service Benefit", "Leave Encashment", "Gratuity",
+		];
 		frm.set_query("approver_l1", () => ({ filters: { enabled: 1, user_type: "System User" } }));
 		frm.set_query("approver_l2", () => ({ filters: { enabled: 1, user_type: "System User" } }));
 	},
@@ -68,11 +73,14 @@ frappe.ui.form.on("HR Payment Advice", {
 
 		// Only a submitted advice that has not been paid can be confirmed. A draft is
 		// still HR's, and a paid one already has a reference that must not be rewritten.
-		const leave_salary = frm.doc.source_doctype === "Leave Salary Settlement"
-			|| (frm.doc.references || []).some((r) => r.reference_doctype === "Leave Salary Settlement");
+		// Same list as PAID_BY_PAYMENT_ENTRY in payment_advice.py.
+		const by_entry = ["Leave Salary Settlement", "Gratuity Finalisation"];
+		const paid_by_entry = by_entry.includes(frm.doc.source_doctype)
+			|| (frm.doc.references || []).some((r) => by_entry.includes(r.reference_doctype));
 		if (frm.doc.docstatus === 1 && !["Paid", "Cancelled"].includes(status)) {
-			if (leave_salary) {
-				// Leave salary is paid with a Payment Entry against the employee's payable, never marked paid by hand.
+			if (paid_by_entry) {
+				// Leave salary and gratuity are paid with a Payment Entry against the employee's payable, never marked
+				// paid by hand: cancelling that entry is how the payment is reversed.
 				if (["Approved", "Sent to Finance", "Partially Paid"].includes(status) && frappe.model.can_create("Payment Entry")) {
 					frm.add_custom_button(__("Create Payment Entry"), function () {
 						frappe.call({

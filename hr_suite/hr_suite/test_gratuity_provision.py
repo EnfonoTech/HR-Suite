@@ -5,7 +5,7 @@ year for the first five years and 30 after (Country Config slabs), never read ba
 """
 
 import frappe
-from frappe.utils import flt
+from frappe.utils import flt, nowdate
 
 from hr_suite.hr_suite import gratuity_provision as gp
 from hr_suite.hr_suite.policy import get_country_policy
@@ -161,6 +161,27 @@ class TestGratuityProvision(SettlementTestBase):
 
 		entry = frappe.get_doc("Payment Entry", _gratuity_payment_entry(advice, doc.name)["payment_entry"])
 		self.assertEqual((entry.party, entry.paid_to, flt(entry.paid_amount)), (emp, self.gratuity_payable, final))
+
+	def test_gratuity_advice_is_paid_by_payment_entry_and_can_be_unwound(self):
+		"""Marked paid by hand there is nothing to cancel, and the advice and the finalisation lock each other."""
+		from hr_suite.hr_suite.payment_advice import mark_paid, raise_for_document
+
+		emp = self.staff("GratUnwind", opening=0, ctc=4000, joined="2020-01-01")
+		doc = self.finalise(emp, "Termination")
+		raise_for_document("Gratuity Finalisation", doc.name)
+		doc.reload()
+		advice = frappe.get_doc("HR Payment Advice", doc.payment_advice)
+
+		with self.assertRaises(frappe.ValidationError):
+			mark_paid(advice.name, payment_reference="cash", payment_date=nowdate())
+		self.assertNotEqual(frappe.db.get_value("HR Payment Advice", advice.name, "status"), "Paid")
+
+		advice.reload()
+		advice.cancel()  # unpaid: the advice goes first, then the finalisation
+		doc.reload()
+		self.assertFalse(doc.payment_advice)  # the cancelled advice no longer claims it
+		doc.cancel()
+		self.assertEqual(frappe.db.get_value("Journal Entry", doc.journal_entry, "docstatus"), 2)
 
 
 	def test_provision_moves_to_payable_at_exit(self):

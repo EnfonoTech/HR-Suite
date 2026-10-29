@@ -54,6 +54,18 @@ class HRPaymentAdvice(Document):
 		"""
 		self.db_set("status", "Approved")
 
+	def before_cancel(self):
+		"""The source document points back at this advice and stays submitted; that link must not block the cancel.
+
+		Without this the advice and its source lock each other: frappe refuses to cancel the advice while a submitted
+		Leave Salary Settlement or Gratuity Finalisation links to it, and the source refuses to cancel while the
+		advice is live. The order is payment entry, then advice, then source.
+		"""
+		from hr_suite.hr_suite.payment_advice import SOURCE_DOCUMENTS
+
+		ignore = list(self.get("ignore_linked_doctypes") or [])
+		self.ignore_linked_doctypes = tuple(ignore + [d for d in SOURCE_DOCUMENTS if d not in ignore])
+
 	def on_cancel(self):
 		if self.status == "Paid":
 			frappe.throw(
@@ -66,6 +78,10 @@ class HRPaymentAdvice(Document):
 			)
 
 		self.db_set("status", "Cancelled")
+
+		from hr_suite.hr_suite.payment_advice import release_source_links
+
+		release_source_links(self)
 
 	def _set_company(self):
 		if not self.company and self.employee:
