@@ -196,6 +196,7 @@ doc_events = {
 	"Gratuity": {
 		# Section 10: gratuity is paid through the finalisation and an HR Payment Advice, not the payslip.
 		"validate": "hr_suite.hr_suite.gratuity_provision.refuse_pay_via_salary_slip",
+		"before_submit": "hr_suite.hr_suite.gratuity_rules.validate_one_gratuity_per_employee",
 	},
 	"Additional Salary": {
 		# Cancelling or deleting the booking releases the loan instalment, so a later
@@ -247,9 +248,6 @@ doc_events = {
 	"Exit Interview": {
 		"on_update": "hr_suite.hr_suite.integrations.hrms.on_exit_interview_update",
 		"on_trash": "hr_suite.hr_suite.integrations.hrms.on_exit_interview_trash",
-	},
-	"Gratuity": {
-		"before_submit": "hr_suite.hr_suite.gratuity_rules.validate_one_gratuity_per_employee",
 	},
 	"Salary Structure Assignment": {
 		"before_submit": "hr_suite.hr_suite.integrations.hrms.validate_minimum_wage",
