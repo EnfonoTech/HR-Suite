@@ -42,9 +42,27 @@ def get_current_assignment(employee: str, as_on=None) -> dict | None:
 	return rows[0] if rows else None
 
 
+def get_upcoming_assignment(employee: str) -> dict | None:
+	"""Earliest submitted assignment that has not started yet, for an employee with none in force."""
+	rows = frappe.get_all(
+		"Salary Structure Assignment",
+		filters={"employee": employee, "docstatus": 1, "from_date": [">", getdate(today())]},
+		fields=["name", "salary_structure", "base", "from_date", "currency"],
+		order_by="from_date asc, creation desc",
+		limit=1,
+	)
+	return rows[0] if rows else None
+
+
 def _build_preview_slip(assignment: dict, employee: str, as_on=None):
 	"""Ask HRMS to evaluate the structure for this employee. Never saved."""
-	from hrms.payroll.doctype.salary_structure.salary_structure import make_salary_slip
+	from hrms.payroll.doctype.salary_structure import salary_structure
+
+	# hrms 15.64.7 moved the work into _make_salary_slip and made the whitelisted
+	# make_salary_slip check Employee permission with no ignore_permissions argument,
+	# so passing it raised TypeError and every snapshot came out empty. The inner
+	# function is used where it exists; older hrms still has only the outer one.
+	make_salary_slip = getattr(salary_structure, "_make_salary_slip", salary_structure.make_salary_slip)
 
 	return make_salary_slip(
 		assignment["salary_structure"],
@@ -106,6 +124,12 @@ def sync_employee_salary(employee: str, as_on=None) -> dict:
 		return {"employee": employee, "synced": False, "reason": "no such employee"}
 
 	assignment = get_current_assignment(employee, as_on)
+	if not assignment and not as_on:
+		# A new joiner's first assignment often starts on a later date. Show that salary now,
+		# priced on its own start date, rather than an empty tab until the day it begins.
+		assignment = get_upcoming_assignment(employee)
+		if assignment:
+			as_on = assignment.from_date
 
 	# Clear first, so an employee whose assignment was cancelled does not keep
 	# showing figures that no longer have a document behind them.
@@ -185,6 +209,32 @@ def on_salary_structure_assignment_change(doc, method=None):
 	if not doc.get("employee"):
 		return
 	sync_employee_salary(doc.employee)
+	# The mirror is written without touching `modified`, so a browser holding the Employee
+	# would keep showing the old figures until its 120-second staleness check. Tell any open
+	# Employee form to reload, once the figures are committed.
+	frappe.publish_realtime(
+		"hr_suite_salary_synced",
+		{"employee": doc.employee},
+		doctype="Employee",
+		docname=doc.employee,
+		after_commit=True,
+	)
+
+
+def sync_assignments_starting_today():
+	"""Daily: an assignment that starts today replaces the figures the Employee shows."""
+	starting = frappe.get_all(
+		"Salary Structure Assignment",
+		filters={"docstatus": 1, "from_date": getdate(today())},
+		pluck="employee",
+	)
+	for employee in sorted(set(starting)):
+		try:
+			sync_employee_salary(employee)
+			frappe.db.commit()
+		except Exception:
+			frappe.db.rollback()
+			frappe.log_error(message=frappe.get_traceback(), title=f"Salary snapshot failed for {employee}")
 
 
 # ─── API ────────────────────────────────────────────────────────────────────────

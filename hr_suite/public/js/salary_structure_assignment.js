@@ -9,6 +9,14 @@ frappe.ui.form.on("Salary Structure Assignment", {
 	after_save(frm) {
 		_inject_override_buttons(frm);
 	},
+	// Submitting or cancelling rewrites the Employee's Salary tab on the server. Drop this
+	// browser's cached copy so opening the Employee next loads the new figures at once.
+	on_submit(frm) {
+		frappe.model.remove_from_locals("Employee", frm.doc.employee);
+	},
+	after_cancel(frm) {
+		frappe.model.remove_from_locals("Employee", frm.doc.employee);
+	},
 });
 
 // ── Apply Salary Breakup ────────────────────────────────────────────────────
