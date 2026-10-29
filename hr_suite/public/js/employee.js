@@ -736,6 +736,24 @@ function _hr_suite_onboarding_banner(frm) {
 }
 
 
+// An assignment submitted elsewhere (another tab, another user) rewrites the Salary tab on
+// the server; the server announces it to whoever has this Employee open, and the form reloads
+// unless it holds unsaved edits. Registered once per page, not once per form.
+frappe.ui.form.on("Employee", {
+	setup: function () {
+		if (frappe._hr_suite_salary_listener) return;
+		frappe._hr_suite_salary_listener = true;
+		frappe.realtime.on("hr_suite_salary_synced", function (data) {
+			const open = window.cur_frm;
+			if (open && open.doctype === "Employee" && open.docname === data.employee && !open.is_dirty()) {
+				open.reload_doc();
+			} else {
+				frappe.model.remove_from_locals("Employee", data.employee);
+			}
+		});
+	},
+});
+
 // ─── Salary tab: components fetched from the Salary Structure Assignment ───────
 // The figures are a mirror, never a second copy anybody can edit. If the table is
 // empty but the employee has a submitted assignment, we fetch once on open so the

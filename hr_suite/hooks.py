@@ -31,6 +31,8 @@ scheduler_events = {
 	},
 	"daily": [
 		"hr_suite.hr_suite.salary_override_api.apply_pending_salary_overrides",
+		# the Employee's Salary tab moves to an assignment on the day it starts
+		"hr_suite.hr_suite.employee_salary.sync_assignments_starting_today",
 		# ORDER MATTERS between these two. The leave-type sync switches a type to monthly
 		# accrual only while no employee holds a live allocation of it, which is true for
 		# exactly one moment each year: after the old leave year has ended and before the
