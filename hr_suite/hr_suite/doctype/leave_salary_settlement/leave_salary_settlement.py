@@ -130,8 +130,6 @@ class LeaveSalarySettlement(Document):
 		else:
 			self._pull_leave_application()
 		self._require_ledger_engine()
-		if not self._is_final():
-			self._require_annual_leave()
 		self._guard_one_open_draft()
 		self._price()
 
@@ -247,16 +245,6 @@ class LeaveSalarySettlement(Document):
 			frappe.throw(
 				_("A Leave Salary Settlement is for annual leave ({0}). {1} is {2}, which does not advance leave salary.").format(
 					self._policy.annual_leave_type, self.leave_application, self.leave_type
-				),
-				title=_("Not Annual Leave"),
-			)
-
-	def _require_annual_leave(self):
-		"""Leave salary is paid in advance of annual leave only, never of sick, Hajj or other leave."""
-		if self.leave_type != self._policy.annual_leave_type:
-			frappe.throw(
-				_("{0} is {1}. A Leave Salary Settlement is only for {2}.").format(
-					self.leave_application, self.leave_type, self._policy.annual_leave_type
 				),
 				title=_("Not Annual Leave"),
 			)
