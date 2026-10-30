@@ -846,3 +846,11 @@ def make_from_leave_application(leave_application):
 		"leave_application": leave_application,
 		"last_working_day": add_days(la.from_date, -1),
 	}
+
+
+def set_leave_application_onload(doc, method=None):
+	"""Tell the Leave Application form whether it may start a settlement: approved annual leave only."""
+	if doc.docstatus != 1 or doc.status != "Approved":
+		return
+	policy = get_policy(doc.employee, on_date=doc.from_date)
+	doc.set_onload("hrs_can_settle_leave_salary", int(bool(policy.get("has_policy")) and doc.leave_type == policy.annual_leave_type))

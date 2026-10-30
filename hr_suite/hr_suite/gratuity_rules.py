@@ -88,3 +88,24 @@ def sync_gratuity_rules():
 			rule.insert(ignore_permissions=True)
 		except Exception:
 			frappe.log_error(frappe.get_traceback(), "HR Suite: could not create Gratuity Rule " + name)
+
+
+def validate_one_gratuity_per_employee(doc, method=None):
+	"""Gratuity is paid once per employment: refuse to submit a second one while another is live.
+
+	HRMS lets any number of Gratuity documents be submitted for one employee, so a settled
+	employee could be paid again. Drafts are left alone, and a cancelled one does not count,
+	which keeps Amend working.
+	"""
+	existing = frappe.db.get_value(
+		"Gratuity",
+		{"employee": doc.employee, "docstatus": 1, "name": ["!=", doc.name]},
+		"name",
+	)
+	if existing:
+		frappe.throw(
+			_("Gratuity {0} is already submitted for {1}. Cancel it before submitting this one.").format(
+				frappe.bold(existing), frappe.bold(doc.employee)
+			),
+			title=_("Gratuity Already Exists"),
+		)

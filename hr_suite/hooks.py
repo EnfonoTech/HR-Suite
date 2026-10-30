@@ -31,6 +31,8 @@ scheduler_events = {
 	},
 	"daily": [
 		"hr_suite.hr_suite.salary_override_api.apply_pending_salary_overrides",
+		# the Employee's Salary tab moves to an assignment on the day it starts
+		"hr_suite.hr_suite.employee_salary.sync_assignments_starting_today",
 		# ORDER MATTERS between these two. The leave-type sync switches a type to monthly
 		# accrual only while no employee holds a live allocation of it, which is true for
 		# exactly one moment each year: after the old leave year has ended and before the
@@ -194,6 +196,7 @@ doc_events = {
 	"Gratuity": {
 		# Section 10: gratuity is paid through the finalisation and an HR Payment Advice, not the payslip.
 		"validate": "hr_suite.hr_suite.gratuity_provision.refuse_pay_via_salary_slip",
+		"before_submit": "hr_suite.hr_suite.gratuity_rules.validate_one_gratuity_per_employee",
 	},
 	"Additional Salary": {
 		# Cancelling or deleting the booking releases the loan instalment, so a later
@@ -209,6 +212,7 @@ doc_events = {
 		"validate": "hr_suite.hr_suite.performance.validate_appraisal",
 	},
 	"Leave Application": {
+		"onload": "hr_suite.hr_suite.doctype.leave_salary_settlement.leave_salary_settlement.set_leave_application_onload",
 		"validate": [
 			"hr_suite.hr_suite.integrations.hrms.on_leave_application_validate",
 			"hr_suite.hr_suite.sick_leave_tiers.preview_split",
@@ -275,7 +279,11 @@ jinja = {
 	]
 }
 
-override_whitelisted_methods = {}
+override_whitelisted_methods = {
+	# the Leave Application form lists every leave type the employee's country declares,
+	# not only the allocated ones
+	"hrms.hr.doctype.leave_application.leave_application.get_leave_details": "hr_suite.hr_suite.leave_application_rules.get_leave_details",
+}
 
 # hrms submits the payroll accrual Journal Entry inline. Where that entry needs
 # approval, the refusal aborts the whole run and leaves the payslips in draft —
